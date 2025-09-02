@@ -6,7 +6,7 @@
 #include <Magma/Script/ScriptModule.h>
 
 #include "ECS/World.h"
-#include "UI/UI.h"
+// #include "UI/UI.h"
 // #include "SceneRenderer.h"
 
 using namespace VolcaniCore;

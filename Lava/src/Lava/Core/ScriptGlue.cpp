@@ -34,7 +34,6 @@
 
 using namespace Magma;
 using namespace Magma::Script;
-using namespace Lava::UI;
 using namespace Lava::ECS;
 // using namespace Lava::Physics;
 
