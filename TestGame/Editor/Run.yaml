@@ -1,0 +1,5 @@
+Scenes:
+  - Scene:
+      Name: test
+      Screen: TestScreen2
+      UI: ""

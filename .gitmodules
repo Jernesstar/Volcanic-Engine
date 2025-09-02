@@ -1,0 +1,76 @@
+[submodule "VolcaniCore/vendor/glfw"]
+	path = VolcaniCore/vendor/glfw
+	url = https://github.com/glfw/glfw.git
+[submodule "VolcaniCore/vendor/glm"]
+	path = VolcaniCore/vendor/glm
+	url = https://github.com/g-truc/glm.git
+[submodule "Magma/vendor/stb_image"]
+	path = Magma/vendor/stb_image
+	url = https://github.com/LavaFlow-Technologies/stb_image
+[submodule "Magma/vendor/assimp"]
+	path = Magma/vendor/assimp
+	url = https://github.com/LavaFlow-Technologies/assimp.git
+[submodule "Magma/vendor/freetype"]
+	path = Magma/vendor/freetype
+	url = https://github.com/LavaFlow-Technologies/freetype.git
+[submodule "Magma/vendor/yaml-cpp"]
+	path = Magma/vendor/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp.git
+[submodule "Magma/vendor/ImGuiFileDialog"]
+	path = Magma/vendor/ImGuiFileDialog
+	url = https://github.com/aiekick/ImGuiFileDialog.git
+[submodule "Magma/vendor/imgui"]
+	path = Magma/vendor/imgui
+	url = https://github.com/ocornut/imgui.git
+	branch = docking
+[submodule "Magma/vendor/flecs"]
+	path = Lava/vendor/flecs
+	url = https://github.com/SanderMertens/flecs.git
+[submodule "Magma/vendor/PhysX"]
+	path = Lava/vendor/PhysX
+	url = https://github.com/NVIDIA-Omniverse/PhysX.git
+[submodule "Magma/vendor/rapidjson"]
+	path = Magma/vendor/rapidjson
+	url = https://github.com/Tencent/rapidjson.git
+[submodule "Magma/vendor/angelscript"]
+	path = Magma/vendor/angelscript
+	url = https://github.com/LavaFlow-Technologies/angelscript.git
+[submodule "Magma/vendor/soloud"]
+	path = Magma/vendor/soloud
+	url = https://github.com/jarikomppa/soloud.git
+[submodule "Magma/vendor/ImGuizmo"]
+	path = Magma/vendor/ImGuizmo
+	url = https://github.com/CedricGuillemet/ImGuizmo.git
+[submodule "Magma/vendor/efsw"]
+	path = Magma/vendor/efsw
+	url = https://github.com/SpartanJ/efsw.git
+[submodule "Magma/vendor/SPIRV-Cross"]
+	path = Magma/vendor/SPIRV-Cross
+	url = https://github.com/KhronosGroup/SPIRV-Cross.git
+[submodule "Magma/vendor/glslang"]
+	path = Magma/vendor/glslang
+	url = https://github.com/LavaFlow-Technologies/glslang.git
+[submodule "VolcaniCore/vendor/glad"]
+	path = Magma/vendor/glad
+	url = https://github.com/LavaFlow-Technologies/glad.git
+[submodule "Magma/vendor/IconFontCppHeaders"]
+	path = Magma/vendor/IconFontCppHeaders
+	url = https://github.com/juliettef/IconFontCppHeaders.git
+[submodule "Magma/vendor/ImGuiColorTextEdit"]
+	path = Magma/vendor/ImGuiColorTextEdit
+	url = https://github.com/LavaFlow-Technologies/ImGuiColorTextEdit.git
+[submodule "Magma/vendor/clay"]
+	path = Lava/vendor/clay
+	url = https://github.com/nicbarker/clay.git
+[submodule "Lava/vendor/flecs"]
+	path = Lava/vendor/flecs
+	url = https://github.com/SanderMertens/flecs.git
+[submodule "Lava/vendor/PhysX"]
+	path = Lava/vendor/PhysX
+	url = https://github.com/NVIDIA-Omniverse/PhysX.git
+[submodule "Magma/vendor/glad"]
+	path = Magma/vendor/glad
+	url = https://github.com/LavaFlow-Technologies/glad.git
+[submodule "Lava/vendor/clay"]
+	path = Lava/vendor/clay
+	url = https://github.com/nicbarker/clay.git
