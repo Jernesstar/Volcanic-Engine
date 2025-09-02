@@ -17,15 +17,15 @@ project "freetype"
         "%{VendorPaths.freetype}/src/base/ftbitmap.c",
         "%{VendorPaths.freetype}/src/base/ftstroke.c",
         "%{VendorPaths.freetype}/src/base/ftmm.c",
-        "%{VendorPaths.freetype}/src/lzw/ftlzw.c",
-        "%{VendorPaths.freetype}/src/sfnt/sfnt.c",
-        "%{VendorPaths.freetype}/src/gzip/ftgzip.c",
-        "%{VendorPaths.freetype}/src/truetype/truetype.c",
-        "%{VendorPaths.freetype}/src/psnames/psnames.c",
-        "%{VendorPaths.freetype}/src/raster/raster.c",
-        "%{VendorPaths.freetype}/src/smooth/smooth.c",
-        "%{VendorPaths.freetype}/src/autofit/autofit.c",
-        "%{VendorPaths.freetype}/src/svg/svg.c"
+        -- "%{VendorPaths.freetype}/src/lzw/ftlzw.c",
+        -- "%{VendorPaths.freetype}/src/sfnt/sfnt.c",
+        -- "%{VendorPaths.freetype}/src/gzip/ftgzip.c",
+        -- "%{VendorPaths.freetype}/src/truetype/truetype.c",
+        -- "%{VendorPaths.freetype}/src/psnames/psnames.c",
+        -- "%{VendorPaths.freetype}/src/raster/raster.c",
+        -- "%{VendorPaths.freetype}/src/smooth/smooth.c",
+        -- "%{VendorPaths.freetype}/src/autofit/autofit.c",
+        -- "%{VendorPaths.freetype}/src/svg/svg.c"
     }
 
     includedirs {

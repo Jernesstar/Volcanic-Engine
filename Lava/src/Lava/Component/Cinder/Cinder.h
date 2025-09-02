@@ -4,7 +4,7 @@
 
 using namespace VolcaniCore;
 
-namespace Ash {
+namespace Cinder {
 
 extern void Init();
 extern void Close();

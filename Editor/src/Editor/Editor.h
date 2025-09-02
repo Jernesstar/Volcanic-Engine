@@ -21,6 +21,9 @@ struct LavaFlow {
 
 class Editor {
 public:
+	static void RegisterInterface();
+
+public:
 	Editor() { s_Instance = this; }
 	~Editor() = default;
 

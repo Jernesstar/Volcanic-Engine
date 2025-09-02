@@ -9,21 +9,14 @@
 #include <VolcaniCore/Core/Log.h>
 #include <VolcaniCore/Event/Events.h>
 
-#include <Magma/Graphics/Renderer.h>
-#include <Magma/Graphics/RendererAPI.h>
-#include <Magma/Graphics/ShaderLibrary.h>
+#include <Lava/Core/Lava.h>
 
-// #include <Lava/UI/UI.h>
-#include <Lava/Physics/Physics.h>
-
-#include "Editor/Editor/AssetImporter.h"
-#include "Editor/UI/UIRenderer.h"
+#include "Editor/AssetImporter.h"
+#include "UI/UIRenderer.h"
 
 using namespace VolcaniCore;
 using namespace Magma::Graphics;
 using namespace Magma::UI;
-
-using namespace Lava::Physics;
 
 namespace Magma {
 
@@ -37,71 +30,13 @@ EditorApp::EditorApp(const CommandLineArgs& args)
 				Application::Close();
 		});
 
-	RendererAPI::Create(RendererAPI::Backend::OpenGL);
-	Renderer::Init();
+	Lava::InitComponents();
 
 	GetWindow()->Maximize();
 
 	UIRenderer::Init();
-
-	Application::PushDir();
-
-	ShaderLibrary::Add("Framebuffer",
-		AssetImporter::GetShader({
-			"Magma/assets/shaders/Framebuffer.glsl.vert",
-			"Magma/assets/shaders/Framebuffer.glsl.frag"
-		}));
-	ShaderLibrary::Add("Lighting",
-		AssetImporter::GetShader({
-			"Magma/assets/shaders/Lighting.glsl.vert",
-			"Magma/assets/shaders/Lighting.glsl.frag"
-		}));
-	ShaderLibrary::Add("Light",
-		AssetImporter::GetShader({
-			"Magma/assets/shaders/Light.glsl.vert",
-			"Magma/assets/shaders/Light.glsl.frag"
-		}));
-
-	ShaderLibrary::Add("Bloom-Downsample",
-		AssetImporter::GetShader({
-			"Magma/assets/shaders/Framebuffer.glsl.vert",
-			"Magma/assets/shaders/Downsample.glsl.frag"
-		}));
-	ShaderLibrary::Add("Bloom-Upsample",
-		AssetImporter::GetShader({
-			"Magma/assets/shaders/Framebuffer.glsl.vert",
-			"Magma/assets/shaders/Upsample.glsl.frag"
-		}));
-	ShaderLibrary::Add("Bloom",
-		AssetImporter::GetShader({
-			"Magma/assets/shaders/Framebuffer.glsl.vert",
-			"Magma/assets/shaders/Bloom.glsl.frag"
-		}));
-
-	ShaderLibrary::Add("Particle-Emit",
-		AssetImporter::GetShader({
-			"Magma/assets/shaders/ParticleEmitter.glsl.comp",
-		}));
-	ShaderLibrary::Add("Particle-Update",
-		AssetImporter::GetShader({
-			"Magma/assets/shaders/ParticleUpdate.glsl.comp",
-		}));
-	ShaderLibrary::Add("Particle-DefaultDraw",
-		AssetImporter::GetShader({
-			"Magma/assets/shaders/Particle.glsl.vert",
-			"Magma/assets/shaders/Particle.glsl.frag"
-		}));
-
-	float fontSize = 15.0f;
 	ImGuiIO& io = ImGui::GetIO();
-	io.Fonts->AddFontFromFileTTF(
-		"Magma/assets/fonts/JetBrainsMono-Bold.ttf", fontSize);
-	io.FontDefault =
-		io.Fonts->AddFontFromFileTTF(
-			"Magma/assets/fonts/JetBrainsMono-Regular.ttf", fontSize);
 	io.IniFilename = nullptr;
-
-	Application::PopDir();
 
 	m_Editor.Open();
 	m_Editor.Load(args);
@@ -112,20 +47,12 @@ EditorApp::~EditorApp() {
 
 	UIRenderer::Close();
 
-	ShaderLibrary::Clear();
-
-	Renderer::Close();
-	RendererAPI::Shutdown();
+	Lava::CloseComponents();
 }
 
 void EditorApp::OnUpdate(TimeStep ts) {
-	float fps = (1.0f / (float)ts) * 1000.0f;
-	Renderer::GetFrame().Info.FPS = fps;
-
-	RendererAPI::Get()->StartFrame();
-	Renderer::BeginFrame();
-
-	Renderer::Clear();
+	Lava::BeginFrame();
+	Lava::Update(ts);
 
 	UIRenderer::BeginFrame();
 	ImGuizmo::BeginFrame();
@@ -135,8 +62,7 @@ void EditorApp::OnUpdate(TimeStep ts) {
 
 	UIRenderer::EndFrame();
 
-	Renderer::EndFrame();
-	RendererAPI::Get()->EndFrame();
+	Lava::EndFrame();
 }
 
 }

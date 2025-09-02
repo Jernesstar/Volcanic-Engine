@@ -9,12 +9,14 @@ project "Editor"
     targetdir ("%{RootPath}/build/%{_ACTION}/Magma/bin")
 
     files {
-        "src/Editor/**.h",
-        "src/Editor/**.cpp",
+        "src/**.h",
+        "src/**.cpp",
     }
 
     includedirs {
-        "src/Editor",
+        "src",
+        "src/**",
+
         "src/Magma",
 
         "%{RootPath}/VolcaniCore/src",
@@ -53,7 +55,7 @@ project "Editor"
         "%{Includes.PhysX}",
 
         "%{Includes.angelscript}",
-        "%{VendorPaths.angelscript}",
+        "%{MagmaVendorDir}",
         "%{Includes.soloud}",
     }
 
@@ -118,13 +120,13 @@ project "Editor"
             "-Wno-pointer-arith"
         }
 
-include "Magma/.deps/imgui"
-include "Magma/.deps/ImGuiFileDialog"
-include "Magma/.deps/ImGuizmo"
-include "Magma/.deps/ImGuiColorTextEdit"
-include "Magma/.deps/assimp"
-include "Magma/.deps/freetype"
-include "Magma/.deps/stb_image"
-include "Magma/.deps/efsw"
-include "Magma/.deps/glslang"
-include "Magma/.deps/SPIRV-Cross"
+include "Editor/.deps/imgui"
+include "Editor/.deps/ImGuiFileDialog"
+include "Editor/.deps/ImGuizmo"
+include "Editor/.deps/ImGuiColorTextEdit"
+include "Editor/.deps/assimp"
+include "Editor/.deps/freetype"
+include "Editor/.deps/stb_image"
+include "Editor/.deps/efsw"
+include "Editor/.deps/glslang"
+include "Editor/.deps/SPIRV-Cross"

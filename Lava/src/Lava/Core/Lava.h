@@ -4,11 +4,10 @@
 
 using namespace VolcaniCore;
 
-namespace Ash {
+namespace Lava {
 
-extern void Init();
-extern void Close();
-extern void RegisterInterface();
+extern void InitComponents();
+extern void CloseComponents();
 extern void BeginFrame();
 extern void Update(TimeStep ts);
 extern void EndFrame();

@@ -8,8 +8,8 @@ namespace Lava {
 
 class ScriptGlue {
 public:
-	static void Copy(Ref<ScriptObject> src, Ref<ScriptObject> dst);
 	static void RegisterInterface();
+	static void Copy(Ref<ScriptObject> src, Ref<ScriptObject> dst);
 };
 
 }

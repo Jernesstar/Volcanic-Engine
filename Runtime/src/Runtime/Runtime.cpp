@@ -12,7 +12,7 @@
 // #include <Magma/Physics/Physics.h>
 // #include <Magma/UI/UIRenderer.h>
 
-#include <Lava/Core/ScriptGlue.h>
+#include <Lava/Core/Lava.h>
 
 namespace fs = std::filesystem;
 
@@ -40,11 +40,7 @@ Runtime::Runtime(const CommandLineArgs& args)
 
 	Application::PushDir(rootPath);
 
-	// Ash::Init();
-	// Cinder::Init();
-	// Igneous::Init();
-	// Pyro::Init();
-	// Silica::Init();
+	Lava::InitComponents();
 
 	Project project;
 	// project.Load("./.volc.proj");

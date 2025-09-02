@@ -5,22 +5,16 @@
 #include <imgui/misc/cpp/imgui_stdlib.h>
 #include <ImGuiFileDialog/ImGuiFileDialog.h>
 
-#include <yaml-cpp/yaml.h>
-
 #include <VolcaniCore/Core/Application.h>
 #include <VolcaniCore/Core/FileUtils.h>
 #include <VolcaniCore/Core/Log.h>
 #include <VolcaniCore/Core/Input.h>
+
 #include <Magma/Graphics/RendererAPI.h>
-
 #include <Magma/Core/YAMLSerializer.h>
-#include <Magma/Script/ScriptEngine.h>
-#include <Magma/Audio/AudioEngine.h>
-// #include <Magma/Physics/Physics.h>
 
-#include <Lava/Core/ScriptGlue.h>
+#include "UI/UIRenderer.h"
 
-#include "Editor/UI/UIRenderer.h"
 #include "AssetImporter.h"
 #include "ScriptManager.h"
 
@@ -37,9 +31,8 @@ struct {
 		bool openProject   = false;
 		bool runProject    = false;
 		bool exportProject = false;
-		bool exportProjectTo = false;
-
-		bool addScreen     = false;
+		bool newLavaFlow   = false;
+		bool openLavaFlow  = false;
 	} project;
 
 	struct {
@@ -56,30 +49,26 @@ static void ProjectSaveRuntime(const Project& project);
 
 static UI::Image s_WelcomeImage;
 
+void Editor::RegisterInterface() {
+
+}
+
 void Editor::Open() {
 	Application::PushDir();
 	s_WelcomeImage.Content =
-		AssetImporter::GetTexture("Magma/assets/images/VolcanicDisplay.png");
+		AssetImporter::GetTexture("Editor/assets/images/VolcanicDisplay.png");
 	Application::PopDir();
 
-	// Physics::Init();
-	AudioEngine::Init();
-	ScriptEngine::Init();
-
-	Lava::ScriptGlue::RegisterInterface();
-	m_App = CreateRef<Lava::App>();
-
+	Editor::RegisterInterface();
 	Panel::RegisterInterface();
 	Tab::RegisterInterface();
+
+	m_App = CreateRef<Lava::App>();
 }
 
 void Editor::Close() {
 	CloseProject();
 	m_App.reset();
-
-	ScriptEngine::Shutdown();
-	AudioEngine::Shutdown();
-	// Physics::Close();
 }
 
 void Editor::Load(const CommandLineArgs& args) {
@@ -145,12 +134,6 @@ void Editor::Render() {
 				ImGui::Separator();
 				if(ImGui::MenuItem("Export"))
 					menu.project.exportProject = true;
-				if(ImGui::MenuItem("Export To"))
-					menu.project.exportProjectTo = true;
-
-				ImGui::Separator();
-				if(ImGui::MenuItem("Add Screen"))
-					menu.project.addScreen = true;
 
 				ImGui::EndMenu();
 			}
@@ -234,8 +217,6 @@ void Editor::Render() {
 		RunProject();
 	// if(menu.project.exportProject)
 	// 	ExportProject(m_Project.ExportPath);
-	if(menu.project.exportProjectTo)
-		ExportProject();
 
 	if(menu.tab.newTab)
 		NewTab();
@@ -290,9 +271,17 @@ void Editor::RenderWelcomeScreen() {
 				menu.project.openProject = true;
 			if(ImGui::Button("New Project"))
 				menu.project.newProject = true;
-			// for(auto prev : m_PreviousProjects)
+			if(ImGui::Button("Open LavaFlow"))
+				menu.project.openLavaFlow = true;
+			if(ImGui::Button("New LavaFlow"))
+				menu.project.newLavaFlow = true;
+
+			ImGui::SeparatorText("Previous projects");
+			// for(auto prev : m_Cache.PreviousProjects)
 			// 	if(ImGui::Selectable(prev.c_str()))
 			// 		NewProject(prev);
+
+			ImGui::SeparatorText("Previous LavaFlows");
 
 		}
 		ImGui::EndChild();
@@ -416,7 +405,7 @@ void Editor::NewProject(const std::string& volcPath) {
 		m_LavaFlow.Path =
 			(fs::path(m_Project.Path) / ".lavaflow" / pathName).string();
 	else
-		m_LavaFlow.Path = (fs::path("Magma") / ".lavaflow" / pathName).string();
+		m_LavaFlow.Path = (fs::path("Editor") / ".cache" / ".lavaflow" / pathName).string();
 
 	m_LavaFlow.Path = fs::canonical(m_LavaFlow.Path).string();
 
@@ -478,30 +467,31 @@ void Editor::CloseProject() {
 	// m_AssetManager.Save();
 	// m_AssetManager.Clear();
 
-	ProjectSave(m_Project);
+	if(m_Project.Path != "")
+		ProjectSave(m_Project);
 	m_Project = { };
 }
 
-void Editor::ExportProject() {
-	IGFD::FileDialogConfig config;
-	config.path = ".";
-	auto instance = ImGuiFileDialog::Instance();
-	instance->OpenDialog("ChooseDir", "Choose Directory", nullptr, config);
+// void Editor::ExportProject() {
+// 	IGFD::FileDialogConfig config;
+// 	config.path = ".";
+// 	auto instance = ImGuiFileDialog::Instance();
+// 	instance->OpenDialog("ChooseDir", "Choose Directory", nullptr, config);
 
-	std::string exportPath = "";
-	if(instance->Display("ChooseDir")) {
-		if(instance->IsOk())
-			exportPath = instance->GetCurrentPath();
+// 	std::string exportPath = "";
+// 	if(instance->Display("ChooseDir")) {
+// 		if(instance->IsOk())
+// 			exportPath = instance->GetCurrentPath();
 
-		instance->Close();
-		menu.project.exportProjectTo = false;
-	}
+// 		instance->Close();
+// 		menu.project.exportProjectTo = false;
+// 	}
 
-	if(exportPath == "")
-		return;
+// 	if(exportPath == "")
+// 		return;
 
-	ExportProject(exportPath);
-}
+// 	ExportProject(exportPath);
+// }
 
 void Editor::ExportProject(const std::string& exportPath) {
 	menu.project.exportProject = false;
