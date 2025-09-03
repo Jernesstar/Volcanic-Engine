@@ -30,7 +30,7 @@ public:
 
 	void Init(ScriptObject obj);
 
-	void OnLoad(const std::string& path);
+	void OnLoad(const std::string& path = "");
 	void OnSelect();
 	void OnDeselect();
 	void OnClose();

@@ -49,21 +49,35 @@ static void ProjectSaveRuntime(const Project& project);
 
 static UI::Image s_WelcomeImage;
 
-void Editor::RegisterInterface() {
-
-}
-
 void Editor::Open() {
-	Application::PushDir();
-	s_WelcomeImage.Content =
-		AssetImporter::GetTexture("Editor/assets/images/VolcanicDisplay.png");
-	Application::PopDir();
-
 	Editor::RegisterInterface();
 	Panel::RegisterInterface();
 	Tab::RegisterInterface();
 
 	m_App = CreateRef<Lava::App>();
+
+	Application::PushDir();
+	s_WelcomeImage.Content =
+		AssetImporter::GetTexture("Editor/assets/images/VolcanicDisplay.png");
+
+	YAML::Node file;
+	try {
+		file = YAML::LoadFile("Editor/.cache/data.yml");
+	}
+	catch(YAML::ParserException e) {
+		VOLCANICORE_LOG_INFO("File '%s' is not well formatted", path.c_str());
+		return;
+	}
+	catch(YAML::BadFile e) {
+		VOLCANICORE_LOG_INFO("File '%s' is bad", path.c_str());
+		return;
+	}
+
+	auto data = file["EditorData"];
+	m_Cache.PreviousProjects = data["LastProjects"].as<List<std::string>>();
+	m_Cache.PreviousLavaFlows = data["LastLavaFlows"].as<List<std::string>>();
+
+	Application::PopDir();
 }
 
 void Editor::Close() {
@@ -128,8 +142,8 @@ void Editor::Render() {
 					menu.project.newProject = true;
 				if(ImGui::MenuItem("Open", "Ctrl+P"))
 					menu.project.openProject = true;
-				if(ImGui::MenuItem("Run", "Ctrl+R"))
-					menu.project.runProject = true;
+				// if(ImGui::MenuItem("Run", "Ctrl+R"))
+				// 	menu.project.runProject = true;
 
 				ImGui::Separator();
 				if(ImGui::MenuItem("Export"))
@@ -168,9 +182,9 @@ void Editor::Render() {
 		auto tabBarFlags = ImGuiTabBarFlags_Reorderable
 						 | ImGuiTabBarFlags_TabListPopupButton;
 		if(m_Tabs && ImGui::BeginTabBar("Tabs", tabBarFlags)) {
-			auto leadingFlags = ImGuiTabItemFlags_Trailing
-							  | ImGuiTabItemFlags_NoReorder;
-			if(ImGui::TabItemButton("+", leadingFlags))
+			auto plusFlags = ImGuiTabItemFlags_Trailing
+						   | ImGuiTabItemFlags_NoReorder;
+			if(ImGui::TabItemButton("+", plusFlags))
 				menu.tab.newTab = true;
 
 			uint32_t tabToDelete = 0;
@@ -241,18 +255,14 @@ void Editor::Render() {
 void Editor::RenderEmptyTab(Tab& tab) {
 	ImGui::Begin("##Empty");
 	{
-		// Retrieve ObjectTab list
-		// Display each option
-
-		// if(ImGui::Button("New Object")) {
-		// 	tab.reset();
-		// 	tab = CreateRef<ObjectTab>();
-		// }
-		// if(ImGui::Button("Open Object")) {
-		// 	tab.reset();
-		// 	tab = CreateRef<ObjectTab>();
-		// 	tab.As<ObjectTab>()->OpenObject();
-		// }
+		for(auto object : m_LavaFlow.ObjectList) {
+			if(ImGui::Button(("New " + object).c_str()))
+				tab.Init(object);
+			if(ImGui::Button(("Open " + object).c_str())) {
+				tab.Init(object);
+				tab.OnLoad();
+			}
+		}
 	}
 	ImGui::End();
 }
@@ -277,11 +287,14 @@ void Editor::RenderWelcomeScreen() {
 				menu.project.newLavaFlow = true;
 
 			ImGui::SeparatorText("Previous projects");
-			// for(auto prev : m_Cache.PreviousProjects)
-			// 	if(ImGui::Selectable(prev.c_str()))
-			// 		NewProject(prev);
+			for(auto prev : m_Cache.PreviousProjects)
+				if(ImGui::Selectable(prev.c_str()))
+					NewProject(prev);
 
 			ImGui::SeparatorText("Previous LavaFlows");
+			for(auto prev : m_Cache.PreviousProjects)
+				if(ImGui::Selectable(prev.c_str()))
+					NewProject(prev);
 
 		}
 		ImGui::EndChild();
@@ -328,25 +341,8 @@ void Editor::NewTab() {
 }
 
 void Editor::OpenTab(const std::string& type) {
-	auto uiPath = fs::path(m_LavaFlow.Path) / "Object" / type / "UI";
-	auto modulePath = (uiPath / type).string() + "Tab.as";
-	Ref<ScriptModule> mod = AssetImporter::GetScript(modulePath);
-	Ref<ScriptClass> cls = mod->GetClass(type);
-	ScriptObject tabScriptObj = cls->Instantiate();
-
 	Tab& newTab = m_Tabs.Emplace();
-	newTab.Init(tabScriptObj);
-	auto field = tabScriptObj.GetProperty("TabHandle");
-	field.Data = &newTab;
-
-	for(auto path : FileUtils::GetFiles(uiPath.string(), { ".as" })) {
-		auto name = fs::path(path).filename().string();
-		Ref<ScriptModule> panelMod = AssetImporter::GetScript(path);
-		Ref<ScriptClass> panelClass = panelMod->GetClass(type);
-		ScriptObject panelScriptObj = panelClass->Instantiate();
-		newTab.Panels.Emplace(name, panelScriptObj);
-	}
-
+	newTab.Init(type);
 	SetTab(m_Tabs.Count());
 }
 
@@ -589,13 +585,13 @@ void Editor::LoadLavaFlow(const std::string& pathName) {
 		return;
 	}
 
-	// Cache Name and ObjectList
 	auto lavaFlowNode = file["LavaFlow"];
 	VOLCANICORE_ASSERT(lavaFlowNode);
 
-	// Assuming LavaFlow is a struct with a name and an object list
 	m_LavaFlow.Name = lavaFlowNode["Name"].as<std::string>();
 	m_LavaFlow.ObjectList = lavaFlowNode["ObjectList"].as<List<std::string>>();
+
+	// ScriptManager::LoadScript(pathName, true, nullptr, "");
 }
 void ProjectSave(const Project& project) {
 	YAMLSerializer serializer;
@@ -622,6 +618,10 @@ void ProjectSaveRuntime(const Project& project) {
 	// BinaryWriter writer(exportPath);
 	// writer.Write(project.Name);
 	// writer.Write(project.App);
+}
+
+void Editor::RegisterInterface() {
+
 }
 
 }

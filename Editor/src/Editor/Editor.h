@@ -19,6 +19,11 @@ struct LavaFlow {
 	List<std::string> ObjectList;
 };
 
+struct Cache {
+	List<std::string> PreviousProjects;
+	List<std::string> PreviousLavaFlows;
+};
+
 class Editor {
 public:
 	static void RegisterInterface();
@@ -40,6 +45,7 @@ public:
 		return s_Instance->m_Tabs.At(s_Instance->m_CurrentTab - 1);
 	}
 
+	static const LavaFlow& GetLavaFlow() { return s_Instance->m_LavaFlow; }
 	static Project& GetProject() { return s_Instance->m_Project; }
 	static Ref<Lava::App> GetApp() { return s_Instance->m_App; }
 
@@ -47,14 +53,17 @@ private:
 	inline static Editor* s_Instance;
 
 private:
+	Ref<Lava::App> m_App;
 	Project m_Project;
 	LavaFlow m_LavaFlow;
-	Ref<Lava::App> m_App;
-	// EditorAssetManager m_AssetManager;
+	Cache m_Cache;
 
 	uint64_t m_CurrentTab = 0;
 	List<Tab> m_Tabs;
 	List<Tab> m_ClosedTabs;
+
+	void RenderEmptyTab(Tab& tab);
+	void RenderWelcomeScreen();
 
 	void SetTab(uint32_t idx);
 	void NewTab();
@@ -71,10 +80,8 @@ private:
 	void CloseProject();
 	void ExportProject();
 	void ExportProject(const std::string& path);
+	void NewLavaFlow(const std::string& path);
 	void LoadLavaFlow(const std::string& path);
-
-	void RenderEmptyTab(Tab& tab);
-	void RenderWelcomeScreen();
 };
 
 }

@@ -25,10 +25,27 @@ Tab::~Tab() {
 	m_IsDead->Release();
 }
 
-void Tab::Init(ScriptObject obj) {
+void Tab::Init(const std::string& type) {
+	const auto& lavaFlow = Editor::GetLavaFlow();
+	auto uiPath = fs::path(lavaFlow.Path) / "Object" / type / "UI";
+	auto modulePath = (uiPath / type).string() + "Tab.as";
+	Ref<ScriptModule> mod = AssetImporter::GetScript(modulePath);
+	Ref<ScriptClass> cls = mod->GetClass(type);
+	m_ScriptObj = cls->Instantiate();
+
+	auto field = m_ScriptObj.GetProperty("TabHandle");
+	// *field.As<Tab>() = &newTab;
+
+	for(auto path : FileUtils::GetFiles(uiPath.string(), { ".as" })) {
+		auto name = fs::path(path).filename().string();
+		Ref<ScriptModule> panelMod = AssetImporter::GetScript(path);
+		Ref<ScriptClass> panelClass = panelMod->GetClass(type);
+		ScriptObject panelScriptObj = panelClass->Instantiate();
+		newTab.Panels.Emplace(name, panelScriptObj);
+	}
+
 	m_IsDead = obj.GetHandle()->GetWeakRefFlag();
 	m_IsDead->AddRef();
-	m_ScriptObj = obj;
 	Type = m_ScriptObj.GetClass()->Name;
 }
 
