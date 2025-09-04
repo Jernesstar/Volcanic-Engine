@@ -36,6 +36,7 @@ project "Lava"
         "%{Includes.angelscript}",
         "%{MagmaVendorDir}",
         "%{Includes.soloud}",
+        "%{Includes.asio}"
     }
 
     links {
@@ -45,6 +46,10 @@ project "Lava"
         "yaml-cpp",
         "PhysX",
         "flecs",
+        "asio",
+
+        "ssl",
+        "crypto"
     }
 
     defines {

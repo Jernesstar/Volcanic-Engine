@@ -5,6 +5,14 @@
 #include <imgui/misc/cpp/imgui_stdlib.h>
 #include <ImGuiFileDialog/ImGuiFileDialog.h>
 
+#include <fstream>
+#include <iostream>
+
+#include <asio.hpp>
+#include <asio/ssl.hpp>
+
+#include <miniz-cpp/zip_file.hpp>
+
 #include <VolcaniCore/Core/Application.h>
 #include <VolcaniCore/Core/FileUtils.h>
 #include <VolcaniCore/Core/Log.h>
@@ -17,6 +25,8 @@
 
 #include "AssetImporter.h"
 #include "ScriptManager.h"
+
+using asio::ip::tcp;
 
 using namespace VolcaniCore;
 using namespace Magma;
@@ -47,6 +57,81 @@ static void ProjectLoad(const std::string& path, Project& project);
 static void ProjectSave(const Project& project);
 static void ProjectSaveRuntime(const Project& project);
 
+
+std::string download_url(asio::io_context& io, asio::ssl::context& ssl_ctx,
+						 std::string host, std::string path, int depth = 5) {
+	if (depth == 0) throw std::runtime_error("Too many redirects");
+
+	asio::ssl::stream<tcp::socket> socket(io, ssl_ctx);
+
+	// Resolve + connect
+	tcp::resolver resolver(io);
+	auto endpoints = resolver.resolve(host, "443");
+	asio::connect(socket.lowest_layer(), endpoints);
+
+	// TLS handshake
+	socket.handshake(asio::ssl::stream_base::client);
+
+	// Send HTTP request
+	std::string req =
+		"GET " + path + " HTTP/1.1\r\n"
+		"Host: " + host + "\r\n"
+		"User-Agent: MagmaEditor/1.0\r\n"
+		"Accept: */*\r\n"
+		"Connection: close\r\n\r\n";
+	asio::write(socket, asio::buffer(req));
+
+	// Read full response
+	std::string response;
+	char buf[8192];
+	for (;;) {
+		asio::error_code ec;
+		std::size_t n = socket.read_some(asio::buffer(buf), ec);
+		if (n > 0) response.append(buf, buf + n);
+		if (ec == asio::error::eof) break;
+		if (ec) throw asio::system_error(ec);
+	}
+
+	// Parse status line
+	auto status_line_end = response.find("\r\n");
+	if (status_line_end == std::string::npos) throw std::runtime_error("Bad HTTP response");
+	std::string status_line = response.substr(0, status_line_end);
+	int status_code = 0;
+	sscanf(status_line.c_str(), "HTTP/1.%*d %d", &status_code);
+
+	// Headers end
+	auto header_end = response.find("\r\n\r\n");
+	if (header_end == std::string::npos) throw std::runtime_error("Bad HTTP response 2");
+	std::string headers = response.substr(0, header_end);
+	std::string body = response.substr(header_end + 4);
+
+	// Handle redirect
+	if (status_code == 301 || status_code == 302) {
+		std::smatch m;
+		std::regex re("Location: (.+)\r");
+		if (std::regex_search(headers, m, re)) {
+			std::string location = m[1];
+			std::cout << "Redirect -> " << location << "\n";
+
+			// Parse new URL
+			if (location.rfind("https://", 0) == 0) location = location.substr(8);
+			auto slash = location.find('/');
+			std::string new_host = location.substr(0, slash);
+			std::string new_path = location.substr(slash);
+
+			return download_url(io, ssl_ctx, new_host, new_path, depth - 1);
+		}
+		throw std::runtime_error("Redirect without Location header");
+	}
+
+	// Success
+	if (status_code == 200) {
+		return body;
+	}
+
+	throw std::runtime_error("HTTP error " + std::to_string(status_code));
+}
+
 static UI::Image s_WelcomeImage;
 
 void Editor::Open() {
@@ -64,22 +149,69 @@ void Editor::Open() {
 	s_WelcomeImage.Width = 700;
 	s_WelcomeImage.Height = 700;
 
-	YAML::Node file;
-	try {
-		file = YAML::LoadFile("Editor/.cache/data.yml");
-	}
-	catch(YAML::ParserException e) {
-		VOLCANICORE_LOG_INFO("Malformed cache file");
-		return;
-	}
-	catch(YAML::BadFile e) {
-		VOLCANICORE_LOG_INFO("Bad cache file");
-		return;
+	if(FileUtils::PathExists("Editor/.cache/data.yml")) {
+		YAML::Node file;
+		try {
+			file = YAML::LoadFile("Editor/.cache/data.yml");
+		}
+		catch(YAML::ParserException e) {
+			VOLCANICORE_LOG_INFO("Malformed cache file");
+			return;
+		}
+		catch(YAML::BadFile e) {
+			VOLCANICORE_LOG_INFO("Bad cache file");
+			return;
+		}
+
+		auto data = file["EditorData"];
+		m_Cache.PreviousProjects = data["LastProjects"].as<List<std::string>>();
+		m_Cache.PreviousLavaFlows = data["LastLavaFlows"].as<List<std::string>>();
 	}
 
-	auto data = file["EditorData"];
-	m_Cache.PreviousProjects = data["LastProjects"].as<List<std::string>>();
-	m_Cache.PreviousLavaFlows = data["LastLavaFlows"].as<List<std::string>>();
+	for(auto flow : m_Cache.PreviousLavaFlows) {
+		if(FileUtils::PathExists("Editor/.cache/.lavaflow/" + flow))
+			continue;
+
+		try {
+			asio::io_context io;
+			asio::ssl::context ssl_ctx(asio::ssl::context::tlsv12_client);
+
+			// Start with GitHub repo zip
+			std::string body = download_url(io, ssl_ctx,
+				"github.com",
+				"/LavaFlow-Technologies/" + flow + "/archive/refs/heads/main.zip");
+
+			// Open output file
+			std::ofstream out("Editor/.cache/.repo/" + flow + "", std::ios::binary);
+			out.write(body.data(), body.size());
+			out.close();
+
+			miniz_cpp::zip_file zip(zip_path);
+
+			for (auto& name : zip.namelist()) {
+				std::string out_path = out_dir + "/" + name;
+
+				if (name.back() == '/') {
+					// Directory entry
+					fs::create_directories(out_path);
+					continue;
+				}
+
+				fs::create_directories(fs::path(out_path).parent_path());
+
+				auto data = zip.read(name); // returns std::string with file contents
+
+				std::ofstream out(out_path, std::ios::binary);
+				out.write(data.data(), data.size());
+				out.close();
+
+				std::cout << "Extracted: " << out_path << "\n";
+			}
+		}
+		catch (std::exception &e) {
+			std::cerr << "Error: " << e.what() << "\n";
+		}
+	}
 
 	Application::PopDir();
 }
@@ -544,7 +676,7 @@ void Editor::ExportProject(const std::string& exportPath) {
 	// std::string runtimePath = runtimeEnv;
 	// auto target = (fs::path(exportPath) / m_Project.App).string() + ".exe";
 
-	// if(FileUtils::FileExists(target))
+	// if(FileUtils::PathExists(target))
 	// 	fs::remove(target);
 
 	// fs::copy_file(runtimePath, target, fs::copy_options::overwrite_existing);

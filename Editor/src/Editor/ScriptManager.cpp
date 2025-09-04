@@ -2,6 +2,7 @@
 
 #include <angelscript/add_on/scriptbuilder/scriptbuilder.h>
 
+#include <VolcaniCore/Core/Application.h>
 #include <VolcaniCore/Core/FileUtils.h>
 
 #include "Editor/Editor.h"
@@ -10,10 +11,28 @@ namespace fs = std::filesystem;
 
 namespace Magma {
 
-static void IncludeCallback(const char* include, const char* from,
+static int IncludeCallback(const char* includeStr, const char* from,
 	CScriptBuilder* builder, void* param)
 {
+	auto includes = (List<std::string>*)param;
+	std::string include = includeStr;
+	Application::PushDir();
 
+	bool found = false;
+	includes->ForEach(
+		[&](const std::string& path)
+		{
+			auto fullPath = (fs::path(path) / include).string();
+			if(FileUtils::PathExists(fullPath)) {
+				found = true;
+				builder->AddSectionFromFile(fullPath.c_str());
+				return;
+			}
+		});
+
+	Application::PopDir();
+
+	return found ? 0 : -1;
 }
 
 asIScriptModule* ScriptManager::LoadScript(const std::string& path,
@@ -41,7 +60,7 @@ asIScriptModule* ScriptManager::LoadScript(const std::string& path,
 	}
 	builder.DefineWord("EDITOR");
 
-	builder.SetIncludeCallback();
+	builder.SetIncludeCallback(IncludeCallback, (void*)&includePaths);
 
 	r = builder.AddSectionFromFile(path.c_str());
 	if(r < 0) {

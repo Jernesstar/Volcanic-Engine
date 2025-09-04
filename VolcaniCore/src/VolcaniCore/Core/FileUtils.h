@@ -7,6 +7,8 @@
 
 #include "List.h"
 
+namespace fs = std::filesystem;
+
 namespace VolcaniCore {
 
 class File {
@@ -28,17 +30,17 @@ private:
 
 class FileUtils {
 public:
-	static bool FileExists(const std::string& path);
+	static bool PathExists(const fs::path& path);
 
-	static void CreateFile(const std::string& path);
+	static void CreateFile(const fs::path& path);
 
-	static std::string ReadFile(const std::string& path);
+	static std::string ReadFile(const fs::path& path);
 
-	static void WriteToFile(const std::string& path, const std::string& info);
+	static void WriteToFile(const fs::path& path, const std::string& info);
 
-	static List<std::string> GetFiles(const std::string& dir);
+	static List<std::string> GetFiles(const fs::path& dir);
 	static List<std::string> GetFiles(
-		const std::string& dir, const List<std::string>& ext);
+		const fs::path& dir, const List<fs::path>& ext);
 };
 
 }

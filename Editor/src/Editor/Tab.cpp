@@ -7,6 +7,7 @@
 
 #include "Editor.h"
 #include "AssetImporter.h"
+#include "ScriptManager.h"
 
 namespace fs = std::filesystem;
 
@@ -36,7 +37,10 @@ void Tab::Init(const std::string& type) {
 	const auto& lavaFlow = Editor::GetLavaFlow();
 	auto uiPath = fs::path(lavaFlow.Path) / lavaFlow.Name / "Object" / type / "UI";
 	auto modulePath = (uiPath / type).string() + "Tab.as";
-	Ref<ScriptModule> mod = ScriptManager::GetScript(modulePath);
+	auto moduleData =
+		ScriptManager::LoadScript(modulePath, false, nullptr, "",
+			{ "Magma/scripts", "Lava/scripts" });
+	Ref<ScriptModule> mod = CreateRef<ScriptModule>(moduleData);
 	Ref<ScriptClass> cls = mod->GetClass(type);
 	m_ScriptObj = cls->Instantiate();
 

@@ -37,6 +37,7 @@ project "Editor"
         "%{Includes.glslang}",
         "%{Includes.SPIRV_Cross}",
         "%{Includes.efsw}",
+        "%{Includes.miniz_cpp}",
 
         "%{Includes.assimp}",
         "%{Includes.stb_image}",
@@ -57,6 +58,7 @@ project "Editor"
         "%{Includes.angelscript}",
         "%{MagmaVendorDir}",
         "%{Includes.soloud}",
+        "%{Includes.asio}",
     }
 
     links {
@@ -83,7 +85,11 @@ project "Editor"
         "flecs",
         "yaml-cpp",
         "angelscript",
-        "soloud"
+        "soloud",
+        "asio",
+
+        "ssl",
+        "crypto"
     }
 
     defines {
@@ -127,6 +133,6 @@ include "Editor/.deps/ImGuiColorTextEdit"
 include "Editor/.deps/assimp"
 include "Editor/.deps/freetype"
 include "Editor/.deps/stb_image"
-include "Editor/.deps/efsw"
 include "Editor/.deps/glslang"
 include "Editor/.deps/SPIRV-Cross"
+include "Editor/.deps/efsw"

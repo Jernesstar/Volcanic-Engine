@@ -28,15 +28,15 @@ void File::Close() {
 	m_Data.close();
 }
 
-bool FileUtils::FileExists(const std::string& path) {
+bool FileUtils::PathExists(const fs::path& path) {
 	return fs::exists(path.c_str());
 }
 
-void FileUtils::CreateFile(const std::string& path) {
+void FileUtils::CreateFile(const fs::path& path) {
 	std::ofstream file{ path.c_str() };
 }
 
-std::string FileUtils::ReadFile(const std::string& filePath) {
+std::string FileUtils::ReadFile(const fs::path& filePath) {
 	std::ifstream in(filePath, std::ios::in);
 	VOLCANICORE_ASSERT_ARGS(in, "Could not open file: %s", filePath.c_str());
 
@@ -45,12 +45,12 @@ std::string FileUtils::ReadFile(const std::string& filePath) {
 	return buffer.str();
 }
 
-void FileUtils::WriteToFile(const std::string& path, const std::string& info) {
+void FileUtils::WriteToFile(const fs::path& path, const std::string& info) {
 	std::ofstream fout(path.c_str());
 	fout << info.c_str();
 }
 
-List<std::string> FileUtils::GetFiles(const std::string& dir) {
+List<std::string> FileUtils::GetFiles(const fs::path& dir) {
 	List<std::string> files;
 
 	if(fs::is_directory(dir))
@@ -61,7 +61,7 @@ List<std::string> FileUtils::GetFiles(const std::string& dir) {
 }
 
 List<std::string> FileUtils::GetFiles(
-	const std::string& dir, const List<std::string>& extensions)
+	const fs::path& dir, const List<fs::path>& extensions)
 {
 	List<std::string> files;
 	if(fs::is_directory(dir))

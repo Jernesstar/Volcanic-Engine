@@ -854,10 +854,10 @@ void EditorAssetManager::RuntimeSave(const std::string& exportPath) {
 			auto source1 = sourceRoot.string() + ".glsl." + type;
 			auto target1 = targetRoot.string() + ".bin." + type;
 
-			if(!FileUtils::FileExists(source1))
+			if(!FileUtils::PathExists(source1))
 				continue;
 
-			if(FileUtils::FileExists(target1))
+			if(FileUtils::PathExists(target1))
 				fs::remove(target1);
 
 			BinaryWriter writer(target1);

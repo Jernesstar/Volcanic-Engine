@@ -74,3 +74,9 @@
 [submodule "Lava/vendor/clay"]
 	path = Lava/.vendor/clay
 	url = https://github.com/nicbarker/clay.git
+[submodule "Magma/.vendor/asio"]
+	path = Magma/.vendor/asio
+	url = https://github.com/chriskohlhoff/asio.git
+[submodule "Editor/.vendor/miniz-cpp"]
+	path = Editor/.vendor/miniz-cpp
+	url = https://github.com/tfussell/miniz-cpp.git

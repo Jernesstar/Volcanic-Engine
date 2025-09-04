@@ -15,7 +15,7 @@ public:
 	~ScriptManager() = default;
 
 	static asIScriptModule* LoadScript(const std::string& path,
-		bool metadata = true, bool* error = nullptr, std::string name = ""
+		bool metadata = true, bool* error = nullptr, std::string name = "",
 		const List<std::string>& includePaths = { });
 	static void SaveScript(asIScriptModule* mod, BinaryWriter& writer);
 

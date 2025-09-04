@@ -13,7 +13,7 @@ namespace Magma {
 class BinaryReader : public FileStream {
 public:
 	BinaryReader(const std::string& path) {
-		VOLCANICORE_ASSERT(FileUtils::FileExists(path));
+		VOLCANICORE_ASSERT(FileUtils::PathExists(path));
 		m_Stream.open(path, std::ios::in | std::ios::binary);
 	}
 

@@ -36,6 +36,7 @@ project "Runtime"
         "%{Includes.angelscript}",
         "%{VendorPaths.angelscript}",
         "%{Includes.soloud}",
+        "%{Includes.asio}",
 
         "%{Includes.glm}",
         "%{Includes.glad}",
@@ -54,7 +55,8 @@ project "Runtime"
 
         "flecs",
         "angelscript",
-        "soloud"
+        "soloud",
+        "asio"
     }
 
     defines {

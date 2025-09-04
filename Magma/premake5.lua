@@ -35,7 +35,8 @@ project "Magma"
 
         "%{Includes.angelscript}",
         "%{MagmaVendorDir}",
-        "%{Includes.soloud}"
+        "%{Includes.soloud}",
+        "%{Includes.asio}"
     }
 
     links {
@@ -45,7 +46,11 @@ project "Magma"
 
         "flecs",
         "angelscript",
-        "soloud"
+        "soloud",
+        "asio",
+
+        "ssl",
+        "crypto"
     }
 
     defines {
@@ -72,3 +77,4 @@ include "Magma/.deps/angelscript"
 include "Magma/.deps/soloud"
 include "Magma/.deps/yaml-cpp"
 include "Magma/.deps/glad"
+include "Magma/.deps/asio"
