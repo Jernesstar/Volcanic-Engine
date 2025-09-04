@@ -168,49 +168,45 @@ void Editor::Open() {
 		m_Cache.PreviousLavaFlows = data["LastLavaFlows"].as<List<std::string>>();
 	}
 
-	for(auto flow : m_Cache.PreviousLavaFlows) {
-		if(FileUtils::PathExists("Editor/.cache/.lavaflow/" + flow))
-			continue;
+	for(auto flowPath : m_Cache.PreviousLavaFlows) {
+		// std::string cachePath = "Editor/.cache/.lavaflow";
+		// auto flow = fs::path(flowPath).filename().string();
+		// if(FileUtils::PathExists(cachePath + flow))
+		// 	continue;
+		// if(flow.substr(0, 11) != "github.com/")
+		// 	continue;
 
-		try {
-			asio::io_context io;
-			asio::ssl::context ssl_ctx(asio::ssl::context::tlsv12_client);
+		// try {
+		// 	asio::io_context io;
+		// 	asio::ssl::context ssl_ctx(asio::ssl::context::tlsv12_client);
 
-			// Start with GitHub repo zip
-			std::string body = download_url(io, ssl_ctx,
-				"github.com",
-				"/LavaFlow-Technologies/" + flow + "/archive/refs/heads/main.zip");
+		// 	std::string body = download_url(io, ssl_ctx,
+		// 		"github.com", flow + "/archive/refs/heads/main.zip");
 
-			// Open output file
-			std::ofstream out("Editor/.cache/.repo/" + flow + "", std::ios::binary);
-			out.write(body.data(), body.size());
-			out.close();
+		// 	miniz_cpp::zip_file zip(std::vector<uint8_t>(body.begin(), body.end()));
 
-			miniz_cpp::zip_file zip(zip_path);
+		// 	for(auto& name : zip.namelist()) {
+		// 		fs::path outPath =
+		// 			flowPath / fs::path(name).lexically_relative(flow + "-main");
+		// 		outPath = outPath.generic_string();
+		// 		std::cout << outPath << "\n";
 
-			for (auto& name : zip.namelist()) {
-				std::string out_path = out_dir + "/" + name;
+		// 		// Directory entry
+		// 		if (name.back() == '/') {
+		// 			fs::create_directories(outPath);
+		// 			continue;
+		// 		}
 
-				if (name.back() == '/') {
-					// Directory entry
-					fs::create_directories(out_path);
-					continue;
-				}
-
-				fs::create_directories(fs::path(out_path).parent_path());
-
-				auto data = zip.read(name); // returns std::string with file contents
-
-				std::ofstream out(out_path, std::ios::binary);
-				out.write(data.data(), data.size());
-				out.close();
-
-				std::cout << "Extracted: " << out_path << "\n";
-			}
-		}
-		catch (std::exception &e) {
-			std::cerr << "Error: " << e.what() << "\n";
-		}
+		// 		fs::create_directories(fs::path(outPath).parent_path());
+		// 		std::ofstream out(outPath, std::ios::binary);
+		// 		std::string data = zip.read(name);
+		// 		out.write(data.data(), data.size());
+		// 		out.close();
+		// 	}
+		// }
+		// catch (std::exception &e) {
+		// 	std::cerr << "Error: " << e.what() << "\n";
+		// }
 	}
 
 	Application::PopDir();
@@ -409,7 +405,7 @@ void Editor::RenderWelcomeScreen() {
 			   | ImGuiWindowFlags_NoDocking;
 	ImGui::Begin("##Welcome", nullptr, flags);
 	{
-		ImVec2 size = { 300, ImGui::GetContentRegionAvail().y };
+		ImVec2 size = { 600, ImGui::GetContentRegionAvail().y };
 		auto childFlags = ImGuiChildFlags_Border;
 		ImGui::BeginChild("Options", size, childFlags);
 		{
@@ -428,10 +424,9 @@ void Editor::RenderWelcomeScreen() {
 					NewProject(prev);
 
 			ImGui::SeparatorText("Previous LavaFlows");
-			for(auto prev : m_Cache.PreviousProjects)
+			for(auto prev : m_Cache.PreviousLavaFlows)
 				if(ImGui::Selectable(prev.c_str()))
-					NewProject(prev);
-
+					LoadLavaFlow(prev);
 		}
 		ImGui::EndChild();
 		ImGui::SameLine();

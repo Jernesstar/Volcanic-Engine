@@ -24,6 +24,7 @@ static int IncludeCallback(const char* includeStr, const char* from,
 		{
 			auto fullPath = (fs::path(path) / include).string();
 			if(FileUtils::PathExists(fullPath)) {
+				VOLCANICORE_LOG_INFO("Including '%s'", fullPath.c_str());
 				found = true;
 				builder->AddSectionFromFile(fullPath.c_str());
 				return;
@@ -32,7 +33,7 @@ static int IncludeCallback(const char* includeStr, const char* from,
 
 	Application::PopDir();
 
-	return found ? 0 : -1;
+	return found ? 1 : -1;
 }
 
 asIScriptModule* ScriptManager::LoadScript(const std::string& path,
@@ -63,6 +64,7 @@ asIScriptModule* ScriptManager::LoadScript(const std::string& path,
 	builder.SetIncludeCallback(IncludeCallback, (void*)&includePaths);
 
 	r = builder.AddSectionFromFile(path.c_str());
+
 	if(r < 0) {
 		VOLCANICORE_LOG_ERROR("AddSectionFromFile failed");
 		if(error) *error = true;

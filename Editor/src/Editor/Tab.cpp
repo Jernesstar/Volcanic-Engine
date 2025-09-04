@@ -34,14 +34,15 @@ Tab::~Tab() {
 }
 
 void Tab::Init(const std::string& type) {
+	auto className = type + "Tab";
 	const auto& lavaFlow = Editor::GetLavaFlow();
 	auto uiPath = fs::path(lavaFlow.Path) / lavaFlow.Name / "Object" / type / "UI";
-	auto modulePath = (uiPath / type).string() + "Tab.as";
+	auto modulePath = (uiPath / className).string() + ".as";
 	auto moduleData =
 		ScriptManager::LoadScript(modulePath, false, nullptr, "",
 			{ "Magma/scripts", "Lava/scripts" });
 	Ref<ScriptModule> mod = CreateRef<ScriptModule>(moduleData);
-	Ref<ScriptClass> cls = mod->GetClass(type);
+	Ref<ScriptClass> cls = mod->GetClass(className);
 	m_ScriptObj = cls->Instantiate();
 
 	auto field = m_ScriptObj.GetProperty("TabHandle");
@@ -49,6 +50,8 @@ void Tab::Init(const std::string& type) {
 
 	for(auto path : FileUtils::GetFiles(uiPath.string(), { ".as" })) {
 		auto name = fs::path(path).filename().string();
+		if(name == className)
+			continue;
 		Ref<ScriptModule> panelMod = AssetImporter::GetScript(path);
 		Ref<ScriptClass> panelClass = panelMod->GetClass(type);
 		ScriptObject panelScriptObj = panelClass->Instantiate();
