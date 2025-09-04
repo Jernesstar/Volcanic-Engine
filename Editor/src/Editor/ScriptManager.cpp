@@ -10,8 +10,15 @@ namespace fs = std::filesystem;
 
 namespace Magma {
 
+static void IncludeCallback(const char* include, const char* from,
+	CScriptBuilder* builder, void* param)
+{
+
+}
+
 asIScriptModule* ScriptManager::LoadScript(const std::string& path,
-	bool metadata, bool* error, std::string name)
+	bool metadata, bool* error, std::string name,
+	const List<std::string>& includePaths)
 {
 	auto* engine = ScriptEngine::Get();
 
@@ -33,6 +40,9 @@ asIScriptModule* ScriptManager::LoadScript(const std::string& path,
 		return nullptr;
 	}
 	builder.DefineWord("EDITOR");
+
+	builder.SetIncludeCallback();
+
 	r = builder.AddSectionFromFile(path.c_str());
 	if(r < 0) {
 		VOLCANICORE_LOG_ERROR("AddSectionFromFile failed");

@@ -60,16 +60,20 @@ void Editor::Open() {
 	s_WelcomeImage.Content =
 		AssetImporter::GetTexture("Editor/assets/images/VolcanicDisplay.png");
 
+	s_WelcomeImage.UsePosition = false;
+	s_WelcomeImage.Width = 700;
+	s_WelcomeImage.Height = 700;
+
 	YAML::Node file;
 	try {
 		file = YAML::LoadFile("Editor/.cache/data.yml");
 	}
 	catch(YAML::ParserException e) {
-		VOLCANICORE_LOG_INFO("File '%s' is not well formatted", path.c_str());
+		VOLCANICORE_LOG_INFO("Malformed cache file");
 		return;
 	}
 	catch(YAML::BadFile e) {
-		VOLCANICORE_LOG_INFO("File '%s' is bad", path.c_str());
+		VOLCANICORE_LOG_INFO("Bad cache file");
 		return;
 	}
 
@@ -135,8 +139,7 @@ void Editor::Render() {
 	{
 		ImGui::PopStyleVar(3);
 
-		ImGui::BeginMainMenuBar();
-		{
+		if(m_Tabs && ImGui::BeginMainMenuBar()) {
 			if(ImGui::BeginMenu("Project")) {
 				if(ImGui::MenuItem("New", "Ctrl+N"))
 					menu.project.newProject = true;
@@ -176,8 +179,9 @@ void Editor::Render() {
 
 			// 	ImGui::EndMenu();
 			// }
+
+			ImGui::EndMainMenuBar();
 		}
-		ImGui::EndMainMenuBar();
 
 		auto tabBarFlags = ImGuiTabBarFlags_Reorderable
 						 | ImGuiTabBarFlags_TabListPopupButton;
@@ -300,9 +304,6 @@ void Editor::RenderWelcomeScreen() {
 		ImGui::EndChild();
 		ImGui::SameLine();
 
-		s_WelcomeImage.UsePosition = false;
-		s_WelcomeImage.Width = 800;
-		s_WelcomeImage.Height = 800;
 		s_WelcomeImage.Draw();
 	}
 	ImGui::End();
@@ -574,14 +575,15 @@ void ProjectLoad(const std::string& path, Project& project) {
 
 void Editor::LoadLavaFlow(const std::string& pathName) {
 	// Load LavaFlow data from file
+	auto flowFile = (fs::path(pathName) / ".flow.yml").string();
 	YAML::Node file;
 	try {
-		file = YAML::LoadFile(pathName);
+		file = YAML::LoadFile(flowFile);
 	} catch (YAML::ParserException e) {
-		VOLCANICORE_LOG_INFO("File '%s' is not well formatted", pathName.c_str());
+		VOLCANICORE_LOG_INFO("File '%s' is not well formatted", flowFile.c_str());
 		return;
 	} catch (YAML::BadFile e) {
-		VOLCANICORE_LOG_INFO("File '%s' is bad", pathName.c_str());
+		VOLCANICORE_LOG_INFO("File '%s' is bad", flowFile.c_str());
 		return;
 	}
 
@@ -589,7 +591,7 @@ void Editor::LoadLavaFlow(const std::string& pathName) {
 	VOLCANICORE_ASSERT(lavaFlowNode);
 
 	m_LavaFlow.Name = lavaFlowNode["Name"].as<std::string>();
-	m_LavaFlow.ObjectList = lavaFlowNode["ObjectList"].as<List<std::string>>();
+	m_LavaFlow.ObjectList = lavaFlowNode["Objects"].as<List<std::string>>();
 
 	// ScriptManager::LoadScript(pathName, true, nullptr, "");
 }

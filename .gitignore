@@ -13,3 +13,6 @@ build/
 
 # Generated files
 gen/
+
+# Cache
+.cache/

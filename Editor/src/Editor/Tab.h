@@ -28,7 +28,7 @@ public:
 	Tab();
 	~Tab();
 
-	void Init(ScriptObject obj);
+	void Init(const std::string& type);
 
 	void OnLoad(const std::string& path = "");
 	void OnSelect();

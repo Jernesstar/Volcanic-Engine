@@ -1,7 +1,14 @@
 #include "Tab.h"
 
+#include <VolcaniCore/Core/FileUtils.h>
+
 #include <Magma/Script/ScriptEngine.h>
 #include <Magma/Script/ScriptClass.h>
+
+#include "Editor.h"
+#include "AssetImporter.h"
+
+namespace fs = std::filesystem;
 
 using namespace Magma::Script;
 
@@ -27,9 +34,9 @@ Tab::~Tab() {
 
 void Tab::Init(const std::string& type) {
 	const auto& lavaFlow = Editor::GetLavaFlow();
-	auto uiPath = fs::path(lavaFlow.Path) / "Object" / type / "UI";
+	auto uiPath = fs::path(lavaFlow.Path) / lavaFlow.Name / "Object" / type / "UI";
 	auto modulePath = (uiPath / type).string() + "Tab.as";
-	Ref<ScriptModule> mod = AssetImporter::GetScript(modulePath);
+	Ref<ScriptModule> mod = ScriptManager::GetScript(modulePath);
 	Ref<ScriptClass> cls = mod->GetClass(type);
 	m_ScriptObj = cls->Instantiate();
 
@@ -41,12 +48,12 @@ void Tab::Init(const std::string& type) {
 		Ref<ScriptModule> panelMod = AssetImporter::GetScript(path);
 		Ref<ScriptClass> panelClass = panelMod->GetClass(type);
 		ScriptObject panelScriptObj = panelClass->Instantiate();
-		newTab.Panels.Emplace(name, panelScriptObj);
+		Panels.Emplace(name, panelScriptObj);
 	}
 
-	m_IsDead = obj.GetHandle()->GetWeakRefFlag();
+	m_IsDead = m_ScriptObj.GetHandle()->GetWeakRefFlag();
 	m_IsDead->AddRef();
-	Type = m_ScriptObj.GetClass()->Name;
+	Type = type;
 }
 
 void Tab::OnLoad(const std::string& path) {
