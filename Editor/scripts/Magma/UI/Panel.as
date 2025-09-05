@@ -1,5 +1,4 @@
 
-
 shared abstract class Panel
 {
     bool Open = false;
@@ -13,7 +12,7 @@ shared abstract class Panel
     void OnUpdate(float ts) { }
     void OnRender() { }
 
-    Panel@ GetPanel(string name) { return Panel.GetPanel(name); }
+    // Panel@ GetPanel(string name) { return Panel.GetPanel(name); }
 
     private Panel_t@ PanelHandle;
 };

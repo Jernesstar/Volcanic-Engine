@@ -34,29 +34,52 @@ Tab::~Tab() {
 }
 
 void Tab::Init(const std::string& type) {
-	auto className = type + "Tab";
+	List<std::string> includes =
+	{
+		"Editor/scripts",
+		"Editor/scripts/Magma",
+		"Editor/scripts/Magma/Editor",
+		"Editor/scripts/Magma/UI",
+		"Editor/scripts/Magma/Object",
+		"Lava/scripts",
+		"Lava/scripts/Lava",
+		"Lava/scripts/Lava/Physics",
+		"Lava/scripts/Lava/ECS",
+		"Lava/scripts/Lava/Component",
+		"Lava/scripts/Lava/Component/Ash",
+		"Lava/scripts/Lava/Component/Igneous",
+		"Lava/scripts/Lava/Component/Silica",
+		"Lava/scripts/Lava/Component/Cinder",
+		"Lava/scripts/Lava/Component/Pyro",
+	};
+
+	auto tabName = type + "Tab";
 	const auto& lavaFlow = Editor::GetLavaFlow();
 	auto uiPath = fs::path(lavaFlow.Path) / lavaFlow.Name / "Object" / type / "UI";
-	auto modulePath = (uiPath / className).string() + ".as";
+	auto modulePath = (uiPath / tabName).string() + ".as";
 	auto moduleData =
-		ScriptManager::LoadScript(modulePath, false, nullptr, "",
-			{ "Magma/scripts", "Lava/scripts" });
-	Ref<ScriptModule> mod = CreateRef<ScriptModule>(moduleData);
-	Ref<ScriptClass> cls = mod->GetClass(className);
+		ScriptManager::LoadScript(modulePath, false, nullptr, tabName, includes);
+	Ref<ScriptModule> tabModule = CreateRef<ScriptModule>(moduleData);
+	Ref<ScriptClass> cls = tabModule->GetClass(tabName);
 	m_ScriptObj = cls->Instantiate();
 
-	auto field = m_ScriptObj.GetProperty("TabHandle");
+	// auto field = m_ScriptObj.GetProperty("TabHandle");
 	// *field.As<Tab>() = &newTab;
 
 	for(auto path : FileUtils::GetFiles(uiPath.string(), { ".as" })) {
-		auto name = fs::path(path).filename().string();
-		if(name == className)
+		auto name = fs::path(path).filename().stem().string();
+		VOLCANICORE_LOG_INFO("Panel: %s", name.c_str());
+		if(name == tabName)
 			continue;
-		Ref<ScriptModule> panelMod = AssetImporter::GetScript(path);
-		Ref<ScriptClass> panelClass = panelMod->GetClass(type);
-		ScriptObject panelScriptObj = panelClass->Instantiate();
-		Panels.Emplace(name, panelScriptObj);
+		auto mod =
+			ScriptManager::LoadScript(path, false, nullptr, name, includes);
+		Ref<ScriptModule> panelMod = CreateRef<ScriptModule>(mod);
+		// Ref<ScriptClass> panelClass = panelMod->GetClass(name);
+		// ScriptObject panelScriptObj = panelClass->Instantiate();
+		// Panels.Emplace(name, panelScriptObj);
+		VOLCANICORE_LOG_INFO("Here 1");
 	}
+	VOLCANICORE_LOG_INFO("Here");
 
 	m_IsDead = m_ScriptObj.GetHandle()->GetWeakRefFlag();
 	m_IsDead->AddRef();

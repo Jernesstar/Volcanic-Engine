@@ -22,9 +22,8 @@ static int IncludeCallback(const char* includeStr, const char* from,
 	includes->ForEach(
 		[&](const std::string& path)
 		{
-			auto fullPath = (fs::path(path) / include).string();
+			auto fullPath = (fs::path(path) / include).generic_string();
 			if(FileUtils::PathExists(fullPath)) {
-				VOLCANICORE_LOG_INFO("Including '%s'", fullPath.c_str());
 				found = true;
 				builder->AddSectionFromFile(fullPath.c_str());
 				return;
@@ -32,6 +31,10 @@ static int IncludeCallback(const char* includeStr, const char* from,
 		});
 
 	Application::PopDir();
+
+	if(!found) {
+		VOLCANICORE_LOG_ERROR("Could not find include '%s'", includeStr);
+	}
 
 	return found ? 1 : -1;
 }
@@ -61,7 +64,8 @@ asIScriptModule* ScriptManager::LoadScript(const std::string& path,
 	}
 	builder.DefineWord("EDITOR");
 
-	builder.SetIncludeCallback(IncludeCallback, (void*)&includePaths);
+	if(includePaths)
+		builder.SetIncludeCallback(IncludeCallback, (void*)&includePaths);
 
 	r = builder.AddSectionFromFile(path.c_str());
 
