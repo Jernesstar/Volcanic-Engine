@@ -2,6 +2,10 @@
 
 #include "AssetManager.h"
 
+#include <Magma/Script/ScriptEngine.h>
+
+using namespace Magma::Script;
+
 namespace Ash {
 
 void Init() {
@@ -24,31 +28,63 @@ void EndFrame() {
 
 }
 
-void RegisterInterface() {
-	
+static void AssetDefaultCtor(Asset* ptr) {
+	new (ptr) Asset{ };
 }
 
+static void AssetInitCtor(uint64_t id, AssetType type, Asset* ptr) {
+	// new (ptr) Asset{ id, type };
+}
+
+static uint64_t GetAssetID(Asset* asset) {
+	return (uint64_t)asset->ID;
+}
+
+static bool AssetIsValid(Asset* asset) {
+	// return AssetManager::Get()->IsValid(*asset);
+}
+
+static bool AssetIsLoaded(Asset* asset) {
+	// return AssetManager::Get()->IsLoaded(*asset);
+}
+
+static std::string AssetGetName(Asset* asset) {
+	// return AssetManager::Get()->GetAssetName(*asset);
+}
+
+void RegisterInterface() {
+	auto* engine = ScriptEngine::Get();
+
+	engine->RegisterEnum("AssetType");
+	engine->RegisterEnumValue("AssetType", "None",    0);
+	engine->RegisterEnumValue("AssetType", "Mesh",	  1);
+	engine->RegisterEnumValue("AssetType", "Texture", 2);
+	engine->RegisterEnumValue("AssetType", "Cubemap", 3);
+	engine->RegisterEnumValue("AssetType", "Font",	  4);
+	engine->RegisterEnumValue("AssetType", "Audio",	  5);
+	engine->RegisterEnumValue("AssetType", "Script",  6);
+	engine->RegisterEnumValue("AssetType", "Shader",  7);
+	engine->RegisterEnumValue("AssetType", "Custom",  8);
+
+	engine->RegisterObjectType("Asset", sizeof(Asset),
+		asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Asset>());
+	engine->RegisterObjectBehaviour("Asset", asBEHAVE_CONSTRUCT,
+		"void f()", asFUNCTION(AssetDefaultCtor), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectBehaviour("Asset", asBEHAVE_CONSTRUCT,
+		"void f(uint64, AssetType)", asFUNCTION(AssetInitCtor),
+		asCALL_CDECL_OBJLAST);
+}
+
+// static Sound* GetSound(Asset asset, AssetManager* manager) {
+// 	manager->Load(asset);
+// 	return manager->Get<Sound>(asset).get();
+// }
+
+// static void PlaySound(Sound* sound) {
+// 	sound->Play();
+// }
+
 void RegisterAssetManager() {
-	// auto* engine = ScriptEngine::Get();
-
-	// engine->RegisterEnum("AssetType");
-	// engine->RegisterEnumValue("AssetType", "Mesh",	  0);
-	// engine->RegisterEnumValue("AssetType", "Texture", 1);
-	// engine->RegisterEnumValue("AssetType", "Cubemap", 2);
-	// engine->RegisterEnumValue("AssetType", "Font",	  3);
-	// engine->RegisterEnumValue("AssetType", "Audio",	  4);
-	// engine->RegisterEnumValue("AssetType", "Script",  5);
-	// engine->RegisterEnumValue("AssetType", "Shader",  6);
-	// engine->RegisterEnumValue("AssetType", "None",	  7);
-
-	// engine->RegisterObjectType("Asset", sizeof(Asset),
-	// 	asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Asset>());
-	// engine->RegisterObjectBehaviour("Asset", asBEHAVE_CONSTRUCT,
-	// 	"void f()", asFUNCTION(AssetDefaultCtor), asCALL_CDECL_OBJLAST);
-	// engine->RegisterObjectBehaviour("Asset", asBEHAVE_CONSTRUCT,
-	// 	"void f(uint64, AssetType)", asFUNCTION(AssetInitCtor),
-	// 	asCALL_CDECL_OBJLAST);
-
 	// engine->RegisterObjectProperty("Asset", "const AssetType Type",
 	// 	asOFFSET(Asset, Type));
 	// engine->RegisterObjectProperty("Asset", "const bool Primary",

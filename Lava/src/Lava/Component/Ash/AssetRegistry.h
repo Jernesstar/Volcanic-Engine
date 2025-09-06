@@ -10,7 +10,6 @@ namespace Ash {
 enum class AssetType : uint8_t {
 	None,
 	Mesh, // .glTF, .obj, .fbx
-	AnimatedMesh, // .fbx
 	Texture, // .png, .jpg, .bmp
 	Cubemap, // Texture folder, Texture
 	Shader, // .glsl, .hlsl

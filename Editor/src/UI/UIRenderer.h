@@ -6,6 +6,7 @@
 #include "Text.h"
 #include "TextInput.h"
 #include "Dropdown.h"
+#include "FileDialog.h"
 
 namespace Magma::UI {
 
@@ -30,6 +31,9 @@ public:
 	static UIState DrawText(Text& text);
 	static UIState DrawTextInput(TextInput& textInput);
 	static UIState DrawDropdown(Dropdown& dropdown);
+
+	static void DrawFileDialog(FileDialog& fileDialog);
+	static void DrawFileDialog(const std::string& title);
 
 	static UIState DrawMenuBar(const std::string& name);
 	static UIState DrawMenu(const std::string& name);

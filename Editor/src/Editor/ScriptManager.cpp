@@ -39,50 +39,52 @@ static int IncludeCallback(const char* includeStr, const char* from,
 	return found ? 1 : -1;
 }
 
-asIScriptModule* ScriptManager::LoadScript(const std::string& path,
+asIScriptModule* ScriptManager::LoadScript(const List<std::string>& paths,
 	bool metadata, bool* error, std::string name,
 	const List<std::string>& includePaths)
 {
 	auto* engine = ScriptEngine::Get();
 
-	if(!fs::exists(path)) {
-		VOLCANICORE_LOG_ERROR(
-			"GetScriptData: File '%s' does not exist", path.c_str());
-		if(error) *error = true;
-		return nullptr;
-	}
-
 	if(name == "")
-		name = fs::path(path).filename().stem().string();
+		name = fs::path(paths[0]).filename().stem().string();
+
 	CScriptBuilder builder;
 	int r;
 	r = builder.StartNewModule(engine, name.c_str());
 	if(r < 0) {
-		VOLCANICORE_LOG_ERROR("StartNewModule failed'%s'", name.c_str());
-		if(error) *error = true;
+		VOLCANICORE_LOG_ERROR("StartNewModule failed for module name '%s'", name.c_str());
+		if(error)
+			*error = true;
 		return nullptr;
 	}
+
 	builder.DefineWord("EDITOR");
 
 	if(includePaths)
 		builder.SetIncludeCallback(IncludeCallback, (void*)&includePaths);
 
-	r = builder.AddSectionFromFile(path.c_str());
-
-	if(r < 0) {
-		VOLCANICORE_LOG_ERROR("AddSectionFromFile failed");
-		if(error) *error = true;
-		return nullptr;
+	for(auto& path : paths) {
+		r = builder.AddSectionFromFile(path.c_str());
+		if(r < 0) {
+			VOLCANICORE_LOG_ERROR("AddSectionFromFile failed for file '%s'", path.c_str());
+			if(error)
+				*error = true;
+			return nullptr;
+		}
 	}
+
 	r = builder.BuildModule();
 	if(r < 0) {
-		VOLCANICORE_LOG_ERROR("BuildModule failed");
+		VOLCANICORE_LOG_ERROR("BuildModule failed for module name '%s'", name.c_str());
 		if(error) *error = true;
 		return nullptr;
 	}
+
+
 	asIScriptModule* handle = builder.GetModule();
 
-	if(error) *error = false;
+	if(error)
+		*error = false;
 
 	if(!metadata)
 		return handle;
@@ -121,6 +123,12 @@ asIScriptModule* ScriptManager::LoadScript(const std::string& path,
 	return handle;
 }
 
+asIScriptModule* ScriptManager::LoadScript(const std::string& path,
+	bool metadata, bool* error, std::string name,
+	const List<std::string>& includePaths)
+{
+	return LoadScript({ path }, metadata, error, name, includePaths);
+}
 class ByteCodeWriter : public asIBinaryStream {
 public:
 	ByteCodeWriter(BinaryWriter* writer)

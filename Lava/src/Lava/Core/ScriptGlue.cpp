@@ -377,39 +377,6 @@ void RegisterEvents() {
 
 }
 
-// static void AssetDefaultCtor(Asset* ptr) {
-// 	new (ptr) Asset{ };
-// }
-
-// static void AssetInitCtor(uint64_t id, AssetType type, Asset* ptr) {
-// 	new (ptr) Asset{ id, type };
-// }
-
-// static uint64_t GetAssetID(Asset* asset) {
-// 	return (uint64_t)asset->ID;
-// }
-
-// static bool AssetIsValid(Asset* asset) {
-// 	return AssetManager::Get()->IsValid(*asset);
-// }
-
-// static bool AssetIsLoaded(Asset* asset) {
-// 	return AssetManager::Get()->IsLoaded(*asset);
-// }
-
-// static std::string AssetGetName(Asset* asset) {
-// 	return AssetManager::Get()->GetAssetName(*asset);
-// }
-
-// static Sound* GetSound(Asset asset, AssetManager* manager) {
-// 	manager->Load(asset);
-// 	return manager->Get<Sound>(asset).get();
-// }
-
-// static void PlaySound(Sound* sound) {
-// 	sound->Play();
-// }
-
 // static Component* EntityAddComponent(const std::string& name, Entity* entity) {
 
 // }

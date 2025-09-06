@@ -21,6 +21,12 @@ using namespace Lava::Physics;
 namespace Lava {
 
 void InitComponents() {
+	Physics::Init();
+	AudioEngine::Init();
+	ScriptEngine::Init();
+
+	ScriptGlue::RegisterInterface();
+
 	Ash::Init();
 	Ash::RegisterInterface();
 
@@ -35,24 +41,18 @@ void InitComponents() {
 
 	Pyro::Init();
 	Pyro::RegisterInterface();
-
-	Physics::Init();
-	AudioEngine::Init();
-	ScriptEngine::Init();
-
-	ScriptGlue::RegisterInterface();
 }
 
 void CloseComponents() {
-	ScriptEngine::Shutdown();
-	AudioEngine::Shutdown();
-	// Physics::Close();
-
 	Ash::Close();
 	Igneous::Close();
 	Silica::Close();
 	Cinder::Close();
 	Pyro::Close();
+
+	ScriptEngine::Shutdown();
+	AudioEngine::Shutdown();
+	// Physics::Close();
 }
 
 void BeginFrame() {

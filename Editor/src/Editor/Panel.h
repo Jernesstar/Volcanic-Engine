@@ -22,7 +22,7 @@ public:
 	bool Open = false;
 
 public:
-	Panel(const std::string& name, ScriptObject obj);
+	Panel(const std::string& tab, const std::string& name);
 	~Panel();
 
 	void OnOpen();

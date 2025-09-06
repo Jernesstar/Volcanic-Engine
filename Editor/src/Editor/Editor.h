@@ -14,14 +14,21 @@ using namespace VolcaniCore;
 namespace Magma {
 
 struct LavaFlow {
-	std::string Path;
 	std::string Name;
+	std::string Path;
 	List<std::string> ObjectList;
 };
 
 struct Cache {
-	List<std::string> PreviousProjects;
-	List<std::string> PreviousLavaFlows;
+	struct Flow {
+		std::string Name;
+		std::string Path;
+		std::string URL;
+		bool Local;
+	};
+
+	List<std::string> PastProjects;
+	List<Flow> PastLavaFlows;
 };
 
 class Editor {
@@ -38,6 +45,11 @@ public:
 	void Load(const CommandLineArgs& args);
 	void Update(TimeStep ts);
 	void Render();
+
+	static Ref<ScriptModule> GetModule(const std::string& name);
+	static Ref<ScriptClass> GetTabClass(const std::string& name);
+	static Ref<ScriptClass> GetPanelClass(const std::string& tab,
+										  const std::string& name);
 
 	static Tab* GetCurrentTab() {
 		if(!s_Instance->m_CurrentTab)
@@ -62,9 +74,9 @@ private:
 	List<Tab> m_Tabs;
 	List<Tab> m_ClosedTabs;
 
-	void RenderEmptyTab(Tab& tab);
-	void RenderWelcomeScreen();
+	void RenderSplashScreen();
 
+	void RenderEmptyTab(Tab& tab);
 	void SetTab(uint32_t idx);
 	void NewTab();
 	void NewTab(Tab tab);

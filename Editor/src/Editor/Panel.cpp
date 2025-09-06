@@ -2,6 +2,7 @@
 
 #include <Magma/Script/ScriptEngine.h>
 
+#include "Editor.h"
 #include "Tab.h"
 
 using namespace Magma::Script;
@@ -17,12 +18,12 @@ void Panel::RegisterInterface() {
 		asMETHOD(Panel, GetPanel), asCALL_THISCALL);
 }
 
-Panel::Panel(const std::string& name, ScriptObject obj)
-	: Name(name), m_ScriptObj(obj)
+Panel::Panel(const std::string& tab,const std::string& name)
+	: Name(name)
 {
-	m_IsDead = obj.GetHandle()->GetWeakRefFlag();
+	m_ScriptObj = Editor::GetPanelClass(tab, name)->Instantiate();
+	m_IsDead = m_ScriptObj.GetHandle()->GetWeakRefFlag();
 	m_IsDead->AddRef();
-	m_ScriptObj = obj;
 }
 
 Panel::~Panel() {

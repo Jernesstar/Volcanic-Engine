@@ -34,56 +34,19 @@ Tab::~Tab() {
 }
 
 void Tab::Init(const std::string& type) {
-	List<std::string> includes =
-	{
-		"Editor/scripts",
-		"Editor/scripts/Magma",
-		"Editor/scripts/Magma/Editor",
-		"Editor/scripts/Magma/UI",
-		"Editor/scripts/Magma/Object",
-		"Lava/scripts",
-		"Lava/scripts/Lava",
-		"Lava/scripts/Lava/Physics",
-		"Lava/scripts/Lava/ECS",
-		"Lava/scripts/Lava/Component",
-		"Lava/scripts/Lava/Component/Ash",
-		"Lava/scripts/Lava/Component/Igneous",
-		"Lava/scripts/Lava/Component/Silica",
-		"Lava/scripts/Lava/Component/Cinder",
-		"Lava/scripts/Lava/Component/Pyro",
-	};
-
-	auto tabName = type + "Tab";
-	const auto& lavaFlow = Editor::GetLavaFlow();
-	auto uiPath = fs::path(lavaFlow.Path) / lavaFlow.Name / "Object" / type / "UI";
-	auto modulePath = (uiPath / tabName).string() + ".as";
-	auto moduleData =
-		ScriptManager::LoadScript(modulePath, false, nullptr, tabName, includes);
-	Ref<ScriptModule> tabModule = CreateRef<ScriptModule>(moduleData);
-	Ref<ScriptClass> cls = tabModule->GetClass(tabName);
-	m_ScriptObj = cls->Instantiate();
-
-	// auto field = m_ScriptObj.GetProperty("TabHandle");
-	// *field.As<Tab>() = &newTab;
-
-	for(auto path : FileUtils::GetFiles(uiPath.string(), { ".as" })) {
-		auto name = fs::path(path).filename().stem().string();
-		VOLCANICORE_LOG_INFO("Panel: %s", name.c_str());
-		if(name == tabName)
-			continue;
-		auto mod =
-			ScriptManager::LoadScript(path, false, nullptr, name, includes);
-		Ref<ScriptModule> panelMod = CreateRef<ScriptModule>(mod);
-		// Ref<ScriptClass> panelClass = panelMod->GetClass(name);
-		// ScriptObject panelScriptObj = panelClass->Instantiate();
-		// Panels.Emplace(name, panelScriptObj);
-		VOLCANICORE_LOG_INFO("Here 1");
-	}
-	VOLCANICORE_LOG_INFO("Here");
-
+	Type = type;
+	m_ScriptObj = Editor::GetTabClass(type)->Instantiate();
 	m_IsDead = m_ScriptObj.GetHandle()->GetWeakRefFlag();
 	m_IsDead->AddRef();
-	Type = type;
+
+	auto mod = Editor::GetModule(type);
+	for(auto& [name, cls] : mod->GetClasses())
+		Panels.Emplace(type, name);
+
+	// OnOpen();
+
+	// auto field = m_ScriptObj.GetProperty("TabHandle");
+	// *field.As<*Tab>() = this;
 }
 
 void Tab::OnLoad(const std::string& path) {

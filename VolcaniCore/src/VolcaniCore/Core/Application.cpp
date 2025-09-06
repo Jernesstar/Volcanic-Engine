@@ -9,20 +9,8 @@ namespace fs = std::filesystem;
 
 namespace VolcaniCore {
 
-Application::Application(uint32_t width, uint32_t height,
-						 const std::string& title)
-{
-	s_Instance = this;
-	s_Window->Resize(width, height);
-	// s_Window->SetIcon(icon);
-	s_Window->SetTitle(title);
-}
-
 void Application::Init() {
 	VOLCANICORE_ASSERT(glfwInit(), "Failed to initialize GLFW");
-
-	s_Window = CreateRef<Window>(800, 600);
-	Events::Init();
 }
 
 void Application::Close() {
@@ -31,6 +19,12 @@ void Application::Close() {
 	s_Window.reset();
 	glfwTerminate();
 	exit(0);
+}
+
+Application::Application(const WindowSpecification& spec) {
+	s_Instance = this;
+	s_Window = CreateRef<Window>(spec);
+	Events::Init();
 }
 
 void Application::Run() {
@@ -48,6 +42,14 @@ void Application::Run() {
 }
 
 static std::string s_OldPath;
+
+std::string Application::GetHomeDir() {
+#ifdef VOLCANICENGINE_WINDOWS
+	return getenv("USERPROFILE");
+#elif VOLCANICENGINE_LINUX
+	return getenv("HOME");
+#endif
+}
 
 std::string Application::GetCurrentDir() {
 	return s_Path;

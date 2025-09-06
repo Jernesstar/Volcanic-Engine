@@ -21,7 +21,7 @@ using namespace Magma::UI;
 namespace Magma {
 
 EditorApp::EditorApp(const CommandLineArgs& args)
-	: Application(1920, 1080, "Magma Editor")
+	: Application({ "Magma Editor", 1200, 800, false, false, true })
 {
 	Events::RegisterListener<KeyPressedEvent>(
 		[](const KeyPressedEvent& event)
@@ -31,8 +31,6 @@ EditorApp::EditorApp(const CommandLineArgs& args)
 		});
 
 	Lava::InitComponents();
-
-	GetWindow()->Maximize();
 
 	UIRenderer::Init();
 	ImGuiIO& io = ImGui::GetIO();

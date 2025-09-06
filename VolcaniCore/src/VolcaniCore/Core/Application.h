@@ -10,8 +10,7 @@ namespace VolcaniCore {
 
 class Application {
 public:
-	Application(uint32_t width = 800, uint32_t height = 600,
-				const std::string& title = "Application");
+	Application(const WindowSpecification& spec = { "Application" });
 	virtual ~Application() = default;
 
 	static void Close();
@@ -19,6 +18,7 @@ public:
 
 	static Ref<Window> GetWindow() { return s_Window; }
 
+	static std::string GetHomeDir();
 	static std::string GetCurrentDir();
 	static void PushDir();
 	static void PushDir(const std::string& path);

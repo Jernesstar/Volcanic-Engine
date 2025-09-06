@@ -22,6 +22,9 @@
 #include <imgui/backends/imgui_impl_opengl3.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
 
+#include <ImGuiFileDialog/ImGuiFileDialog.h>
+#include <ImGuiColorTextEdit/TextEditor.h>
+
 #include <Graphics/OpenGL/Texture2D.h>
 
 #include <VolcaniCore/Core/Application.h>
@@ -260,6 +263,46 @@ UIState UIRenderer::DrawDropdown(Dropdown& dropdown) {
 		// ImGui::IsMouseReleased(0),
 		// ImGui::IsMouseDown(0),
 	};
+}
+
+static Map<std::string, FileDialog> s_Dialogs;
+
+void UIRenderer::DrawFileDialog(FileDialog& dialog) {
+	if(dialog.Title == "")
+		return;
+	if(s_Dialogs.contains(dialog.Title))
+		return;
+
+	auto instance = ImGuiFileDialog::Instance();
+	IGFD::FileDialogConfig config;
+	config.path = dialog.StartPath;
+	std::string exts;
+	for(auto& ext : dialog.Extensions)
+		exts += "." + ext + ",";
+
+	instance->OpenDialog(dialog.Title, dialog.Title, exts.c_str(), config);
+	s_Dialogs.emplace(dialog.Title, dialog);
+}
+
+void UIRenderer::DrawFileDialog(const std::string& title) {
+	if(!s_Dialogs.contains(title))
+		return;
+
+	auto& dialog = s_Dialogs[title];
+	auto instance = ImGuiFileDialog::Instance();
+
+	// Returns true when an action has been taken (select or cancel)
+	if(instance->Display(dialog.Title, 32,
+						{ (float)dialog.Width, (float)dialog.Height }))
+	{
+		if(instance->IsOk()) {
+			std::string path = instance->GetFilePathName();
+			dialog.OnSelect(path);
+		}
+
+		s_Dialogs.erase(dialog.Title);
+		instance->Close();
+	}
 }
 
 UIState UIRenderer::DrawMenuBar(const std::string& name) {

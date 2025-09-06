@@ -14,6 +14,9 @@ public:
 	ScriptManager() = default;
 	~ScriptManager() = default;
 
+	static asIScriptModule* LoadScript(const List<std::string>& path,
+		bool metadata = true, bool* error = nullptr, std::string name = "",
+		const List<std::string>& includePaths = { });
 	static asIScriptModule* LoadScript(const std::string& path,
 		bool metadata = true, bool* error = nullptr, std::string name = "",
 		const List<std::string>& includePaths = { });

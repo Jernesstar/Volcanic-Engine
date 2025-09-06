@@ -7,16 +7,52 @@
 
 namespace VolcaniCore {
 
-Window::Window(uint32_t width, uint32_t height)
-	: m_Width(width), m_Height(height)
+Window::Window(const WindowSpecification& spec)
+	: m_Spec(spec)
 {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_SAMPLES, 4);
 
-	m_NativeWindow = glfwCreateWindow(width, height, "", nullptr, nullptr);
+	GLFWmonitor* monitor = nullptr;
+	const GLFWvidmode* mode = nullptr;
+	if(spec.Fullscreen) {
+		monitor = glfwGetPrimaryMonitor();
+		mode = glfwGetVideoMode(monitor);
+
+		glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+		glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+		glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+		glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+		m_Spec.Width = mode->width;
+		m_Spec.Height = mode->height;
+	}
+
+	if(spec.SplashScreen) {
+		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+		glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+		glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
+		glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
+	}
+
+	m_NativeWindow =
+		glfwCreateWindow(m_Spec.Width, m_Spec.Height, m_Spec.Title.c_str(),
+						 monitor, nullptr);
+
 	VOLCANICORE_ASSERT(m_NativeWindow, "Could not create the window");
+
+	if(spec.SplashScreen) {
+		monitor = glfwGetPrimaryMonitor();
+		mode = glfwGetVideoMode(monitor);
+
+		int monitorX, monitorY;
+		glfwGetMonitorPos(monitor, &monitorX, &monitorY);
+		glfwSetWindowPos(m_NativeWindow,
+						 monitorX + (mode->width - m_Spec.Width) / 2,
+						 monitorY + (mode->height - m_Spec.Height) / 2);
+		glfwShowWindow(m_NativeWindow);
+	}
 
 	glfwMakeContextCurrent(m_NativeWindow);
 	glfwSwapInterval(0);
@@ -24,7 +60,8 @@ Window::Window(uint32_t width, uint32_t height)
 	Events::RegisterListener<WindowResizedEvent>(
 		[&](const WindowResizedEvent& event)
 		{
-			this->Resize(event.Width, event.Height);
+			m_Spec.Width = event.Width;
+			m_Spec.Height = event.Height;
 		});
 }
 
@@ -32,31 +69,62 @@ Window::~Window() {
 	glfwDestroyWindow(m_NativeWindow);
 }
 
-void Window::Resize(uint32_t width, uint32_t height) {
-	if(!(width && height) || (width == m_Width && height == m_Height))
-		return;
-
-	m_Width = width;
-	m_Height = height;
-	glfwSetWindowSize(m_NativeWindow, width, height);
+void Window::Update() {
+	glfwSwapBuffers(m_NativeWindow);
 }
 
-void Window::Maximize() {
+void Window::Maximize(bool enable) {
+	m_Spec.Maximized = true;
 	glfwMaximizeWindow(m_NativeWindow);
 }
 
-// void Window::SetIcon(const ImageData& imageData) {
-// 	if(!imageData.Data) {
-// 		glfwSetWindowIcon(m_NativeWindow, 0, nullptr);
-// 		return;
-// 	}
+void Window::Fullscreen(bool enable) {
+	GLFWmonitor* monitor = glfwGetWindowMonitor(m_NativeWindow);
+	if(enable) {
+		if(monitor)
+			return;
 
-// 	GLFWimage icon;
-// 	icon.width = imageData.Width;
-// 	icon.height = imageData.Height;
-// 	icon.pixels = imageData.Data.Get();
-// 	glfwSetWindowIcon(m_NativeWindow, 1, &icon);
-// }
+		monitor = glfwGetPrimaryMonitor();
+		const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+		glfwSetWindowMonitor(m_NativeWindow, monitor, 0, 0,
+							 mode->width, mode->height,
+							 mode->refreshRate);
+	}
+	else {
+		if(!monitor)
+			return;
+
+		glfwSetWindowMonitor(m_NativeWindow, nullptr, 0, 0,
+							 m_Spec.Width, m_Spec.Height, 0);
+	}
+}
+
+void Window::SplashScreen(bool enable) {
+
+}
+
+void Window::Resize(uint32_t width, uint32_t height) {
+	if(!(width && height) || (width == m_Spec.Width && height == m_Spec.Height))
+		return;
+
+	m_Spec.Width = width;
+	m_Spec.Height = height;
+	m_Spec.Maximized = false;
+	glfwSetWindowSize(m_NativeWindow, width, height);
+}
+
+void Window::SetIcon(const Icon& icon) {
+	if(!icon.Data) {
+		glfwSetWindowIcon(m_NativeWindow, 0, nullptr);
+		return;
+	}
+
+	GLFWimage iconData;
+	iconData.width = icon.Width;
+	iconData.height = icon.Height;
+	iconData.pixels = icon.Data.Get();
+	glfwSetWindowIcon(m_NativeWindow, 1, &iconData);
+}
 
 void Window::SetTitle(const std::string& title) {
 	glfwSetWindowTitle(m_NativeWindow, title.c_str());
