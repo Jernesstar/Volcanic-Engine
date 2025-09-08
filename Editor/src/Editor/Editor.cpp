@@ -121,21 +121,22 @@ static std::string HTTPGet(asio::io_context& io, asio::ssl::context& sslContext,
 	throw std::runtime_error("HTTP error " + std::to_string(statusCode));
 }
 
-static void DownloadLavaFlow(const Cache::Flow& flow) {
+static void DownloadLavaFlow(const std::string& url) {
 	try {
 		asio::io_context io;
 		asio::ssl::context ssl_ctx(asio::ssl::context::tlsv12_client);
+		auto flowName = url.substr(url.rfind('/') + 1);
 
 		std::string body =
 			HTTPGet(io, ssl_ctx, "github.com",
-					flow.URL + "/archive/refs/heads/main.zip");
+					url + "/archive/refs/heads/main.zip");
 
 		miniz_cpp::zip_file zip(std::vector<uint8_t>(body.begin(), body.end()));
 
 		std::string cachePath = "Editor/.cache/.lavaflow";
 		for(auto& name : zip.namelist()) {
 			fs::path outPath =
-				cachePath / fs::path(name).lexically_relative(flow.Name + "-main");
+				cachePath / fs::path(name).lexically_relative(flowName + "-main");
 			outPath = outPath.generic_string();
 			std::cout << outPath << "\n";
 
@@ -186,13 +187,7 @@ void Editor::Open() {
 
 		auto data = file["EditorData"];
 		m_Cache.PastProjects = data["PastProjects"].as<List<std::string>>();
-		for(auto node : data["PastLavaFlows"])
-			m_Cache.PastLavaFlows.Emplace(
-				node["Flow"]["Name"].as<std::string>(),
-				node["Flow"]["Path"].as<std::string>(),
-				node["Flow"]["URL"].as<std::string>(),
-				node["Flow"]["Local"].as<bool>()
-			);
+		m_Cache.PastLavaFlows = data["PastLavaFlows"].as<List<std::string>>();
 	}
 
 	Application::PopDir();
@@ -204,41 +199,41 @@ void Editor::Close() {
 }
 
 Ref<ScriptModule> Editor::GetModule(const std::string& name) {
+	if(!s_TabModules.count(name)) {
+		VOLCANICORE_LOG_INFO("Could not find module '%s'", name.c_str());
+		return nullptr;
+	}
 	return s_TabModules[name];
 }
 
 Ref<ScriptClass> Editor::GetTabClass(const std::string& name) {
-	return s_TabModules[name]->GetClass(name);
+	if(!s_TabModules.count(name)) {
+		VOLCANICORE_LOG_INFO("Could not find tab class '%s'", name.c_str());
+		return nullptr;
+	}
+	return s_TabModules[name]->GetClass(name + "Tab");
 }
 
 Ref<ScriptClass> Editor::GetPanelClass(const std::string& tab,
 									   const std::string& name)
 {
+	if(!s_TabModules.count(tab)) {
+		VOLCANICORE_LOG_INFO("Could not find panel class '%s'", name.c_str());
+		return nullptr;
+	}
 	return s_TabModules[tab]->GetClass(name);
 }
 
 void Editor::Load(const CommandLineArgs& args) {
-	// if(args["--project"]) {
-	// 	NewProject(args["--project"]);
-
-	// 	if(args["--export"]) {
-	// 		auto path = (args["--export"].Args[0]);
-	// 		ExportProject(path);
-	// 		Application::Close();
-	// 		return;
-	// 	}
-
-	// 	NewTab(CreateRef<ProjectTab>());
-	// }
-	// for(auto& path : args["--scene"])
-	// 	NewTab(CreateRef<SceneTab>(path));
-	// for(auto& path : args["--ui"])
-	// 	NewTab(CreateRef<UITab>(path));
+	if(args["--project"])
+		NewProject(args["--project"]);
+	if(args["--lavaflow"])
+		NewProject(args["--lavaflow"]);
 }
 
 void Editor::Update(TimeStep ts) {
-	for(auto tab : m_Tabs)
-		tab.OnUpdate(ts);
+	// for(auto tab : m_Tabs)
+	// 	tab.OnUpdate(ts);
 }
 
 void Editor::Render() {
@@ -299,41 +294,13 @@ void Editor::Render() {
 			ImGuiID dockspaceID = ImGui::GetID("DockSpace");
 			ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), dockspaceFlags);
 
-			if(GetCurrentTab()->Type != "None")
-				GetCurrentTab()->OnRender();
-			else
-				RenderEmptyTab(m_Tabs[m_CurrentTab]);
+			// if(GetCurrentTab()->Type != "None")
+			// 	GetCurrentTab()->OnRender();
+			// else
+			// 	RenderEmptyTab(m_Tabs[m_CurrentTab]);
 		}
 	}
 	ImGui::End();
-
-	// if(menu.project.newProject)
-	// 	NewProject();
-	// if(menu.project.openProject)
-	// 	OpenProject();
-	// if(menu.project.runProject)
-	// 	RunProject();
-	// if(menu.project.exportProject)
-	// 	ExportProject(m_Project.ExportPath);
-
-	// if(menu.tab.newTab)
-	// 	NewTab();
-	// if(menu.tab.newScene)
-	// 	NewTab(CreateRef<SceneTab>());
-	// if(menu.tab.newUI)
-	// 	NewTab(CreateRef<UITab>());
-
-	// if(menu.tab.openTab)
-	// 	LoadTab();
-	// if(menu.tab.openScene)
-	// 	OpenTab(TabType::Scene);
-	// if(menu.tab.openUI)
-	// 	OpenTab(TabType::UI);
-
-	// if(menu.tab.reopenTab)
-	// 	ReopenTab();
-	// if(menu.tab.closeTab)
-	// 	CloseTab(m_CurrentTab);
 }
 
 void Editor::RenderEmptyTab(Tab& tab) {
@@ -357,6 +324,16 @@ void Editor::RenderSplashScreen() {
 			   | ImGuiWindowFlags_NoDocking;
 	ImGui::Begin("##Welcome", nullptr, flags);
 	{
+		ImVec2 curPos = ImGui::GetCursorPos();
+		ImVec2 buttonPos =
+			{ curPos.x + ImGui::GetContentRegionAvail().x - 40, curPos.y };
+		ImGui::SetCursorPos(buttonPos);
+		if(ImGui::Button("-"))
+			Application::GetWindow()->Minimize();
+		ImGui::SameLine();
+		if(ImGui::Button("X"))
+			Application::Close();
+		ImGui::SetCursorPos(curPos);
 		ImGui::Text("Magma Editor");
 
 		ImVec2 size = { 400, ImGui::GetContentRegionAvail().y };
@@ -374,7 +351,6 @@ void Editor::RenderSplashScreen() {
 					[&](std::string& path)
 					{
 						NewProject(path);
-						OpenTab("Project");
 					};
 				dialog.Draw();
 			}
@@ -401,32 +377,32 @@ void Editor::RenderSplashScreen() {
 			ImGui::SeparatorText("Previous LavaFlows");
 			ImVec2 size = { 590, 40 };
 
-			for(auto flow : m_Cache.PastLavaFlows) {
-				auto buttonFlags = ImGuiButtonFlags_EnableNav
-								 | ImGuiButtonFlags_MouseButtonLeft;
+			for(auto path : m_Cache.PastLavaFlows) {
+				// auto buttonFlags = ImGuiButtonFlags_EnableNav
+				// 				 | ImGuiButtonFlags_MouseButtonLeft;
 
-				ImGui::SetNextItemAllowOverlap();
-				ImVec2 min = ImGui::GetCursorScreenPos();
-				ImGui::InvisibleButton(flow.Path.c_str(), size, buttonFlags);
-				ImVec2 max = ImGui::GetCursorScreenPos();
-				bool clicked = ImGui::IsItemActivated();
+				// ImGui::SetNextItemAllowOverlap();
+				// ImVec2 min = ImGui::GetCursorScreenPos();
+				// ImGui::InvisibleButton(flow.Path.c_str(), size, buttonFlags);
+				// ImVec2 max = ImGui::GetCursorScreenPos();
+				// bool clicked = ImGui::IsItemActivated();
 
-				ImGui::SetCursorScreenPos({ min.x + 10, min.y });
-				ImGui::SetNextItemAllowOverlap();
-				ImGui::Text(flow.Name.c_str());
-				ImGui::SetNextItemAllowOverlap();
-				ImGui::Text(flow.Path.c_str());
-				ImGui::SetCursorScreenPos(max);
-				ImGui::Dummy({ 0, 0 });
+				// ImGui::SetCursorScreenPos({ min.x + 10, min.y });
+				// ImGui::SetNextItemAllowOverlap();
+				// ImGui::Text(flow.Name.c_str());
+				// ImGui::SetNextItemAllowOverlap();
+				// ImGui::Text(flow.Path.c_str());
+				// ImGui::SetCursorScreenPos(max);
+				// ImGui::Dummy({ 0, 0 });
 
-				ImVec2 p0 = min;
-				ImVec2 p1 = ImVec2(max.x + size.x, max.y);
+				// ImVec2 p0 = min;
+				// ImVec2 p1 = ImVec2(max.x + size.x, max.y);
 
-				ImDrawList* drawList = ImGui::GetWindowDrawList();
-				drawList->AddRect(p0, p1, ImColor(255, 255, 255, 255), 0, 0, 1.0f);
+				// ImDrawList* drawList = ImGui::GetWindowDrawList();
+				// drawList->AddRect(p0, p1, ImColor(255, 255, 255, 255), 0, 0, 1.0f);
 
-				if(clicked)
-					LoadLavaFlow(flow.Path);
+				// if(clicked)
+				// 	LoadLavaFlow(flow.Path);
 			}
 		}
 		ImGui::EndChild();
@@ -443,10 +419,11 @@ void Editor::SetTab(uint32_t idx) {
 	if(GetCurrentTab())
 		GetCurrentTab()->OnDeselect();
 
-	if(idx) {
+	if(idx > 0) {
 		m_CurrentTab = idx;
 		Tab* tab = GetCurrentTab();
 		tab->OnSelect();
+
 		title += " - " + tab->Name;
 	}
 
@@ -454,16 +431,11 @@ void Editor::SetTab(uint32_t idx) {
 }
 
 void Editor::NewTab(Tab tab) {
-	// menu.tab.newScene = false;
-	// menu.tab.newUI = false;
-
 	s_Instance->m_Tabs.Add(tab);
 	s_Instance->SetTab(s_Instance->m_Tabs.Count());
 }
 
 void Editor::NewTab() {
-	// menu.tab.newTab = false;
-
 	Tab& newTab = m_Tabs.Emplace();
 	newTab.Name = "New Tab";
 	NewTab(newTab);
@@ -480,14 +452,11 @@ void Editor::LoadTab(const std::string& type) {
 }
 
 void Editor::ReopenTab() {
-	// menu.tab.reopenTab = false;
-
 	if(m_ClosedTabs)
 		NewTab(m_ClosedTabs.Pop());
 }
 
 void Editor::CloseTab(uint32_t idx) {
-	// menu.tab.closeTab = false;
 	if(idx == 0)
 		return;
 
@@ -497,34 +466,20 @@ void Editor::CloseTab(uint32_t idx) {
 }
 
 void Editor::NewProject() {
+
 }
 
 void Editor::NewProject(const std::string& volcPath) {
 	ProjectLoad(volcPath, m_Project);
+	auto [found, i] =
+		m_Cache.PastProjects.Find([&](auto& path) { return path == volcPath; });
+	if(!found)
+		m_Cache.PastProjects.Add(volcPath);
 
-	std::string pathName = m_Project.LavaFlow;
-	if(pathName.substr(0, 2) == "./")
-		m_LavaFlow.Path =
-			(fs::path(m_Project.Path) / ".lavaflow" / pathName).string();
-	else
-		m_LavaFlow.Path = (fs::path("Editor") / ".cache" / ".lavaflow" / pathName).string();
-
-	m_LavaFlow.Path = fs::canonical(m_LavaFlow.Path).string();
-
+	Application::GetWindow()->Maximize();
+	m_LavaFlow.Path = m_Project.LavaFlow;
 	LoadLavaFlow(m_LavaFlow.Path);
-
-	// m_AssetManager.Load(m_Project.Path);
-	auto rootPath = fs::path(volcPath).parent_path();
-
-	m_App->AppLoad =
-		[this, rootPath](Ref<ScriptModule>& script)
-		{
-			auto scriptPath = rootPath / "Project" / "App.as";
-			script = AssetImporter::GetScript(scriptPath.string());
-		};
-
-	m_App->Running = false;
-	// m_ScriptObj.Call("NewProject");
+	OpenTab("Project");
 }
 
 void Editor::OpenProject() {
@@ -541,21 +496,11 @@ void Editor::OpenProject() {
 		};
 	dialog.Draw();
 
-	// menu.project.openProject = false;
+	UIRenderer::DrawFileDialog("Open Project");
 }
 
 void Editor::RunProject() {
-	// menu.project.runProject = false;
 
-// 	std::string command;
-// #ifdef VOLCANICENGINE_WINDOWS
-// 	command = "Runtime --project ";
-// 	command += m_Project.ExportPath + "\\.volc.proj";
-// #elif VOLCANICENGINE_LINUX
-// 	command = "Runtime --project ";
-// 	command += m_Project.ExportPath + "/.volc.proj";
-// #endif
-// 	system(command.c_str());
 }
 
 void Editor::CloseProject() {
@@ -563,38 +508,16 @@ void Editor::CloseProject() {
 	m_ClosedTabs.Clear();
 	m_CurrentTab = 0;
 
-	// m_AssetManager.Save();
-	// m_AssetManager.Clear();
-
 	if(m_Project.Path != "")
 		ProjectSave(m_Project);
 	m_Project = { };
 }
 
 void Editor::ExportProject() {
-	// IGFD::FileDialogConfig config;
-	// config.path = ".";
-	// auto instance = ImGuiFileDialog::Instance();
-	// instance->OpenDialog("ChooseDir", "Choose Directory", nullptr, config);
 
-	// std::string exportPath = "";
-	// if(instance->Display("ChooseDir")) {
-	// 	if(instance->IsOk())
-	// 		exportPath = instance->GetCurrentPath();
-
-	// 	instance->Close();
-	// }
-	// menu.project.exportProjectTo = false;
-
-	// if(exportPath == "")
-	// 	return;
-
-	// ExportProject(exportPath);
 }
 
 void Editor::ExportProject(const std::string& exportPath) {
-	// menu.project.exportProject = false;
-
 	if(fs::is_regular_file(exportPath)) {
 		VOLCANICORE_LOG_INFO("'%s' is not a valid directory path");
 		return;
@@ -602,10 +525,13 @@ void Editor::ExportProject(const std::string& exportPath) {
 
 }
 
+void Editor::NewLavaFlow(const std::string& path) {
+	
+}
 
-void Editor::LoadLavaFlow(const std::string& pathName) {
+void Editor::LoadLavaFlow(const std::string& path) {
 	// Load LavaFlow data from file
-	auto flowFile = (fs::path(pathName) / ".flow.yml").string();
+	auto flowFile = (fs::path(path) / ".flow.yml").string();
 	YAML::Node file;
 	try {
 		file = YAML::LoadFile(flowFile);
@@ -620,7 +546,8 @@ void Editor::LoadLavaFlow(const std::string& pathName) {
 	auto lavaFlowNode = file["LavaFlow"];
 	VOLCANICORE_ASSERT(lavaFlowNode);
 
-	m_LavaFlow.Name = lavaFlowNode["Name"].as<std::string>();
+	m_LavaFlow.Path = path;
+	m_LavaFlow.Name = path.substr(path.rfind("/"));
 	m_LavaFlow.ObjectList = lavaFlowNode["Objects"].as<List<std::string>>();
 
 	List<std::string> includes =
@@ -651,6 +578,10 @@ void Editor::LoadLavaFlow(const std::string& pathName) {
 
 		s_TabModules[type] = CreateRef<ScriptModule>(moduleData);
 	}
+}
+
+void Editor::CloseLavaFlow() {
+	s_TabModules.clear();
 }
 
 void ProjectLoad(const std::string& path, Project& project) {

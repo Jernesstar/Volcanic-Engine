@@ -9,8 +9,8 @@ namespace Magma::Script {
 ScriptClass::ScriptClass(const std::string& name, asITypeInfo* type)
 	: Name(name)
 {
+	VOLCANICORE_ASSERT(type);
 	m_Type = type;
-	VOLCANICORE_ASSERT(m_Type);
 	m_Factory = m_Type->GetFactoryByIndex(0);
 	// VOLCANICORE_ASSERT(m_Factory);
 
@@ -33,9 +33,9 @@ bool ScriptClass::Implements(const std::string& interfaceName) {
 }
 
 bool ScriptClass::DerivesFrom(const std::string& className) {
-	asITypeInfo* interface =
+	asITypeInfo* type =
 		ScriptEngine::Get()->GetTypeInfoByName(className.c_str());
-	return m_Type->DerivesFrom(interface);
+	return m_Type->DerivesFrom(type);
 }
 
 void ScriptClass::SetInstanceMethod(const List<std::string>& args) {
@@ -48,8 +48,12 @@ void ScriptClass::SetInstanceMethod(const List<std::string>& args) {
 }
 
 asIScriptFunction* ScriptClass::GetFunction(const std::string& name) const {
-	if(!m_Functions.count(name))
+	if(!m_Functions.count(name)) {
+		VOLCANICORE_LOG_WARNING(
+			"ScriptClass::GetFunction: Could not find function '%s' in class : %s",
+			name.c_str(), Name.c_str());
 		return nullptr;
+	}
 	return m_Functions.at(name);
 }
 

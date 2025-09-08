@@ -60,11 +60,10 @@ private:
 	ScriptFunc GetFunc(const std::string& name) const;
 
 private:
+	ScriptClass* m_Class = nullptr;
 	asIScriptObject* m_Handle = nullptr;
-	int m_RefCount;
+	int m_RefCount = 0;
 	bool m_Initialized = false;
-
-	const ScriptClass* m_Class;
 
 	friend class ScriptClass;
 };

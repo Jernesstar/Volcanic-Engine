@@ -29,12 +29,11 @@ ScriptObject::ScriptObject() {
 
 ScriptObject::ScriptObject(asIScriptObject* obj) {
 	m_Handle = obj;
-	m_RefCount = 1;
+	AddRef();
 }
 
 ScriptObject::~ScriptObject() {
-	if(m_Handle)
-		m_Handle->Release();
+	Release();
 }
 
 uint32_t ScriptObject::AddRef() {
@@ -80,7 +79,10 @@ ScriptField ScriptObject::GetProperty(uint32_t idx) {
 
 ScriptFunc ScriptObject::GetFunc(const std::string& name) const {
 	auto* function = m_Class->GetFunction(name);
-	return { function, ScriptEngine::GetContext(), m_Handle };
+	auto* context = ScriptEngine::GetContext();
+	VOLCANICORE_ASSERT(function);
+	VOLCANICORE_ASSERT(context);
+	return { function, context, m_Handle };
 }
 
 }

@@ -8,7 +8,9 @@ shared abstract class Tab
         set { TabHandle.Name = value; }
     }
 
-    // void OnOpen() { }
+    Tab() { }
+
+    void OnOpen() { }
     void OnClose() { }
     void OnSelect() { }
     void OnDeselect() { }

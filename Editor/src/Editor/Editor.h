@@ -20,15 +20,8 @@ struct LavaFlow {
 };
 
 struct Cache {
-	struct Flow {
-		std::string Name;
-		std::string Path;
-		std::string URL;
-		bool Local;
-	};
-
 	List<std::string> PastProjects;
-	List<Flow> PastLavaFlows;
+	List<std::string> PastLavaFlows;
 };
 
 class Editor {
@@ -94,6 +87,7 @@ private:
 	void ExportProject(const std::string& path);
 	void NewLavaFlow(const std::string& path);
 	void LoadLavaFlow(const std::string& path);
+	void CloseLavaFlow();
 };
 
 }

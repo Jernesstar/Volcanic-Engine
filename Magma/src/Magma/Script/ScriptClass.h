@@ -26,11 +26,11 @@ public:
 		ScriptFunc func = GetFunc();
 		asIScriptObject* obj =
 			func.CallReturn<asIScriptObject*>(std::forward<Args>(args)...);
-		obj->AddRef();
 
 		ScriptObject newObj(obj);
-		newObj.m_Class = this;
+		newObj.m_Class = (ScriptClass*)this;
 		newObj.m_Initialized = true;
+		newObj.AddRef();
 		return newObj;
 	}
 
@@ -40,8 +40,9 @@ public:
 								->CreateUninitializedScriptObject(m_Type);
 
 		ScriptObject newObj(obj);
-		newObj.m_Class = this;
+		newObj.m_Class = (ScriptClass*)this;
 		newObj.m_Initialized = false;
+		newObj.AddRef();
 		return newObj;
 	}
 

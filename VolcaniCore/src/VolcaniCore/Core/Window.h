@@ -13,9 +13,10 @@ struct WindowSpecification {
 	std::string Title;
 	uint32_t Width = 800;
 	uint32_t Height = 600;
-	bool Maximized = false;
-	bool Fullscreen = false;
 	bool SplashScreen = false;
+	bool Fullscreen = false;
+	bool Maximized = false;
+	bool Minimized = false;
 };
 
 struct Icon {
@@ -33,8 +34,9 @@ public:
 	bool IsOpen() const { return !glfwWindowShouldClose(m_NativeWindow); }
 
 	void Maximize(bool enable = true);
+	void Minimize();
 	void Fullscreen(bool enable = true);
-	void SplashScreen(bool enable = true);
+	void UndoSplashScreen();
 	void Resize(uint32_t width, uint32_t height);
 	void SetIcon(const Icon& icon);
 	void SetTitle(const std::string& title);

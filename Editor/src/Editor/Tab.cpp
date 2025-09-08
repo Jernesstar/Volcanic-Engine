@@ -30,7 +30,8 @@ Tab::Tab() {
 }
 
 Tab::~Tab() {
-	m_IsDead->Release();
+	if(m_IsDead)
+		m_IsDead->Release();
 }
 
 void Tab::Init(const std::string& type) {
@@ -41,9 +42,8 @@ void Tab::Init(const std::string& type) {
 
 	auto mod = Editor::GetModule(type);
 	for(auto& [name, cls] : mod->GetClasses())
-		Panels.Emplace(type, name);
-
-	// OnOpen();
+		if(cls->DerivesFrom("Panel"))
+			Panels.Emplace(type, name);
 
 	// auto field = m_ScriptObj.GetProperty("TabHandle");
 	// *field.As<*Tab>() = this;

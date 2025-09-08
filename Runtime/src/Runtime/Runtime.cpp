@@ -21,7 +21,7 @@ namespace Lava {
 extern std::string FindExecutablePath();
 
 Runtime::Runtime(const CommandLineArgs& args)
-	: Application({ "Runtime", 1920, 1080 })
+	: Application({ "Runtime", 1920, 1080, false, true })
 {
 	Events::RegisterListener<KeyPressedEvent>(
 		[](const KeyPressedEvent& event)

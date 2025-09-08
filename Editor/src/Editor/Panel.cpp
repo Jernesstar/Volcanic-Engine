@@ -18,16 +18,18 @@ void Panel::RegisterInterface() {
 		asMETHOD(Panel, GetPanel), asCALL_THISCALL);
 }
 
-Panel::Panel(const std::string& tab,const std::string& name)
+Panel::Panel(const std::string& tab, const std::string& name)
 	: Name(name)
 {
+	VOLCANICORE_LOG_INFO("%s", name.c_str());
 	m_ScriptObj = Editor::GetPanelClass(tab, name)->Instantiate();
 	m_IsDead = m_ScriptObj.GetHandle()->GetWeakRefFlag();
 	m_IsDead->AddRef();
 }
 
 Panel::~Panel() {
-	m_IsDead->Release();
+	if(m_IsDead)
+		m_IsDead->Release();
 }
 
 void Panel::OnOpen() {

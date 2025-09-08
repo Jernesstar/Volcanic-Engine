@@ -30,9 +30,9 @@ Window::Window(const WindowSpecification& spec)
 	}
 
 	if(spec.SplashScreen) {
+		glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); // Splash screen
 		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-		glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
-		glfwWindowHint(GLFW_FLOATING, GLFW_TRUE);
+		// glfwWindowHint(GLFW_FLOATING, GLFW_TRUE); // Always on top
 		glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
 	}
 
@@ -74,8 +74,16 @@ void Window::Update() {
 }
 
 void Window::Maximize(bool enable) {
-	m_Spec.Maximized = true;
-	glfwMaximizeWindow(m_NativeWindow);
+	m_Spec.Maximized = enable;
+	if(enable)
+		glfwMaximizeWindow(m_NativeWindow);
+	else
+		glfwRestoreWindow(m_NativeWindow);
+}
+
+void Window::Minimize() {
+	m_Spec.Minimized = true;
+	glfwIconifyWindow(m_NativeWindow);
 }
 
 void Window::Fullscreen(bool enable) {
@@ -99,7 +107,7 @@ void Window::Fullscreen(bool enable) {
 	}
 }
 
-void Window::SplashScreen(bool enable) {
+void Window::UndoSplashScreen() {
 
 }
 
