@@ -40,8 +40,6 @@ struct hash<Ash::Asset> {
 
 namespace Ash {
 
-
-
 class AssetRegistry {
 public:
 

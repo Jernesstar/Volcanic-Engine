@@ -50,28 +50,33 @@ void Tab::Init(const std::string& type) {
 }
 
 void Tab::OnLoad(const std::string& path) {
-	m_ScriptObj.Call("OnLoad", path);
+	if(m_IsDead->Get())
+		m_ScriptObj.Call("OnLoad", path);
 }
 
 void Tab::OnSelect() {
-	m_ScriptObj.Call("OnSelect");
+	if(m_IsDead->Get())
+		m_ScriptObj.Call("OnSelect");
 }
 
 void Tab::OnDeselect() {
-	m_ScriptObj.Call("OnDeselect");
+	if(m_IsDead->Get())
+		m_ScriptObj.Call("OnDeselect");
 }
 
 void Tab::OnClose() {
-	m_ScriptObj.Call("OnClose");
+	if(m_IsDead->Get())
+		m_ScriptObj.Call("OnClose");
 }
 
 void Tab::OnUpdate(TimeStep ts) {
-	if(!m_IsDead->Get())
+	if(m_IsDead->Get())
 		m_ScriptObj.Call("OnUpdate", (float)ts);
 }
 
 void Tab::OnRender() {
-	m_ScriptObj.Call("OnRender");
+	if(m_IsDead->Get())
+		m_ScriptObj.Call("OnRender");
 }
 
 Panel* Tab::GetPanel(const std::string& name) {
