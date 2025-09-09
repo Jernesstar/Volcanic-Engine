@@ -7,9 +7,7 @@
 
 namespace VolcaniCore {
 
-Window::Window(const WindowSpecification& spec)
-	: m_Spec(spec)
-{
+static GLFWwindow* CreateWindow(WindowSpecification& spec) {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -25,8 +23,8 @@ Window::Window(const WindowSpecification& spec)
 		glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
 		glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
 		glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
-		m_Spec.Width = mode->width;
-		m_Spec.Height = mode->height;
+		spec.Width = mode->width;
+		spec.Height = mode->height;
 	}
 
 	if(spec.SplashScreen) {
@@ -36,11 +34,11 @@ Window::Window(const WindowSpecification& spec)
 		glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
 	}
 
-	m_NativeWindow =
-		glfwCreateWindow(m_Spec.Width, m_Spec.Height, m_Spec.Title.c_str(),
+	GLFWwindow* window =
+		glfwCreateWindow(spec.Width, spec.Height, spec.Title.c_str(),
 						 monitor, nullptr);
 
-	VOLCANICORE_ASSERT(m_NativeWindow, "Could not create the window");
+	VOLCANICORE_ASSERT(window, "Could not create the window");
 
 	if(spec.SplashScreen) {
 		monitor = glfwGetPrimaryMonitor();
@@ -48,15 +46,22 @@ Window::Window(const WindowSpecification& spec)
 
 		int monitorX, monitorY;
 		glfwGetMonitorPos(monitor, &monitorX, &monitorY);
-		glfwSetWindowPos(m_NativeWindow,
-						 monitorX + (mode->width - m_Spec.Width) / 2,
-						 monitorY + (mode->height - m_Spec.Height) / 2);
-		glfwShowWindow(m_NativeWindow);
+		glfwSetWindowPos(window,
+						 monitorX + (mode->width - spec.Width) / 2,
+						 monitorY + (mode->height - spec.Height) / 2);
+		glfwShowWindow(window);
 	}
 
-	glfwMakeContextCurrent(m_NativeWindow);
+	glfwMakeContextCurrent(window);
 	glfwSwapInterval(0);
 
+	return window;
+}
+
+Window::Window(const WindowSpecification& spec)
+	: m_Spec(spec)
+{
+	m_NativeWindow = CreateWindow(m_Spec);
 	Events::RegisterListener<WindowResizedEvent>(
 		[&](const WindowResizedEvent& event)
 		{

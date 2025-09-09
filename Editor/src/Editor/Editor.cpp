@@ -195,6 +195,7 @@ void Editor::Open() {
 
 void Editor::Close() {
 	CloseProject();
+	CloseLavaFlow();
 	m_App.reset();
 }
 
@@ -237,9 +238,16 @@ void Editor::Update(TimeStep ts) {
 }
 
 void Editor::Render() {
+	if(!m_Tabs) {
+		RenderSplashScreen();
+		return;
+	}
+
+	RenderTitleBar();
+
 	bool dockspaceOpen = true;
 	ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags_PassthruCentralNode;
-	ImGuiWindowFlags windowFlags = m_Tabs ? ImGuiWindowFlags_MenuBar : 0;
+	ImGuiWindowFlags windowFlags;
 	windowFlags |= ImGuiWindowFlags_NoDocking
 				 | ImGuiWindowFlags_NoMove
 				 | ImGuiWindowFlags_NoDecoration
@@ -248,8 +256,8 @@ void Editor::Render() {
 				 | ImGuiWindowFlags_NoBringToFrontOnFocus;
 
 	ImGuiViewport* viewport = ImGui::GetMainViewport();
-	ImGui::SetNextWindowPos(viewport->Pos);
-	ImGui::SetNextWindowSize(viewport->Size);
+	ImGui::SetNextWindowPos({ viewport->Pos.x, viewport->Pos.y + 25.0f });
+	ImGui::SetNextWindowSize({ viewport->Size.x, viewport->Size.y - 25.0f });
 	ImGui::SetNextWindowViewport(viewport->ID);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
@@ -259,61 +267,13 @@ void Editor::Render() {
 	{
 		ImGui::PopStyleVar(3);
 
-		// Menu bar here
+		ImGuiID dockspaceID = ImGui::GetID("DockSpace");
+		ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), dockspaceFlags);
 
-		auto tabBarFlags = ImGuiTabBarFlags_Reorderable
-						 | ImGuiTabBarFlags_TabListPopupButton;
-		if(m_Tabs && ImGui::BeginTabBar("Tabs", tabBarFlags)) {
-			auto plusFlags = ImGuiTabItemFlags_Trailing
-						   | ImGuiTabItemFlags_NoReorder;
-			// if(ImGui::TabItemButton("+", plusFlags))
-			// 	menu.tab.newTab = true;
-
-			uint32_t tabToDelete = 0;
-			for(uint32_t i = 0; i < m_Tabs.Count(); i++) {
-				Tab& tab = m_Tabs[i];
-				TabState state =
-					UIRenderer::DrawTab(tab.Name, tab.Type == "Project");
-				if(state.Closed)
-					tabToDelete = i + 1;
-				else if(state.Clicked)
-					SetTab(i);
-			}
-
-			if(tabToDelete != 0)
-				CloseTab(tabToDelete);
-
-			ImGui::EndTabBar();
-
-			// GetProjectTab()->RenderButtons();
-		}
-
-		if(!m_Tabs)
-			RenderSplashScreen();
-		else {
-			ImGuiID dockspaceID = ImGui::GetID("DockSpace");
-			ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), dockspaceFlags);
-
-			// if(GetCurrentTab()->Type != "None")
-			// 	GetCurrentTab()->OnRender();
-			// else
-			// 	RenderEmptyTab(m_Tabs[m_CurrentTab]);
-		}
-	}
-	ImGui::End();
-}
-
-void Editor::RenderEmptyTab(Tab& tab) {
-	ImGui::Begin("##Empty");
-	{
-		for(auto object : m_LavaFlow.ObjectList) {
-			if(ImGui::Button(("New " + object).c_str()))
-				tab.Init(object);
-			if(ImGui::Button(("Open " + object).c_str())) {
-				tab.Init(object);
-				tab.OnLoad();
-			}
-		}
+		if(GetCurrentTab()->Type != "None")
+			GetCurrentTab()->OnRender();
+		else
+			RenderEmptyTab(m_Tabs[m_CurrentTab]);
 	}
 	ImGui::End();
 }
@@ -409,6 +369,103 @@ void Editor::RenderSplashScreen() {
 		ImGui::SameLine();
 
 		s_WelcomeImage.Draw();
+	}
+	ImGui::End();
+}
+
+void Editor::RenderTitleBar() {
+	ImGuiWindowFlags titleBarFlags = ImGuiWindowFlags_NoTitleBar
+								   | ImGuiWindowFlags_NoCollapse
+								   | ImGuiWindowFlags_NoResize
+								   | ImGuiWindowFlags_NoMove
+								   | ImGuiWindowFlags_NoDocking
+								   | ImGuiWindowFlags_NoScrollbar
+								   | ImGuiWindowFlags_NoSavedSettings
+								   | ImGuiWindowFlags_NoScrollWithMouse;
+	const ImGuiViewport* viewport = ImGui::GetMainViewport();
+
+	ImGui::SetNextWindowPos(viewport->WorkPos);
+	ImGui::SetNextWindowSize(ImVec2{ viewport->WorkSize.x, 50.0f });
+	ImGui::SetNextWindowViewport(viewport->ID);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2{ 0.0f, 0.0f });
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 40.0f, 2.0f });
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4{ 0.01f, 0.01f, 0.01f, 1.0f });
+
+	ImGui::Begin("window-frame-titlebar", nullptr, titleBarFlags);
+	{
+		ImGui::PopStyleVar(3);
+		ImGui::PopStyleColor(1);
+		auto image = s_WelcomeImage;
+		image.x = 5;
+		image.y = 5;
+		image.Width = 40;
+		image.Height = 40;
+		image.UsePosition = true;
+		image.Draw();
+		ImGui::SameLine();
+
+		ImGui::Text("Magma Editor");
+		ImGui::SameLine();
+
+		ImGui::BeginChild(
+			"##MenuBar", ImVec2(0, 0), 0, ImGuiWindowFlags_MenuBar);
+		{
+			if(ImGui::BeginMenuBar()) {
+				if(ImGui::BeginMenu("Test")) {
+			
+					ImGui::EndMenu();
+				}
+				ImGui::EndMenuBar();
+			}
+			// m_ScriptObj.Call("OnRenderMenuBar");
+		}
+		ImGui::EndChild();
+
+		ImGui::BeginChild("##Tabs", ImVec2(0, 0));
+		{
+			auto tabBarFlags = ImGuiTabBarFlags_Reorderable
+							| ImGuiTabBarFlags_TabListPopupButton;
+			if(ImGui::BeginTabBar("Tabs", tabBarFlags)) {
+				auto plusFlags = ImGuiTabItemFlags_Trailing
+							   | ImGuiTabItemFlags_NoReorder;
+				if(ImGui::TabItemButton("+", plusFlags))
+					// NewTab();
+					;
+
+				uint32_t tabToDelete = 0;
+				for(uint32_t i = 0; i < m_Tabs.Count(); i++) {
+					Tab& tab = m_Tabs[i];
+					TabState state =
+						UIRenderer::DrawTab(tab.Name, tab.Type == "Project");
+					if(state.Closed)
+						tabToDelete = i + 1;
+					else if(state.Clicked)
+						SetTab(i);
+				}
+
+				if(tabToDelete != 0)
+					CloseTab(tabToDelete);
+
+				ImGui::EndTabBar();
+			}
+		}
+		ImGui::EndChild();
+	}
+	ImGui::End();
+}
+
+void Editor::RenderEmptyTab(Tab& tab) {
+	ImGui::Begin("##Empty");
+	{
+		for(auto object : m_LavaFlow.ObjectList) {
+			if(ImGui::Button(("New " + object).c_str()))
+				tab.Init(object);
+			if(ImGui::Button(("Open " + object).c_str())) {
+				tab.Init(object);
+				tab.OnLoad();
+			}
+		}
 	}
 	ImGui::End();
 }
@@ -530,6 +587,8 @@ void Editor::NewLavaFlow(const std::string& path) {
 }
 
 void Editor::LoadLavaFlow(const std::string& path) {
+	CloseLavaFlow();
+
 	// Load LavaFlow data from file
 	auto flowFile = (fs::path(path) / ".flow.yml").string();
 	YAML::Node file;
@@ -614,7 +673,6 @@ void ProjectSave(const Project& project) {
 	.BeginMapping()
 		.WriteKey("Name").Write(project.Name)
 		.WriteKey("LavaFlow").Write(project.LavaFlow)
-		.WriteKey("Name").Write(project.Name)
 		;
 
 	serializer

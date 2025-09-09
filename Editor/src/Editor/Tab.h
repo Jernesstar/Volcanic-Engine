@@ -20,8 +20,8 @@ public:
 	static void RegisterInterface();
 
 public:
-	std::string Type;
-	std::string Name;
+	std::string Type = "None";
+	std::string Name = "Empty";
 	List<Panel> Panels;
 
 public:

@@ -34,7 +34,7 @@ public:
 
 	void Open();
 	void Close();
-	
+
 	void Load(const CommandLineArgs& args);
 	void Update(TimeStep ts);
 	void Render();
@@ -68,8 +68,9 @@ private:
 	List<Tab> m_ClosedTabs;
 
 	void RenderSplashScreen();
-
+	void RenderTitleBar();
 	void RenderEmptyTab(Tab& tab);
+
 	void SetTab(uint32_t idx);
 	void NewTab();
 	void NewTab(Tab tab);
