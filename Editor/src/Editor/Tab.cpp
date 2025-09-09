@@ -32,6 +32,7 @@ Tab::Tab() {
 Tab::~Tab() {
 	if(m_IsDead)
 		m_IsDead->Release();
+	m_ScriptObj.DestroyAndRelease();
 }
 
 void Tab::Init(const std::string& type) {
@@ -45,38 +46,50 @@ void Tab::Init(const std::string& type) {
 		if(cls->DerivesFrom("Panel"))
 			Panels.Emplace(type, name);
 
-	// auto field = m_ScriptObj.GetProperty("TabHandle");
-	// *field.As<*Tab>() = this;
+	OnOpen();
+	auto field = m_ScriptObj.GetProperty("TabHandle");
+	*field.As<Tab*>() = this;
+}
+
+void Tab::OnOpen() {
+	if(m_IsDead && !m_IsDead->Get())
+		m_ScriptObj.Call("OnOpen");
+}
+
+void Tab::OnClose() {
+	if(m_IsDead && !m_IsDead->Get())
+		m_ScriptObj.Call("OnClose");
 }
 
 void Tab::OnLoad(const std::string& path) {
-	if(m_IsDead->Get())
+	if(m_IsDead && !m_IsDead->Get())
 		m_ScriptObj.Call("OnLoad", path);
 }
 
 void Tab::OnSelect() {
-	if(m_IsDead->Get())
+	if(m_IsDead && !m_IsDead->Get())
 		m_ScriptObj.Call("OnSelect");
 }
 
 void Tab::OnDeselect() {
-	if(m_IsDead->Get())
+	if(m_IsDead && !m_IsDead->Get())
 		m_ScriptObj.Call("OnDeselect");
 }
 
-void Tab::OnClose() {
-	if(m_IsDead->Get())
-		m_ScriptObj.Call("OnClose");
-}
-
 void Tab::OnUpdate(TimeStep ts) {
-	if(m_IsDead->Get())
+	if(m_IsDead && !m_IsDead->Get())
 		m_ScriptObj.Call("OnUpdate", (float)ts);
+
+	for(auto& panel : Panels)
+		panel.OnUpdate(ts);
 }
 
 void Tab::OnRender() {
-	if(m_IsDead->Get())
+	if(m_IsDead && !m_IsDead->Get())
 		m_ScriptObj.Call("OnRender");
+
+	for(auto& panel : Panels)
+		panel.OnRender();
 }
 
 Panel* Tab::GetPanel(const std::string& name) {

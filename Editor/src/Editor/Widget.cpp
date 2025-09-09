@@ -17,15 +17,15 @@
 
 #include <VolcaniCore/Core/Input.h>
 
-// #include <Magma/Core/AssetManager.h>
 #include <Magma/Script/ScriptEngine.h>
 #include <Magma/Script/ScriptModule.h>
 #include <Magma/Script/ScriptClass.h>
 #include <Magma/Script/ScriptObject.h>
-// #include <Magma/UI/UI.h>
+
+#include "UI/UI.h"
 
 using namespace Magma;
-// using namespace Magma::UI;
+using namespace Magma::UI;
 using namespace Magma::Script;
 
 namespace Magma {

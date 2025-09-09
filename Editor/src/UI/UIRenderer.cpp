@@ -348,11 +348,11 @@ TabState UIRenderer::DrawTab(const std::string& name, bool closeButton) {
 	s_Stack.Add(UIType::Tab);
 
 	ImVec2 size = ImGui::CalcTextSize(name.c_str());
-	float padding = closeButton ? 24.0f : 10.0f;
-	float tabHeight = 7.0f;
-	float radius = closeButton ? tabHeight * 0.5f : 0;
+	static const float tabHeight = 12.0f;
+	float radius = closeButton * tabHeight * 0.5f;
+	float padding = 10 + closeButton  * tabHeight;
 
-	ImGui::SetNextItemWidth(size.x + (2.0f*radius + padding));
+	ImGui::SetNextItemWidth(size.x + padding);
 
 	ImGui::PushID(s_Stack.Count());
 	bool tabItem =
@@ -360,11 +360,11 @@ TabState UIRenderer::DrawTab(const std::string& name, bool closeButton) {
 			closeButton ? 0 : ImGuiTabItemFlags_NoReorder);
 	ImGui::PopID();
 
-	ImVec2 pos;
-	pos.x = ImGui::GetItemRectMax().x - 6.0f*radius;
-	pos.y = ImGui::GetItemRectMin().y + radius;
+	ImVec2 closeButtonPos;
+	closeButtonPos.x = ImGui::GetItemRectMax().x - 2.0f*radius;
+	closeButtonPos.y = ImGui::GetItemRectMin().y + radius;
 
-	ImGuiTabBar* tabBar = ImGui::GetCurrentTabBar();
+	// ImGuiTabBar* tabBar = ImGui::GetCurrentTabBar();
 
 	TabState state;
 	if(tabItem) {
@@ -375,7 +375,7 @@ TabState UIRenderer::DrawTab(const std::string& name, bool closeButton) {
 
 	if(closeButton) {
 		auto closeButtonID = ImGui::GetID((int*)s_Stack.Count());
-		state.Closed = ImGui::CloseButton(closeButtonID, pos);
+		state.Closed = ImGui::CloseButton(closeButtonID, closeButtonPos);
 	}
 
 	return state;
@@ -424,10 +424,10 @@ void UIRenderer::EndFrame() {
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-	GLFWwindow* backup_current_context = glfwGetCurrentContext();
+	GLFWwindow* context = glfwGetCurrentContext();
 	ImGui::UpdatePlatformWindows();
 	ImGui::RenderPlatformWindowsDefault();
-	glfwMakeContextCurrent(backup_current_context);
+	glfwMakeContextCurrent(context);
 }
 
 void UIRenderer::Init() {

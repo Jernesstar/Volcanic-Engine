@@ -30,10 +30,13 @@ public:
 
 	void Init(const std::string& type);
 
+	void OnOpen();
+	void OnClose();
 	void OnLoad(const std::string& path = "");
+
 	void OnSelect();
 	void OnDeselect();
-	void OnClose();
+
 	void OnUpdate(TimeStep ts);
 	void OnRender();
 
@@ -42,7 +45,7 @@ public:
 private:
 	// The C++ side holds a weak link to the script side to
 	// avoid a circular reference between the C++ side and script side
-	asILockableSharedBool *m_IsDead;
+	asILockableSharedBool *m_IsDead = nullptr;
 	ScriptObject m_ScriptObj;
 };
 

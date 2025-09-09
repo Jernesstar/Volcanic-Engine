@@ -33,6 +33,10 @@ public:
 	ScriptObject(asIScriptObject* handle);
 	~ScriptObject();
 
+	uint32_t AddRef();
+	uint32_t Release();
+	void DestroyAndRelease();
+
 	template<typename T, typename... Args>
 	T Call(const std::string& name, Args&&... args) const {
 		ScriptFunc func = GetFunc(name);
@@ -53,10 +57,6 @@ public:
 	const ScriptClass* GetClass() const { return m_Class; }
 
 private:
-	uint32_t AddRef();
-	uint32_t Release();
-	void DestroyAndRelease();
-
 	ScriptFunc GetFunc(const std::string& name) const;
 
 private:

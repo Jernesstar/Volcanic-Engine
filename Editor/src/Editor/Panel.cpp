@@ -30,25 +30,26 @@ Panel::Panel(const std::string& tab, const std::string& name)
 Panel::~Panel() {
 	if(m_IsDead)
 		m_IsDead->Release();
+	m_ScriptObj.DestroyAndRelease();
 }
 
 void Panel::OnOpen() {
-	if(!m_IsDead->Get())
+	if(m_IsDead && !m_IsDead->Get())
 		m_ScriptObj.Call("OnOpen");
 }
 
 void Panel::OnClose() {
-	if(!m_IsDead->Get())
+	if(m_IsDead && !m_IsDead->Get())
 		m_ScriptObj.Call("OnClose");
 }
 
 void Panel::OnUpdate(TimeStep ts) {
-	if(!m_IsDead->Get())
+	if(m_IsDead && !m_IsDead->Get())
 		m_ScriptObj.Call("OnUpdate", (float)ts);
 }
 
 void Panel::OnRender() {
-	if(!m_IsDead->Get())
+	if(m_IsDead && !m_IsDead->Get())
 		m_ScriptObj.Call("OnRender");
 }
 

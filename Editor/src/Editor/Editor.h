@@ -69,15 +69,14 @@ private:
 
 	void RenderSplashScreen();
 	void RenderTitleBar();
-	void RenderEmptyTab(Tab& tab);
 
-	void SetTab(uint32_t idx);
 	void NewTab();
 	void NewTab(Tab tab);
 	void OpenTab(const std::string& type);
 	void LoadTab(const std::string& type = "None");
 	void ReopenTab();
 	void CloseTab(uint32_t idx);
+	void SetTab(uint32_t idx);
 
 	void NewProject();
 	void NewProject(const std::string& volcPath);

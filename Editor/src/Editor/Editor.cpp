@@ -270,10 +270,7 @@ void Editor::Render() {
 		ImGuiID dockspaceID = ImGui::GetID("DockSpace");
 		ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), dockspaceFlags);
 
-		if(GetCurrentTab()->Type != "None")
-			GetCurrentTab()->OnRender();
-		else
-			RenderEmptyTab(m_Tabs[m_CurrentTab]);
+		GetCurrentTab()->OnRender();
 	}
 	ImGui::End();
 }
@@ -373,6 +370,8 @@ void Editor::RenderSplashScreen() {
 	ImGui::End();
 }
 
+static bool s_NewTab = false;
+
 void Editor::RenderTitleBar() {
 	ImGuiWindowFlags titleBarFlags = ImGuiWindowFlags_NoTitleBar
 								   | ImGuiWindowFlags_NoCollapse
@@ -385,35 +384,38 @@ void Editor::RenderTitleBar() {
 	const ImGuiViewport* viewport = ImGui::GetMainViewport();
 
 	ImGui::SetNextWindowPos(viewport->WorkPos);
-	ImGui::SetNextWindowSize(ImVec2{ viewport->WorkSize.x, 50.0f });
+	ImGui::SetNextWindowSize(ImVec2{ viewport->WorkSize.x, 60.0f });
 	ImGui::SetNextWindowViewport(viewport->ID);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2{ 0.0f, 0.0f });
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 40.0f, 2.0f });
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0.0f, 0.0f });
 	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4{ 0.01f, 0.01f, 0.01f, 1.0f });
 
-	ImGui::Begin("window-frame-titlebar", nullptr, titleBarFlags);
+	ImGui::Begin("Window-Frame-Titlebar", nullptr, titleBarFlags);
 	{
 		ImGui::PopStyleVar(3);
 		ImGui::PopStyleColor(1);
 		auto image = s_WelcomeImage;
 		image.x = 5;
 		image.y = 5;
-		image.Width = 40;
-		image.Height = 40;
+		image.Width = 50;
+		image.Height = 50;
 		image.UsePosition = true;
 		image.Draw();
 		ImGui::SameLine();
 
+		ImGui::SetWindowFontScale(2.0f);
 		ImGui::Text("Magma Editor");
+		ImGui::SetWindowFontScale(1.0f);
 		ImGui::SameLine();
 
-		ImGui::BeginChild(
-			"##MenuBar", ImVec2(0, 0), 0, ImGuiWindowFlags_MenuBar);
+		ImVec2 menuSize = { ImGui::GetContentRegionAvail().x - 90.0f, 25.0f };
+		ImGui::BeginChild("##MenuBar", menuSize, 0,
+			titleBarFlags | ImGuiWindowFlags_MenuBar);
 		{
 			if(ImGui::BeginMenuBar()) {
 				if(ImGui::BeginMenu("Test")) {
-			
+					ImGui::MenuItem("Item 1");
 					ImGui::EndMenu();
 				}
 				ImGui::EndMenuBar();
@@ -422,22 +424,34 @@ void Editor::RenderTitleBar() {
 		}
 		ImGui::EndChild();
 
-		ImGui::BeginChild("##Tabs", ImVec2(0, 0));
+		ImGui::SameLine();
+		ImGui::SetCursorPosX(
+			ImGui::GetCursorPos().x + ImGui::GetContentRegionAvail().x - 40.0f);
+		if(ImGui::Button("-"))
+			Application::GetWindow()->Minimize();
+		ImGui::SameLine();
+		if(ImGui::Button("X"))
+			Application::Close();
+
+		ImVec2 tabBarSize = { ImGui::GetContentRegionAvail().x - 200.0f, 0.0f };
+		ImGui::SetCursorPos(ImVec2(60.0f, 35.0f));
+		ImGui::BeginChild("##TabBar", tabBarSize);
 		{
 			auto tabBarFlags = ImGuiTabBarFlags_Reorderable
-							| ImGuiTabBarFlags_TabListPopupButton;
-			if(ImGui::BeginTabBar("Tabs", tabBarFlags)) {
+							 | ImGuiTabBarFlags_NoTooltip;
+			if(ImGui::BeginTabBar("##Tabs", tabBarFlags)) {
 				auto plusFlags = ImGuiTabItemFlags_Trailing
 							   | ImGuiTabItemFlags_NoReorder;
 				if(ImGui::TabItemButton("+", plusFlags))
-					// NewTab();
-					;
+					s_NewTab = true;
+				if(s_NewTab)
+					NewTab();
 
 				uint32_t tabToDelete = 0;
 				for(uint32_t i = 0; i < m_Tabs.Count(); i++) {
 					Tab& tab = m_Tabs[i];
 					TabState state =
-						UIRenderer::DrawTab(tab.Name, tab.Type == "Project");
+						UIRenderer::DrawTab(tab.Name, tab.Type != "Project");
 					if(state.Closed)
 						tabToDelete = i + 1;
 					else if(state.Clicked)
@@ -455,47 +469,31 @@ void Editor::RenderTitleBar() {
 	ImGui::End();
 }
 
-void Editor::RenderEmptyTab(Tab& tab) {
-	ImGui::Begin("##Empty");
-	{
+void Editor::NewTab() {
+	if(ImGui::BeginTooltip()) {
+		ImGui::Text("New Tab");
+
 		for(auto object : m_LavaFlow.ObjectList) {
-			if(ImGui::Button(("New " + object).c_str()))
-				tab.Init(object);
+			ImGui::SeparatorText(object.c_str());
+
+			if(ImGui::Button(("New " + object).c_str())) {
+				OpenTab(object);
+				s_NewTab = false;
+			}
 			if(ImGui::Button(("Open " + object).c_str())) {
-				tab.Init(object);
-				tab.OnLoad();
+				OpenTab(object);
+				// tab.OnLoad();
+				s_NewTab = false;
 			}
 		}
+
+		ImGui::EndTooltip();
 	}
-	ImGui::End();
-}
-
-void Editor::SetTab(uint32_t idx) {
-	auto title = "Magma Editor: " + m_Project.Name;
-
-	if(GetCurrentTab())
-		GetCurrentTab()->OnDeselect();
-
-	if(idx > 0) {
-		m_CurrentTab = idx;
-		Tab* tab = GetCurrentTab();
-		tab->OnSelect();
-
-		title += " - " + tab->Name;
-	}
-
-	Application::GetWindow()->SetTitle(title);
 }
 
 void Editor::NewTab(Tab tab) {
-	s_Instance->m_Tabs.Add(tab);
-	s_Instance->SetTab(s_Instance->m_Tabs.Count());
-}
-
-void Editor::NewTab() {
-	Tab& newTab = m_Tabs.Emplace();
-	newTab.Name = "New Tab";
-	NewTab(newTab);
+	m_Tabs.Add(tab);
+	SetTab(m_Tabs.Count());
 }
 
 void Editor::OpenTab(const std::string& type) {
@@ -520,6 +518,23 @@ void Editor::CloseTab(uint32_t idx) {
 	m_ClosedTabs.Add(m_Tabs.Pop(idx - 1));
 	if(idx == m_CurrentTab)
 		SetTab(idx - 1);
+}
+
+void Editor::SetTab(uint32_t idx) {
+	auto title = "Magma Editor: " + m_Project.Name;
+
+	if(GetCurrentTab())
+		GetCurrentTab()->OnDeselect();
+
+	if(idx > 0) {
+		m_CurrentTab = idx;
+		Tab* tab = GetCurrentTab();
+		tab->OnSelect();
+
+		title += " - " + tab->Name;
+	}
+
+	Application::GetWindow()->SetTitle(title);
 }
 
 void Editor::NewProject() {
