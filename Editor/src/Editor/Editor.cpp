@@ -409,7 +409,7 @@ void Editor::RenderTitleBar() {
 		ImGui::SetWindowFontScale(1.0f);
 		ImGui::SameLine();
 
-		ImVec2 menuSize = { ImGui::GetContentRegionAvail().x - 90.0f, 25.0f };
+		ImVec2 menuSize = { ImGui::GetContentRegionAvail().x - 100.0f, 25.0f };
 		ImGui::BeginChild("##MenuBar", menuSize, 0,
 			titleBarFlags | ImGuiWindowFlags_MenuBar);
 		{
@@ -426,14 +426,14 @@ void Editor::RenderTitleBar() {
 
 		ImGui::SameLine();
 		ImGui::SetCursorPosX(
-			ImGui::GetCursorPos().x + ImGui::GetContentRegionAvail().x - 40.0f);
+			ImGui::GetCursorPos().x + ImGui::GetContentRegionAvail().x - 45.0f);
 		if(ImGui::Button("-"))
 			Application::GetWindow()->Minimize();
 		ImGui::SameLine();
 		if(ImGui::Button("X"))
 			Application::Close();
 
-		ImVec2 tabBarSize = { ImGui::GetContentRegionAvail().x - 200.0f, 0.0f };
+		ImVec2 tabBarSize = { ImGui::GetContentRegionAvail().x - 100.0f, 0.0f };
 		ImGui::SetCursorPos(ImVec2(60.0f, 35.0f));
 		ImGui::BeginChild("##TabBar", tabBarSize);
 		{
@@ -443,9 +443,8 @@ void Editor::RenderTitleBar() {
 				auto plusFlags = ImGuiTabItemFlags_Trailing
 							   | ImGuiTabItemFlags_NoReorder;
 				if(ImGui::TabItemButton("+", plusFlags))
-					s_NewTab = true;
-				if(s_NewTab)
-					NewTab();
+					ImGui::OpenPopup("New Tab");
+				NewTab();
 
 				uint32_t tabToDelete = 0;
 				for(uint32_t i = 0; i < m_Tabs.Count(); i++) {
@@ -470,24 +469,25 @@ void Editor::RenderTitleBar() {
 }
 
 void Editor::NewTab() {
-	if(ImGui::BeginTooltip()) {
-		ImGui::Text("New Tab");
-
+	if(ImGui::BeginPopup("New Tab")) {
 		for(auto object : m_LavaFlow.ObjectList) {
+			if(object == "Project")
+				continue;
+
 			ImGui::SeparatorText(object.c_str());
 
 			if(ImGui::Button(("New " + object).c_str())) {
 				OpenTab(object);
-				s_NewTab = false;
+				ImGui::CloseCurrentPopup();
 			}
 			if(ImGui::Button(("Open " + object).c_str())) {
 				OpenTab(object);
 				// tab.OnLoad();
-				s_NewTab = false;
+				ImGui::CloseCurrentPopup();
 			}
 		}
 
-		ImGui::EndTooltip();
+		ImGui::EndPopup();
 	}
 }
 

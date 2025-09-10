@@ -348,20 +348,20 @@ TabState UIRenderer::DrawTab(const std::string& name, bool closeButton) {
 	s_Stack.Add(UIType::Tab);
 
 	ImVec2 size = ImGui::CalcTextSize(name.c_str());
-	static const float tabHeight = 12.0f;
+	static const float tabHeight = 6.0f;
 	float radius = closeButton * tabHeight * 0.5f;
-	float padding = 10 + closeButton  * tabHeight;
+	float padding = closeButton * tabHeight + 14;
 
 	ImGui::SetNextItemWidth(size.x + padding);
 
 	ImGui::PushID(s_Stack.Count());
 	bool tabItem =
 		ImGui::BeginTabItem(name.c_str(), nullptr,
-			closeButton ? 0 : ImGuiTabItemFlags_NoReorder);
+			closeButton * ImGuiTabItemFlags_NoReorder);
 	ImGui::PopID();
 
 	ImVec2 closeButtonPos;
-	closeButtonPos.x = ImGui::GetItemRectMax().x - 2.0f*radius;
+	closeButtonPos.x = ImGui::GetItemRectMax().x - 4.0f*radius;
 	closeButtonPos.y = ImGui::GetItemRectMin().y + radius;
 
 	// ImGuiTabBar* tabBar = ImGui::GetCurrentTabBar();
