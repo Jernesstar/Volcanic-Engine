@@ -30,9 +30,9 @@ Tab::Tab() {
 }
 
 Tab::~Tab() {
+	m_ScriptObj.DestroyAndRelease();
 	if(m_IsDead)
 		m_IsDead->Release();
-	m_ScriptObj.DestroyAndRelease();
 }
 
 void Tab::Init(const std::string& type) {
@@ -46,9 +46,9 @@ void Tab::Init(const std::string& type) {
 		if(cls->DerivesFrom("Panel"))
 			Panels.Emplace(type, name);
 
-	OnOpen();
-	auto field = m_ScriptObj.GetProperty("TabHandle");
+	ScriptField field = m_ScriptObj.GetProperty("TabHandle");
 	*field.As<Tab*>() = this;
+	OnOpen();
 }
 
 void Tab::OnOpen() {

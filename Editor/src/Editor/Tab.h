@@ -27,6 +27,11 @@ public:
 public:
 	Tab();
 	~Tab();
+	// Tab(Tab&&) = default;
+	// Tab(const Tab&) = delete;
+
+	// Tab& operator =(Tab&&) = default;
+	// Tab& operator =(const Tab&) = delete;
 
 	void Init(const std::string& type);
 

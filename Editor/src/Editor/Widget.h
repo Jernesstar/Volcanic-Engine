@@ -1,24 +1,36 @@
 #pragma once
 
+#include <Magma/Script/ScriptEngine.h>
+
+using namespace Magma::Script;
+
 namespace Magma {
 
 class Widget {
 public:
-	Widget();
-	~Widget();
+	virtual void Render(ScriptFunc func) = 0;
+};
 
-	static void Begin();
-	static void End();
-	static void Child();
-	static void EndChild();
+class WindowWidget {
+public:
+	enum class Options {
+		MenuBar, TitleBar
+	};
 
-	static void Text();
-	static void Image();
+	WindowWidget* With(WindowWidget::Options option);
+	void Render(ScriptFunc func);
+};
 
+class WidgetRenderer {
+public:
 	static void RegisterInterface();
+	static void BeginFrame();
+	static void EndFrame();
 
-private:
-	
+	static WindowWidget* Window();
+	// static ChildWidget* ChildWindow();
+	// static TextWidget* Text();
+	// static ImageWidget* Image();
 };
 
 }

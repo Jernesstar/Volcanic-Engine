@@ -32,8 +32,8 @@ public:
 
 private:
 	Tab* m_Tab = nullptr;
+	asILockableSharedBool* m_IsDead = nullptr;
 	ScriptObject m_ScriptObj;
-	asILockableSharedBool *m_IsDead;
 
 private:
 	Panel* GetPanel(const std::string& name);

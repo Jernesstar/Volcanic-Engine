@@ -71,7 +71,6 @@ private:
 	void RenderTitleBar();
 
 	void NewTab();
-	void NewTab(Tab tab);
 	void OpenTab(const std::string& type);
 	void LoadTab(const std::string& type = "None");
 	void ReopenTab();

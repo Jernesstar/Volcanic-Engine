@@ -25,6 +25,7 @@
 
 #include "AssetImporter.h"
 #include "ScriptManager.h"
+#include "Widget.h"
 
 using asio::ip::tcp;
 
@@ -233,7 +234,7 @@ void Editor::Load(const CommandLineArgs& args) {
 }
 
 void Editor::Update(TimeStep ts) {
-	// for(auto tab : m_Tabs)
+	// for(auto& tab : m_Tabs)
 	// 	tab.OnUpdate(ts);
 }
 
@@ -242,6 +243,8 @@ void Editor::Render() {
 		RenderSplashScreen();
 		return;
 	}
+
+	WidgetRenderer::BeginFrame();
 
 	RenderTitleBar();
 
@@ -266,13 +269,13 @@ void Editor::Render() {
 	ImGui::Begin("DockSpaceWindow", &dockspaceOpen, windowFlags);
 	{
 		ImGui::PopStyleVar(3);
-
 		ImGuiID dockspaceID = ImGui::GetID("DockSpace");
 		ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), dockspaceFlags);
-
 		GetCurrentTab()->OnRender();
 	}
 	ImGui::End();
+
+	WidgetRenderer::EndFrame();
 }
 
 void Editor::RenderSplashScreen() {
@@ -491,11 +494,6 @@ void Editor::NewTab() {
 	}
 }
 
-void Editor::NewTab(Tab tab) {
-	m_Tabs.Add(tab);
-	SetTab(m_Tabs.Count());
-}
-
 void Editor::OpenTab(const std::string& type) {
 	Tab& newTab = m_Tabs.Emplace();
 	newTab.Init(type);
@@ -507,15 +505,17 @@ void Editor::LoadTab(const std::string& type) {
 }
 
 void Editor::ReopenTab() {
-	if(m_ClosedTabs)
-		NewTab(m_ClosedTabs.Pop());
+	if(m_ClosedTabs) {
+		m_Tabs.AddMove(m_ClosedTabs.Pop());
+		SetTab(m_Tabs.Count());
+	}
 }
 
 void Editor::CloseTab(uint32_t idx) {
 	if(idx == 0)
 		return;
 
-	m_ClosedTabs.Add(m_Tabs.Pop(idx - 1));
+	m_ClosedTabs.AddMove(m_Tabs.Pop(idx - 1));
 	if(idx == m_CurrentTab)
 		SetTab(idx - 1);
 }
@@ -709,7 +709,7 @@ void ProjectSaveRuntime(const Project& project) {
 void Editor::RegisterInterface() {
 	Panel::RegisterInterface();
 	Tab::RegisterInterface();
-	// Widget::RegisterInterface();
+	WidgetRenderer::RegisterInterface();
 }
 
 }

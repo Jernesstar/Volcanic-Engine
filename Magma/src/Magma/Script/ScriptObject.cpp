@@ -42,20 +42,18 @@ uint32_t ScriptObject::AddRef() {
 }
 
 uint32_t ScriptObject::Release() {
-	if(--m_RefCount == 0) {
-		if(m_Handle)
-			m_Handle->Release();
-		return 0;
+	if(m_Handle) {
+		m_Handle->Release();
+		m_RefCount--;
 	}
 
 	return m_RefCount;
 }
 
 void ScriptObject::DestroyAndRelease() {
-	if(m_Handle) {
+	while(m_Handle && --m_RefCount)
 		m_Handle->Release();
-		m_Handle = nullptr;
-	}
+	m_Handle = nullptr;
 }
 
 ScriptField ScriptObject::GetProperty(const std::string& name) {

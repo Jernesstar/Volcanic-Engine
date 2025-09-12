@@ -28,9 +28,9 @@ Panel::Panel(const std::string& tab, const std::string& name)
 }
 
 Panel::~Panel() {
+	m_ScriptObj.DestroyAndRelease();
 	if(m_IsDead)
 		m_IsDead->Release();
-	m_ScriptObj.DestroyAndRelease();
 }
 
 void Panel::OnOpen() {

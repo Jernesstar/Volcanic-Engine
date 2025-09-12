@@ -80,6 +80,7 @@ void Window::Update() {
 
 void Window::Maximize(bool enable) {
 	m_Spec.Maximized = enable;
+
 	if(enable)
 		glfwMaximizeWindow(m_NativeWindow);
 	else
