@@ -2,16 +2,6 @@
 
 #include <VolcaniCore/Event/Events.h>
 
-#include <Magma/Graphics/Renderer.h>
-#include <Magma/Graphics/Shader.h>
-#include <Magma/Graphics/ShaderLibrary.h>
-
-#include <Magma/Core/BinaryReader.h>
-#include <Magma/Script/ScriptEngine.h>
-#include <Magma/Audio/AudioEngine.h>
-// #include <Magma/Physics/Physics.h>
-// #include <Magma/UI/UIRenderer.h>
-
 #include <Lava/Core/Lava.h>
 
 namespace fs = std::filesystem;

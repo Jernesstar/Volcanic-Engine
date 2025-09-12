@@ -1,22 +1,22 @@
 #include "App.h"
 
-#include <VolcaniCore/Core/Application.h>
-#include <VolcaniCore/Core/Input.h>
-#include <VolcaniCore/Core/Log.h>
-#include <VolcaniCore/Core/List.h>
-#include <VolcaniCore/Core/FileUtils.h>
+// #include <VolcaniCore/Core/Application.h>
+// #include <VolcaniCore/Core/Input.h>
+// #include <VolcaniCore/Core/Log.h>
+// #include <VolcaniCore/Core/List.h>
+// #include <VolcaniCore/Core/FileUtils.h>
 
-#include <Magma/Graphics/Renderer.h>
-#include <Magma/Graphics/Renderer2D.h>
-#include <Magma/Graphics/Renderer3D.h>
+// #include <Magma/Graphics/Renderer.h>
+// #include <Magma/Graphics/Renderer2D.h>
+// #include <Magma/Graphics/Renderer3D.h>
 
-#include <Magma/Script/ScriptModule.h>
-#include <Magma/Script/ScriptClass.h>
-#include <Magma/Script/ScriptObject.h>
+// #include <Magma/Script/ScriptModule.h>
+// #include <Magma/Script/ScriptClass.h>
+// #include <Magma/Script/ScriptObject.h>
 // #include <Magma/UI/UIRenderer.h>
 // #include <Magma/Physics/Physics.h>
 
-#include "ScriptGlue.h"
+// #include "ScriptGlue.h"
 
 // using namespace Magma::Script;
 // using namespace Lava::ECS;
@@ -26,8 +26,8 @@ namespace fs = std::filesystem;
 
 namespace Lava {
 
-static Ref<ScriptModule> s_AppModule = nullptr;
-static Ref<ScriptObject> s_AppObject = nullptr;
+// static Ref<ScriptModule> s_AppModule = nullptr;
+// static Ref<ScriptObject> s_AppObject = nullptr;
 
 // static bool s_ScreenPrepared = false;
 // static bool s_ShouldSwitchScreen = false;
@@ -126,7 +126,7 @@ static void AppLog(const std::string& msg, App* app) {
 App::App() {
 	s_Instance = this;
 
-	ScriptEngine::RegisterSingleton("AppClass", "App", this);
+	// ScriptEngine::RegisterSingleton("AppClass", "App", this);
 
 	// ScriptEngine::RegisterMethod<App>(
 	// 	"AppClass", "void SwitchScreen(const string &in)", &App::SwitchScreen);
@@ -160,8 +160,8 @@ App::App() {
 }
 
 void App::OnLoad() {
-	s_AppModule = CreateRef<ScriptModule>();
-	AppLoad(s_AppModule);
+	// s_AppModule = CreateRef<ScriptModule>();
+	// AppLoad(s_AppModule);
 
 	// s_AppObject = s_AppModule->GetClass(m_Project.App)->Instantiate();
 	// s_AppObject->Call("OnLoad");
@@ -172,16 +172,16 @@ void App::OnClose() {
 	// s_Screen = nullptr;
 	// s_ScreenPrepared = false;
 
-	if(s_AppObject)
-		s_AppObject->Call("OnClose");
+	// if(s_AppObject)
+	// 	s_AppObject->Call("OnClose");
 
-	s_AppObject.reset();
-	s_AppModule.reset();
+	// s_AppObject.reset();
+	// s_AppModule.reset();
 }
 
 void App::OnUpdate(TimeStep ts) {
-	if(!Running)
-		return;
+	// if(!Running)
+	// 	return;
 
 	// if(s_ShouldSwitchScreen)
 	// 	ScreenSet(s_NewScreenName);
@@ -190,7 +190,7 @@ void App::OnUpdate(TimeStep ts) {
 	// else if(s_ShouldPopScreen)
 	// 	ScreenPop();
 
-	s_AppObject->Call("OnUpdate", (float)ts);
+	// s_AppObject->Call("OnUpdate", (float)ts);
 
 	// if(!s_Screen)
 	// 	return;
