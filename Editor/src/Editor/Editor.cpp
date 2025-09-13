@@ -27,7 +27,7 @@
 #include "ScriptManager.h"
 #include "Widget.h"
 
-using asio::ip::tcp;
+using namespace asio::ip;
 
 using namespace VolcaniCore;
 using namespace Magma;

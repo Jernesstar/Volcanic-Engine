@@ -2,17 +2,7 @@
 
 #include <VolcaniCore/Core/Template.h>
 
-namespace Ash {
-
-enum class Event {
-	AssetAdded,
-	AssetRemoved,
-	AssetLoaded,
-	AssetUnloaded,
-	AssetUpdated,
-	RegistryLoaded,
-	RegistryUnloaded
-};
+namespace Lava {
 
 class AssetManager : public VolcaniCore::Derivable<AssetManager> {
 public:

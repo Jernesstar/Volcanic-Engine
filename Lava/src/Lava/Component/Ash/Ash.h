@@ -1,16 +1,30 @@
 #pragma once
 
-#include <VolcaniCore/Core/Time.h>
+#include "Component.h"
 
 using namespace VolcaniCore;
 
-namespace Ash {
+namespace Lava {
 
-extern void Init();
-extern void Close();
-extern void RegisterInterface();
-extern void BeginFrame();
-extern void Update(TimeStep ts);
-extern void EndFrame();
+enum AshEvent : uint32_t {
+	AssetAdded,
+	AssetRemoved,
+	AssetLoaded,
+	AssetUnloaded,
+	AssetUpdated,
+	RegistryLoaded,
+	RegistryUnloaded
+};
+
+class Ash : public Component {
+public:
+	void Init() override;
+	void Shutdown() override;
+	void BeginFrame() override;
+	void EndFrame() override;
+
+	void OnUpdate(TimeStep ts) override;
+	void OnEvent(uint32_t event) override;
+};
 
 }

@@ -5,7 +5,7 @@
 
 using namespace VolcaniCore;
 
-namespace Ash {
+namespace Lava {
 
 enum class AssetType : uint8_t {
 	None,

@@ -6,26 +6,32 @@
 
 using namespace Magma::Script;
 
-namespace Ash {
+namespace Lava {
 
-void Init() {
+static void AshRegisterInterface();
+
+void Ash::Init() {
+	AshRegisterInterface();
+}
+
+void Ash::Shutdown() {
 
 }
 
-void Close() {
+void Ash::BeginFrame() {
 
 }
 
-void BeginFrame() {
+void Ash::EndFrame() {
 
 }
 
-void Update(TimeStep ts) {
+void Ash::OnUpdate(TimeStep ts) {
 
 }
 
-void EndFrame() {
-
+void Ash::OnEvent(uint32_t event) {
+	AshEvent e = (AshEvent)event;
 }
 
 static void AssetDefaultCtor(Asset* ptr) {
@@ -52,7 +58,7 @@ static std::string AssetGetName(Asset* asset) {
 	// return AssetManager::Get()->GetAssetName(*asset);
 }
 
-void RegisterInterface() {
+void AshRegisterInterface() {
 	auto* engine = ScriptEngine::Get();
 
 	engine->RegisterEnum("AssetType");

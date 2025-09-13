@@ -84,6 +84,8 @@ void Renderer::StartFrame() {
 	s_Info.IndexCount    = 0;
 	s_Info.VertexCount   = 0;
 	s_Info.InstanceCount = 0;
+
+	Clear();
 }
 
 void Renderer::EndFrame() {

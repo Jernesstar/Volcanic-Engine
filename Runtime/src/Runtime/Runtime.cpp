@@ -43,11 +43,7 @@ Runtime::~Runtime() {
 	m_App->OnClose();
 	m_App.reset();
 
-	// Silica::Close();
-	// Pyro::Close();
-	// Igneous::Close();
-	// Cinder::Close();
-	// Ash::Close();
+	Lava::CloseComponents();
 }
 
 void Runtime::OnUpdate(TimeStep ts) {
