@@ -56,7 +56,7 @@ void WidgetRenderer::RegisterInterface() {
 		asFUNCTION(WindowWidgetRender), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectMethod("WindowWidget", "WindowWidget@ With(WindowFlag)",
 		asMETHOD(WindowWidget, With), asCALL_THISCALL);
-	engine->RegisterGlobalFunction("WindowWidget@ Window()",
+	engine->RegisterGlobalFunction("WindowWidget@ Window(string name)",
 		asFUNCTION(WidgetRenderer::Window), asCALL_CDECL);
 
 	engine->RegisterObjectType("Child", 0, asOBJ_REF | asOBJ_NOCOUNT);
@@ -76,7 +76,7 @@ void WidgetRenderer::EndFrame() {
 
 void WindowWidget::Render(ScriptFunc func) {
 	ImGui::PushID(s_Windows.Count());
-	ImGui::Begin("Window");
+	ImGui::Begin(Name.c_str());
 
 	func.CallVoid();
 
@@ -89,8 +89,8 @@ WindowWidget* WindowWidget::With(WindowWidget::Options option) {
 	return this;
 }
 
-WindowWidget* WidgetRenderer::Window() {
-	return &s_Windows.Emplace();
+WindowWidget* WidgetRenderer::Window(const std::string& name) {
+	return &s_Windows.Emplace(name);
 }
 
 }

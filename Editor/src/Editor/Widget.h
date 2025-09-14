@@ -17,6 +17,12 @@ public:
 		MenuBar, TitleBar
 	};
 
+public:
+	std::string Name;
+
+public:
+	WindowWidget(const std::string& name)
+		: Name(name) { }
 	WindowWidget* With(WindowWidget::Options option);
 	void Render(ScriptFunc func);
 };
@@ -27,7 +33,7 @@ public:
 	static void BeginFrame();
 	static void EndFrame();
 
-	static WindowWidget* Window();
+	static WindowWidget* Window(const std::string& name);
 	// static ChildWidget* ChildWindow();
 	// static TextWidget* Text();
 	// static ImageWidget* Image();
