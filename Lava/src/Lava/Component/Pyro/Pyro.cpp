@@ -1,29 +1,29 @@
 #include "Pyro.h"
 
-namespace Pyro {
+namespace Lava {
 
-void Init() {
-
-}
-
-void Close() {
+void Pyro::Init() {
 
 }
 
-void BeginFrame() {
+void Pyro::Shutdown() {
 
 }
 
-void Update(TimeStep ts) {
+void Pyro::BeginFrame() {
 
 }
 
-void EndFrame() {
+void Pyro::EndFrame() {
 
 }
 
-void RegisterInterface() {
-	
+void Pyro::OnUpdate(TimeStep ts) {
+
+}
+
+void Pyro::OnEvent(uint32_t event) {
+
 }
 
 }

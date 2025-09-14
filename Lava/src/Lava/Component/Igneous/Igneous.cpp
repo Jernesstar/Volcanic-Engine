@@ -6,37 +6,39 @@
 
 using namespace Magma::Graphics;
 
-namespace Igneous {
+namespace Lava {
 
-void Init() {
+void Igneous::Init() {
 	RendererAPI::Create(RendererAPI::Backend::OpenGL);
 	// Renderer::Init();
 }
 
-void Close() {
+void Igneous::Shutdown() {
 	// Renderer::Close();
 	RendererAPI::Shutdown();
 }
 
-void BeginFrame() {
+void Igneous::BeginFrame() {
 	RendererAPI::Get()->StartFrame();
 	// Renderer::BeginFrame();
 	// Renderer::Clear();
 }
 
-void Update(TimeStep ts) {
+void Igneous::EndFrame() {
+	// Renderer::EndFrame();
+	RendererAPI::Get()->EndFrame();
+}
+
+void Igneous::OnUpdate(TimeStep ts) {
 	// float fps = (1.0f / (float)ts) * 1000.0f;
 	// Renderer::GetFrame().Info.FPS = fps;
 
 }
 
-void EndFrame() {
-	// Renderer::EndFrame();
-	RendererAPI::Get()->EndFrame();
-}
+void Igneous::OnEvent(uint32_t event) {
+	// float fps = (1.0f / (float)ts) * 1000.0f;
+	// Renderer::GetFrame().Info.FPS = fps;
 
-void RegisterInterface() {
-	
 }
 
 }

@@ -20,6 +20,8 @@ using namespace Lava::Physics;
 
 namespace Lava {
 
+static List<Component*> s_Components;
+
 void InitComponents() {
 	Physics::Init();
 	AudioEngine::Init();
@@ -27,28 +29,25 @@ void InitComponents() {
 
 	ScriptGlue::RegisterInterface();
 
-	Ash::Init();
-	Ash::RegisterInterface();
+	auto ash = new Ash();
+	ash->Init();
+	s_Components.Add(ash);
 
-	Igneous::Init();
-	Igneous::RegisterInterface();
+	auto igneous = new Igneous();
+	igneous->Init();
+	s_Components.Add(igneous);
 
-	Silica::Init();
-	Silica::RegisterInterface();
-
-	Cinder::Init();
-	Cinder::RegisterInterface();
-
-	Pyro::Init();
-	Pyro::RegisterInterface();
+	auto silica = new Silica();
+	silica->Init();
+	s_Components.Add(silica);
 }
 
 void CloseComponents() {
-	Ash::Close();
-	Igneous::Close();
-	Silica::Close();
-	Cinder::Close();
-	Pyro::Close();
+	for(auto component : s_Components) {
+		component->Shutdown();
+		delete component;
+	}
+	s_Components.Clear();
 
 	ScriptEngine::Shutdown();
 	AudioEngine::Shutdown();
@@ -56,27 +55,18 @@ void CloseComponents() {
 }
 
 void BeginFrame() {
-	Ash::BeginFrame();
-	Igneous::BeginFrame();
-	Silica::BeginFrame();
-	Cinder::BeginFrame();
-	Pyro::BeginFrame();
+	for(auto component : s_Components)
+		component->BeginFrame();
 }
 
 void Update(TimeStep ts) {
-	Ash::Update(ts);
-	Igneous::Update(ts);
-	Silica::Update(ts);
-	Cinder::Update(ts);
-	Pyro::Update(ts);
+	for(auto component : s_Components)
+		component->OnUpdate(ts);
 }
 
 void EndFrame() {
-	Ash::EndFrame();
-	Igneous::EndFrame();
-	Silica::EndFrame();
-	Cinder::EndFrame();
-	Pyro::EndFrame();
+	for(auto component : s_Components)
+		component->EndFrame();
 }
 
 }

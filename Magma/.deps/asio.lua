@@ -18,9 +18,11 @@ project "asio"
 
     defines {
         "_WIN32_WINDOWS",
-        "ASIO_SEPARATE_COMPILATION"
+        -- "ASIO_STANDALONE",
+        "ASIO_SEPARATE_COMPILATION",
     }
 
-    buildoptions {
-        "-mthreads"
-    }
+    filter "system:linux"
+        buildoptions {
+            "-mthreads"
+        }

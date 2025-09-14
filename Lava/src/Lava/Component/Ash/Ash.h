@@ -8,12 +8,13 @@ namespace Lava {
 
 enum AshEvent : uint32_t {
 	AssetAdded,
-	AssetRemoved,
+	AssetDeleted,
 	AssetLoaded,
 	AssetUnloaded,
-	AssetUpdated,
-	RegistryLoaded,
-	RegistryUnloaded
+	AssetSourceUpdated,
+	AssetSourceDeleted,
+	AssetMetadataUpdated,
+	AssetMetadataDeleted
 };
 
 class Ash : public Component {

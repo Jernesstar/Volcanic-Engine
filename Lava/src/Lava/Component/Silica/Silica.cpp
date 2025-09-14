@@ -1,29 +1,29 @@
 #include "Silica.h"
 
-namespace Silica {
+namespace Lava {
 
-void Init() {
-
-}
-
-void Close() {
+void Silica::Init() {
 
 }
 
-void BeginFrame() {
+void Silica::Shutdown() {
 
 }
 
-void Update(TimeStep ts) {
+void Silica::BeginFrame() {
 
 }
 
-void EndFrame() {
+void Silica::EndFrame() {
 
 }
 
-void RegisterInterface() {
-	
+void Silica::OnUpdate(TimeStep ts) {
+
+}
+
+void Silica::OnEvent(uint32_t event) {
+
 }
 
 }

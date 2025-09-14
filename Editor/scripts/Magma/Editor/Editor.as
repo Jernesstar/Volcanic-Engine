@@ -40,5 +40,4 @@ shared abstract class Editor
     {
 
     }
-
 }

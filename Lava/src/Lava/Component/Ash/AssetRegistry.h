@@ -30,22 +30,22 @@ struct Asset {
 namespace std {
 
 template<>
-struct hash<Ash::Asset> {
-	std::size_t operator()(const Ash::Asset& asset) const {
+struct hash<Lava::Asset> {
+	std::size_t operator()(const Lava::Asset& asset) const {
 		return (uint64_t)asset.ID;
 	}
 };
 
 }
 
-namespace Ash {
+namespace Lava {
 
 class AssetRegistry {
 public:
 
 
 private:
-	OMap<Asset, bool> m_AssetRegistry;
+	
 };
 
 }
