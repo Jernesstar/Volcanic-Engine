@@ -38,26 +38,6 @@ static void AssetDefaultCtor(Asset* ptr) {
 	new (ptr) Asset{ };
 }
 
-static void AssetInitCtor(uint64_t id, AssetType type, Asset* ptr) {
-	// new (ptr) Asset{ id, type };
-}
-
-static uint64_t GetAssetID(Asset* asset) {
-	return (uint64_t)asset->ID;
-}
-
-static bool AssetIsValid(Asset* asset) {
-	// return AssetManager::Get()->IsValid(*asset);
-}
-
-static bool AssetIsLoaded(Asset* asset) {
-	// return AssetManager::Get()->IsLoaded(*asset);
-}
-
-static std::string AssetGetName(Asset* asset) {
-	// return AssetManager::Get()->GetAssetName(*asset);
-}
-
 void AshRegisterInterface() {
 	auto* engine = ScriptEngine::Get();
 
@@ -72,13 +52,13 @@ void AshRegisterInterface() {
 	engine->RegisterEnumValue("AssetType", "Shader",  7);
 	engine->RegisterEnumValue("AssetType", "Custom",  8);
 
-	engine->RegisterObjectType("Asset", sizeof(Asset),
-		asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Asset>());
-	engine->RegisterObjectBehaviour("Asset", asBEHAVE_CONSTRUCT,
-		"void f()", asFUNCTION(AssetDefaultCtor), asCALL_CDECL_OBJLAST);
-	engine->RegisterObjectBehaviour("Asset", asBEHAVE_CONSTRUCT,
-		"void f(uint64, AssetType)", asFUNCTION(AssetInitCtor),
-		asCALL_CDECL_OBJLAST);
+	// engine->RegisterObjectType("Asset", sizeof(Asset),
+	// 	asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<Asset>());
+	// engine->RegisterObjectBehaviour("Asset", asBEHAVE_CONSTRUCT,
+	// 	"void f()", asFUNCTION(AssetDefaultCtor), asCALL_CDECL_OBJLAST);
+	// engine->RegisterObjectBehaviour("Asset", asBEHAVE_CONSTRUCT,
+	// 	"void f(uint64, AssetType)", asFUNCTION(AssetInitCtor),
+	// 	asCALL_CDECL_OBJLAST);
 }
 
 // static Sound* GetSound(Asset asset, AssetManager* manager) {

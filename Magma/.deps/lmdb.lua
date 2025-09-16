@@ -7,7 +7,13 @@ project "lmdb"
     targetdir ("%{RootPath}/build/%{_ACTION}/Magma/lib")
 
     files {
-        "%{VendorPaths.lmdb}/"
+        "%{VendorPaths.lmdb}/libraries/liblmdb/mdb.c",
+        "%{VendorPaths.lmdb}/libraries/liblmdb/midl.c",
+        "%{VendorPaths.lmdb}/libraries/liblmdb/mdb_stat.c",
+        "%{VendorPaths.lmdb}/libraries/liblmdb/mdb_copy.c",
+        "%{VendorPaths.lmdb}/libraries/liblmdb/mdb_load.c",
+        "%{VendorPaths.lmdb}/libraries/liblmdb/mdb_dump.c",
+        "%{VendorPaths.lmdb}/libraries/liblmdb/mdb_drop.c",
     }
 
     includedirs {
@@ -15,7 +21,7 @@ project "lmdb"
     }
 
     defines {
-        ""
+
     }
 
     buildoptions {

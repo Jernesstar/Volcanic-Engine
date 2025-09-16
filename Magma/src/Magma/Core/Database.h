@@ -2,7 +2,8 @@
 
 #include <lmdb.h>
 
-#include "Buffer.h"
+#include <VolcaniCore/Core/Buffer.h>
+#include <VolcaniCore/Core/List.h>
 
 using namespace VolcaniCore;
 
@@ -11,7 +12,7 @@ using Bytes = Buffer<uint8_t>;
 namespace Magma {
 
 struct DatabaseQuery {
-	
+	Bytes Key;
 };
 
 struct DatabaseResult {
@@ -28,12 +29,18 @@ class Registry;
 
 class Database {
 public:
+	const std::string Name;
+
+public:
+	Database(const std::string& name, MDB_env* registry, MDB_dbi handle);
+	~Database() = default;
+
 	void Insert(const Bytes& key, const Bytes& value);
 	DatabaseResult Query(const DatabaseQuery& query);
 
 private:
-	
-	Registry* m_Registry;
+	MDB_env* m_Registry;
+	MDB_dbi m_Handle;
 };
 
 class Registry {
@@ -43,6 +50,10 @@ public:
 
 	Database* NewDatabase(const std::string& name);
 	Database* GetDatabase(const std::string& name);
-}
+
+private:
+	MDB_env* m_Handle;
+	List<Database> m_Databases;
+};
 
 }

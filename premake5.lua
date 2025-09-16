@@ -81,6 +81,7 @@ Includes["soloud"]                = "%{VendorPaths.soloud}/include"
 Includes["yaml_cpp"]              = "%{VendorPaths.yaml_cpp}/include"
 Includes["rapidjson"]             = "%{VendorPaths.rapidjson}/include"
 Includes["asio"]                  = "%{VendorPaths.asio}/asio/include"
+Includes["lmdb"]                  = "%{VendorPaths.lmdb}/libraries/liblmdb"
 
 -- Lava libraries
 Includes["flecs"]                 = "%{VendorPaths.flecs}/include"
