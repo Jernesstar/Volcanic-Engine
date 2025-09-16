@@ -36,7 +36,8 @@ project "Lava"
         "%{Includes.angelscript}",
         "%{MagmaVendorDir}",
         "%{Includes.soloud}",
-        "%{Includes.asio}"
+        "%{Includes.asio}",
+        "%{Includes.lmdb}"
     }
 
     links {
@@ -47,6 +48,7 @@ project "Lava"
         "PhysX",
         "flecs",
         "asio",
+        "lmdb",
 
         "ssl",
         "crypto"

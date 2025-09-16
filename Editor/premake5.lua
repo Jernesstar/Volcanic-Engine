@@ -59,6 +59,7 @@ project "Editor"
         "%{MagmaVendorDir}",
         "%{Includes.soloud}",
         "%{Includes.asio}",
+        "%{Includes.lmdb}",
     }
 
     links {
@@ -87,6 +88,7 @@ project "Editor"
         "angelscript",
         "soloud",
         "asio",
+        "lmdb",
 
         "ssl",
         "crypto"

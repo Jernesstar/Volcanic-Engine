@@ -80,3 +80,6 @@
 [submodule "Editor/.vendor/miniz-cpp"]
 	path = Editor/.vendor/miniz-cpp
 	url = https://github.com/tfussell/miniz-cpp.git
+[submodule "Magma/.vendor/lmdb"]
+	path = Magma/.vendor/lmdb
+	url = https://github.com/LMDB/lmdb.git

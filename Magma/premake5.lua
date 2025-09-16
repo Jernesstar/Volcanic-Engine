@@ -36,7 +36,8 @@ project "Magma"
         "%{Includes.angelscript}",
         "%{MagmaVendorDir}",
         "%{Includes.soloud}",
-        "%{Includes.asio}"
+        "%{Includes.asio}",
+        "%{Includes.lmdb}"
     }
 
     links {
@@ -48,6 +49,7 @@ project "Magma"
         "angelscript",
         "soloud",
         "asio",
+        "lmdb",
 
         "ssl",
         "crypto"
@@ -78,3 +80,4 @@ include "Magma/.deps/soloud"
 include "Magma/.deps/yaml-cpp"
 include "Magma/.deps/glad"
 include "Magma/.deps/asio"
+include "Magma/.deps/lmdb"

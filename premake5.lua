@@ -49,6 +49,7 @@ VendorPaths["soloud"]             = "%{MagmaVendorDir}/soloud"
 VendorPaths["yaml_cpp"]           = "%{MagmaVendorDir}/yaml-cpp"
 VendorPaths["rapidjson"]          = "%{MagmaVendorDir}/rapidjson"
 VendorPaths["asio"]               = "%{MagmaVendorDir}/asio"
+VendorPaths["lmdb"]               = "%{MagmaVendorDir}/lmdb"
 
 -- Lava libraries
 VendorPaths["flecs"]              = "%{LavaVendorDir}/flecs"
