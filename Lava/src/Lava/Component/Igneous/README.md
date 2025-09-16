@@ -1,2 +1,0 @@
-# Igneous
-Rendering system

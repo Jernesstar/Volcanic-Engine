@@ -1,2 +1,0 @@
-# Silica
-Networking system

@@ -1,11 +1,6 @@
 
 namespace Lava {
 
-class Asset
-{
-	UUID ID = 0;
-};
-
 class AssetMetadata
 {
 	UUID ID = 0;
@@ -14,12 +9,9 @@ class AssetMetadata
 	List<UUID> Refs;
 };
 
-class AssetRegistry {
-public:
+class AssetRegistry
+{
 
-
-private:
-	
 };
 
 }

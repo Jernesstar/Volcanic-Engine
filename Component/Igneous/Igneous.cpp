@@ -38,7 +38,6 @@ void Igneous::OnUpdate(TimeStep ts) {
 void Igneous::OnEvent(uint32_t event) {
 	// float fps = (1.0f / (float)ts) * 1000.0f;
 	// Renderer::GetFrame().Info.FPS = fps;
-
 }
 
 }
