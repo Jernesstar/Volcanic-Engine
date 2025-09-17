@@ -45,14 +45,7 @@ project "Magma"
 
         "yaml-cpp",
 
-        "flecs",
         "angelscript",
-        "soloud",
-        "asio",
-        "lmdb",
-
-        "ssl",
-        "crypto"
     }
 
     defines {
@@ -76,8 +69,4 @@ project "Magma"
 
 
 include "Magma/.deps/angelscript"
-include "Magma/.deps/soloud"
 include "Magma/.deps/yaml-cpp"
-include "Magma/.deps/glad"
-include "Magma/.deps/asio"
-include "Magma/.deps/lmdb"

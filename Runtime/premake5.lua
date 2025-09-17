@@ -30,17 +30,10 @@ project "Runtime"
         "%{Includes.yaml_cpp}",
         "%{Includes.rapidjson}",
         
-        "%{Includes.flecs}",
-        "%{Includes.PhysX}",
-        "%{Includes.clay}",
         "%{Includes.angelscript}",
         "%{VendorPaths.angelscript}",
-        "%{Includes.soloud}",
-        "%{Includes.asio}",
-        "%{Includes.lmdb}",
 
         "%{Includes.glm}",
-        "%{Includes.glad}",
         "%{Includes.glfw}",
     }
 
@@ -54,11 +47,7 @@ project "Runtime"
 
         "yaml-cpp",
 
-        "flecs",
         "angelscript",
-        "soloud",
-        "asio",
-        "lmdb",
     }
 
     defines {

@@ -4,15 +4,6 @@
 
 #include <stb_image/stb_image.h>
 
-#include <assimp/scene.h>
-#include <assimp/Importer.hpp>
-#include <assimp/postprocess.h>
-
-#include <glslang/Public/ShaderLang.h>
-#include <glslang/Public/ResourceLimits.h>
-#include <glslang/SPIRV/Logger.h>
-#include <glslang/SPIRV/GlslangToSpv.h>
-
 #include <soloud.h>
 #include <soloud_wav.h>
 

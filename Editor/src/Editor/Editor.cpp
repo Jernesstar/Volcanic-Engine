@@ -18,7 +18,6 @@
 #include <VolcaniCore/Core/Log.h>
 #include <VolcaniCore/Core/Input.h>
 
-#include <Magma/Graphics/RendererAPI.h>
 #include <Magma/Core/YAMLSerializer.h>
 
 #include "UI/UI.h"

@@ -33,33 +33,21 @@ project "Editor"
         "%{Includes.glad}",
         "%{Includes.glfw}",
 
-        "%{VendorPaths.glslang}",
-        "%{Includes.glslang}",
-        "%{Includes.SPIRV_Cross}",
+        "%{Includes.angelscript}",
+        "%{MagmaVendorDir}",
+
+        "%{Includes.yaml_cpp}",
+        "%{Includes.rapidjson}",
+
         "%{Includes.efsw}",
         "%{Includes.miniz_cpp}",
 
-        "%{Includes.assimp}",
         "%{Includes.stb_image}",
-        "%{Includes.freetype}",
 
         "%{Includes.imgui}",
         "%{Includes.imgui}/imgui",
         "%{Includes.ImGuiFileDialog}",
         "%{Includes.IconFontCppHeaders}",
-
-        "%{Includes.yaml_cpp}",
-        "%{Includes.rapidjson}",
-
-        "%{Includes.clay}",
-        "%{Includes.flecs}",
-        "%{Includes.PhysX}",
-
-        "%{Includes.angelscript}",
-        "%{MagmaVendorDir}",
-        "%{Includes.soloud}",
-        "%{Includes.asio}",
-        "%{Includes.lmdb}",
     }
 
     links {
@@ -70,12 +58,6 @@ project "Editor"
         "glfw",
         "glad",
 
-        "glslang",
-        "SPIRV-Cross",
-
-        "assimp",
-        "freetype",
-        "stb_image",
         "efsw",
 
         "imgui",
@@ -83,12 +65,8 @@ project "Editor"
         "ImGuizmo",
         "ImGuiColorTextEdit",
 
-        "flecs",
         "yaml-cpp",
         "angelscript",
-        "soloud",
-        "asio",
-        "lmdb",
 
         "ssl",
         "crypto"
@@ -128,13 +106,10 @@ project "Editor"
             "-Wno-pointer-arith"
         }
 
+
+include "Editor/.deps/efsw"
+include "Editor/.deps/asio"
 include "Editor/.deps/imgui"
 include "Editor/.deps/ImGuiFileDialog"
 include "Editor/.deps/ImGuizmo"
 include "Editor/.deps/ImGuiColorTextEdit"
-include "Editor/.deps/assimp"
-include "Editor/.deps/freetype"
-include "Editor/.deps/stb_image"
-include "Editor/.deps/glslang"
-include "Editor/.deps/SPIRV-Cross"
-include "Editor/.deps/efsw"

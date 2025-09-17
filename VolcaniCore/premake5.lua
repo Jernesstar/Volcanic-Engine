@@ -20,7 +20,6 @@ project "VolcaniCore"
         "src/impl",
 
         "%{Includes.glfw}",
-        "%{Includes.glad}",
         "%{Includes.glm}",
     }
 

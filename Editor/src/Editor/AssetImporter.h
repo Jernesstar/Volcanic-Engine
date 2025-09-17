@@ -1,11 +1,5 @@
 #pragma once
 
-#include <Magma/Graphics/Mesh.h>
-#include <Magma/Graphics/Texture.h>
-#include <Magma/Graphics/Cubemap.h>
-#include <Magma/Graphics/Shader.h>
-
-#include <Magma/Audio/Sound.h>
 #include <Magma/Script/ScriptModule.h>
 
 using namespace VolcaniCore;

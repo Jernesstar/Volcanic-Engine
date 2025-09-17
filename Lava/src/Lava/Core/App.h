@@ -1,11 +1,12 @@
 #pragma once
 
 #include <VolcaniCore/Core/Defines.h>
+#include <VolcaniCore/Core/Time.h>
 
 #include <Magma/Core/Project.h>
 #include <Magma/Script/ScriptModule.h>
 
-#include "ECS/World.h"
+// #include "ECS/World.h"
 // #include "UI/UI.h"
 // #include "SceneRenderer.h"
 

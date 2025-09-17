@@ -34,8 +34,6 @@
 
 using namespace Magma;
 using namespace Magma::Script;
-using namespace Lava::ECS;
-// using namespace Lava::Physics;
 
 namespace Lava {
 
@@ -392,19 +390,19 @@ void RegisterEvents() {
 void RegisterECS() {
 	auto* engine = ScriptEngine::Get();
 
-	engine->RegisterObjectType("Entity", sizeof(Entity),
-		asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_ALLINTS |
-		asGetTypeTraits<Entity>());
-	engine->RegisterObjectMethod("Entity", "string get_Name() const property",
-		asMETHOD(Entity, GetName), asCALL_THISCALL);
-	engine->RegisterObjectMethod("Entity", "void set_Name(const string &in) property",
-		asMETHOD(Entity, SetName), asCALL_THISCALL);
-	engine->RegisterObjectMethod("Entity", "bool get_IsAlive() const property",
-		asMETHOD(Entity, IsAlive), asCALL_THISCALL);
-	engine->RegisterObjectMethod("Entity", "bool get_IsValid() const property",
-		asMETHOD(Entity, IsValid), asCALL_THISCALL);
-	engine->RegisterObjectMethod("Entity", "void Kill()",
-		asMETHOD(Entity, Kill), asCALL_THISCALL);
+	// engine->RegisterObjectType("Entity", sizeof(Entity),
+	// 	asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_ALLINTS |
+	// 	asGetTypeTraits<Entity>());
+	// engine->RegisterObjectMethod("Entity", "string get_Name() const property",
+	// 	asMETHOD(Entity, GetName), asCALL_THISCALL);
+	// engine->RegisterObjectMethod("Entity", "void set_Name(const string &in) property",
+	// 	asMETHOD(Entity, SetName), asCALL_THISCALL);
+	// engine->RegisterObjectMethod("Entity", "bool get_IsAlive() const property",
+	// 	asMETHOD(Entity, IsAlive), asCALL_THISCALL);
+	// engine->RegisterObjectMethod("Entity", "bool get_IsValid() const property",
+	// 	asMETHOD(Entity, IsValid), asCALL_THISCALL);
+	// engine->RegisterObjectMethod("Entity", "void Kill()",
+		// asMETHOD(Entity, Kill), asCALL_THISCALL);
 
 	// engine->RegisterObjectMethod("Entity", "bool Has(const string &in) const",
 	// 	asMETHODPR(Entity, Has, (const std::string& name) const, bool),

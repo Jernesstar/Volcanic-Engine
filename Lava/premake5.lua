@@ -23,35 +23,21 @@ project "Lava"
         "%{RootPath}/Magma/src",
         "%{RootPath}/Magma/src/Magma",
 
-        "%{Includes.PhysX}",
-        "%{Includes.flecs}",
-        "%{Includes.clay}",
         "%{Includes.yaml_cpp}",
         "%{Includes.rapidjson}",
 
         "%{Includes.glm}",
         "%{Includes.glad}",
         "%{Includes.glfw}",
-        "%{Includes.imgui}",
         "%{Includes.angelscript}",
         "%{MagmaVendorDir}",
-        "%{Includes.soloud}",
-        "%{Includes.asio}",
-        "%{Includes.lmdb}"
     }
 
     links {
         "Magma",
         "VolcaniCore",
 
-        "yaml-cpp",
-        "PhysX",
-        "flecs",
-        "asio",
-        "lmdb",
-
-        "ssl",
-        "crypto"
+        -- "yaml-cpp",
     }
 
     defines {
@@ -71,6 +57,3 @@ project "Lava"
 
     filter "system:windows"
         systemversion "latest"
-
-include "Lava/.deps/flecs"
-include "Lava/.deps/PhysX"
