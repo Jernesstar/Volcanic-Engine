@@ -50,9 +50,12 @@ VendorPaths["rapidjson"]          = "%{MagmaVendorDir}/rapidjson"
 -- Lava libraries
 
 -- Editor libraries
+VendorPaths["asio"]               = "%{EditorVendorDir}/asio"
+VendorPaths["stb_image"]          = "%{EditorVendorDir}/stb_image"
+VendorPaths["soloud"]             = "%{EditorVendorDir}/soloud"
 VendorPaths["efsw"]               = "%{EditorVendorDir}/efsw"
 VendorPaths["miniz_cpp"]          = "%{EditorVendorDir}/miniz-cpp"
-VendorPaths["glad"]               = "%{MagmaVendorDir}/glad"
+VendorPaths["glad"]               = "%{EditorVendorDir}/glad"
 VendorPaths["imgui"]              = "%{EditorVendorDir}/imgui"
 VendorPaths["ImGuiFileDialog"]    = "%{EditorVendorDir}/ImGuiFileDialog"
 VendorPaths["ImGuizmo"]           = "%{EditorVendorDir}/ImGuizmo"
@@ -71,6 +74,9 @@ Includes["rapidjson"]             = "%{VendorPaths.rapidjson}/include"
 -- Lava libraries
 
 -- Editor libraries
+Includes["asio"]                  = "%{VendorPaths.asio}/asio/include"
+Includes["stb_image"]             = "%{VendorPaths.stb_image}/include"
+Includes["soloud"]                = "%{VendorPaths.soloud}/include"
 Includes["glad"]                  = "%{VendorPaths.glad}/include"
 Includes["efsw"]                  = "%{VendorPaths.efsw}/include"
 Includes["miniz_cpp"]             = "%{VendorPaths.miniz_cpp}/include"

@@ -40,6 +40,7 @@ project "Editor"
         "%{Includes.rapidjson}",
 
         "%{Includes.efsw}",
+        "%{Includes.soloud}",
         "%{Includes.miniz_cpp}",
 
         "%{Includes.stb_image}",
@@ -56,9 +57,12 @@ project "Editor"
         "VolcaniCore",
 
         "glfw",
-        "glad",
 
+        "glad",
         "efsw",
+        "soloud",
+        "stb_image",
+        "asio",
 
         "imgui",
         "ImGuiFileDialog",
@@ -107,6 +111,9 @@ project "Editor"
         }
 
 
+include "Editor/.deps/glad"
+include "Editor/.deps/soloud"
+include "Editor/.deps/stb_image"
 include "Editor/.deps/efsw"
 include "Editor/.deps/asio"
 include "Editor/.deps/imgui"

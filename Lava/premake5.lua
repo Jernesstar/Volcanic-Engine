@@ -27,7 +27,6 @@ project "Lava"
         "%{Includes.rapidjson}",
 
         "%{Includes.glm}",
-        "%{Includes.glad}",
         "%{Includes.glfw}",
         "%{Includes.angelscript}",
         "%{MagmaVendorDir}",

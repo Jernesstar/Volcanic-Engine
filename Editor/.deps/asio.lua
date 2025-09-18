@@ -3,8 +3,8 @@ project "asio"
     language "C++"
     staticruntime "Off"
 
-    objdir ("%{RootPath}/build/%{_ACTION}/Magma/obj")
-    targetdir ("%{RootPath}/build/%{_ACTION}/Magma/lib")
+    objdir ("%{RootPath}/build/%{_ACTION}/Editor/obj")
+    targetdir ("%{RootPath}/build/%{_ACTION}/Editor/lib")
 
     files {
         "%{VendorPaths.asio}/asio/src/asio.cpp",
