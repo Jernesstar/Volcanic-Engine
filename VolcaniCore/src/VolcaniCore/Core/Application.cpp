@@ -24,7 +24,6 @@ void Application::Close() {
 Application::Application(const WindowSpecification& spec) {
 	s_Instance = this;
 	s_Window = CreateRef<Window>(spec);
-	Events::Init();
 }
 
 void Application::Run() {

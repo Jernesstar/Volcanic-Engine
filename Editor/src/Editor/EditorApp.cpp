@@ -15,7 +15,6 @@
 #include "UI/UIRenderer.h"
 
 using namespace VolcaniCore;
-using namespace Magma::Graphics;
 using namespace Magma::UI;
 
 namespace Magma {
@@ -49,11 +48,11 @@ EditorApp::~EditorApp() {
 }
 
 void EditorApp::OnUpdate(TimeStep ts) {
-	Lava::BeginFrame();
-	Lava::Update(ts);
-
 	UIRenderer::BeginFrame();
 	ImGuizmo::BeginFrame();
+
+	Lava::BeginFrame();
+	Lava::Update(ts);
 
 	m_Editor.Update(ts);
 	m_Editor.Render();

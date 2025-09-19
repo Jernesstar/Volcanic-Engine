@@ -5,7 +5,6 @@
 #include <Magma/Core/Project.h>
 
 #include <Lava/Core/App.h>
-#include <Lava/Component/Ash/AssetManager.h>
 
 #include "Tab.h"
 

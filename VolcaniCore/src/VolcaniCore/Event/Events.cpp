@@ -61,7 +61,7 @@ void Events::KeyCallback(GLFWwindow* window, int key, int scancode,
 	}
 }
 
-void Events::KeyCharCallback(GLFWwindow* window, unsigned int codepoint) {
+void Events::KeyCharCallback(GLFWwindow* window, uint32_t codepoint) {
 	KeyCharEvent event((KeyCode)codepoint, (char)codepoint);
 	Dispatch(event);
 }

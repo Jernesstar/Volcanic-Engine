@@ -1,21 +1,20 @@
 #pragma once
 
-#include <Magma/Graphics/Framebuffer.h>
-
 #include "UIElement.h"
+
+#include "Editor/AssetImporter.h"
 
 namespace Magma::UI {
 
 class Image : public UIElement {
 public:
-	Ref<Graphics::Texture> Content;
-	uint64_t ImageID = 0;
+	Ref<Texture> Content;
 
 public:
 	Image()
 		: UIElement(UIElementType::Image) { }
-	Image(Ref<Graphics::Texture> image)
-		: UIElement(UIElementType::Image), Content(image) { }
+	Image(Ref<Texture> image)
+		: UIElement(UIElementType::Image), Content(std::move(image)) { }
 
 	void Draw() override;
 };

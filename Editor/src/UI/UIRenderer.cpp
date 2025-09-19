@@ -25,13 +25,10 @@
 #include <ImGuiFileDialog/ImGuiFileDialog.h>
 #include <ImGuiColorTextEdit/TextEditor.h>
 
-#include <Graphics/OpenGL/Texture2D.h>
-
 #include <VolcaniCore/Core/Application.h>
 #include <VolcaniCore/Core/List.h>
 
 #include <VolcaniCore/Event/Events.h>
-#include <Magma/Graphics/RendererAPI.h>
 
 using namespace VolcaniCore;
 
@@ -158,9 +155,9 @@ static void ButtonImage(Ref<UIElement> element, ImVec2 dim) {
 	if(!element->As<Image>()->Content)
 		return;
 
-	auto tex = element->As<Image>()->Content->As<OpenGL::Texture2D>();
-	auto id = (ImTextureID)(intptr_t)tex->GetID();
-	// ImGui::ImageButton(id, dim, ImVec2(0, 1), ImVec2(1, 0));
+	auto tex = element->As<Image>()->Content;
+	auto id = (ImTextureID)(intptr_t)tex->ID;
+	ImGui::ImageButton("##Image", id, dim, ImVec2(0, 1), ImVec2(1, 0));
 }
 
 UIState UIRenderer::DrawButton(UI::Button& button) {
@@ -189,12 +186,12 @@ UIState UIRenderer::DrawButton(UI::Button& button) {
 }
 
 UIState UIRenderer::DrawImage(UI::Image& image) {
-	auto texture = image.Content->As<OpenGL::Texture2D>();
+	auto texture = image.Content;
 
 	ImVec2 dim = ImVec2(image.Width, image.Height);
 	if(image.UsePosition)
 		ImGui::SetCursorPos(ImVec2(image.x, image.y));
-	ImGui::Image((ImTextureID)(intptr_t)texture->GetID(), dim, ImVec2(0, 1), ImVec2(1, 0));
+	ImGui::Image((ImTextureID)(intptr_t)texture->ID, dim, ImVec2(0, 1), ImVec2(1, 0));
 
 	return {
 		ImGui::IsItemClicked(),
@@ -413,6 +410,7 @@ void UIRenderer::Pop(uint64_t count) {
 }
 
 void UIRenderer::BeginFrame() {
+	glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	ImGui_ImplGlfw_NewFrame();
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui::NewFrame();
@@ -431,6 +429,18 @@ void UIRenderer::EndFrame() {
 }
 
 void UIRenderer::Init() {
+	int success = gladLoadGL();
+	VOLCANICORE_ASSERT(success, "Glad could not load OpenGL");
+	VOLCANICORE_LOG_INFO(
+		"Successfully loaded OpenGL\n"
+		"\tVersion: %s\n"
+		"\tGPU: %s", glGetString(GL_VERSION), glGetString(GL_RENDERER));
+
+	glEnable(GL_MULTISAMPLE);				// Smooth edges
+	glEnable(GL_FRAMEBUFFER_SRGB);			// Gamma correction
+	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS); // Smooth cubemap edges
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 
@@ -443,10 +453,8 @@ void UIRenderer::Init() {
 					| ImGuiConfigFlags_NavEnableSetMousePos;
 	io.DisplaySize = ImVec2(window->GetWidth(), window->GetHeight());
 
-	if(RendererAPI::Get()->GetBackend() == RendererAPI::Backend::OpenGL) {
-		ImGui_ImplGlfw_InitForOpenGL(window->GetNativeWindow(), true);
-		ImGui_ImplOpenGL3_Init("#version 460 core");
-	}
+	ImGui_ImplGlfw_InitForOpenGL(window->GetNativeWindow(), true);
+	ImGui_ImplOpenGL3_Init("#version 460 core");
 
 	Events::RegisterListener<KeyPressedEvent>(
 		[](KeyPressedEvent& event)

@@ -62,6 +62,7 @@ Window::Window(const WindowSpecification& spec)
 	: m_Spec(spec)
 {
 	m_NativeWindow = CreateWindow(m_Spec);
+	Events::Init();
 	Events::RegisterListener<WindowResizedEvent>(
 		[&](const WindowResizedEvent& event)
 		{
@@ -114,7 +115,11 @@ void Window::Fullscreen(bool enable) {
 }
 
 void Window::UndoSplashScreen() {
+	m_Spec.SplashScreen = false;
 
+	glfwDestroyWindow(m_NativeWindow);
+	m_NativeWindow = CreateWindow(m_Spec);
+	Events::Init();
 }
 
 void Window::Resize(uint32_t width, uint32_t height) {

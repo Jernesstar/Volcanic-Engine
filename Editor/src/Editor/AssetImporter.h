@@ -1,45 +1,83 @@
 #pragma once
 
+#include <glad/glad.h>
+
+#include <soloud.h>
+#include <soloud_wav.h>
+
+#include <VolcaniCore/Core/Defines.h>
+#include <VolcaniCore/Core/Buffer.h>
+
 #include <Magma/Script/ScriptModule.h>
 
 using namespace VolcaniCore;
 
-using namespace Magma::Audio;
-
 namespace Magma {
-struct MaterialPaths {
-	std::string Diffuse;
-	std::string Specular;
-	std::string Emissive;
-	glm::vec4 DiffuseColor;
-	glm::vec4 SpecularColor;
-	glm::vec4 EmissiveColor;
 
-	std::string operator[](uint32_t i) { return *(&Diffuse + i); }
+class AudioEngine {
+public:
+	static void Init() {
+		s_Engine = new SoLoud::Soloud;
+		s_Engine->init();
+	}
+
+	static void Shutdown() {
+		s_Engine->deinit();
+		delete s_Engine;
+	}
+
+	static SoLoud::Soloud* Get() {
+		return s_Engine;
+	}
+
+private:
+	static SoLoud::Soloud* s_Engine;
 };
 
-struct ShaderFile {
-	const std::string Path;
-	const Graphics::ShaderType Type;
+class Sound {
+public:
+	Sound() = default;
+	~Sound() = default;
+
+	void Play(float volume = -1.0f) {
+		AudioEngine::Get()->play(m_Sound, volume);
+	}
+
+	SoLoud::Wav& GetInternal() { return m_Sound; }
+
+private:
+	SoLoud::Wav m_Sound;
+};
+
+struct ImageData {
+	uint32_t Width, Height;
+	Buffer<uint8_t> Data;
+};
+
+struct Texture {
+	uint32_t ID;
+
+	Texture(ImageData pixels) {
+		auto format = GL_RGBA8;
+		auto filter = GL_NEAREST;
+
+		glCreateTextures(GL_TEXTURE_2D, 1, &ID);
+		glTextureStorage2D(ID, 1, format, pixels.Width, pixels.Height);
+		glTextureParameteri(ID, GL_TEXTURE_MIN_FILTER, filter);
+		glTextureParameteri(ID, GL_TEXTURE_MAG_FILTER, filter);
+		glTextureParameteri(ID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTextureParameteri(ID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glTextureSubImage2D(ID, 0, 0, 0, pixels.Width, pixels.Height, GL_RGBA,
+							GL_UNSIGNED_BYTE, pixels.Data.Get());
+	}
 };
 
 class AssetImporter {
 public:
-	static Graphics::ImageData GetImageData(const std::string& path,
+	static ImageData GetImageData(const std::string& path,
 		bool flip = true);
-
-	static Ref<Graphics::Mesh> GetMesh(const std::string& path);
-	static void GetMeshData(const std::string& path,
-		List<Graphics::SubMesh>& mesh,
-		List<MaterialPaths>& materialPaths);
-
-	static Ref<Graphics::Texture> GetTexture(const std::string& path,
+	static Ref<Texture> GetTexture(const std::string& path,
 		bool flip = true);
-	static Ref<Graphics::Cubemap> GetCubemap(const std::string& path);
-
-	static VolcaniCore::Buffer<uint32_t> GetShaderData(const std::string& path);
-	static Ref<Graphics::ShaderPipeline> GetShader(
-		const List<std::string>& path);
 
 	static VolcaniCore::Buffer<float> GetAudioData(const std::string& path);
 	static Ref<Sound> GetAudio(const std::string& path);

@@ -41,6 +41,7 @@ public:
 	void SetIcon(const Icon& icon);
 	void SetTitle(const std::string& title);
 
+	const WindowSpecification& GetSpec() const { return m_Spec; }
 	uint32_t GetWidth() const { return m_Spec.Width; }
 	uint32_t GetHeight() const { return m_Spec.Height; }
 

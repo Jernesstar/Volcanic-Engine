@@ -40,10 +40,10 @@ project "Editor"
         "%{Includes.rapidjson}",
 
         "%{Includes.efsw}",
+        "%{Includes.asio}",
+        "%{Includes.stb_image}",
         "%{Includes.soloud}",
         "%{Includes.miniz_cpp}",
-
-        "%{Includes.stb_image}",
 
         "%{Includes.imgui}",
         "%{Includes.imgui}/imgui",
