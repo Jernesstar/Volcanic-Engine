@@ -27,8 +27,10 @@ struct Icon {
 
 class Window {
 public:
-	Window(const WindowSpecification& spec);
+	Window();
 	~Window();
+
+	void Init(const WindowSpecification& spec);
 
 	void Update();
 	bool IsOpen() const { return !glfwWindowShouldClose(m_NativeWindow); }
@@ -49,7 +51,7 @@ public:
 
 private:
 	WindowSpecification m_Spec;
-	GLFWwindow* m_NativeWindow;
+	GLFWwindow* m_NativeWindow = nullptr;
 };
 
 }

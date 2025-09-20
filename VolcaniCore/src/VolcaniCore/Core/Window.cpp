@@ -58,11 +58,7 @@ static GLFWwindow* CreateWindow(WindowSpecification& spec) {
 	return window;
 }
 
-Window::Window(const WindowSpecification& spec)
-	: m_Spec(spec)
-{
-	m_NativeWindow = CreateWindow(m_Spec);
-	Events::Init();
+Window::Window() {
 	Events::RegisterListener<WindowResizedEvent>(
 		[&](const WindowResizedEvent& event)
 		{
@@ -72,7 +68,17 @@ Window::Window(const WindowSpecification& spec)
 }
 
 Window::~Window() {
-	glfwDestroyWindow(m_NativeWindow);
+	if(m_NativeWindow)
+		glfwDestroyWindow(m_NativeWindow);
+}
+
+void Window::Init(const WindowSpecification& spec) {
+	if(m_NativeWindow)
+		glfwDestroyWindow(m_NativeWindow);
+
+	m_Spec = spec;
+	m_NativeWindow = CreateWindow(m_Spec);
+	Events::Init();
 }
 
 void Window::Update() {
@@ -116,10 +122,7 @@ void Window::Fullscreen(bool enable) {
 
 void Window::UndoSplashScreen() {
 	m_Spec.SplashScreen = false;
-
-	glfwDestroyWindow(m_NativeWindow);
-	m_NativeWindow = CreateWindow(m_Spec);
-	Events::Init();
+	Init(m_Spec);
 }
 
 void Window::Resize(uint32_t width, uint32_t height) {

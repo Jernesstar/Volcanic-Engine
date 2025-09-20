@@ -23,7 +23,8 @@ void Application::Close() {
 
 Application::Application(const WindowSpecification& spec) {
 	s_Instance = this;
-	s_Window = CreateRef<Window>(spec);
+	s_Window = CreateRef<Window>();
+	s_Window->Init(spec);
 }
 
 void Application::Run() {

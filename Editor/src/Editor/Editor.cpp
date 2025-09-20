@@ -309,7 +309,7 @@ void Editor::RenderSplashScreen() {
 				dialog.OnSelect =
 					[&](std::string& path)
 					{
-						Application::GetWindow()->UndoSplashScreen();
+						Application::GetWindow()->Maximize();
 						NewProject(path);
 					};
 				dialog.Draw();
