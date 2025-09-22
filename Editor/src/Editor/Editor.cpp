@@ -121,6 +121,71 @@ static std::string HTTPGet(asio::io_context& io, asio::ssl::context& sslContext,
 	throw std::runtime_error("HTTP error " + std::to_string(statusCode));
 }
 
+// Simple HTTPS client using standalone Asio
+std::string send_request(const std::string& host, const std::string& port,
+						 const std::string& target, const std::string& data,
+						 const std::string& api_key) {
+	asio::io_context io_context;
+	asio::ssl::context ctx(asio::ssl::context::sslv23_client);
+	asio::ssl::stream<asio::ip::tcp::socket> socket(io_context, ctx);
+
+	// Resolve host
+	asio::ip::tcp::resolver resolver(io_context);
+	auto endpoints = resolver.resolve(host, port);
+
+	// Connect and handshake
+	asio::connect(socket.lowest_layer(), endpoints);
+	socket.handshake(asio::ssl::stream_base::client);
+
+	// Build HTTP request
+	std::ostringstream request;
+	request << "POST " << target << " HTTP/1.1\r\n"
+			<< "Host: " << host << "\r\n"
+			<< "Authorization: Bearer " << api_key << "\r\n"
+			<< "Content-Type: application/json\r\n"
+			<< "Content-Length: " << data.size() << "\r\n"
+			<< "Connection: close\r\n\r\n"
+			<< data;
+
+	// Send request
+	asio::write(socket, asio::buffer(request.str()));
+
+	// Read response
+	asio::streambuf response;
+	asio::read_until(socket, response, "\r\n");
+
+	// Check response
+	std::istream response_stream(&response);
+	std::string http_version;
+	unsigned int status_code;
+	std::string status_message;
+
+	response_stream >> http_version >> status_code;
+	std::getline(response_stream, status_message);
+
+	if (!response_stream || http_version.substr(0, 5) != "HTTP/")
+		throw std::runtime_error("Invalid HTTP response");
+	if (status_code != 200)
+		throw std::runtime_error("Request failed with status " + std::to_string(status_code));
+
+	// Read headers
+	asio::read_until(socket, response, "\r\n\r\n");
+	std::string header;
+	while (std::getline(response_stream, header) && header != "\r")
+		;
+
+	// Read body
+	std::ostringstream body;
+	if (response.size() > 0)
+		body << &response;
+	asio::error_code ec;
+	while (asio::read(socket, response, asio::transfer_at_least(1), ec))
+		body << &response;
+	if (ec != asio::error::eof) throw std::runtime_error("Read failed: " + ec.message());
+
+	return body.str();
+}
+
 static void DownloadLavaFlow(const std::string& url) {
 	try {
 		asio::io_context io;
@@ -168,8 +233,8 @@ void Editor::Open() {
 		AssetImporter::GetTexture("Editor/assets/images/VolcanicDisplay.png");
 
 	s_WelcomeImage.UsePosition = false;
-	s_WelcomeImage.Width = 590;
-	s_WelcomeImage.Height = 590;
+	s_WelcomeImage.Width = 600;
+	s_WelcomeImage.Height = 600;
 
 	if(FileUtils::PathExists("Editor/.cache/data.yml")) {
 		YAML::Node file;
@@ -239,7 +304,7 @@ void Editor::Update(TimeStep ts) {
 
 void Editor::Render() {
 	if(!m_Tabs) {
-		RenderSplashScreen();
+		RenderStartScreen();
 		return;
 	}
 
@@ -277,12 +342,22 @@ void Editor::Render() {
 	WidgetRenderer::EndFrame();
 }
 
-void Editor::RenderSplashScreen() {
+void Editor::RenderStartScreen() {
 	auto flags = ImGuiWindowFlags_NoDecoration
 			   | ImGuiWindowFlags_NoMove
 			   | ImGuiWindowFlags_NoDocking;
+	ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(viewport->Pos);
+	ImGui::SetNextWindowSize(viewport->Size);
+	ImGui::SetNextWindowViewport(viewport->ID);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
 	ImGui::Begin("##Welcome", nullptr, flags);
 	{
+		ImGui::PopStyleVar(3);
+
 		ImVec2 curPos = ImGui::GetCursorPos();
 		ImVec2 buttonPos =
 			{ curPos.x + ImGui::GetContentRegionAvail().x - 40, curPos.y };
@@ -322,6 +397,27 @@ void Editor::RenderSplashScreen() {
 			}
 			if(ImGui::Button("New LavaFlow")) {
 
+			}
+			if(ImGui::Button("FlowyAI")) {
+				try {
+					// Example: calling OpenAI's chat endpoint (replace with your service)
+					std::string host = "api.openai.com";
+					std::string port = "443";
+					std::string target = "/v1/chat/completions";
+					std::string api_key =
+						"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";
+
+					std::string json_payload = R"({
+						"model": "gpt-4o-mini",
+						"messages": [{"role": "user", "content": "Hello from C++ Asio!"}]
+					})";
+
+					std::string result = send_request(host, port, target, json_payload, api_key);
+					std::cout << "Response: " << result << "\n";
+				}
+				catch (std::exception& e) {
+					std::cerr << "Error: " << e.what() << "\n";
+				}
 			}
 
 			UIRenderer::DrawFileDialog("Open Project");

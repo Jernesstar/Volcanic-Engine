@@ -13,6 +13,7 @@ struct WindowSpecification {
 	std::string Title;
 	uint32_t Width = 800;
 	uint32_t Height = 600;
+	bool Undecorated = false;
 	bool SplashScreen = false;
 	bool Fullscreen = false;
 	bool Maximized = false;

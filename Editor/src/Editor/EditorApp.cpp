@@ -20,7 +20,7 @@ using namespace Magma::UI;
 namespace Magma {
 
 EditorApp::EditorApp(const CommandLineArgs& args)
-	: Application({ "Magma Editor", 1200, 800, true })
+	: Application({ "Magma Editor", 1400, 800, true })
 {
 	Events::RegisterListener<KeyPressedEvent>(
 		[](const KeyPressedEvent& event)

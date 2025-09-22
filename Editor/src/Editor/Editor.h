@@ -66,7 +66,7 @@ private:
 	List<Tab> m_Tabs;
 	List<Tab> m_ClosedTabs;
 
-	void RenderSplashScreen();
+	void RenderStartScreen();
 	void RenderTitleBar();
 
 	void NewTab();

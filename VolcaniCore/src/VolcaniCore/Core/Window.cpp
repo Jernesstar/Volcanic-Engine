@@ -26,8 +26,10 @@ static GLFWwindow* CreateWindow(WindowSpecification& spec) {
 		spec.Width = mode->width;
 		spec.Height = mode->height;
 	}
-
-	if(spec.SplashScreen) {
+	else if(spec.Undecorated) {
+		glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+	}
+	else if(spec.SplashScreen) {
 		glfwWindowHint(GLFW_DECORATED, GLFW_FALSE); // Splash screen
 		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
 		// glfwWindowHint(GLFW_FLOATING, GLFW_TRUE); // Always on top
@@ -40,7 +42,7 @@ static GLFWwindow* CreateWindow(WindowSpecification& spec) {
 
 	VOLCANICORE_ASSERT(window, "Could not create the window");
 
-	if(spec.SplashScreen) {
+	if(spec.Undecorated || spec.SplashScreen) {
 		monitor = glfwGetPrimaryMonitor();
 		mode = glfwGetVideoMode(monitor);
 
@@ -122,6 +124,7 @@ void Window::Fullscreen(bool enable) {
 
 void Window::UndoSplashScreen() {
 	m_Spec.SplashScreen = false;
+	glfwMakeContextCurrent(nullptr);
 	Init(m_Spec);
 }
 

@@ -17,4 +17,6 @@ public:
 	virtual void OnUpdate(TimeStep ts) = 0;
 };
 
+extern Component* LoadComponent(const std::string& path);
+
 }
