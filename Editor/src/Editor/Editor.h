@@ -12,9 +12,17 @@ using namespace VolcaniCore;
 
 namespace Magma {
 
+struct Component {
+	std::string Name;
+	std::string Path;
+	List<std::string> CoreDeps;
+	List<std::string> EditorDeps;
+};
+
 struct LavaFlow {
 	std::string Name;
 	std::string Path;
+	List<std::string> Components;
 	List<std::string> ObjectList;
 };
 
@@ -28,6 +36,10 @@ public:
 	static void RegisterInterface();
 
 public:
+	enum class EditorMode { None, Component, Flow, Project };
+	EditorMode Mode = EditorMode::None;
+
+public:
 	Editor() { s_Instance = this; }
 	~Editor() = default;
 
@@ -37,6 +49,13 @@ public:
 	void Load(const CommandLineArgs& args);
 	void Update(TimeStep ts);
 	void Render();
+
+	void NewTab();
+	void OpenTab(const std::string& type);
+	void LoadTab(const std::string& type = "None");
+	void ReopenTab();
+	void CloseTab(uint32_t idx);
+	void SetTab(uint32_t idx);
 
 	static Ref<ScriptModule> GetModule(const std::string& name);
 	static Ref<ScriptClass> GetTabClass(const std::string& name);
@@ -58,34 +77,35 @@ private:
 
 private:
 	Ref<Lava::App> m_App;
+
 	Project m_Project;
 	LavaFlow m_LavaFlow;
-	Cache m_Cache;
+	Component m_Component;
 
+	Cache m_Cache;
 	uint64_t m_CurrentTab = 0;
 	List<Tab> m_Tabs;
 	List<Tab> m_ClosedTabs;
 
 	void RenderStartScreen();
-	void RenderTitleBar();
-
-	void NewTab();
-	void OpenTab(const std::string& type);
-	void LoadTab(const std::string& type = "None");
-	void ReopenTab();
-	void CloseTab(uint32_t idx);
-	void SetTab(uint32_t idx);
+	void RenderComponentEditor();
+	void RenderFlowEditor();
+	void RenderProjectEditor();
 
 	void NewProject();
-	void NewProject(const std::string& volcPath);
 	void OpenProject();
-	void RunProject();
+	void OpenProject(const std::string& file);
 	void CloseProject();
-	void ExportProject();
-	void ExportProject(const std::string& path);
-	void NewLavaFlow(const std::string& path);
-	void LoadLavaFlow(const std::string& path);
+
+	void NewLavaFlow();
+	void OpenLavaFlow();
+	void OpenLavaFlow(const std::string& file);
 	void CloseLavaFlow();
+
+	void NewComponent();
+	void OpenComponent();
+	void OpenComponent(const std::string& file);
+	void CloseComponent();
 };
 
 }

@@ -126,7 +126,7 @@ std::string send_request(const std::string& host, const std::string& port,
 						 const std::string& target, const std::string& data,
 						 const std::string& api_key) {
 	asio::io_context io_context;
-	asio::ssl::context ctx(asio::ssl::context::sslv23_client);
+	asio::ssl::context ctx(asio::ssl::context::tlsv12_client);
 	asio::ssl::stream<asio::ip::tcp::socket> socket(io_context, ctx);
 
 	// Resolve host
@@ -232,7 +232,9 @@ void Editor::Open() {
 	s_WelcomeImage.Content =
 		AssetImporter::GetTexture("Editor/assets/images/VolcanicDisplay.png");
 
-	s_WelcomeImage.UsePosition = false;
+	s_WelcomeImage.UsePosition = true;
+	s_WelcomeImage.x = 790;
+	s_WelcomeImage.y = 150;
 	s_WelcomeImage.Width = 600;
 	s_WelcomeImage.Height = 600;
 
@@ -292,52 +294,30 @@ Ref<ScriptClass> Editor::GetPanelClass(const std::string& tab,
 
 void Editor::Load(const CommandLineArgs& args) {
 	if(args["--project"])
-		NewProject(args["--project"]);
-	if(args["--lavaflow"])
-		NewProject(args["--lavaflow"]);
+		OpenProject(args["--project"]);
+	else if(args["--lavaflow"])
+		OpenLavaFlow(args["--lavaflow"]);
+	else if(args["--component"])
+		OpenComponent(args["--component"]);
 }
 
 void Editor::Update(TimeStep ts) {
-	// for(auto& tab : m_Tabs)
-	// 	tab.OnUpdate(ts);
+	if(Mode == EditorMode::Project)
+		for(auto& tab : m_Tabs)
+			tab.OnUpdate(ts);
 }
 
 void Editor::Render() {
-	if(!m_Tabs) {
-		RenderStartScreen();
-		return;
-	}
-
 	WidgetRenderer::BeginFrame();
 
-	RenderTitleBar();
-
-	bool dockspaceOpen = true;
-	ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags_PassthruCentralNode;
-	ImGuiWindowFlags windowFlags;
-	windowFlags |= ImGuiWindowFlags_NoDocking
-				 | ImGuiWindowFlags_NoMove
-				 | ImGuiWindowFlags_NoDecoration
-				 | ImGuiWindowFlags_NoBackground
-				 | ImGuiWindowFlags_NoInputs
-				 | ImGuiWindowFlags_NoBringToFrontOnFocus;
-
-	ImGuiViewport* viewport = ImGui::GetMainViewport();
-	ImGui::SetNextWindowPos({ viewport->Pos.x, viewport->Pos.y + 25.0f });
-	ImGui::SetNextWindowSize({ viewport->Size.x, viewport->Size.y - 25.0f });
-	ImGui::SetNextWindowViewport(viewport->ID);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-
-	ImGui::Begin("DockSpaceWindow", &dockspaceOpen, windowFlags);
-	{
-		ImGui::PopStyleVar(3);
-		ImGuiID dockspaceID = ImGui::GetID("DockSpace");
-		ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), dockspaceFlags);
-		GetCurrentTab()->OnRender();
-	}
-	ImGui::End();
+	if(Mode == EditorMode::None)
+		RenderStartScreen();
+	else if(Mode == EditorMode::Component)
+		RenderComponentEditor();
+	else if(Mode == EditorMode::Flow)
+		RenderFlowEditor();
+	else if(Mode == EditorMode::Project)
+		RenderProjectEditor();
 
 	WidgetRenderer::EndFrame();
 }
@@ -354,7 +334,7 @@ void Editor::RenderStartScreen() {
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
-	ImGui::Begin("##Welcome", nullptr, flags);
+	ImGui::Begin("##StartScreen", nullptr, flags);
 	{
 		ImGui::PopStyleVar(3);
 
@@ -368,35 +348,67 @@ void Editor::RenderStartScreen() {
 		if(ImGui::Button("X"))
 			Application::Close();
 		ImGui::SetCursorPos(curPos);
-		ImGui::Text("Magma Editor");
 
 		ImVec2 size = { 400, ImGui::GetContentRegionAvail().y };
 		auto childFlags = ImGuiChildFlags_Border;
 		ImGui::BeginChild("Options", size, childFlags);
 		{
+			if(ImGui::Button("New Project")) {
+
+			}
 			if(ImGui::Button("Open Project")) {
 				FileDialog dialog;
 				dialog.Width = 500;
 				dialog.Height = 500;
 				dialog.Title = "Open Project";
 				dialog.StartPath = Application::GetHomeDir();
-				dialog.Extensions = { "magma.proj" };
+				dialog.Extensions = { ".proj.yml" };
 				dialog.OnSelect =
 					[&](std::string& path)
 					{
 						Application::GetWindow()->Maximize();
-						NewProject(path);
+						OpenProject(path);
+						Mode = EditorMode::Project;
 					};
 				dialog.Draw();
 			}
-			if(ImGui::Button("New Project")) {
+			if(ImGui::Button("New LavaFlow")) {
 
 			}
 			if(ImGui::Button("Open LavaFlow")) {
-
+				FileDialog dialog;
+				dialog.Width = 500;
+				dialog.Height = 500;
+				dialog.Title = "Open LavaFlow";
+				dialog.StartPath = Application::GetHomeDir();
+				dialog.Extensions = { ".flow.yml" };
+				dialog.OnSelect =
+					[&](std::string& path)
+					{
+						Application::GetWindow()->Maximize();
+						OpenLavaFlow(path);
+						Mode = EditorMode::Flow;
+					};
+				dialog.Draw();
 			}
-			if(ImGui::Button("New LavaFlow")) {
-
+			if(ImGui::Button("New Component")) {
+				
+			}
+			if(ImGui::Button("Open Component")) {
+				FileDialog dialog;
+				dialog.Width = 500;
+				dialog.Height = 500;
+				dialog.Title = "Open Component";
+				dialog.StartPath = Application::GetHomeDir();
+				dialog.Extensions = { ".comp.yml" };
+				dialog.OnSelect =
+					[&](std::string& path)
+					{
+						Application::GetWindow()->Maximize();
+						OpenComponent(path);
+						Mode = EditorMode::Component;
+					};
+				dialog.Draw();
 			}
 			if(ImGui::Button("FlowyAI")) {
 				try {
@@ -420,15 +432,17 @@ void Editor::RenderStartScreen() {
 				}
 			}
 
-			UIRenderer::DrawFileDialog("Open Project");
 			UIRenderer::DrawFileDialog("New Project");
-			UIRenderer::DrawFileDialog("Open LavaFlow");
+			UIRenderer::DrawFileDialog("Open Project");
 			UIRenderer::DrawFileDialog("New LavaFlow");
+			UIRenderer::DrawFileDialog("Open LavaFlow");
+			UIRenderer::DrawFileDialog("New Component");
+			UIRenderer::DrawFileDialog("Open Component");
 
 			ImGui::SeparatorText("Previous projects");
 			for(auto proj : m_Cache.PastProjects)
 				if(ImGui::Selectable(proj.c_str()))
-					NewProject(proj);
+					OpenProject(proj);
 
 			ImGui::SeparatorText("Previous LavaFlows");
 			ImVec2 size = { 590, 40 };
@@ -462,16 +476,76 @@ void Editor::RenderStartScreen() {
 			}
 		}
 		ImGui::EndChild();
-		ImGui::SameLine();
 
 		s_WelcomeImage.Draw();
+
+		ImGui::NewLine();
+		ImGui::SetCursorPos({ 850.0f, 755.0f });
+		ImGui::SetWindowFontScale(3.0f);
+		ImGui::Text("Magma Editor v0.1");
+		ImGui::SetWindowFontScale(1.0f);
 	}
 	ImGui::End();
 }
 
-static bool s_NewTab = false;
+void Editor::RenderComponentEditor() {
+	auto flags = ImGuiWindowFlags_NoDecoration
+			| ImGuiWindowFlags_NoMove
+			| ImGuiWindowFlags_NoDocking;
+	ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(viewport->Pos);
+	ImGui::SetNextWindowSize(viewport->Size);
+	ImGui::SetNextWindowViewport(viewport->ID);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 
-void Editor::RenderTitleBar() {
+	ImGui::Begin("##ComponentEditor", nullptr, flags);
+	{
+		ImGui::PopStyleVar(3);
+
+		ImGui::Text("Name: %s", m_Component.Name);
+		ImGui::Text("Path: %s", m_Component.Path);
+
+		if(ImGui::Button("Build")) {
+			std::string command;
+#ifdef VOLCANICENGINE_WINDOWS
+			command = ".vendor/bin/Windows/premake5.exe";
+#elif VOLCANICENGINE_LINUX
+			command = ".vendor/bin/Linux/premake5.exe";
+#endif
+			command += " "
+
+			system(command.c_str());
+		}
+		if(ImGui::Button("Add Dependency")) {
+
+		}
+	}
+	ImGui::End();
+}
+
+void Editor::RenderFlowEditor() {
+	auto flags = ImGuiWindowFlags_NoDecoration
+			| ImGuiWindowFlags_NoMove
+			| ImGuiWindowFlags_NoDocking;
+	ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(viewport->Pos);
+	ImGui::SetNextWindowSize(viewport->Size);
+	ImGui::SetNextWindowViewport(viewport->ID);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
+	ImGui::Begin("##FlowEditor", nullptr, flags);
+	{
+		ImGui::PopStyleVar(3);
+
+	}
+	ImGui::End();
+}
+
+void Editor::RenderProjectEditor() {
 	ImGuiWindowFlags titleBarFlags = ImGuiWindowFlags_NoTitleBar
 								   | ImGuiWindowFlags_NoCollapse
 								   | ImGuiWindowFlags_NoResize
@@ -490,7 +564,7 @@ void Editor::RenderTitleBar() {
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0.0f, 0.0f });
 	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4{ 0.01f, 0.01f, 0.01f, 1.0f });
 
-	ImGui::Begin("Window-Frame-Titlebar", nullptr, titleBarFlags);
+	ImGui::Begin("##TitleBar", nullptr, titleBarFlags);
 	{
 		ImGui::PopStyleVar(3);
 		ImGui::PopStyleColor(1);
@@ -565,7 +639,36 @@ void Editor::RenderTitleBar() {
 		ImGui::EndChild();
 	}
 	ImGui::End();
+
+	bool dockspaceOpen = true;
+	ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags_PassthruCentralNode;
+	ImGuiWindowFlags windowFlags;
+	windowFlags |= ImGuiWindowFlags_NoDocking
+				 | ImGuiWindowFlags_NoMove
+				 | ImGuiWindowFlags_NoDecoration
+				 | ImGuiWindowFlags_NoBackground
+				 | ImGuiWindowFlags_NoInputs
+				 | ImGuiWindowFlags_NoBringToFrontOnFocus;
+
+	ImGui::SetNextWindowPos({ viewport->Pos.x, viewport->Pos.y + 25.0f });
+	ImGui::SetNextWindowSize({ viewport->Size.x, viewport->Size.y - 25.0f });
+	ImGui::SetNextWindowViewport(viewport->ID);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
+	ImGui::Begin("DockSpaceWindow", &dockspaceOpen, windowFlags);
+	{
+		ImGui::PopStyleVar(3);
+		ImGuiID dockspaceID = ImGui::GetID("DockSpace");
+		ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), dockspaceFlags);
+
+		GetCurrentTab()->OnRender();
+	}
+	ImGui::End();
 }
+
+static bool s_NewTab = false;
 
 void Editor::NewTab() {
 	if(ImGui::BeginPopup("New Tab")) {
@@ -636,20 +739,6 @@ void Editor::SetTab(uint32_t idx) {
 void Editor::NewProject() {
 
 }
-
-void Editor::NewProject(const std::string& volcPath) {
-	ProjectLoad(volcPath, m_Project);
-	auto [found, i] =
-		m_Cache.PastProjects.Find([&](auto& path) { return path == volcPath; });
-	if(!found)
-		m_Cache.PastProjects.Add(volcPath);
-
-	Application::GetWindow()->Maximize();
-	m_LavaFlow.Path = m_Project.LavaFlow;
-	LoadLavaFlow(m_LavaFlow.Path);
-	OpenTab("Project");
-}
-
 void Editor::OpenProject() {
 	UI::FileDialog dialog;
 	dialog.Title = "Open Project";
@@ -659,7 +748,7 @@ void Editor::OpenProject() {
 		[&](std::string& path)
 		{
 			CloseProject();
-			NewProject(path);
+			OpenProject(path);
 			OpenTab("Project");
 		};
 	dialog.Draw();
@@ -667,8 +756,17 @@ void Editor::OpenProject() {
 	UIRenderer::DrawFileDialog("Open Project");
 }
 
-void Editor::RunProject() {
+void Editor::OpenProject(const std::string& file) {
+	ProjectLoad(file, m_Project);
+	auto [found, i] =
+		m_Cache.PastProjects.Find(file);
+	if(!found)
+		m_Cache.PastProjects.Add(file);
 
+	// Application::GetWindow()->Maximize();
+	// m_LavaFlow.Path = m_Project.LavaFlow;
+	// LoadLavaFlow(m_LavaFlow.Path);
+	// OpenTab("Project");
 }
 
 void Editor::CloseProject() {
@@ -681,64 +779,43 @@ void Editor::CloseProject() {
 	m_Project = { };
 }
 
-void Editor::ExportProject() {
-
-}
-
-void Editor::ExportProject(const std::string& exportPath) {
-	if(fs::is_regular_file(exportPath)) {
-		VOLCANICORE_LOG_INFO("'%s' is not a valid directory path");
-		return;
-	}
-
-}
-
-void Editor::NewLavaFlow(const std::string& path) {
+void Editor::NewLavaFlow() {
 	
 }
 
-void Editor::LoadLavaFlow(const std::string& path) {
+void Editor::OpenLavaFlow() {
+	
+}
+
+void Editor::OpenLavaFlow(const std::string& file) {
 	CloseLavaFlow();
 
-	// Load LavaFlow data from file
-	auto flowFile = (fs::path(path) / ".flow.yml").string();
-	YAML::Node file;
+	YAML::Node fileNode;
 	try {
-		file = YAML::LoadFile(flowFile);
+		fileNode = YAML::LoadFile(file);
 	} catch (YAML::ParserException e) {
-		VOLCANICORE_LOG_INFO("File '%s' is not well formatted", flowFile.c_str());
+		VOLCANICORE_LOG_INFO("File '%s' is not well formatted", file.c_str());
 		return;
 	} catch (YAML::BadFile e) {
-		VOLCANICORE_LOG_INFO("File '%s' is bad", flowFile.c_str());
+		VOLCANICORE_LOG_INFO("File '%s' is bad", file.c_str());
 		return;
 	}
 
-	auto lavaFlowNode = file["LavaFlow"];
+	auto lavaFlowNode = fileNode["LavaFlow"];
 	VOLCANICORE_ASSERT(lavaFlowNode);
 
-	m_LavaFlow.Path = path;
-	m_LavaFlow.Name = path.substr(path.rfind("/"));
+	auto path = fs::path(file).parent_path();
+	m_LavaFlow.Path = path.string();
+	m_LavaFlow.Name = path.filename().string();
+	m_LavaFlow.Components = lavaFlowNode["Components"].as<List<std::string>>();
 	m_LavaFlow.ObjectList = lavaFlowNode["Objects"].as<List<std::string>>();
 
 	List<std::string> includes =
-	{
-		"Editor/scripts",
-		"Editor/scripts/Magma",
-		"Editor/scripts/Magma/Editor",
-		"Editor/scripts/Magma/UI",
-		"Editor/scripts/Magma/Object",
-		"Lava/scripts",
-		"Lava/scripts/Lava",
-		"Lava/scripts/Lava/Physics",
-		"Lava/scripts/Lava/ECS",
-		"Lava/scripts/Lava/Component",
-		"Lava/scripts/Lava/Component/Ash",
-		"Lava/scripts/Lava/Component/Igneous",
-		"Lava/scripts/Lava/Component/Silica",
-		"Lava/scripts/Lava/Component/Cinder",
-		"Lava/scripts/Lava/Component/Pyro",
-	};
-
+		m_LavaFlow.Components.Apply<std::string>(
+			[](const std::string& object) -> std::string
+			{
+				return object + "/Script";
+			});
 	for(auto type : m_LavaFlow.ObjectList) {
 		auto uiPath = fs::path(m_LavaFlow.Path) / "Editor" / "UI" / type;
 		auto moduleData =
@@ -752,6 +829,42 @@ void Editor::LoadLavaFlow(const std::string& path) {
 
 void Editor::CloseLavaFlow() {
 	s_TabModules.clear();
+}
+
+void Editor::NewComponent() {
+
+}
+
+void Editor::OpenComponent() {
+
+}
+
+void Editor::OpenComponent(const std::string& file) {
+	YAML::Node fileNode;
+	try {
+		fileNode = YAML::LoadFile(file);
+	} catch (YAML::ParserException e) {
+		VOLCANICORE_LOG_INFO("File '%s' is not well formatted", file.c_str());
+		return;
+	} catch (YAML::BadFile e) {
+		VOLCANICORE_LOG_INFO("File '%s' is bad", file.c_str());
+		return;
+	}
+
+	auto componentNode = fileNode["Component"];
+	VOLCANICORE_ASSERT(componentNode);
+
+	auto path = fs::path(file).parent_path();
+	m_Component.Path = path.string();
+	m_Component.Name = path.filename().string();
+	m_Component.CoreDeps =
+		fileNode["Dependencies"]["Core"].as<List<std::string>>();
+	m_Component.EditorDeps =
+		fileNode["Dependencies"]["Editor"].as<List<std::string>>();
+}
+
+void Editor::CloseComponent() {
+
 }
 
 void ProjectLoad(const std::string& path, Project& project) {

@@ -25,22 +25,18 @@ public:
 	static bool FunctionHasMetadata(const std::string& name,
 									const std::string& str)
 	{
-		return
-			s_FunctionMetadata[name]
-			.Find([&](auto& val) { return val == str; });
+		return s_FunctionMetadata[name].Find(str);
 	}
 	static bool ClassHasMetadata(const std::string& name,
 								 const std::string& str)
 	{
-		return
-			s_ClassMetadata[name].Find([&](auto& val) { return val == str; });
+		return s_ClassMetadata[name].Find(str);
 	}
 	static bool FieldHasMetadata(const std::string& _class,
 		const std::string& field, const std::string& str)
 	{
 		return
-			s_FieldMetadata[_class + "::" + field]
-			.Find([&](auto& val) { return val == str; });
+			s_FieldMetadata[_class + "::" + field].Find(str);
 	}
 
 	static void RunCodeAnalysis();

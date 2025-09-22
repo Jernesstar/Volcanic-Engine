@@ -167,11 +167,18 @@ public:
 	}
 
 	template<typename TOut>
-	List<TOut> Apply(const Func<TOut, T&>& func) {
+	List<TOut> Apply(const Func<TOut, const T&>& func) {
 		List<TOut> out;
 		for(auto& val : *this)
 			out.Add(func(val));
 		return out;
+	}
+
+	SearchResult Find(const T& target) {
+		for(uint64_t i = 0; i < Count(); i++)
+			if(target == *At(i))
+				return { true, i };
+		return { false, 0 };
 	}
 
 	SearchResult Find(const Func<bool, const T&>& func) const {
