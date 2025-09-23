@@ -49,7 +49,6 @@ project "Magma"
     }
 
     defines {
-        "flecs_STATIC",
         "NOMINMAX",
         "YAML_CPP_STATIC_DEFINE"
     }

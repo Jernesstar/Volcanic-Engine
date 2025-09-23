@@ -507,14 +507,10 @@ void Editor::RenderComponentEditor() {
 		ImGui::Text("Name: %s", m_Component.Name);
 		ImGui::Text("Path: %s", m_Component.Path);
 
-		if(ImGui::Button("Build")) {
+		if(ImGui::Button("Build for Windows")) {
 			std::string command;
-#ifdef VOLCANICENGINE_WINDOWS
 			command = ".vendor/bin/Windows/premake5.exe";
-#elif VOLCANICENGINE_LINUX
-			command = ".vendor/bin/Linux/premake5.exe";
-#endif
-			command += " "
+			command += " ";
 
 			system(command.c_str());
 		}

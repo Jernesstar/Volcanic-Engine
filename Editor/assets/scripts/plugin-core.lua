@@ -1,0 +1,5 @@
+project "AshCore"
+    kind "DynamicLib"
+    language "C++"
+    cppdialect "C++latest"
+    staticruntime "Off"
