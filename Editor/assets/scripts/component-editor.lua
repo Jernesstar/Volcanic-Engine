@@ -13,12 +13,16 @@ project "AshEditor"
         "Source/**.cpp"
     }
 
-    _OPTIONS["VolcanicPaths"]
     includedirs {
+        "%{VolcaniCorePath}",
+        "%{VolcaniCorePath}/*",
+        "%{MagmaPath}",
+        "%{MagmaPath}/*",
     }
 
     links {
-        "VolcaniCore"
+        "VolcaniCore",
+        "Magma"
     }
 
     defines {
