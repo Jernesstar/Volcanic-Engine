@@ -14,6 +14,7 @@
 #include <miniz-cpp/zip_file.hpp>
 
 #include <VolcaniCore/Core/Application.h>
+#include <VolcaniCore/Core/Algo.h>
 #include <VolcaniCore/Core/FileUtils.h>
 #include <VolcaniCore/Core/Log.h>
 #include <VolcaniCore/Core/Input.h>
@@ -233,8 +234,8 @@ void Editor::Open() {
 		AssetImporter::GetTexture("Editor/assets/images/VolcanicDisplay.png");
 
 	s_WelcomeImage.UsePosition = true;
-	s_WelcomeImage.x = 790;
-	s_WelcomeImage.y = 150;
+	s_WelcomeImage.x = 760;
+	s_WelcomeImage.y = 120;
 	s_WelcomeImage.Width = 600;
 	s_WelcomeImage.Height = 600;
 
@@ -309,6 +310,7 @@ void Editor::Update(TimeStep ts) {
 
 void Editor::Render() {
 	WidgetRenderer::BeginFrame();
+	RenderTitleBar();
 
 	if(Mode == EditorMode::None)
 		RenderStartScreen();
@@ -322,32 +324,130 @@ void Editor::Render() {
 	WidgetRenderer::EndFrame();
 }
 
-void Editor::RenderStartScreen() {
-	auto flags = ImGuiWindowFlags_NoDecoration
-			   | ImGuiWindowFlags_NoMove
-			   | ImGuiWindowFlags_NoDocking;
-	ImGuiViewport* viewport = ImGui::GetMainViewport();
-	ImGui::SetNextWindowPos(viewport->Pos);
-	ImGui::SetNextWindowSize(viewport->Size);
-	ImGui::SetNextWindowViewport(viewport->ID);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+void Editor::RenderTitleBar() {
+	ImGuiWindowFlags titleBarFlags = ImGuiWindowFlags_NoTitleBar
+								   | ImGuiWindowFlags_NoCollapse
+								   | ImGuiWindowFlags_NoResize
+								   | ImGuiWindowFlags_NoMove
+								   | ImGuiWindowFlags_NoDocking
+								   | ImGuiWindowFlags_NoScrollbar
+								   | ImGuiWindowFlags_NoSavedSettings
+								   | ImGuiWindowFlags_NoScrollWithMouse;
 
-	ImGui::Begin("##StartScreen", nullptr, flags);
+	const ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(viewport->Pos);
+	ImGui::SetNextWindowSize({ viewport->Size.x, 60.0f });
+	ImGui::SetNextWindowViewport(viewport->ID);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, { 0.0f, 0.0f });
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, { 0.01f, 0.01f, 0.01f, 1.0f });
+
+	ImGui::Begin("##TitleBar", nullptr, titleBarFlags);
 	{
 		ImGui::PopStyleVar(3);
+		ImGui::PopStyleColor(1);
+		auto image = s_WelcomeImage;
+		image.x = 5;
+		image.y = 5;
+		image.Width = 50;
+		image.Height = 50;
+		image.UsePosition = true;
+		image.Draw();
+		ImGui::SameLine();
 
-		ImVec2 curPos = ImGui::GetCursorPos();
-		ImVec2 buttonPos =
-			{ curPos.x + ImGui::GetContentRegionAvail().x - 40, curPos.y };
-		ImGui::SetCursorPos(buttonPos);
+		ImGui::SetWindowFontScale(2.0f);
+		if(Mode == EditorMode::Project)
+			ImGui::Text("Project Editor");
+		else if(Mode == EditorMode::Flow)
+			ImGui::Text("Flow Editor");
+		else if(Mode == EditorMode::Component)
+			ImGui::Text("Component Editor");
+		else
+			ImGui::Text("Magma Editor v0.1");
+		ImGui::SetWindowFontScale(1.0f);
+		ImGui::SameLine();
+
+		ImVec2 menuSize = { ImGui::GetContentRegionAvail().x - 100.0f, 25.0f };
+		ImGui::BeginChild("##MenuBar", menuSize, 0,
+			titleBarFlags | ImGuiWindowFlags_MenuBar);
+		{
+			if(ImGui::BeginMenuBar()) {
+				if(ImGui::BeginMenu("Test")) {
+					ImGui::MenuItem("Item 1");
+					ImGui::EndMenu();
+				}
+				ImGui::EndMenuBar();
+			}
+
+			if(Mode == EditorMode::Project)
+				// m_ScriptObj.Call("OnRenderMenuBar");
+			;
+		}
+		ImGui::EndChild();
+
+		ImGui::SameLine();
+		ImGui::SetCursorPosX(
+			ImGui::GetCursorPos().x + ImGui::GetContentRegionAvail().x - 45.0f);
 		if(ImGui::Button("-"))
 			Application::GetWindow()->Minimize();
 		ImGui::SameLine();
 		if(ImGui::Button("X"))
 			Application::Close();
-		ImGui::SetCursorPos(curPos);
+
+		ImVec2 tabBarSize = { ImGui::GetContentRegionAvail().x - 100.0f, 0.0f };
+		ImGui::SetCursorPos({ 60.0f, 35.0f });
+		if(Mode == EditorMode::Project
+		&& ImGui::BeginChild("##TabBar", tabBarSize))
+		{
+			auto tabBarFlags = ImGuiTabBarFlags_Reorderable
+							 | ImGuiTabBarFlags_NoTooltip;
+			if(ImGui::BeginTabBar("##Tabs", tabBarFlags)) {
+				auto plusFlags = ImGuiTabItemFlags_Trailing
+							   | ImGuiTabItemFlags_NoReorder;
+				if(ImGui::TabItemButton("+", plusFlags))
+					ImGui::OpenPopup("New Tab");
+				NewTab();
+
+				uint32_t tabToDelete = 0;
+				for(uint32_t i = 0; i < m_Tabs.Count(); i++) {
+					Tab& tab = m_Tabs[i];
+					TabState state =
+						UIRenderer::DrawTab(tab.Name, tab.Type != "Project");
+					if(state.Closed)
+						tabToDelete = i + 1;
+					else if(state.Clicked)
+						SetTab(i);
+				}
+
+				if(tabToDelete != 0)
+					CloseTab(tabToDelete);
+
+				ImGui::EndTabBar();
+			}
+
+			ImGui::EndChild();
+		}
+	}
+	ImGui::End();
+}
+
+void Editor::RenderStartScreen() {
+	auto flags = ImGuiWindowFlags_NoDecoration
+			   | ImGuiWindowFlags_NoMove
+			   | ImGuiWindowFlags_NoDocking;
+
+	const ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos({ viewport->Pos.x, viewport->Pos.y + 60.0f });
+	ImGui::SetNextWindowSize({ viewport->Size.x, viewport->Size.y - 60.0f });
+	ImGui::SetNextWindowViewport(viewport->ID);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
+
+	ImGui::Begin("##StartScreen", nullptr, flags);
+	{
+		ImGui::PopStyleVar(3);
 
 		ImVec2 size = { 400, ImGui::GetContentRegionAvail().y };
 		auto childFlags = ImGuiChildFlags_Border;
@@ -362,7 +462,7 @@ void Editor::RenderStartScreen() {
 				dialog.Height = 500;
 				dialog.Title = "Open Project";
 				dialog.StartPath = Application::GetHomeDir();
-				dialog.Extensions = { ".proj.yml" };
+				dialog.Extensions = { "proj.yml" };
 				dialog.OnSelect =
 					[&](std::string& path)
 					{
@@ -381,11 +481,10 @@ void Editor::RenderStartScreen() {
 				dialog.Height = 500;
 				dialog.Title = "Open LavaFlow";
 				dialog.StartPath = Application::GetHomeDir();
-				dialog.Extensions = { ".flow.yml" };
+				dialog.Extensions = { "flow.yml" };
 				dialog.OnSelect =
 					[&](std::string& path)
 					{
-						Application::GetWindow()->Maximize();
 						OpenLavaFlow(path);
 						Mode = EditorMode::Flow;
 					};
@@ -400,36 +499,17 @@ void Editor::RenderStartScreen() {
 				dialog.Height = 500;
 				dialog.Title = "Open Component";
 				dialog.StartPath = Application::GetHomeDir();
-				dialog.Extensions = { ".comp.yml" };
+				dialog.Extensions = { "comp.yml" };
 				dialog.OnSelect =
 					[&](std::string& path)
 					{
-						Application::GetWindow()->Maximize();
 						OpenComponent(path);
 						Mode = EditorMode::Component;
 					};
 				dialog.Draw();
 			}
 			if(ImGui::Button("FlowyAI")) {
-				try {
-					// Example: calling OpenAI's chat endpoint (replace with your service)
-					std::string host = "api.openai.com";
-					std::string port = "443";
-					std::string target = "/v1/chat/completions";
-					std::string api_key =
-						"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";
 
-					std::string json_payload = R"({
-						"model": "gpt-4o-mini",
-						"messages": [{"role": "user", "content": "Hello from C++ Asio!"}]
-					})";
-
-					std::string result = send_request(host, port, target, json_payload, api_key);
-					std::cout << "Response: " << result << "\n";
-				}
-				catch (std::exception& e) {
-					std::cerr << "Error: " << e.what() << "\n";
-				}
 			}
 
 			UIRenderer::DrawFileDialog("New Project");
@@ -478,12 +558,6 @@ void Editor::RenderStartScreen() {
 		ImGui::EndChild();
 
 		s_WelcomeImage.Draw();
-
-		ImGui::NewLine();
-		ImGui::SetCursorPos({ 850.0f, 755.0f });
-		ImGui::SetWindowFontScale(3.0f);
-		ImGui::Text("Magma Editor v0.1");
-		ImGui::SetWindowFontScale(1.0f);
 	}
 	ImGui::End();
 }
@@ -492,31 +566,106 @@ void Editor::RenderComponentEditor() {
 	auto flags = ImGuiWindowFlags_NoDecoration
 			| ImGuiWindowFlags_NoMove
 			| ImGuiWindowFlags_NoDocking;
-	ImGuiViewport* viewport = ImGui::GetMainViewport();
-	ImGui::SetNextWindowPos(viewport->Pos);
-	ImGui::SetNextWindowSize(viewport->Size);
+
+	const ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos({ viewport->Pos.x, viewport->Pos.y + 60.0f });
+	ImGui::SetNextWindowSize({ viewport->Size.x, viewport->Size.y - 60.0f });
 	ImGui::SetNextWindowViewport(viewport->ID);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
 
 	ImGui::Begin("##ComponentEditor", nullptr, flags);
 	{
 		ImGui::PopStyleVar(3);
 
-		ImGui::Text("Name: %s", m_Component.Name);
-		ImGui::Text("Path: %s", m_Component.Path);
+		ImGui::Text("Name: %s", m_Component.Name.c_str());
+		ImGui::Text("Path: %s", m_Component.Path.c_str());
+
+		if(ImGui::Button("Generate Premake")) {
+			Application::PushDir();
+			auto proj = FileUtils::ReadFile("Editor/assets/scripts/component.lua");
+			Application::PopDir();
+
+			auto volcPath =
+				fs::path(Application::GetLibraryDir()) / "VolcaniCore" / "src";
+			auto magmaPath =
+				fs::path(Application::GetLibraryDir()) / "Magma" / "src";
+			Replace(proj, "${0}", m_Component.Name);
+			Replace(proj, "${1}", fs::path(m_Component.Path).generic_string());
+			Replace(proj, "${2}", volcPath.generic_string());
+			Replace(proj, "${3}", magmaPath.generic_string());
+
+			auto premakePath =
+				fs::path(m_Component.Path) / "Build" / "premake5.lua";
+			File premake(premakePath.string(), true);
+			premake.Write(proj);
+
+			for(auto dep : m_Component.CoreDeps)
+				premake.Write(
+					std::string("table.insert(CoreDeps, ") + "\"" + dep + "\")");
+			for(auto dep : m_Component.EditorDeps)
+				premake.Write(
+					std::string("table.insert(EditorDeps, ") + "\"" + dep + "\")");
+
+			for(auto dep : m_Component.CoreDeps) {
+				premake.Write(
+					std::string("VendorPaths[\"") + dep + "\"] = \"%{ComponentPath}/" + dep + "\"");
+			}
+			for(auto dep : m_Component.EditorDeps) {
+				premake.Write(
+					std::string("VendorPaths[\"") + dep + "\"] = \"%{ComponentPath}/" + dep + "\"");
+			}
+
+			for(auto dep : m_Component.CoreDeps)
+				premake.Write(std::string("include \"Dependencies/") + dep + "\"");
+			for(auto dep : m_Component.EditorDeps)
+				premake.Write(std::string("include \"Dependencies/") + dep + "\"");
+		}
+
+		if(ImGui::Button("Run Premake")) {
+			Application::PushDir();
+			std::string command;
+			command = ".vendor\\premake\\bin\\Windows\\premake5.exe gmake --file=";
+			command += (fs::path(m_Component.Path) / "Build" / "premake5.lua").string();
+
+			system(command.c_str());
+			Application::PopDir();
+		}
 
 		if(ImGui::Button("Build for Windows")) {
 			std::string command;
-			command = ".vendor/bin/Windows/premake5.exe";
-			command += " ";
+			command = "cd /D \"";
+			command += (fs::path(m_Component.Path) / "Build" / "Platform" / "gcc-Windows").make_preferred().string();
+			command += "\" && ";
+			command += "mingw32-make.exe -f Makefile";
 
+			VOLCANICORE_LOG_INFO(command.c_str());
 			system(command.c_str());
 		}
-		if(ImGui::Button("Add Dependency")) {
+
+		ImGui::SeparatorText("Dependencies");
+		ImGui::Text("Core");
+		ImGui::Indent();
+
+		if(ImGui::Button("Add Dependency##0")) {
 
 		}
+
+		for(auto dep : m_Component.CoreDeps)
+			ImGui::Text(dep.c_str());
+		ImGui::Unindent();
+
+		ImGui::Text("Editor");
+		ImGui::Indent();
+
+		if(ImGui::Button("Add Dependency##1")) {
+
+		}
+
+		for(auto dep : m_Component.EditorDeps)
+			ImGui::Text(dep.c_str());
+		ImGui::Unindent();
 	}
 	ImGui::End();
 }
@@ -525,13 +674,14 @@ void Editor::RenderFlowEditor() {
 	auto flags = ImGuiWindowFlags_NoDecoration
 			| ImGuiWindowFlags_NoMove
 			| ImGuiWindowFlags_NoDocking;
-	ImGuiViewport* viewport = ImGui::GetMainViewport();
-	ImGui::SetNextWindowPos(viewport->Pos);
-	ImGui::SetNextWindowSize(viewport->Size);
+
+	const ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos({ viewport->Pos.x, viewport->Pos.y + 60.0f });
+	ImGui::SetNextWindowSize({ viewport->Size.x, viewport->Size.y - 60.0f });
 	ImGui::SetNextWindowViewport(viewport->ID);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
 
 	ImGui::Begin("##FlowEditor", nullptr, flags);
 	{
@@ -542,100 +692,6 @@ void Editor::RenderFlowEditor() {
 }
 
 void Editor::RenderProjectEditor() {
-	ImGuiWindowFlags titleBarFlags = ImGuiWindowFlags_NoTitleBar
-								   | ImGuiWindowFlags_NoCollapse
-								   | ImGuiWindowFlags_NoResize
-								   | ImGuiWindowFlags_NoMove
-								   | ImGuiWindowFlags_NoDocking
-								   | ImGuiWindowFlags_NoScrollbar
-								   | ImGuiWindowFlags_NoSavedSettings
-								   | ImGuiWindowFlags_NoScrollWithMouse;
-	const ImGuiViewport* viewport = ImGui::GetMainViewport();
-
-	ImGui::SetNextWindowPos(viewport->WorkPos);
-	ImGui::SetNextWindowSize(ImVec2{ viewport->WorkSize.x, 60.0f });
-	ImGui::SetNextWindowViewport(viewport->ID);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, ImVec2{ 0.0f, 0.0f });
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{ 0.0f, 0.0f });
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4{ 0.01f, 0.01f, 0.01f, 1.0f });
-
-	ImGui::Begin("##TitleBar", nullptr, titleBarFlags);
-	{
-		ImGui::PopStyleVar(3);
-		ImGui::PopStyleColor(1);
-		auto image = s_WelcomeImage;
-		image.x = 5;
-		image.y = 5;
-		image.Width = 50;
-		image.Height = 50;
-		image.UsePosition = true;
-		image.Draw();
-		ImGui::SameLine();
-
-		ImGui::SetWindowFontScale(2.0f);
-		ImGui::Text("Magma Editor");
-		ImGui::SetWindowFontScale(1.0f);
-		ImGui::SameLine();
-
-		ImVec2 menuSize = { ImGui::GetContentRegionAvail().x - 100.0f, 25.0f };
-		ImGui::BeginChild("##MenuBar", menuSize, 0,
-			titleBarFlags | ImGuiWindowFlags_MenuBar);
-		{
-			if(ImGui::BeginMenuBar()) {
-				if(ImGui::BeginMenu("Test")) {
-					ImGui::MenuItem("Item 1");
-					ImGui::EndMenu();
-				}
-				ImGui::EndMenuBar();
-			}
-			// m_ScriptObj.Call("OnRenderMenuBar");
-		}
-		ImGui::EndChild();
-
-		ImGui::SameLine();
-		ImGui::SetCursorPosX(
-			ImGui::GetCursorPos().x + ImGui::GetContentRegionAvail().x - 45.0f);
-		if(ImGui::Button("-"))
-			Application::GetWindow()->Minimize();
-		ImGui::SameLine();
-		if(ImGui::Button("X"))
-			Application::Close();
-
-		ImVec2 tabBarSize = { ImGui::GetContentRegionAvail().x - 100.0f, 0.0f };
-		ImGui::SetCursorPos(ImVec2(60.0f, 35.0f));
-		ImGui::BeginChild("##TabBar", tabBarSize);
-		{
-			auto tabBarFlags = ImGuiTabBarFlags_Reorderable
-							 | ImGuiTabBarFlags_NoTooltip;
-			if(ImGui::BeginTabBar("##Tabs", tabBarFlags)) {
-				auto plusFlags = ImGuiTabItemFlags_Trailing
-							   | ImGuiTabItemFlags_NoReorder;
-				if(ImGui::TabItemButton("+", plusFlags))
-					ImGui::OpenPopup("New Tab");
-				NewTab();
-
-				uint32_t tabToDelete = 0;
-				for(uint32_t i = 0; i < m_Tabs.Count(); i++) {
-					Tab& tab = m_Tabs[i];
-					TabState state =
-						UIRenderer::DrawTab(tab.Name, tab.Type != "Project");
-					if(state.Closed)
-						tabToDelete = i + 1;
-					else if(state.Clicked)
-						SetTab(i);
-				}
-
-				if(tabToDelete != 0)
-					CloseTab(tabToDelete);
-
-				ImGui::EndTabBar();
-			}
-		}
-		ImGui::EndChild();
-	}
-	ImGui::End();
-
 	bool dockspaceOpen = true;
 	ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags_PassthruCentralNode;
 	ImGuiWindowFlags windowFlags;
@@ -646,12 +702,13 @@ void Editor::RenderProjectEditor() {
 				 | ImGuiWindowFlags_NoInputs
 				 | ImGuiWindowFlags_NoBringToFrontOnFocus;
 
-	ImGui::SetNextWindowPos({ viewport->Pos.x, viewport->Pos.y + 25.0f });
-	ImGui::SetNextWindowSize({ viewport->Size.x, viewport->Size.y - 25.0f });
+	const ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos({ viewport->Pos.x, viewport->Pos.y + 60.0f });
+	ImGui::SetNextWindowSize({ viewport->Size.x, viewport->Size.y - 60.0f });
 	ImGui::SetNextWindowViewport(viewport->ID);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
 
 	ImGui::Begin("DockSpaceWindow", &dockspaceOpen, windowFlags);
 	{
@@ -735,6 +792,7 @@ void Editor::SetTab(uint32_t idx) {
 void Editor::NewProject() {
 
 }
+
 void Editor::OpenProject() {
 	UI::FileDialog dialog;
 	dialog.Title = "Open Project";
@@ -759,10 +817,10 @@ void Editor::OpenProject(const std::string& file) {
 	if(!found)
 		m_Cache.PastProjects.Add(file);
 
-	// Application::GetWindow()->Maximize();
 	// m_LavaFlow.Path = m_Project.LavaFlow;
 	// LoadLavaFlow(m_LavaFlow.Path);
 	// OpenTab("Project");
+	Mode = EditorMode::Project;
 }
 
 void Editor::CloseProject() {
@@ -821,6 +879,8 @@ void Editor::OpenLavaFlow(const std::string& file) {
 
 		s_TabModules[type] = CreateRef<ScriptModule>(moduleData);
 	}
+
+	Mode = EditorMode::Flow;
 }
 
 void Editor::CloseLavaFlow() {
@@ -851,16 +911,19 @@ void Editor::OpenComponent(const std::string& file) {
 	VOLCANICORE_ASSERT(componentNode);
 
 	auto path = fs::path(file).parent_path();
-	m_Component.Path = path.string();
+	m_Component.Path = fs::canonical(path).string();
 	m_Component.Name = path.filename().string();
+	m_Component.BuildAuto = componentNode["Build"]["Auto"].as<bool>();
 	m_Component.CoreDeps =
-		fileNode["Dependencies"]["Core"].as<List<std::string>>();
+		componentNode["Dependencies"]["Core"].as<List<std::string>>();
 	m_Component.EditorDeps =
-		fileNode["Dependencies"]["Editor"].as<List<std::string>>();
+		componentNode["Dependencies"]["Editor"].as<List<std::string>>();
+
+	Mode = EditorMode::Component;
 }
 
 void Editor::CloseComponent() {
-
+	Mode = EditorMode::None;
 }
 
 void ProjectLoad(const std::string& path, Project& project) {

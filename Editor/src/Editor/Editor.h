@@ -15,6 +15,7 @@ namespace Magma {
 struct Component {
 	std::string Name;
 	std::string Path;
+	bool BuildAuto;
 	List<std::string> CoreDeps;
 	List<std::string> EditorDeps;
 };
@@ -87,6 +88,7 @@ private:
 	List<Tab> m_Tabs;
 	List<Tab> m_ClosedTabs;
 
+	void RenderTitleBar();
 	void RenderStartScreen();
 	void RenderComponentEditor();
 	void RenderFlowEditor();

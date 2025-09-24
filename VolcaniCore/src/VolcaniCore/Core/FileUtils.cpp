@@ -9,10 +9,10 @@ namespace fs = std::filesystem;
 
 namespace VolcaniCore {
 
-File::File(const std::string& path)
+File::File(const std::string& path, bool clear)
 	: Path(path)
 {
-	m_Data.open(path.c_str(), std::ios::out | std::ios::app);
+	m_Data.open(path.c_str(), std::ios::out | (clear ? std::ios::trunc : std::ios::app));
 }
 
 File& File::Write(const std::string& data) {

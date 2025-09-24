@@ -16,7 +16,7 @@ public:
 	const std::string Path;
 
 public:
-	File(const std::string& path);
+	File(const std::string& path, bool clear = false);
 
 	File& Write(const std::string& info);
 

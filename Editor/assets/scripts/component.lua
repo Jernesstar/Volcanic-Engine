@@ -1,5 +1,13 @@
+-- newoption {
+--     trigger     = "Target",
+--     value       = "TARGET",
+--     description = "Platform and compiler"
+-- }
+
+-- Target = _OPTIONS["Target"]
+
 workspace "${0}"
-    location ("Build")
+    location ("Platform/%{Target}")
     architecture "x86_64"
     configurations { "Debug", "Release" }
 
@@ -10,6 +18,15 @@ workspace "${0}"
     filter "configurations:Release"
         optimize "Full"
 
-BuildPath = ${1};
-VolcaniCorePath = ${2};
-MagmaPath = ${3};
+ComponentPath = "${1}"
+SourcePath = "%{ComponentPath}/Source"
+VendorPath = "%{ComponentPath}/Vendor"
+VolcaniCorePath = "${2}"
+MagmaPath = "${3}"
+
+Target = "gcc-Windows"
+
+CoreDeps = {}
+EditorDeps = {}
+Defines = {}
+VendorPaths = {}

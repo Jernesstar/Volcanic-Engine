@@ -55,6 +55,10 @@ std::string Application::GetCurrentDir() {
 	return s_Path;
 }
 
+std::string Application::GetLibraryDir() {
+	return s_LibraryPath;
+}
+
 void Application::PushDir() {
 	PushDir(s_LibraryPath);
 }

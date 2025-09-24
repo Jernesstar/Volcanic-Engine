@@ -1,5 +1,4 @@
-
-project "AshEditor"
+project "${0}-Editor"
     kind "DynamicLib"
     language "C++"
     cppdialect "C++latest"
@@ -15,15 +14,23 @@ project "AshEditor"
 
     includedirs {
         "%{VolcaniCorePath}",
-        "%{VolcaniCorePath}/*",
+        "%{VolcaniCorePath}/**",
         "%{MagmaPath}",
-        "%{MagmaPath}/*",
+        "%{MagmaPath}/**",
     }
 
     links {
         "VolcaniCore",
         "Magma"
     }
+
+    for _, dep in ipairs(CoreDeps) do
+        links { dep }
+    end
+
+    for _, dep in ipairs(EditorDeps) do
+        links { dep }
+    end
 
     defines {
 

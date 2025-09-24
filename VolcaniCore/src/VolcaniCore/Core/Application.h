@@ -20,6 +20,7 @@ public:
 
 	static std::string GetHomeDir();
 	static std::string GetCurrentDir();
+	static std::string GetLibraryDir();
 	static void PushDir();
 	static void PushDir(const std::string& path);
 	static void PopDir();
