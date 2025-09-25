@@ -1,22 +1,41 @@
 project "${0}-Editor"
-    kind "DynamicLib"
+    kind "SharedLib"
     language "C++"
-    cppdialect "C++latest"
-    staticruntime "Off"
+    cppdialect "C++23"
 
-    objdir ("Build/%{Target}/obj")
-    targetdir ("Build/%{Target}/lib")
+    objdir ("%{ComponentPath}/Build/Platform/%{Target}/obj")
+    targetdir ("%{ComponentPath}/Build/Platform/%{Target}/lib")
 
     files {
-        "Source/**.h",
-        "Source/**.cpp"
+        "%{SourcePath}/Core/**.h",
+        "%{SourcePath}/Core/**.cpp",
+        "%{SourcePath}/Editor/**.h",
+        "%{SourcePath}/Editor/**.cpp"
     }
 
     includedirs {
+        "%{SourcePath}",
+        "%{SourcePath}/Core",
         "%{VolcaniCorePath}",
         "%{VolcaniCorePath}/**",
         "%{MagmaPath}",
-        "%{MagmaPath}/**",
+        "%{MagmaPath}/**"
+    }
+
+    for name, path in pairs(VendorPaths) do
+        includedirs {
+            path,
+            path .. "/**"
+        }
+
+        removeincludedirs {
+            path .. "/**/contrib"
+        }
+    end
+
+    libdirs {
+        -- "%{VolcaniCorePath}/../../lib"
+        "%{VolcaniCorePath}/../../build/**",
     }
 
     links {

@@ -585,6 +585,9 @@ void Editor::RenderComponentEditor() {
 		if(ImGui::Button("Generate Premake")) {
 			Application::PushDir();
 			auto proj = FileUtils::ReadFile("Editor/assets/scripts/component.lua");
+			auto core = FileUtils::ReadFile("Editor/assets/scripts/component-core.lua");
+			auto editor = FileUtils::ReadFile("Editor/assets/scripts/component-editor.lua");
+			// auto runtime = FileUtils::ReadFile("Editor/assets/scripts/component-runtime.lua");
 			Application::PopDir();
 
 			auto volcPath =
@@ -610,27 +613,35 @@ void Editor::RenderComponentEditor() {
 
 			for(auto dep : m_Component.CoreDeps) {
 				premake.Write(
-					std::string("VendorPaths[\"") + dep + "\"] = \"%{ComponentPath}/" + dep + "\"");
+					std::string("VendorPaths[\"") + dep + "\"] = \"%{VendorPath}/" + dep + "\"");
 			}
 			for(auto dep : m_Component.EditorDeps) {
 				premake.Write(
-					std::string("VendorPaths[\"") + dep + "\"] = \"%{ComponentPath}/" + dep + "\"");
+					std::string("VendorPaths[\"") + dep + "\"] = \"%{VendorPath}/" + dep + "\"");
 			}
 
 			for(auto dep : m_Component.CoreDeps)
 				premake.Write(std::string("include \"Dependencies/") + dep + "\"");
 			for(auto dep : m_Component.EditorDeps)
 				premake.Write(std::string("include \"Dependencies/") + dep + "\"");
+
+			Replace(core, "${0}", m_Component.Name);
+			Replace(editor, "${0}", m_Component.Name);
+
+			premake.Write(core);
+			premake.Write(editor);
 		}
 
 		if(ImGui::Button("Run Premake")) {
 			Application::PushDir();
 			std::string command;
-			command = ".vendor\\premake\\bin\\Windows\\premake5.exe gmake --file=";
+			command = ".vendor\\premake\\bin\\Windows\\premake5.exe gmake --file=\"";
 			command += (fs::path(m_Component.Path) / "Build" / "premake5.lua").string();
+			command += "\"";
 
 			system(command.c_str());
 			Application::PopDir();
+			VOLCANICORE_LOG_INFO("Completed: Run premake");
 		}
 
 		if(ImGui::Button("Build for Windows")) {

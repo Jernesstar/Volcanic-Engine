@@ -1,11 +1,10 @@
 project "${0}-Core"
-    kind "DynamicLib"
+    kind "SharedLib"
     language "C++"
-    cppdialect "C++latest"
-    staticruntime "Off"
+    cppdialect "C++23"
 
-    objdir ("Build/Platform/%{Target}/obj")
-    targetdir ("Build/Platform/%{Target}/lib")
+    objdir ("%{ComponentPath}/Build/Platform/%{Target}/obj")
+    targetdir ("%{ComponentPath}/Build/Platform/%{Target}/lib")
 
     files {
         "%{SourcePath}/Core/**.h",
@@ -19,6 +18,22 @@ project "${0}-Core"
         "%{VolcaniCorePath}/**",
         "%{MagmaPath}",
         "%{MagmaPath}/**",
+    }
+
+    for name, path in pairs(VendorPaths) do
+        includedirs {
+            path,
+            path .. "/**"
+        }
+
+        removeincludedirs {
+            path .. "/**/contrib/**"
+        }
+    end
+
+    libdirs {
+        -- "%{VolcaniCorePath}/../../lib"
+        "%{VolcaniCorePath}/../../build/**",
     }
 
     links {
@@ -37,3 +52,6 @@ project "${0}-Core"
     for i, def in ipairs(Defines) do
         defines { def }
     end
+
+    filter "system:windows"
+        systemversion "latest"
