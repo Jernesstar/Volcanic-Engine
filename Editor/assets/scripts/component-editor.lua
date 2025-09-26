@@ -7,8 +7,8 @@ project "${0}-Editor"
     targetdir ("%{ComponentPath}/Build/Platform/%{Target}/lib")
 
     files {
-        "%{SourcePath}/Core/**.h",
-        "%{SourcePath}/Core/**.cpp",
+        -- "%{SourcePath}/Core/**.h",
+        -- "%{SourcePath}/Core/**.cpp",
         "%{SourcePath}/Editor/**.h",
         "%{SourcePath}/Editor/**.cpp"
     }
@@ -18,18 +18,16 @@ project "${0}-Editor"
         "%{SourcePath}/Core",
         "%{VolcaniCorePath}",
         "%{VolcaniCorePath}/**",
+        "%{VolcaniCorePath}/../.vendor/glm",
         "%{MagmaPath}",
-        "%{MagmaPath}/**"
+        "%{MagmaPath}/**",
     }
 
     for name, path in pairs(VendorPaths) do
         includedirs {
             path,
-            path .. "/**"
-        }
-
-        removeincludedirs {
-            path .. "/**/contrib"
+            path .. "/*",
+            path .. "/*/*"
         }
     end
 

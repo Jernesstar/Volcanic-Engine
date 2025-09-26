@@ -620,6 +620,15 @@ void Editor::RenderComponentEditor() {
 					std::string("VendorPaths[\"") + dep + "\"] = \"%{VendorPath}/" + dep + "\"");
 			}
 
+			// for(auto dep : m_Component.CoreDeps) {
+			// 	premake.Write(
+			// 		std::string("IncludePaths[\"") + dep + "\"] = \"%{VendorPath}/" + dep + "\"");
+			// }
+			// for(auto dep : m_Component.EditorDeps) {
+			// 	premake.Write(
+			// 		std::string("IncludePaths[\"") + dep + "\"] = \"%{VendorPath}/" + dep + "\"");
+			// }
+
 			for(auto dep : m_Component.CoreDeps)
 				premake.Write(std::string("include \"Dependencies/") + dep + "\"");
 			for(auto dep : m_Component.EditorDeps)

@@ -3,7 +3,6 @@
 #include <cstdint>
 #include <string>
 #include <memory>
-#include <vector>
 #include <map>
 #include <unordered_map>
 #include <functional>
@@ -18,10 +17,6 @@
 	#define EXPORT
 	#define IMPORT
 	#pragma warning Unknown dynamic link import/export semantics.
-#endif
-
-#if defined(_MSC_VER) || defined(__linux__)
-	#define MAGMA_PHYSICS
 #endif
 
 template<typename T>

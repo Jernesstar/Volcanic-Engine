@@ -2,6 +2,7 @@ project "${0}-Core"
     kind "SharedLib"
     language "C++"
     cppdialect "C++23"
+    staticruntime "Off"
 
     objdir ("%{ComponentPath}/Build/Platform/%{Target}/obj")
     targetdir ("%{ComponentPath}/Build/Platform/%{Target}/lib")
@@ -13,9 +14,10 @@ project "${0}-Core"
 
     includedirs {
         "%{SourcePath}",
-        "%{SourcePath}/Core",
+        "%{SourcePath}/**",
         "%{VolcaniCorePath}",
         "%{VolcaniCorePath}/**",
+        "%{VolcaniCorePath}/../.vendor/glm",
         "%{MagmaPath}",
         "%{MagmaPath}/**",
     }
@@ -23,11 +25,8 @@ project "${0}-Core"
     for name, path in pairs(VendorPaths) do
         includedirs {
             path,
-            path .. "/**"
-        }
-
-        removeincludedirs {
-            path .. "/**/contrib/**"
+            path .. "/*",
+            path .. "/*/*"
         }
     end
 
