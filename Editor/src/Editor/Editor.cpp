@@ -639,6 +639,7 @@ void Editor::RenderComponentEditor() {
 
 			premake.Write(core);
 			premake.Write(editor);
+			VOLCANICORE_LOG_INFO("Completed: Generate Premake");
 		}
 
 		if(ImGui::Button("Run Premake")) {
@@ -648,9 +649,9 @@ void Editor::RenderComponentEditor() {
 			command += (fs::path(m_Component.Path) / "Build" / "premake5.lua").string();
 			command += "\"";
 
-			system(command.c_str());
+			int returnCode = system(command.c_str());
 			Application::PopDir();
-			VOLCANICORE_LOG_INFO("Completed: Run premake");
+			VOLCANICORE_LOG_INFO("Completed: Run Premake");
 		}
 
 		if(ImGui::Button("Build for Windows")) {
@@ -661,7 +662,8 @@ void Editor::RenderComponentEditor() {
 			command += "mingw32-make.exe -f Makefile";
 
 			VOLCANICORE_LOG_INFO(command.c_str());
-			system(command.c_str());
+			int returnCode = system(command.c_str());
+			VOLCANICORE_LOG_INFO("Completed: Build for Windows");
 		}
 
 		ImGui::SeparatorText("Dependencies");

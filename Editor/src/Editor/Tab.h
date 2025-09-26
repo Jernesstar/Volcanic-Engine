@@ -4,7 +4,7 @@
 #include <VolcaniCore/Core/Log.h>
 #include <VolcaniCore/Core/Template.h>
 #include <VolcaniCore/Core/List.h>
-#include <VolcaniCore/Core/Time.h>
+#include <VolcaniCore/Core/TimeUtils.h>
 
 #include <Magma/Script/ScriptObject.h>
 

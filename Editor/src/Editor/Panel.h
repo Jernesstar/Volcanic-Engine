@@ -2,7 +2,7 @@
 
 #include <VolcaniCore/Core/Defines.h>
 #include <VolcaniCore/Core/Template.h>
-#include <VolcaniCore/Core/Time.h>
+#include <VolcaniCore/Core/TimeUtils.h>
 
 #include <Magma/Script/ScriptObject.h>
 

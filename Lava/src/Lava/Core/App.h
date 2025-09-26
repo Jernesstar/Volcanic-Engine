@@ -1,7 +1,7 @@
 #pragma once
 
 #include <VolcaniCore/Core/Defines.h>
-#include <VolcaniCore/Core/Time.h>
+#include <VolcaniCore/Core/TimeUtils.h>
 
 #include <Magma/Core/Project.h>
 #include <Magma/Script/ScriptModule.h>
