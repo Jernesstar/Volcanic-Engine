@@ -1,5 +1,6 @@
 #include "Lava.h"
 
+#include <Magma/Core/DLL.h>
 #include <Magma/Script/ScriptEngine.h>
 
 #include "Component.h"
@@ -9,19 +10,23 @@ using namespace Magma::Script;
 
 namespace Lava {
 
+static List<Ref<Magma::DLL>> s_DLLs;
 static List<Component*> s_Components;
 
 void InitComponents() {
 	ScriptEngine::Init();
 	ScriptGlue::RegisterInterface();
+}
 
-	// auto ash = new Ash();
-	// ash->Init();
-	// s_Components.Add(ash);
+void LoadComponent(const std::string& path) {
+	auto dll = CreateRef<Magma::DLL>(path);
+	Component* component = dll->GetFunction<Component*>("CreateComponent")();
+	s_DLLs.Add(dll);
+	s_Components.Add(component);
 }
 
 void CloseComponents() {
-	for(auto component : s_Components) {
+	for(Component* component : s_Components) {
 		component->Shutdown();
 		delete component;
 	}
@@ -31,17 +36,17 @@ void CloseComponents() {
 }
 
 void BeginFrame() {
-	for(auto component : s_Components)
+	for(Component* component : s_Components)
 		component->BeginFrame();
 }
 
 void Update(TimeStep ts) {
-	for(auto component : s_Components)
+	for(Component* component : s_Components)
 		component->OnUpdate(ts);
 }
 
 void EndFrame() {
-	for(auto component : s_Components)
+	for(Component* component : s_Components)
 		component->EndFrame();
 }
 

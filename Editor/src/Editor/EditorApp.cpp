@@ -57,9 +57,9 @@ void EditorApp::OnUpdate(TimeStep ts) {
 	m_Editor.Update(ts);
 	m_Editor.Render();
 
-	UIRenderer::EndFrame();
-
 	Lava::EndFrame();
+
+	UIRenderer::EndFrame();
 }
 
 }

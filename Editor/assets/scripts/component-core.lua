@@ -8,6 +8,8 @@ project "${0}-Core"
     targetdir ("%{ComponentPath}/Build/Platform/%{Target}/lib")
 
     files {
+        "%{SourcePath}/*.h",
+        "%{SourcePath}/*.cpp",
         "%{SourcePath}/Core/**.h",
         "%{SourcePath}/Core/**.cpp"
     }
@@ -20,6 +22,8 @@ project "${0}-Core"
         "%{VolcaniCorePath}/../.vendor/glm",
         "%{MagmaPath}",
         "%{MagmaPath}/**",
+        "%{MagmaPath}/../.vendor/angelscript/angelscript/include",
+        "%{MagmaPath}/../../Lava/src",
     }
 
     for name, path in pairs(VendorPaths) do
@@ -37,7 +41,8 @@ project "${0}-Core"
 
     links {
         "VolcaniCore",
-        "Magma"
+        "Magma",
+        "angelscript"
     }
 
     for i, dep in ipairs(CoreDeps) do

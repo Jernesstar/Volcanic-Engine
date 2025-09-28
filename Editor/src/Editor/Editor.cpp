@@ -21,6 +21,8 @@
 
 #include <Magma/Core/YAMLSerializer.h>
 
+#include <Lava/Core/Lava.h>
+
 #include "UI/UI.h"
 
 #include "AssetImporter.h"
@@ -664,6 +666,12 @@ void Editor::RenderComponentEditor() {
 			VOLCANICORE_LOG_INFO(command.c_str());
 			int returnCode = system(command.c_str());
 			VOLCANICORE_LOG_INFO("Completed: Build for Windows");
+		}
+
+		if(ImGui::Button("Load Component")) {
+			auto path = fs::path(m_Component.Path) / "Build" / "Platform" / "gcc-Windows" / "lib" / m_Component.Name;
+			Lava::LoadComponent(path.string() + "-Core.dll");
+			VOLCANICORE_LOG_INFO("Completed: Load Component");
 		}
 
 		ImGui::SeparatorText("Dependencies");
