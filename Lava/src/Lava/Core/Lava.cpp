@@ -21,8 +21,9 @@ void InitComponents() {
 void LoadComponent(const std::string& path) {
 	auto dll = CreateRef<Magma::DLL>(path);
 	Component* component = dll->GetFunction<Component*>("CreateComponent")();
-	s_DLLs.Add(dll);
+	component->Init();
 	s_Components.Add(component);
+	s_DLLs.Add(dll);
 }
 
 void CloseComponents() {
@@ -31,6 +32,7 @@ void CloseComponents() {
 		delete component;
 	}
 	s_Components.Clear();
+	s_DLLs.Clear();
 
 	ScriptEngine::Shutdown();
 }

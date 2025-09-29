@@ -31,6 +31,10 @@ project "${0}-Editor"
         }
     end
 
+    externalincludedirs {
+        "C:/msys64/mingw64/include/**",
+    }
+
     libdirs {
         -- "%{VolcaniCorePath}/../../lib"
         "%{VolcaniCorePath}/../../build/**",

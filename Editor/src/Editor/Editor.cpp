@@ -658,12 +658,13 @@ void Editor::RenderComponentEditor() {
 
 		if(ImGui::Button("Build for Windows")) {
 			std::string command;
-			command = "cd /D \"";
-			command += (fs::path(m_Component.Path) / "Build" / "Platform" / "gcc-Windows").make_preferred().string();
-			command += "\" && ";
-			command += "mingw32-make.exe -f Makefile";
+			// command = "\"";
+			// command += getenv("VOLC_PATH");
+			// command += "\\Editor\\assets\\scripts\\build.bat\" \"";
+			// command += fs::path(m_Component.Path).make_preferred().string();
+			// command += "\"";
+			command = "\"C:\\Users\\Jercy /Mukala\\Code\\Work\\VolcanicEngine\\Editor\\assets\\scripts\\build.bat\"\"";
 
-			VOLCANICORE_LOG_INFO(command.c_str());
 			int returnCode = system(command.c_str());
 			VOLCANICORE_LOG_INFO("Completed: Build for Windows");
 		}
