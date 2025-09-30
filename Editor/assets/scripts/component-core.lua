@@ -24,13 +24,13 @@ project "${0}-Core"
         "%{MagmaPath}/**",
         "%{MagmaPath}/../.vendor/angelscript/angelscript/include",
         "%{MagmaPath}/../../Lava/src",
+        "%{VendorPath}"
     }
 
     for name, path in pairs(VendorPaths) do
         includedirs {
             path,
-            path .. "/*",
-            path .. "/*/*"
+            path .. "/include",
         }
     end
 
