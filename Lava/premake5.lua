@@ -40,12 +40,8 @@ project "Lava"
     }
 
     defines {
-        "flecs_STATIC",
         "NOMINMAX",
     }
-
-    filter "action:vs* or system:linux"
-        links { "PhysX" }
 
     filter "toolset:gcc or toolset:clang"
         buildoptions {

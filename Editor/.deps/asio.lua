@@ -26,3 +26,14 @@ project "asio"
         buildoptions {
             "-mthreads"
         }
+
+    links {
+        "ssl",
+        "crypto",
+    }
+
+    filter "system:windows"
+        links {
+            "ws2_32",
+            "mswsock"
+        }

@@ -644,6 +644,7 @@ void Editor::RenderComponentEditor() {
 			VOLCANICORE_LOG_INFO("Completed: Generate Premake");
 		}
 
+		static std::string console;
 		if(ImGui::Button("Run Premake")) {
 			Application::PushDir();
 			std::string command;
@@ -651,7 +652,23 @@ void Editor::RenderComponentEditor() {
 			command += (fs::path(m_Component.Path) / "Build" / "premake5.lua").string();
 			command += "\"";
 
-			int returnCode = system(command.c_str());
+			command += " 2>&1";
+			FILE* pipe = _popen(command.c_str(), "r");
+
+			if(!pipe) {
+				VOLCANICORE_LOG_ERROR("Failed: Build for Windows");
+				return;
+			}
+			else {
+				char buffer[128];
+				
+				while(!feof(pipe)) {
+					if(fgets(buffer, 128, pipe) != nullptr)
+						console.append(buffer);
+				}
+			}
+
+			_pclose(pipe);
 			Application::PopDir();
 			VOLCANICORE_LOG_INFO("Completed: Run Premake");
 		}
@@ -663,7 +680,23 @@ void Editor::RenderComponentEditor() {
 			command += "\" && ";
 			command += "mingw32-make.exe -f Makefile";
 
-			int returnCode = system(command.c_str());
+			command += " 2>&1";
+			FILE* pipe = _popen(command.c_str(), "r");
+
+			if(!pipe) {
+				VOLCANICORE_LOG_ERROR("Failed: Build for Windows");
+				return;
+			}
+			else {
+				char buffer[128];
+				
+				while(!feof(pipe)) {
+					if(fgets(buffer, 128, pipe) != nullptr)
+						console.append(buffer);
+				}
+			}
+
+			_pclose(pipe);
 			VOLCANICORE_LOG_INFO("Completed: Build for Windows");
 		}
 
@@ -695,6 +728,10 @@ void Editor::RenderComponentEditor() {
 		for(auto dep : m_Component.EditorDeps)
 			ImGui::Text(dep.c_str());
 		ImGui::Unindent();
+
+		ImGui::BeginChild("##Console", { 900, 400 }, ImGuiChildFlags_Border);
+		ImGui::TextWrapped(console.c_str());
+		ImGui::EndChild();
 	}
 	ImGui::End();
 }

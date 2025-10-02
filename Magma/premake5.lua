@@ -29,15 +29,10 @@ project "Magma"
         "%{Includes.yaml_cpp}",
         "%{Includes.rapidjson}",
 
-        "%{Includes.clay}",
-        "%{Includes.flecs}",
-        "%{Includes.PhysX}",
-
         "%{Includes.angelscript}",
         "%{MagmaVendorDir}",
         "%{Includes.soloud}",
         "%{Includes.asio}",
-        "%{Includes.lmdb}"
     }
 
     links {
@@ -52,9 +47,6 @@ project "Magma"
         "NOMINMAX",
         "YAML_CPP_STATIC_DEFINE"
     }
-
-    filter "action:vs* or system:linux"
-        links { "PhysX" }
 
     filter "toolset:gcc or toolset:clang"
         buildoptions {
