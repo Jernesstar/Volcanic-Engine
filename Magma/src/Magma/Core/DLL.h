@@ -9,6 +9,9 @@ using FuncPtr = TReturn(*)(Args...);
 
 class DLL {
 public:
+	const std::string& Path;
+
+public:
 	DLL(const std::string& path);
 	~DLL();
 

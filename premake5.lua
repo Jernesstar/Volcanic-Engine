@@ -51,6 +51,7 @@ VendorPaths["rapidjson"]          = "%{MagmaVendorDir}/rapidjson"
 
 -- Editor libraries
 VendorPaths["asio"]               = "%{EditorVendorDir}/asio"
+VendorPaths["ai_sdk_cpp"]         = "%{EditorVendorDir}/ai-sdk-cpp"
 VendorPaths["stb_image"]          = "%{EditorVendorDir}/stb_image"
 VendorPaths["soloud"]             = "%{EditorVendorDir}/soloud"
 VendorPaths["efsw"]               = "%{EditorVendorDir}/efsw"
@@ -75,6 +76,7 @@ Includes["rapidjson"]             = "%{VendorPaths.rapidjson}/include"
 
 -- Editor libraries
 Includes["asio"]                  = "%{VendorPaths.asio}/asio/include"
+Includes["ai_sdk_cpp"]            = "%{VendorPaths.ai_sdk_cpp}/include"
 Includes["stb_image"]             = "%{VendorPaths.stb_image}/include"
 Includes["soloud"]                = "%{VendorPaths.soloud}/include"
 Includes["glad"]                  = "%{VendorPaths.glad}/include"

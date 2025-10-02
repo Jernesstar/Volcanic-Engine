@@ -13,10 +13,10 @@ namespace VolcaniCore {
 
 class File {
 public:
-	const std::string Path;
+	const fs::path& Path;
 
 public:
-	File(const std::string& path, bool clear = false);
+	File(const fs::path& path, bool clear = false);
 
 	File& Write(const std::string& info);
 

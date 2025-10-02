@@ -10,7 +10,9 @@
 
 namespace Magma {
 
-DLL::DLL(const std::string& path) {
+DLL::DLL(const std::string& path)
+	: Path(path)
+{
 #if VOLCANICENGINE_WINDOWS
 	m_Handle = LoadLibraryA(path.c_str());
 #elif VOLCANICENGINE_LINUX

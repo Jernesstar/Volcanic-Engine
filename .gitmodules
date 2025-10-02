@@ -47,3 +47,6 @@
 [submodule "Editor/.vendor/glad"]
 	path = Editor/.vendor/glad
 	url = https://github.com/LavaFlow-Technologies/glad.git
+[submodule "Editor/.vendor/ai-sdk-cpp"]
+	path = Editor/.vendor/ai-sdk-cpp
+	url = https://github.com/ClickHouse/ai-sdk-cpp.git

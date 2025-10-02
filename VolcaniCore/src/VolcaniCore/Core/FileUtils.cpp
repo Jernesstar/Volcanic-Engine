@@ -5,14 +5,12 @@
 
 #include "Core/Assert.h"
 
-namespace fs = std::filesystem;
-
 namespace VolcaniCore {
 
-File::File(const std::string& path, bool clear)
+File::File(const fs::path& path, bool clear)
 	: Path(path)
 {
-	m_Data.open(path.c_str(), std::ios::out | (clear ? std::ios::trunc : std::ios::app));
+	m_Data.open(path.string().c_str(), std::ios::out | (clear ? std::ios::trunc : std::ios::app));
 }
 
 File& File::Write(const std::string& data) {

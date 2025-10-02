@@ -11,6 +11,9 @@
 #include <asio.hpp>
 #include <asio/ssl.hpp>
 
+#include <ai/openai.h>
+// #include <ai/generate.h>
+
 #include <miniz-cpp/zip_file.hpp>
 
 #include <VolcaniCore/Core/Application.h>
@@ -241,24 +244,24 @@ void Editor::Open() {
 	s_WelcomeImage.Width = 600;
 	s_WelcomeImage.Height = 600;
 
-	if(FileUtils::PathExists("Editor/.cache/data.yml")) {
-		YAML::Node file;
-		try {
-			file = YAML::LoadFile("Editor/.cache/data.yml");
-		}
-		catch(YAML::ParserException e) {
-			VOLCANICORE_LOG_INFO("Malformed cache file");
-			return;
-		}
-		catch(YAML::BadFile e) {
-			VOLCANICORE_LOG_INFO("Bad cache file");
-			return;
-		}
+	// if(FileUtils::PathExists("Editor/.cache/data.yml")) {
+	// 	YAML::Node file;
+	// 	try {
+	// 		file = YAML::LoadFile("Editor/.cache/data.yml");
+	// 	}
+	// 	catch(YAML::ParserException e) {
+	// 		VOLCANICORE_LOG_INFO("Malformed cache file");
+	// 		return;
+	// 	}
+	// 	catch(YAML::BadFile e) {
+	// 		VOLCANICORE_LOG_INFO("Bad cache file");
+	// 		return;
+	// 	}
 
-		auto data = file["EditorData"];
-		m_Cache.PastProjects = data["PastProjects"].as<List<std::string>>();
-		m_Cache.PastLavaFlows = data["PastLavaFlows"].as<List<std::string>>();
-	}
+	// 	auto data = file["EditorData"];
+	// 	m_Cache.PastProjects = data["PastProjects"].as<List<std::string>>();
+	// 	m_Cache.PastLavaFlows = data["PastLavaFlows"].as<List<std::string>>();
+	// }
 
 	Application::PopDir();
 }
@@ -511,7 +514,20 @@ void Editor::RenderStartScreen() {
 				dialog.Draw();
 			}
 			if(ImGui::Button("FlowyAI")) {
+				// Ensure OPENAI_API_KEY environment variable is set
+				auto client = ai::openai::create_client();
 
+				auto client1 = ai::openai::create_client();
+				ai::GenerateOptions options1;
+				options1.model = ai::openai::models::kO1Mini;
+				options1.prompt =
+					"What is the capital of France? Please provide a brief answer.";
+
+				auto result = client1.generate_text(options1);
+
+				if (result) {
+					std::cout << result.text << std::endl;
+				}
 			}
 
 			UIRenderer::DrawFileDialog("New Project");
@@ -730,7 +746,7 @@ void Editor::RenderComponentEditor() {
 		ImGui::Unindent();
 
 		ImGui::BeginChild("##Console", { 900, 400 }, ImGuiChildFlags_Border);
-		ImGui::TextWrapped(console.c_str());
+		ImGui::TextUnformatted(console.c_str());
 		ImGui::EndChild();
 	}
 	ImGui::End();

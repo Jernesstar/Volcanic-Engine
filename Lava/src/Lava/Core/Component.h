@@ -8,7 +8,11 @@ namespace Lava {
 
 class Component {
 public:
-	Component() = default;
+	const std::string Name;
+
+public:
+	Component(const std::string& name)
+		: Name(name) { }
 	virtual ~Component() = default;
 
 	virtual void Init() = 0;
