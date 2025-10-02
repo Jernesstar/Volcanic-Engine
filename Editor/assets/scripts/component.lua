@@ -13,18 +13,28 @@ workspace "${0}"
     architecture "x86_64"
     configurations { "Debug", "Release" }
 
+    defines {
+        "_GLFW_USE_HYBRID_HPG"
+    }
+
     filter "system:linux"
-        defines "VOLCANICENGINE_LINUX"
+        defines {
+            "VOLCANICENGINE_LINUX",
+            "_GLFW_X11"
+        }
 
     filter "system:windows"
         defines {
             "VOLCANICENGINE_WINDOWS",
-            "_DEBUG"
+            "_GLFW_WIN32",
         }
 
     filter "configurations:Debug"
         optimize "Debug"
         symbols "On"
+        defines {
+            "_DEBUG"
+        }
 
     filter "configurations:Release"
         optimize "Full"

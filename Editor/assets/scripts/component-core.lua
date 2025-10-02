@@ -20,6 +20,7 @@ project "${0}-Core"
         "%{VolcaniCorePath}",
         "%{VolcaniCorePath}/**",
         "%{VolcaniCorePath}/../.vendor/glm",
+        "%{VolcaniCorePath}/../.vendor/glfw/include",
         "%{MagmaPath}",
         "%{MagmaPath}/**",
         "%{MagmaPath}/../.vendor/angelscript/angelscript/include",
@@ -35,15 +36,32 @@ project "${0}-Core"
     end
 
     libdirs {
-        -- "%{VolcaniCorePath}/../../lib"
         "%{VolcaniCorePath}/../../build/**",
     }
 
     links {
         "VolcaniCore",
         "Magma",
-        "angelscript"
+        "angelscript",
+        "glfw"
     }
+
+    filter "system:linux"
+        links {
+            "pthread",
+            "dl",
+            "GL",
+            "X11",
+        }
+
+    filter "system:windows"
+        systemversion "latest"
+        links {
+            "gdi32",
+            "kernel32",
+            "psapi",
+            "Ws2_32",
+        }
 
     for i, dep in ipairs(CoreDeps) do
         links { dep }
@@ -56,6 +74,3 @@ project "${0}-Core"
     for i, def in ipairs(Defines) do
         defines { def }
     end
-
-    filter "system:windows"
-        systemversion "latest"

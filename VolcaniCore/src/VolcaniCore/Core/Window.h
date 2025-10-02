@@ -55,4 +55,7 @@ private:
 	GLFWwindow* m_NativeWindow = nullptr;
 };
 
+extern void* GetNativeWindowHandle(GLFWwindow* window);
+extern void* GetNativeDisplayHandle();
+
 }

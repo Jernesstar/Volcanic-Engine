@@ -712,6 +712,7 @@ void Editor::RenderComponentEditor() {
 				}
 			}
 
+			std::cout << console;
 			_pclose(pipe);
 			VOLCANICORE_LOG_INFO("Completed: Build for Windows");
 		}
@@ -745,7 +746,7 @@ void Editor::RenderComponentEditor() {
 			ImGui::Text(dep.c_str());
 		ImGui::Unindent();
 
-		ImGui::BeginChild("##Console", { 900, 400 }, ImGuiChildFlags_Border);
+		ImGui::BeginChild("##Console", { 900, 400 }, ImGuiChildFlags_Border | ImGuiChildFlags_ResizeX);
 		ImGui::TextUnformatted(console.c_str());
 		ImGui::EndChild();
 	}

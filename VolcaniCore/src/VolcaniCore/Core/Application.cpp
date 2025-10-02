@@ -9,6 +9,8 @@ namespace fs = std::filesystem;
 
 namespace VolcaniCore {
 
+static TimePoint s_LastFrame{ Time::GetTime() };
+
 void Application::Init() {
 	VOLCANICORE_ASSERT(glfwInit(), "Failed to initialize GLFW");
 }
@@ -19,6 +21,14 @@ void Application::Close() {
 	s_Window.reset();
 	glfwTerminate();
 	exit(0);
+}
+
+Application* Application::Get() {
+	return s_Instance;
+}
+
+Ref<Window> Application::GetWindow() {
+	return s_Window;
 }
 
 Application::Application(const WindowSpecification& spec) {
