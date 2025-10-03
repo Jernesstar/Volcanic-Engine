@@ -25,8 +25,6 @@
 #include <Magma/Script/ScriptClass.h>
 #include <Magma/Script/ScriptObject.h>
 
-#include "UI/UI.h"
-
 using namespace Magma;
 using namespace Magma::UI;
 using namespace Magma::Script;
@@ -38,7 +36,9 @@ static List<WindowWidget> s_Windows;
 static void WindowWidgetRender(asIScriptFunction* ptr, WindowWidget* w) {
 	auto* context = ScriptEngine::GetContext();
 	ScriptFunc func = { ptr, context, nullptr };
-	w->Render(func);
+	w->Begin();
+	func.CallVoid();
+	w->End();
 	ptr->Release();
 }
 
@@ -74,22 +74,12 @@ void WidgetRenderer::EndFrame() {
 	s_Windows.Clear();
 }
 
-void WindowWidget::Render(ScriptFunc func) {
-	ImGui::PushID(s_Windows.Count());
-	ImGui::Begin(Name.c_str());
-
-	func.CallVoid();
-
-	ImGui::End();
-	ImGui::PopID();
-}
-
-WindowWidget* WindowWidget::With(WindowWidget::Options option) {
+Window* Window::With(Window::Option option) {
 
 	return this;
 }
 
-WindowWidget* WidgetRenderer::Window(const std::string& name) {
+Window* WidgetRenderer::Window(const std::string& name) {
 	return &s_Windows.Emplace(name);
 }
 

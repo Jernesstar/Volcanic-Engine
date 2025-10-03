@@ -36,6 +36,13 @@ private:
 	static void Run();
 	static void SetCurrentDir();
 
+	inline static std::string s_LibraryPath;
+	inline static std::string s_Path;
+
+	inline static Application* s_Instance;
+	inline static Ref<Window> s_Window;
+
+	inline static TimePoint s_LastFrame{ Time::GetTime() };
 	friend int ::main(int argc, char** argv);
 };
 
