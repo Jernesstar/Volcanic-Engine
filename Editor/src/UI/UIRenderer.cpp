@@ -1,17 +1,5 @@
 #include "UIRenderer.h"
 
-#define IM_VEC2_CLASS_EXTRA \
-	constexpr ImVec2(glm::vec2& v) : x(v.x), y(v.y) {} \
-	operator glm::vec2() const { return glm::vec2(x, y); }
-
-#define IM_VEC3_CLASS_EXTRA \
-	constexpr ImVec3(glm::vec3& v) : x(v.x), y(v.y), z(v.z) {} \
-	operator glm::vec3() const { return glm::vec3(x, y, z); }
-
-#define IM_VEC4_CLASS_EXTRA \
-	constexpr ImVec4(const glm::vec4& v) : x(v.x), y(v.y), z(v.z), w(v.w) {} \
-	operator glm::vec4() const { return glm::vec4(x, y, z, w); }
-
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
@@ -21,9 +9,6 @@
 #include <imgui/backends/imgui_impl_glfw.h>
 #include <imgui/backends/imgui_impl_opengl3.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
-
-#include <ImGuiFileDialog/ImGuiFileDialog.h>
-#include <ImGuiColorTextEdit/TextEditor.h>
 
 #include <VolcaniCore/Core/Application.h>
 #include <VolcaniCore/Core/List.h>
@@ -79,62 +64,6 @@ static ImVec2 CalcPosition(UIElement* element) {
 }
 
 UIState UIRenderer::DrawWindow(UI::Window& window) {
-	if(window.Width == 0 || window.Height == 0) {
-		s_Stack.Add(UIType::DummyWindow);
-		return { };
-	}
-
-	ImGui::SetNextWindowPos(CalcPosition(&window));
-
-	if(s_Stack
-	&& (s_Stack[-1] == UIType::Window || s_Stack[-1] == UIType::DummyWindow
-		|| s_Stack[-1] == UIType::ChildWindow))
-	{
-		auto childFlags = ImGuiChildFlags_Border
-						| ImGuiChildFlags_FrameStyle
-						| ImGuiChildFlags_ResizeX
-						| ImGuiChildFlags_ResizeY;
-		auto windowFlags = ImGuiWindowFlags_NoScrollbar
-						 | ImGuiWindowFlags_NoScrollWithMouse
-						 | ImGuiWindowFlags_NoTitleBar
-						 | ImGuiWindowFlags_NoCollapse;
-		ImVec2 size((float)window.Width, (float)window.Height);
-
-		ImGui::PushStyleColor(ImGuiCol_FrameBg, window.Color);
-		ImGui::PushID(&window);
-		ImGui::BeginChild("##Window", size, childFlags, windowFlags);
-		ImGui::PopID();
-		ImGui::PopStyleColor();
-
-		s_Stack.Add(UIType::ChildWindow);
-	}
-	else {
-		auto windowFlags = ImGuiWindowFlags_NoDocking
-						 | ImGuiWindowFlags_NoTitleBar
-						 | ImGuiWindowFlags_NoCollapse
-						 | ImGuiWindowFlags_NoResize
-						 | ImGuiWindowFlags_NoMove
-						 | ImGuiWindowFlags_NoBringToFrontOnFocus
-						 | ImGuiWindowFlags_NoNavFocus;
-
-		ImGui::SetNextWindowSize(ImVec2((float)window.Width, (float)window.Height));
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0f);
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 10.0f);
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, window.Color);
-		ImGui::PushStyleColor(ImGuiCol_Border, window.BorderColor);
-		ImGui::PushID(&window);
-		ImGui::Begin("##Window", nullptr, windowFlags);
-		ImGui::PopID();
-		ImGui::PopStyleColor(2);
-		ImGui::PopStyleVar(3);
-
-		s_Stack.Add(UIType::Window);
-	}
-
-	window.Width = (uint32_t)ImGui::GetWindowSize().x;
-	window.Height = (uint32_t)ImGui::GetWindowSize().y;
 
 	return {
 		ImGui::IsMouseClicked(0) && ImGui::IsWindowHovered(),

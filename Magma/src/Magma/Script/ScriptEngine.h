@@ -44,7 +44,8 @@ struct ScriptFunc {
 	asIScriptObject* Object = nullptr;
 
 	~ScriptFunc() {
-		Context->Unprepare();
+		if(Context)
+			Context->Unprepare();
 	}
 
 	template<typename T, typename... Args>
