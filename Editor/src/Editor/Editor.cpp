@@ -26,7 +26,7 @@
 
 #include <Lava/Core/Lava.h>
 
-#include "UI/UI.h"
+#include "UI/Widget.h"
 
 #include "AssetImporter.h"
 #include "ScriptManager.h"
@@ -46,7 +46,6 @@ static void ProjectLoad(const std::string& path, Project& project);
 static void ProjectSave(const Project& project);
 static void ProjectSaveRuntime(const Project& project);
 
-static UI::Image s_WelcomeImage;
 static Map<std::string, Ref<ScriptModule>> s_TabModules;
 
 static std::string HTTPGet(asio::io_context& io, asio::ssl::context& sslContext,
