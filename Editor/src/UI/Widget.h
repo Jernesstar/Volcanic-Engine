@@ -1,21 +1,22 @@
 #pragma once
 
+#include <VolcaniCore/Core/Math.h>
+
 #define IM_VEC2_CLASS_EXTRA \
-	constexpr ImVec2(glm::vec2& v) : x(v.x), y(v.y) {} \
-	operator glm::vec2() const { return glm::vec2(x, y); }
+	constexpr ImVec2(Vec2& v) : x(v.x), y(v.y) {} \
+	operator Vec2() const { return Vec2(x, y); }
 
 #define IM_VEC3_CLASS_EXTRA \
-	constexpr ImVec3(glm::vec3& v) : x(v.x), y(v.y), z(v.z) {} \
-	operator glm::vec3() const { return glm::vec3(x, y, z); }
+	constexpr ImVec3(Vec3& v) : x(v.x), y(v.y), z(v.z) {} \
+	operator Vec3() const { return Vec3(x, y, z); }
 
 #define IM_VEC4_CLASS_EXTRA \
-	constexpr ImVec4(const glm::vec4& v) : x(v.x), y(v.y), z(v.z), w(v.w) {} \
-	operator glm::vec4() const { return glm::vec4(x, y, z, w); }
+	constexpr ImVec4(const Vec4& v) : x(v.x), y(v.y), z(v.z), w(v.w) {} \
+	operator Vec4() const { return Vec4(x, y, z, w); }
 
 #include <ImGuiFileDialog/ImGuiFileDialog.h>
 #include <ImGuiColorTextEdit/TextEditor.h>
 
-#include <VolcaniCore/Core/Math.h>
 #include <VolcaniCore/Core/List.h>
 #include <VolcaniCore/Core/TimeUtils.h>
 #include <VolcaniCore/Core/FileUtils.h>
@@ -45,9 +46,9 @@ enum class WidgetType {
 	Image,
 	Text,
 	TextInput,
-	Gizmo,
 	FileDialog,
 	FileEditor,
+	Gizmo,
 };
 
 struct UIState {
@@ -57,6 +58,10 @@ struct UIState {
 	bool Hovered = false;
 	bool NavFocused = false;
 	bool Dragging = false;
+
+	operator bool() const {
+		return Clicked || Held || Released || Hovered || NavFocused || Dragging;
+	}
 };
 
 class Widget {
@@ -73,7 +78,6 @@ public:
 	bool Visible = true;
 	bool Enabled = true;
 
-	bool StateChange = false;
 	UIState State;
 
 	bool IsNative = true;
@@ -92,13 +96,12 @@ public:
 		if(!Enabled)
 			return;
 
-		if(StateChange) {
+		if(State) {
 			if(IsNative)
 				OnEvent(State);
 			else
 				OnEventScript.CallVoid(State);
-
-			StateChange = false;
+			State = { };
 		}
 
 		for(auto& animations : Animations)
@@ -141,6 +144,9 @@ class Container : public Widget {
 public:
 	Container(const std::string& id)
 		: Widget(id, WidgetType::Container) { }
+
+	void Begin() override;
+	void End() override;
 };
 
 class Dropdown : public Widget {
@@ -151,12 +157,18 @@ public:
 public:
 	Dropdown(const std::string& id)
 		: Widget(id, WidgetType::Dropdown) { }
+
+	void Begin() override;
+	void End() override;
 };
 
 class Button : public Widget {
 public:
 	Button(const std::string& id)
 		: Widget(id, WidgetType::Button) { }
+
+	void Begin() override;
+	void End() override;
 };
 
 class Image : public Widget {
@@ -166,6 +178,9 @@ public:
 public:
 	Image(const std::string& id)
 		: Widget(id, WidgetType::Image) { }
+
+	void Begin() override;
+	void End() override;
 };
 
 class Text : public Widget {
@@ -175,6 +190,9 @@ public:
 public:
 	Text(const std::string& id)
 		: Widget(id, WidgetType::Text) { }
+
+	void Begin() override;
+	void End() override;
 };
 
 class TextInput : public Widget {
@@ -186,12 +204,9 @@ public:
 public:
 	TextInput(const std::string& id)
 		: Widget(id, WidgetType::TextInput) { }
-};
 
-class Gizmo : public Widget {
-public:
-	Gizmo(const std::string& id)
-		: Widget(id, WidgetType::Gizmo) { }
+	void Begin() override;
+	void End() override;
 };
 
 class FileDialog : public Widget {
@@ -205,6 +220,9 @@ public:
 public:
 	FileDialog(const std::string& id)
 		: Widget(id, WidgetType::FileDialog) { }
+
+	void Begin() override;
+	void End() override;
 };
 
 class FileEditor : public Widget {
@@ -214,6 +232,22 @@ public:
 public:
 	FileEditor(const std::string& id)
 		: Widget(id, WidgetType::FileEditor) { }
+};
+
+class Gizmo : public Widget {
+public:
+	enum class GizmoMode {
+		Translate,
+		Rotate,
+		Scale
+	} Mode = GizmoMode::Translate;
+
+public:
+	Gizmo(const std::string& id)
+		: Widget(id, WidgetType::Gizmo) { }
+
+	void Begin() override;
+	void End() override;
 };
 
 class WidgetManager {

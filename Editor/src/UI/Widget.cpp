@@ -58,25 +58,77 @@ void Window::Begin() {
 						 | ImGuiWindowFlags_NoBringToFrontOnFocus
 						 | ImGuiWindowFlags_NoNavFocus;
 
-		ImGui::SetNextWindowSize(ImVec2((float)window.Width, (float)window.Height));
+		ImGui::SetNextWindowSize({ Width, Height });
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 10.0f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, window.Color);
-		ImGui::PushStyleColor(ImGuiCol_Border, window.BorderColor);
-		ImGui::PushID(&window);
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, Color);
+		// ImGui::PushStyleColor(ImGuiCol_Border, BorderColor);
+		ImGui::PushID(this);
 		ImGui::Begin("##Window", nullptr, windowFlags);
 		ImGui::PopID();
 		ImGui::PopStyleColor(2);
 		ImGui::PopStyleVar(3);
 	}
 
-	// window.Width = (uint32_t)ImGui::GetWindowSize().x;
-	// window.Height = (uint32_t)ImGui::GetWindowSize().y;
+	State.Clicked = ImGui::IsMouseClicked(0) && ImGui::IsWindowHovered();
+	State.Held = ImGui::IsMouseDown(0) && ImGui::IsWindowHovered();
+	State.Released = ImGui::IsMouseReleased(0) && ImGui::IsWindowHovered();
+	State.Hovered = ImGui::IsWindowHovered();
+	// State.NavFocused = ;
+	State.Dragging = ImGui::IsMouseDragging(0) && ImGui::IsWindowHovered();
 }
 
 void Window::End() {
+	ImGui::End();
+}
+
+void Container::Begin() {
+
+}
+
+void Container::End() {
+
+}
+
+void Dropdown::Begin() {
+
+}
+
+void Dropdown::End() {
+
+}
+
+void Button::Begin() {
+
+}
+
+void Button::End() {
+
+}
+
+void Image::Begin() {
+
+}
+
+void Image::End() {
+
+}
+
+void Text::Begin() {
+
+}
+
+void Text::End() {
+
+}
+
+void TextInput::Begin() {
+
+}
+
+void TextInput::End() {
 
 }
 
