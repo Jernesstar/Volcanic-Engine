@@ -5,8 +5,8 @@ project "Editor"
     cppdialect "C++latest"
     staticruntime "Off"
 
-    objdir ("%{RootPath}/build/%{_ACTION}/Magma/obj")
-    targetdir ("%{RootPath}/build/%{_ACTION}/Magma/bin")
+    objdir ("%{RootPath}/build/%{_ACTION}/Editor/obj")
+    targetdir ("%{RootPath}/build/%{_ACTION}/Editor/bin")
 
     files {
         "src/**.h",

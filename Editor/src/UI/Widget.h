@@ -23,7 +23,7 @@
 
 #include <Magma/Script/ScriptEngine.h>
 
-#include "Editor/AssetImporter.h"
+#include "Core/AssetImporter.h"
 
 using namespace VolcaniCore;
 using namespace Magma::Script;
@@ -69,7 +69,7 @@ public:
 	const std::string ID;
 	const WidgetType Type;
 
-	Ref<Widget> Parent = nullptr;
+	Widget* Parent = nullptr;
 	List<Ref<Widget>> Children;
 	List<Ref<Animation>> Animations;
 
@@ -123,12 +123,48 @@ public:
 	} 
 
 	bool Is(WidgetType type) const { return Type == type; }
+
+	Widget* Add(Ref<Widget> widget) {
+		Children.Add(widget);
+		widget->Parent = this;
+		return this;
+	}
+
+	Widget* AddCopy(Ref<Widget> widget) {
+		Children.Add(CreateRef<Widget>(*widget));
+		widget->Parent = this;
+		return this;
+	}
+
+	void Remove(const std::string& id) {
+		auto [found, i] =
+			Children.Find([&](auto& w) { return w->ID == id; });
+		if(found)
+			Children.Pop(i);
+	}
+
+	Ref<Widget> Find(const std::string& id) {
+		auto [found, i] =
+			Children.Find([&](auto& w) { return w->ID == id; });
+		if(found)
+			return Children[i];
+		return nullptr;
+	}
+
+private:
+	void Reposition() {
+
+	}
 };
 
 class Window : public Widget {
 public:
 	bool MenuBar = false;
+	bool IsRoot = false;
 	bool IsChild = false;
+	bool AllowResize = false;
+	bool AllowMove = false;
+	bool AllowDock = false;
 
 	Vec4 Color;
 
@@ -164,6 +200,9 @@ public:
 
 class Button : public Widget {
 public:
+	Vec4 Color;
+
+public:
 	Button(const std::string& id)
 		: Widget(id, WidgetType::Button) { }
 
@@ -186,6 +225,7 @@ public:
 class Text : public Widget {
 public:
 	std::string Label;
+	float Scale = 1.0f;
 
 public:
 	Text(const std::string& id)
@@ -232,6 +272,9 @@ public:
 public:
 	FileEditor(const std::string& id)
 		: Widget(id, WidgetType::FileEditor) { }
+
+	void Begin() override;
+	void End() override;
 };
 
 class Gizmo : public Widget {

@@ -36,7 +36,6 @@ using namespace asio::ip;
 
 using namespace VolcaniCore;
 using namespace Magma;
-using namespace Magma::UI;
 
 namespace fs = std::filesystem;
 
@@ -48,185 +47,13 @@ static void ProjectSaveRuntime(const Project& project);
 
 static Map<std::string, Ref<ScriptModule>> s_TabModules;
 
-static std::string HTTPGet(asio::io_context& io, asio::ssl::context& sslContext,
-						 std::string host, std::string path, int depth = 5) {
-	if (depth == 0) throw std::runtime_error("Too many redirects");
+static Ref<UI::Window> s_TitleBar;
+static Ref<UI::Window> s_StartWindow;
+static Ref<UI::Window> s_ComponentEditorWindow;
+static Ref<UI::Window> s_FlowEditorWindow;
+static Ref<UI::Window> s_AppEditorWindow;
 
-	asio::ssl::stream<tcp::socket> socket(io, sslContext);
-
-	// Resolve + connect
-	tcp::resolver resolver(io);
-	auto endpoints = resolver.resolve(host, "443");
-	asio::connect(socket.lowest_layer(), endpoints);
-
-	// TLS handshake
-	socket.handshake(asio::ssl::stream_base::client);
-
-	// Send HTTP request
-	std::string req =
-		"GET " + path + " HTTP/1.1\r\n"
-		"Host: " + host + "\r\n"
-		"User-Agent: MagmaEditor/1.0\r\n"
-		"Accept: */*\r\n"
-		"Connection: close\r\n\r\n";
-	asio::write(socket, asio::buffer(req));
-
-	// Read full response
-	std::string response;
-	char buf[8192];
-	while(true) {
-		asio::error_code ec;
-		std::size_t n = socket.read_some(asio::buffer(buf), ec);
-		if(n > 0)
-			response.append(buf, buf + n);
-		if(ec == asio::error::eof)
-			break;
-		if(ec)
-			throw asio::system_error(ec);
-	}
-
-	auto statusEnd = response.find("\r\n");
-	if(statusEnd == std::string::npos)
-		throw std::runtime_error("Bad HTTP response");
-	std::string line = response.substr(0, statusEnd);
-	int statusCode = 0;
-	sscanf(line.c_str(), "HTTP/1.%*d %d", &statusCode);
-
-	// Headers end
-	auto headerEnd = response.find("\r\n\r\n");
-	if(headerEnd == std::string::npos)
-		throw std::runtime_error("Bad HTTP response 2");
-	std::string headers = response.substr(0, headerEnd);
-	std::string body = response.substr(headerEnd + 4);
-
-	// Handle redirect
-	if(statusCode == 301 || statusCode == 302) {
-		std::smatch m;
-		std::regex re("Location: (.+)\r");
-		if (std::regex_search(headers, m, re)) {
-			std::string location = m[1];
-			std::cout << "Redirect -> " << location << "\n";
-
-			// Parse new URL
-			if(location.rfind("https://", 0) == 0)
-				location = location.substr(8);
-			auto slash = location.find('/');
-			std::string newHost = location.substr(0, slash);
-			std::string newPath = location.substr(slash);
-
-			return HTTPGet(io, sslContext, newHost, newPath, depth - 1);
-		}
-		throw std::runtime_error("Redirect without Location header");
-	}
-
-	// Success
-	if(statusCode == 200)
-		return body;
-
-	throw std::runtime_error("HTTP error " + std::to_string(statusCode));
-}
-
-// Simple HTTPS client using standalone Asio
-std::string send_request(const std::string& host, const std::string& port,
-						 const std::string& target, const std::string& data,
-						 const std::string& api_key) {
-	asio::io_context io_context;
-	asio::ssl::context ctx(asio::ssl::context::tlsv12_client);
-	asio::ssl::stream<asio::ip::tcp::socket> socket(io_context, ctx);
-
-	// Resolve host
-	asio::ip::tcp::resolver resolver(io_context);
-	auto endpoints = resolver.resolve(host, port);
-
-	// Connect and handshake
-	asio::connect(socket.lowest_layer(), endpoints);
-	socket.handshake(asio::ssl::stream_base::client);
-
-	// Build HTTP request
-	std::ostringstream request;
-	request << "POST " << target << " HTTP/1.1\r\n"
-			<< "Host: " << host << "\r\n"
-			<< "Authorization: Bearer " << api_key << "\r\n"
-			<< "Content-Type: application/json\r\n"
-			<< "Content-Length: " << data.size() << "\r\n"
-			<< "Connection: close\r\n\r\n"
-			<< data;
-
-	// Send request
-	asio::write(socket, asio::buffer(request.str()));
-
-	// Read response
-	asio::streambuf response;
-	asio::read_until(socket, response, "\r\n");
-
-	// Check response
-	std::istream response_stream(&response);
-	std::string http_version;
-	unsigned int status_code;
-	std::string status_message;
-
-	response_stream >> http_version >> status_code;
-	std::getline(response_stream, status_message);
-
-	if (!response_stream || http_version.substr(0, 5) != "HTTP/")
-		throw std::runtime_error("Invalid HTTP response");
-	if (status_code != 200)
-		throw std::runtime_error("Request failed with status " + std::to_string(status_code));
-
-	// Read headers
-	asio::read_until(socket, response, "\r\n\r\n");
-	std::string header;
-	while (std::getline(response_stream, header) && header != "\r")
-		;
-
-	// Read body
-	std::ostringstream body;
-	if (response.size() > 0)
-		body << &response;
-	asio::error_code ec;
-	while (asio::read(socket, response, asio::transfer_at_least(1), ec))
-		body << &response;
-	if (ec != asio::error::eof) throw std::runtime_error("Read failed: " + ec.message());
-
-	return body.str();
-}
-
-static void DownloadLavaFlow(const std::string& url) {
-	try {
-		asio::io_context io;
-		asio::ssl::context ssl_ctx(asio::ssl::context::tlsv12_client);
-		auto flowName = url.substr(url.rfind('/') + 1);
-
-		std::string body =
-			HTTPGet(io, ssl_ctx, "github.com",
-					url + "/archive/refs/heads/main.zip");
-
-		miniz_cpp::zip_file zip(std::vector<uint8_t>(body.begin(), body.end()));
-
-		std::string cachePath = "Editor/.cache/.lavaflow";
-		for(auto& name : zip.namelist()) {
-			fs::path outPath =
-				cachePath / fs::path(name).lexically_relative(flowName + "-main");
-			outPath = outPath.generic_string();
-			std::cout << outPath << "\n";
-
-			// Directory entry
-			if (name.back() == '/') {
-				fs::create_directories(outPath);
-				continue;
-			}
-
-			fs::create_directories(fs::path(outPath).parent_path());
-			std::ofstream out(outPath, std::ios::binary);
-			std::string data = zip.read(name);
-			out.write(data.data(), data.size());
-			out.close();
-		}
-	}
-	catch (std::exception &e) {
-		std::cerr << "Error: " << e.what() << "\n";
-	}
-}
+static Ref<Texture> s_Logo;
 
 void Editor::Open() {
 	Editor::RegisterInterface();
@@ -234,14 +61,8 @@ void Editor::Open() {
 	m_App = CreateRef<Lava::App>();
 
 	Application::PushDir();
-	s_WelcomeImage.Content =
+	s_Logo =
 		AssetImporter::GetTexture("Editor/assets/images/VolcanicDisplay.png");
-
-	s_WelcomeImage.UsePosition = true;
-	s_WelcomeImage.x = 760;
-	s_WelcomeImage.y = 120;
-	s_WelcomeImage.Width = 600;
-	s_WelcomeImage.Height = 600;
 
 	// if(FileUtils::PathExists("Editor/.cache/data.yml")) {
 	// 	YAML::Node file;
@@ -263,6 +84,44 @@ void Editor::Open() {
 	// }
 
 	Application::PopDir();
+
+	s_TitleBar = CreateRef<UI::Window>("TitleBar");
+	s_TitleBar->IsRoot = true;
+	s_TitleBar->Color = Vec4(0.2f, 0.2f, 0.2f, 1.0f);
+	auto image = CreateRef<UI::Image>("WelcomeImage");
+	image->Content = s_Logo;
+	image->x = 5;
+	image->y = 5;
+	image->Width = 50;
+	image->Height = 50;
+	s_TitleBar->Add(image);
+
+	s_StartWindow = CreateRef<UI::Window>("Window");
+	s_StartWindow->IsRoot = true;
+	s_StartWindow->Color = Vec4(0.2f, 0.2f, 0.2f, 1.0f);
+
+	auto componentButton = CreateRef<UI::Button>("ComponentButton");
+	componentButton->Add(CreateRef<UI::Text>("Component"));
+	// componentButton->AddLine();
+	s_StartWindow->Add(componentButton);
+
+	auto componentDialog = CreateRef<UI::FileDialog>("projectDialog");
+	componentDialog->Width = 500;
+	componentDialog->Height = 500;
+	componentDialog->OpenDir = false;
+	componentDialog->StartPath = Application::GetHomeDir();
+	componentDialog->Extensions = { "component.yml" };
+	componentDialog->OnSelect =
+		[](const fs::path& path) {
+			// Application::GetWindow()->Maximize();
+			// OpenProject(path);
+			// Mode = EditorMode::Project;
+		};
+	s_StartWindow->Add(componentDialog);
+
+	s_ComponentEditorWindow = CreateRef<UI::Window>("ComponentEditorWindow");
+	s_FlowEditorWindow = CreateRef<UI::Window>("FlowEditorWindow");
+	s_AppEditorWindow = CreateRef<UI::Window>("AppEditorWindow");
 }
 
 void Editor::Close() {
@@ -307,14 +166,19 @@ void Editor::Load(const CommandLineArgs& args) {
 }
 
 void Editor::Update(TimeStep ts) {
-	if(Mode == EditorMode::Project)
+	if(Mode == EditorMode::Component)
+		s_ComponentEditorWindow->Update(ts);
+	else if(Mode == EditorMode::Flow)
+		s_FlowEditorWindow->Update(ts);
+	else if(Mode == EditorMode::Project) {
+		s_AppEditorWindow->Update(ts);
 		for(auto& tab : m_Tabs)
 			tab.OnUpdate(ts);
+	}
 }
 
 void Editor::Render() {
-	WidgetRenderer::BeginFrame();
-	RenderTitleBar();
+	UI::WidgetManager::BeginFrame();
 
 	if(Mode == EditorMode::None)
 		RenderStartScreen();
@@ -325,7 +189,7 @@ void Editor::Render() {
 	else if(Mode == EditorMode::Project)
 		RenderProjectEditor();
 
-	WidgetRenderer::EndFrame();
+	UI::WidgetManager::EndFrame();
 }
 
 void Editor::RenderTitleBar() {
@@ -343,22 +207,13 @@ void Editor::RenderTitleBar() {
 	ImGui::SetNextWindowSize({ viewport->Size.x, 60.0f });
 	ImGui::SetNextWindowViewport(viewport->ID);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, { 0.0f, 0.0f });
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
+
 	ImGui::PushStyleColor(ImGuiCol_WindowBg, { 0.01f, 0.01f, 0.01f, 1.0f });
 
 	ImGui::Begin("##TitleBar", nullptr, titleBarFlags);
 	{
 		ImGui::PopStyleVar(3);
 		ImGui::PopStyleColor(1);
-		auto image = s_WelcomeImage;
-		image.x = 5;
-		image.y = 5;
-		image.Width = 50;
-		image.Height = 50;
-		image.UsePosition = true;
-		image.Draw();
-		ImGui::SameLine();
 
 		ImGui::SetWindowFontScale(2.0f);
 		if(Mode == EditorMode::Project)
@@ -437,146 +292,8 @@ void Editor::RenderTitleBar() {
 }
 
 void Editor::RenderStartScreen() {
-	auto flags = ImGuiWindowFlags_NoDecoration
-			   | ImGuiWindowFlags_NoMove
-			   | ImGuiWindowFlags_NoDocking;
-
-	const ImGuiViewport* viewport = ImGui::GetMainViewport();
-	ImGui::SetNextWindowPos({ viewport->Pos.x, viewport->Pos.y + 60.0f });
-	ImGui::SetNextWindowSize({ viewport->Size.x, viewport->Size.y - 60.0f });
-	ImGui::SetNextWindowViewport(viewport->ID);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
-
-	ImGui::Begin("##StartScreen", nullptr, flags);
-	{
-		ImGui::PopStyleVar(3);
-
-		ImVec2 size = { 400, ImGui::GetContentRegionAvail().y };
-		auto childFlags = ImGuiChildFlags_Border;
-		ImGui::BeginChild("Options", size, childFlags);
-		{
-			if(ImGui::Button("New Project")) {
-
-			}
-			if(ImGui::Button("Open Project")) {
-				FileDialog dialog;
-				dialog.Width = 500;
-				dialog.Height = 500;
-				dialog.Title = "Open Project";
-				dialog.StartPath = Application::GetHomeDir();
-				dialog.Extensions = { "proj.yml" };
-				dialog.OnSelect =
-					[&](std::string& path)
-					{
-						Application::GetWindow()->Maximize();
-						OpenProject(path);
-						Mode = EditorMode::Project;
-					};
-				dialog.Draw();
-			}
-			if(ImGui::Button("New LavaFlow")) {
-
-			}
-			if(ImGui::Button("Open LavaFlow")) {
-				FileDialog dialog;
-				dialog.Width = 500;
-				dialog.Height = 500;
-				dialog.Title = "Open LavaFlow";
-				dialog.StartPath = Application::GetHomeDir();
-				dialog.Extensions = { "flow.yml" };
-				dialog.OnSelect =
-					[&](std::string& path)
-					{
-						OpenLavaFlow(path);
-						Mode = EditorMode::Flow;
-					};
-				dialog.Draw();
-			}
-			if(ImGui::Button("New Component")) {
-				
-			}
-			if(ImGui::Button("Open Component")) {
-				FileDialog dialog;
-				dialog.Width = 500;
-				dialog.Height = 500;
-				dialog.Title = "Open Component";
-				dialog.StartPath = Application::GetHomeDir();
-				dialog.Extensions = { "comp.yml" };
-				dialog.OnSelect =
-					[&](std::string& path)
-					{
-						OpenComponent(path);
-						Mode = EditorMode::Component;
-					};
-				dialog.Draw();
-			}
-			if(ImGui::Button("FlowyAI")) {
-				// Ensure OPENAI_API_KEY environment variable is set
-				auto client = ai::openai::create_client();
-
-				auto client1 = ai::openai::create_client();
-				ai::GenerateOptions options1;
-				options1.model = ai::openai::models::kO1Mini;
-				options1.prompt =
-					"What is the capital of France? Please provide a brief answer.";
-
-				auto result = client1.generate_text(options1);
-
-				if (result) {
-					std::cout << result.text << std::endl;
-				}
-			}
-
-			UIRenderer::DrawFileDialog("New Project");
-			UIRenderer::DrawFileDialog("Open Project");
-			UIRenderer::DrawFileDialog("New LavaFlow");
-			UIRenderer::DrawFileDialog("Open LavaFlow");
-			UIRenderer::DrawFileDialog("New Component");
-			UIRenderer::DrawFileDialog("Open Component");
-
-			ImGui::SeparatorText("Previous projects");
-			for(auto proj : m_Cache.PastProjects)
-				if(ImGui::Selectable(proj.c_str()))
-					OpenProject(proj);
-
-			ImGui::SeparatorText("Previous LavaFlows");
-			ImVec2 size = { 590, 40 };
-
-			for(auto path : m_Cache.PastLavaFlows) {
-				// auto buttonFlags = ImGuiButtonFlags_EnableNav
-				// 				 | ImGuiButtonFlags_MouseButtonLeft;
-
-				// ImGui::SetNextItemAllowOverlap();
-				// ImVec2 min = ImGui::GetCursorScreenPos();
-				// ImGui::InvisibleButton(flow.Path.c_str(), size, buttonFlags);
-				// ImVec2 max = ImGui::GetCursorScreenPos();
-				// bool clicked = ImGui::IsItemActivated();
-
-				// ImGui::SetCursorScreenPos({ min.x + 10, min.y });
-				// ImGui::SetNextItemAllowOverlap();
-				// ImGui::Text(flow.Name.c_str());
-				// ImGui::SetNextItemAllowOverlap();
-				// ImGui::Text(flow.Path.c_str());
-				// ImGui::SetCursorScreenPos(max);
-				// ImGui::Dummy({ 0, 0 });
-
-				// ImVec2 p0 = min;
-				// ImVec2 p1 = ImVec2(max.x + size.x, max.y);
-
-				// ImDrawList* drawList = ImGui::GetWindowDrawList();
-				// drawList->AddRect(p0, p1, ImColor(255, 255, 255, 255), 0, 0, 1.0f);
-
-				// if(clicked)
-				// 	LoadLavaFlow(flow.Path);
-			}
-		}
-		ImGui::EndChild();
-
-		s_WelcomeImage.Draw();
-	}
-	ImGui::End();
+	s_StartWindow->Render();
+	auto w = s_StartWindow->Find("")
 }
 
 void Editor::RenderComponentEditor() {

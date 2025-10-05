@@ -62,14 +62,22 @@ void Window::Begin() {
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 10.0f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-
 		ImGui::PushStyleColor(ImGuiCol_WindowBg, Color);
 		// ImGui::PushStyleColor(ImGuiCol_Border, BorderColor);
+		if(IsRoot) {
+			const ImGuiViewport* viewport = ImGui::GetMainViewport();
+			ImGui::SetNextWindowPos({ x, y });
+			ImGui::SetNextWindowSize({ Width, Height });
+			ImGui::SetNextWindowViewport(viewport->ID);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, { 0.0f, 0.0f });
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
+		}
+
 		ImGui::PushID(this);
 		ImGui::Begin("##Window", nullptr, windowFlags);
 		ImGui::PopID();
-		ImGui::PopStyleColor(2);
-		ImGui::PopStyleVar(3);
+		ImGui::PopStyleColor();
+		ImGui::PopStyleVar(3 + IsRoot * 2);
 	}
 
 	State.Clicked = ImGui::IsMouseClicked(0) && ImGui::IsWindowHovered();
@@ -101,7 +109,14 @@ void Dropdown::End() {
 }
 
 void Button::Begin() {
-
+	ImGui::PushID(this);
+	ImGui::SetNextItemAllowOverlap();
+	ImGui::InvisibleButton("##Image", ImVec2(Width, Height));
+	auto* drawlist = ImGui::GetWindowDrawList();
+	drawlist->AddRectFilled(
+		ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
+		IM_COL32(Color.r, Color.g, Color.b, Color.a), 0.0f);
+	ImGui::PopID();
 }
 
 void Button::End() {
@@ -117,11 +132,12 @@ void Image::End() {
 }
 
 void Text::Begin() {
-
+	ImGui::SetWindowFontScale(Scale);
+	ImGui::Text(Label.c_str());
 }
 
 void Text::End() {
-
+	ImGui::SetWindowFontScale(1.0f);
 }
 
 void TextInput::Begin() {
@@ -129,6 +145,40 @@ void TextInput::Begin() {
 }
 
 void TextInput::End() {
+
+}
+
+void FileDialog::Begin() {
+
+}
+
+void FileDialog::End() {
+	auto instance = ImGuiFileDialog::Instance();
+
+	// Returns true when an action has been taken (select or cancel)
+	if(instance->Display(Title, 32, { Width, Height }))
+	{
+		if(instance->IsOk()) {
+			std::string path = instance->GetFilePathName();
+			OnSelect(path);
+		}
+		instance->Close();
+	}
+}
+
+void FileEditor::Begin() {
+
+}
+
+void FileEditor::End() {
+
+}
+
+void Gizmo::Begin() {
+
+}
+
+void Gizmo::End() {
 
 }
 

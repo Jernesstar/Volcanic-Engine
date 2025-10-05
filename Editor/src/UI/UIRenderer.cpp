@@ -210,27 +210,6 @@ void UIRenderer::DrawFileDialog(FileDialog& dialog) {
 	s_Dialogs.emplace(dialog.Title, dialog);
 }
 
-void UIRenderer::DrawFileDialog(const std::string& title) {
-	if(!s_Dialogs.contains(title))
-		return;
-
-	auto& dialog = s_Dialogs[title];
-	auto instance = ImGuiFileDialog::Instance();
-
-	// Returns true when an action has been taken (select or cancel)
-	if(instance->Display(dialog.Title, 32,
-						{ (float)dialog.Width, (float)dialog.Height }))
-	{
-		if(instance->IsOk()) {
-			std::string path = instance->GetFilePathName();
-			dialog.OnSelect(path);
-		}
-
-		s_Dialogs.erase(dialog.Title);
-		instance->Close();
-	}
-}
-
 UIState UIRenderer::DrawMenuBar(const std::string& name) {
 	ImGui::BeginMainMenuBar();
 

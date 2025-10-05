@@ -11,7 +11,7 @@
 
 #include <Lava/Core/Lava.h>
 
-#include "Editor/AssetImporter.h"
+#include "Core/AssetImporter.h"
 #include "UI/UIRenderer.h"
 
 using namespace VolcaniCore;
