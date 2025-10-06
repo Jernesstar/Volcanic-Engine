@@ -40,14 +40,11 @@ project "Editor"
         "%{Includes.rapidjson}",
 
         "%{Includes.efsw}",
-        "%{Includes.asio}",
+        "%{Includes.drogon}",
         "%{Includes.stb_image}",
         "%{Includes.soloud}",
         "%{Includes.miniz_cpp}",
-        "%{Includes.ai_sdk_cpp}",
-        "%{Includes.ai_sdk_cpp}/**",
-        "%{VendorPaths.ai_sdk_cpp}/third_party/*/include",
-    
+
         "%{Includes.imgui}",
         "%{Includes.imgui}/imgui",
         "%{Includes.ImGuiFileDialog}",
@@ -65,8 +62,7 @@ project "Editor"
         "efsw",
         "soloud",
         "stb_image",
-        "asio",
-        "ai-sdk-cpp",
+        "drogon",
 
         "imgui",
         "ImGuiFileDialog",
@@ -84,8 +80,6 @@ project "Editor"
     defines {
         "NOMINMAX",
         "YAML_CPP_STATIC_DEFINE",
-        "AI_SDK_HAS_OPENAI",
-        "AI_SDK_HAS_ANTHROPIC",
         "CPPHTTPLIB_OPENSSL_SUPPORT",
     }
 
@@ -122,7 +116,7 @@ include "Editor/.deps/glad"
 include "Editor/.deps/soloud"
 include "Editor/.deps/stb_image"
 include "Editor/.deps/efsw"
-include "Editor/.deps/asio"
+include "Editor/.deps/drogon"
 include "Editor/.deps/ai-sdk-cpp"
 include "Editor/.deps/imgui"
 include "Editor/.deps/ImGuiFileDialog"

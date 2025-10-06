@@ -1,4 +1,4 @@
-project "asio"
+project "drogon"
     kind "StaticLib"
     language "C++"
     staticruntime "Off"
@@ -7,13 +7,13 @@ project "asio"
     targetdir ("%{RootPath}/build/%{_ACTION}/Editor/lib")
 
     files {
-        "%{VendorPaths.asio}/asio/src/asio.cpp",
-        "%{VendorPaths.asio}/asio/src/asio_ssl.cpp",
+        "%{VendorPaths.drogon}/drogon/src/drogon.cpp",
+        "%{VendorPaths.drogon}/drogon/src/asio_ssl.cpp",
     }
 
     includedirs {
-        "%{Includes.asio}",
-        "%{Includes.asio}/asio/include",
+        "%{Includes.drogon}",
+        "%{Includes.drogon}/drogon/include",
     }
 
     defines {

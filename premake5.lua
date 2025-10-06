@@ -50,8 +50,7 @@ VendorPaths["rapidjson"]          = "%{MagmaVendorDir}/rapidjson"
 -- Lava libraries
 
 -- Editor libraries
-VendorPaths["asio"]               = "%{EditorVendorDir}/asio"
-VendorPaths["ai_sdk_cpp"]         = "%{EditorVendorDir}/ai-sdk-cpp"
+VendorPaths["drogon"]             = "%{EditorVendorDir}/drogon"
 VendorPaths["stb_image"]          = "%{EditorVendorDir}/stb_image"
 VendorPaths["soloud"]             = "%{EditorVendorDir}/soloud"
 VendorPaths["efsw"]               = "%{EditorVendorDir}/efsw"
@@ -75,8 +74,7 @@ Includes["rapidjson"]             = "%{VendorPaths.rapidjson}/include"
 -- Lava libraries
 
 -- Editor libraries
-Includes["asio"]                  = "%{VendorPaths.asio}/asio/include"
-Includes["ai_sdk_cpp"]            = "%{VendorPaths.ai_sdk_cpp}/include"
+Includes["drogon"]                = "%{VendorPaths.drogon}/drogon/include"
 Includes["stb_image"]             = "%{VendorPaths.stb_image}/include"
 Includes["soloud"]                = "%{VendorPaths.soloud}/include"
 Includes["glad"]                  = "%{VendorPaths.glad}/include"

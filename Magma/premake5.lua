@@ -32,7 +32,7 @@ project "Magma"
         "%{Includes.angelscript}",
         "%{MagmaVendorDir}",
         "%{Includes.soloud}",
-        "%{Includes.asio}",
+        "%{Includes.drogon}",
     }
 
     links {
