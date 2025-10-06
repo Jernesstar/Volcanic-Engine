@@ -2,6 +2,8 @@
 
 #include <VolcaniCore/Core/Math.h>
 
+using namespace VolcaniCore;
+
 #define IM_VEC2_CLASS_EXTRA \
 	constexpr ImVec2(Vec2& v) : x(v.x), y(v.y) {} \
 	operator Vec2() const { return Vec2(x, y); }
@@ -25,7 +27,6 @@
 
 #include "Core/AssetImporter.h"
 
-using namespace VolcaniCore;
 using namespace Magma::Script;
 
 namespace Magma::UI {
@@ -87,6 +88,8 @@ public:
 public:
 	Widget(const std::string& id, WidgetType type)
 		: ID(id), Type(type) { }
+	Widget(Widget&&) = default;
+	Widget(const Widget&) = default;
 	virtual ~Widget() = default;
 
 	virtual void Begin() = 0;
@@ -130,9 +133,11 @@ public:
 		return this;
 	}
 
-	Widget* AddCopy(Ref<Widget> widget) {
-		Children.Add(CreateRef<Widget>(*widget));
-		widget->Parent = this;
+	template<typename TWidget>
+	requires std::derived_from<TWidget, Widget>
+	Widget* AddCopy(Ref<TWidget> widget) {
+		auto& ptr = Children.Emplace(CreateRef<Widget>(*widget));
+		ptr->Parent = this;
 		return this;
 	}
 
@@ -257,6 +262,11 @@ public:
 	List<std::string> Extensions;
 	Func<void, const fs::path&> OnSelect;
 
+	bool StartSelect = false;
+
+private:
+	IGFD::FileDialogConfig Config;
+
 public:
 	FileDialog(const std::string& id)
 		: Widget(id, WidgetType::FileDialog) { }
@@ -295,15 +305,17 @@ public:
 
 class WidgetManager {
 public:
-	static void RegisterInterface();
+	static void Init();
+	static void Close();
 	static void BeginFrame();
 	static void EndFrame();
-
-	static Window* Window(const std::string& name);
-	static Container* Container(const std::string& name);
-	static Dropdown* Dropdown(const std::string& name);
-	static Text* Text(const std::string& name);
-	static Image* Image(const std::string& name);
+	static void RegisterInterface();
+	
+	// static Window* Window(const std::string& name);
+	// static Container* Container(const std::string& name);
+	// static Dropdown* Dropdown(const std::string& name);
+	// static Text* Text(const std::string& name);
+	// static Image* Image(const std::string& name);
 };
 
 }

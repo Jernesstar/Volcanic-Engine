@@ -17,19 +17,23 @@
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
+#include <imgui/backends/imgui_impl_glfw.h>
+#include <imgui/backends/imgui_impl_opengl3.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
 
+#include <VolcaniCore/Core/Application.h>
+#include <VolcaniCore/Event/Events.h>
 #include <VolcaniCore/Core/Input.h>
 
 #include <Magma/Script/ScriptModule.h>
 #include <Magma/Script/ScriptClass.h>
 #include <Magma/Script/ScriptObject.h>
 
+using namespace VolcaniCore;
 using namespace Magma;
-using namespace Magma::UI;
 using namespace Magma::Script;
 
-namespace Magma {
+namespace Magma::UI {
 
 void Window::Begin() {
 	if(IsChild) {
@@ -66,16 +70,34 @@ void Window::Begin() {
 		// ImGui::PushStyleColor(ImGuiCol_Border, BorderColor);
 		if(IsRoot) {
 			const ImGuiViewport* viewport = ImGui::GetMainViewport();
-			ImGui::SetNextWindowPos({ x, y });
+
+			ImGui::SetNextWindowPos(
+				{ viewport->Pos.x + x, viewport->Pos.y + y });
+
+			if(!Width)
+				Width = viewport->Size.x;
+			if(!Height)
+				Height = viewport->Size.y;
+
 			ImGui::SetNextWindowSize({ Width, Height });
 			ImGui::SetNextWindowViewport(viewport->ID);
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, { 0.0f, 0.0f });
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
 		}
 
-		ImGui::PushID(this);
+		if(!IsRoot)
+			ImGui::PushID(this);
+
 		ImGui::Begin("##Window", nullptr, windowFlags);
-		ImGui::PopID();
+		if(AllowDock) {
+			ImGuiID dockspaceID = ImGui::GetID("DockSpace");
+			ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f),
+				ImGuiDockNodeFlags_PassthruCentralNode);
+		}
+
+		if(!IsRoot)
+			ImGui::PopID();
+
 		ImGui::PopStyleColor();
 		ImGui::PopStyleVar(3 + IsRoot * 2);
 	}
@@ -109,14 +131,14 @@ void Dropdown::End() {
 }
 
 void Button::Begin() {
-	ImGui::PushID(this);
 	ImGui::SetNextItemAllowOverlap();
+	ImGui::PushID(this);
 	ImGui::InvisibleButton("##Image", ImVec2(Width, Height));
+	ImGui::PopID();
 	auto* drawlist = ImGui::GetWindowDrawList();
 	drawlist->AddRectFilled(
 		ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
 		IM_COL32(Color.r, Color.g, Color.b, Color.a), 0.0f);
-	ImGui::PopID();
 }
 
 void Button::End() {
@@ -124,7 +146,9 @@ void Button::End() {
 }
 
 void Image::Begin() {
-
+	ImGui::Image(
+		(ImTextureID)(intptr_t)Content->ID, { Width, Height },
+		ImVec2(0, 1), ImVec2(1, 0));
 }
 
 void Image::End() {
@@ -154,9 +178,19 @@ void FileDialog::Begin() {
 
 void FileDialog::End() {
 	auto instance = ImGuiFileDialog::Instance();
+	if(StartSelect) {
+		IGFD::FileDialogConfig config;
+		config.path = StartPath;
+		std::string exts;
+		for(auto& ext : Extensions)
+			exts += "." + ext + ",";
+	
+		instance->OpenDialog(Title, Title, exts.c_str(), config);
+		StartSelect = false;
+	}
 
 	// Returns true when an action has been taken (select or cancel)
-	if(instance->Display(Title, 32, { Width, Height }))
+	if(instance->Display(Title, ImGuiWindowFlags_NoCollapse, { Width, Height }))
 	{
 		if(instance->IsOk()) {
 			std::string path = instance->GetFilePathName();
@@ -182,36 +216,161 @@ void Gizmo::End() {
 
 }
 
-void WidgetManager::RegisterInterface() {
-	auto* engine = ScriptEngine::Get();
+// void Tab::Begin() {
 
-	engine->SetDefaultNamespace("Widget");
+// 	ImVec2 size = ImGui::CalcTextSize(name.c_str());
+// 	static const float tabHeight = 6.0f;
+// 	float radius = closeButton * tabHeight * 0.5f;
+// 	float padding = closeButton * tabHeight + 14;
 
-	engine->RegisterFuncdef("void WindowCallback()");
-	engine->RegisterEnum("WindowFlag");
-	engine->RegisterEnumValue("WindowFlag", "MenuBar", 0);
-	engine->RegisterEnumValue("WindowFlag", "TitleBar", 1);
-	engine->RegisterObjectType("WindowWidget", 0, asOBJ_REF | asOBJ_NOCOUNT);
-	// engine->RegisterObjectMethod("WindowWidget", "void Render(WindowCallback@)",
-	// 	asFUNCTION(WindowWidgetRender), asCALL_CDECL_OBJLAST);
-	// engine->RegisterObjectMethod("WindowWidget", "WindowWidget@ With(WindowFlag)",
-	// 	asMETHOD(WindowWidget, With), asCALL_THISCALL);
-	engine->RegisterGlobalFunction("WindowWidget@ Window(string name)",
-		asFUNCTION(WidgetManager::Window), asCALL_CDECL);
+// 	ImGui::SetNextItemWidth(size.x + padding);
 
-	engine->RegisterObjectType("Child", 0, asOBJ_REF | asOBJ_NOCOUNT);
-	engine->RegisterObjectType("Image", 0, asOBJ_REF | asOBJ_NOCOUNT);
-	engine->RegisterObjectType("Text", 0, asOBJ_REF | asOBJ_NOCOUNT);
+// 	ImGui::PushID(s_Stack.Count());
+// 	bool tabItem =
+// 		ImGui::BeginTabItem(name.c_str(), nullptr,
+// 			closeButton * ImGuiTabItemFlags_NoReorder);
+// 	ImGui::PopID();
 
-	engine->SetDefaultNamespace("");
+// 	ImVec2 closeButtonPos;
+// 	closeButtonPos.x = ImGui::GetItemRectMax().x - 4.0f*radius;
+// 	closeButtonPos.y = ImGui::GetItemRectMin().y + radius;
+
+// 	// ImGuiTabBar* tabBar = ImGui::GetCurrentTabBar();
+
+// 	TabState state;
+// 	if(tabItem) {
+// 		state.Clicked = ImGui::IsItemClicked(0);
+// 		state.Hovered = ImGui::IsItemHovered();
+// 		ImGui::EndTabItem();
+// 	}
+
+// 	if(closeButton) {
+// 		auto closeButtonID = ImGui::GetID((int*)s_Stack.Count());
+// 		state.Closed = ImGui::CloseButton(closeButtonID, closeButtonPos);
+// 	}
+
+// 	return state;
+// }
+
+void WidgetManager::Init() {
+	int success = gladLoadGL();
+	VOLCANICORE_ASSERT(success, "Glad could not load OpenGL");
+	VOLCANICORE_LOG_INFO(
+		"Successfully loaded OpenGL\n"
+		"\tVersion: %s\n"
+		"\tGPU: %s", glGetString(GL_VERSION), glGetString(GL_RENDERER));
+
+	glEnable(GL_MULTISAMPLE);				// Smooth edges
+	glEnable(GL_FRAMEBUFFER_SRGB);			// Gamma correction
+	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS); // Smooth cubemap edges
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+
+	auto window = Application::GetWindow();
+
+	ImGuiIO& io = ImGui::GetIO();
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable
+					| ImGuiConfigFlags_ViewportsEnable
+					| ImGuiConfigFlags_NavEnableKeyboard
+					| ImGuiConfigFlags_NavEnableSetMousePos;
+	io.DisplaySize = ImVec2(window->GetWidth(), window->GetHeight());
+
+	ImGui_ImplGlfw_InitForOpenGL(window->GetNativeWindow(), true);
+	ImGui_ImplOpenGL3_Init("#version 460 core");
+
+	Events::RegisterListener<KeyPressedEvent>(
+		[](KeyPressedEvent& event)
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			// event.Handled = io.WantCaptureKeyboard;
+		});
+	Events::RegisterListener<KeyReleasedEvent>(
+		[](KeyReleasedEvent& event)
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			// event.Handled = io.WantCaptureKeyboard;
+		});
+	Events::RegisterListener<MouseButtonPressedEvent>(
+		[](MouseButtonPressedEvent& event)
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			// event.Handled = io.WantCaptureMouse;
+		});
+	Events::RegisterListener<MouseButtonReleasedEvent>(
+		[](MouseButtonReleasedEvent& event)
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			// event.Handled = io.WantCaptureMouse;
+		});
+	Events::RegisterListener<MouseScrolledEvent>(
+		[](MouseScrolledEvent& event)
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			// event.Handled = io.WantCaptureMouse;
+		});
+	Events::RegisterListener<MouseMovedEvent>(
+		[](MouseMovedEvent& event)
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			// event.Handled = io.WantCaptureMouse;
+		});
+	Events::RegisterListener<WindowResizedEvent>(
+		[](const WindowResizedEvent& event)
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			io.DisplaySize = ImVec2(event.Width, event.Height);
+		});
+
+	ImGui::StyleColorsDark();
+}
+
+void WidgetManager::Close() {
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 }
 
 void WidgetManager::BeginFrame() {
-
+	glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	ImGui_ImplGlfw_NewFrame();
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui::NewFrame();
 }
 
 void WidgetManager::EndFrame() {
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
+	GLFWwindow* context = glfwGetCurrentContext();
+	ImGui::UpdatePlatformWindows();
+	ImGui::RenderPlatformWindowsDefault();
+	glfwMakeContextCurrent(context);
+}
+
+void WidgetManager::RegisterInterface() {
+	auto* engine = ScriptEngine::Get();
+
+	// engine->SetDefaultNamespace("Widget");
+
+	// engine->RegisterFuncdef("void WindowCallback()");
+	// engine->RegisterEnum("WindowFlag");
+	// engine->RegisterEnumValue("WindowFlag", "MenuBar", 0);
+	// engine->RegisterEnumValue("WindowFlag", "TitleBar", 1);
+	// engine->RegisterObjectType("WindowWidget", 0, asOBJ_REF | asOBJ_NOCOUNT);
+	// // engine->RegisterObjectMethod("WindowWidget", "void Render(WindowCallback@)",
+	// // 	asFUNCTION(WindowWidgetRender), asCALL_CDECL_OBJLAST);
+	// // engine->RegisterObjectMethod("WindowWidget", "WindowWidget@ With(WindowFlag)",
+	// // 	asMETHOD(WindowWidget, With), asCALL_THISCALL);
+	// engine->RegisterGlobalFunction("WindowWidget@ Window(string name)",
+	// 	asFUNCTION(WidgetManager::Window), asCALL_CDECL);
+
+	// engine->RegisterObjectType("Child", 0, asOBJ_REF | asOBJ_NOCOUNT);
+	// engine->RegisterObjectType("Image", 0, asOBJ_REF | asOBJ_NOCOUNT);
+	// engine->RegisterObjectType("Text", 0, asOBJ_REF | asOBJ_NOCOUNT);
+
+	// engine->SetDefaultNamespace("");
 }
 
 }

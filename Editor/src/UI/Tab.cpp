@@ -13,7 +13,7 @@ namespace fs = std::filesystem;
 
 using namespace Magma::Script;
 
-namespace Magma {
+namespace Magma::UI {
 
 void Tab::RegisterInterface() {
 	auto* engine = ScriptEngine::Get();

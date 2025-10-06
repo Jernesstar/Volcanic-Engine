@@ -7,7 +7,7 @@
 
 using namespace Magma::Script;
 
-namespace Magma {
+namespace Magma::UI {
 
 void Panel::RegisterInterface() {
 	auto* engine = ScriptEngine::Get();

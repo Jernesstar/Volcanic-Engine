@@ -13,9 +13,6 @@
 [submodule "Magma/.vendor/angelscript"]
 	path = Magma/.vendor/angelscript
 	url = https://github.com/LavaFlow-Technologies/angelscript.git
-[submodule "Editor/.vendor/asio"]
-	path = Editor/.vendor/asio
-	url = https://github.com/chriskohlhoff/asio.git
 [submodule "Editor/.vendor/miniz-cpp"]
 	path = Editor/.vendor/miniz-cpp
 	url = https://github.com/tfussell/miniz-cpp.git
@@ -50,3 +47,6 @@
 [submodule "Editor/.vendor/ai-sdk-cpp"]
 	path = Editor/.vendor/ai-sdk-cpp
 	url = https://github.com/ClickHouse/ai-sdk-cpp.git
+[submodule "Editor/.vendor/drogon"]
+	path = Editor/.vendor/drogon
+	url = https://github.com/drogonframework/drogon.git

@@ -12,7 +12,7 @@
 #include <Lava/Core/Lava.h>
 
 #include "Core/AssetImporter.h"
-#include "UI/UIRenderer.h"
+#include "UI/Widget.h"
 
 using namespace VolcaniCore;
 using namespace Magma::UI;
@@ -31,7 +31,7 @@ EditorApp::EditorApp(const CommandLineArgs& args)
 
 	Lava::InitComponents();
 
-	UIRenderer::Init();
+	WidgetManager::Init();
 	ImGuiIO& io = ImGui::GetIO();
 	io.IniFilename = nullptr;
 
@@ -42,13 +42,13 @@ EditorApp::EditorApp(const CommandLineArgs& args)
 EditorApp::~EditorApp() {
 	m_Editor.Close();
 
-	UIRenderer::Close();
+	WidgetManager::Close();
 
 	Lava::CloseComponents();
 }
 
 void EditorApp::OnUpdate(TimeStep ts) {
-	UIRenderer::BeginFrame();
+	WidgetManager::BeginFrame();
 	ImGuizmo::BeginFrame();
 
 	Lava::BeginFrame();
@@ -59,7 +59,7 @@ void EditorApp::OnUpdate(TimeStep ts) {
 
 	Lava::EndFrame();
 
-	UIRenderer::EndFrame();
+	WidgetManager::EndFrame();
 }
 
 }

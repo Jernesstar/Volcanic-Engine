@@ -63,7 +63,7 @@ public:
 	static Ref<ScriptClass> GetPanelClass(const std::string& tab,
 										  const std::string& name);
 
-	static Tab* GetCurrentTab() {
+	static UI::Tab* GetCurrentTab() {
 		if(!s_Instance->m_CurrentTab)
 			return nullptr;
 		return s_Instance->m_Tabs.At(s_Instance->m_CurrentTab - 1);
@@ -85,8 +85,8 @@ private:
 
 	Cache m_Cache;
 	uint64_t m_CurrentTab = 0;
-	List<Tab> m_Tabs;
-	List<Tab> m_ClosedTabs;
+	List<UI::Tab> m_Tabs;
+	List<UI::Tab> m_ClosedTabs;
 
 	void RenderTitleBar();
 	void RenderStartScreen();
