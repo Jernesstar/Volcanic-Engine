@@ -74,7 +74,7 @@ Includes["rapidjson"]             = "%{VendorPaths.rapidjson}/include"
 -- Lava libraries
 
 -- Editor libraries
-Includes["drogon"]                = "%{VendorPaths.drogon}/drogon/include"
+Includes["drogon"]                = "%{VendorPaths.drogon}/lib/inc"
 Includes["stb_image"]             = "%{VendorPaths.stb_image}/include"
 Includes["soloud"]                = "%{VendorPaths.soloud}/include"
 Includes["glad"]                  = "%{VendorPaths.glad}/include"

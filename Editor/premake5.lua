@@ -41,6 +41,11 @@ project "Editor"
 
         "%{Includes.efsw}",
         "%{Includes.drogon}",
+        "%{VendorPaths.drogon}/*",
+        "%{VendorPaths.drogon}/orm_lib/inc",
+        "%{VendorPaths.drogon}/nosql_lib/redis/inc",
+        "%{VendorPaths.drogon}/trantor",
+        "%{EditorVendorDir}/jsoncpp/include",
         "%{Includes.stb_image}",
         "%{Includes.soloud}",
         "%{Includes.miniz_cpp}",
@@ -79,6 +84,7 @@ project "Editor"
 
     defines {
         "NOMINMAX",
+        "WIN32_LEAN_AND_MEAN",
         "YAML_CPP_STATIC_DEFINE",
         "CPPHTTPLIB_OPENSSL_SUPPORT",
     }
@@ -102,6 +108,8 @@ project "Editor"
             "kernel32",
             "psapi",
             "Ws2_32",
+            "advapi32",
+            "rpcrt4"
         }
 
     filter "toolset:gcc or toolset:clang"
@@ -117,7 +125,6 @@ include "Editor/.deps/soloud"
 include "Editor/.deps/stb_image"
 include "Editor/.deps/efsw"
 include "Editor/.deps/drogon"
-include "Editor/.deps/ai-sdk-cpp"
 include "Editor/.deps/imgui"
 include "Editor/.deps/ImGuiFileDialog"
 include "Editor/.deps/ImGuizmo"

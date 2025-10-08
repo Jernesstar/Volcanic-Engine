@@ -1,3 +1,5 @@
+#include <drogon/drogon.h>
+
 #include "Editor.h"
 
 #include <imgui/imgui.h>
@@ -7,9 +9,6 @@
 #include <fstream>
 #include <iostream>
 #include <regex>
-
-#include <ai/openai.h>
-// #include <ai/generate.h>
 
 #include <miniz-cpp/zip_file.hpp>
 
@@ -24,6 +23,7 @@
 #include <Lava/Core/Lava.h>
 
 #include "UI/Widget.h"
+#include "AI/AI.h"
 
 #include "AssetImporter.h"
 #include "ScriptManager.h"
@@ -49,6 +49,8 @@ static Ref<UI::Window> s_FlowEditorWindow;
 static Ref<UI::Window> s_AppEditorWindow;
 
 static Ref<Texture> s_Logo;
+
+using namespace drogon;
 
 void Editor::Open() {
 	Editor::RegisterInterface();
@@ -79,6 +81,13 @@ void Editor::Open() {
 	// }
 
 	Application::PopDir();
+
+	app().registerHandler("/v1/rpc",
+		[](const HttpRequestPtr& req, Func<void, const HttpResponsePtr&>&& callback)
+		{
+			VOLCANICORE_LOG_INFO("Got RPC request: " + req->path());
+			callback(HttpResponse::newHttpJsonResponse("{ Response: 'OK' }"));
+		});
 }
 
 void Editor::Close() {
@@ -312,19 +321,19 @@ void Editor::RenderStartScreen() {
 	// flowButton->AddLine();
 	s_StartWindow->Add(flowButton);
 
-	auto componentDialog = CreateRef<UI::FileDialog>("FlowDialog");
-	componentDialog->Width = 500;
-	componentDialog->Height = 500;
-	componentDialog->OpenDir = false;
-	componentDialog->StartPath = Application::GetHomeDir();
-	componentDialog->Extensions = { "flow.yml" };
-	componentDialog->OnSelect =
+	auto floatDialog = CreateRef<UI::FileDialog>("FlowDialog");
+	floatDialog->Width = 500;
+	floatDialog->Height = 500;
+	floatDialog->OpenDir = false;
+	floatDialog->StartPath = Application::GetHomeDir();
+	floatDialog->Extensions = { "flow.yml" };
+	floatDialog->OnSelect =
 		[](const fs::path& path) {
 			// Application::GetWindow()->Maximize();
 			// OpenProject(path);
 			// Mode = EditorMode::Project;
 		};
-	s_StartWindow->Add(componentDialog);
+	s_StartWindow->Add(floatDialog);
 
 	auto componentButton = CreateRef<UI::Button>("ComponentButton");
 	componentButton->Add(CreateRef<UI::Text>("Component"));
