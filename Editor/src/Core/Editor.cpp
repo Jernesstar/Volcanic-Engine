@@ -90,10 +90,16 @@ void Editor::Open() {
 			app().registerHandler("/v1/rpc",
 				[](const HttpRequestPtr& req, Func<void, const HttpResponsePtr&>&& callback)
 				{
-					Json::Value request(req->getBody());
+					Json::CharReaderBuilder builder;
+					Json::CharReader* reader = builder.newCharReader();
+					Json::Value request;
+					reader->parse(req->bodyData(),
+						req->bodyData() + req->bodyLength(), &request, nullptr);
+
 					auto method = request["Method"].asString();
 					auto data = request["Data"].asString();
 					VOLCANICORE_LOG_INFO("Method: '%s', Data: '%s'", method.c_str(), data.c_str());
+
 					Json::Value response;
 					response["Status"] = "Ok";
 					callback(HttpResponse::newHttpJsonResponse(response));

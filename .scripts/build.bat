@@ -1,4 +1,16 @@
 @echo off
 
+set Target=%1
+
+if "%Target%" == "" (
+    set Target="Makefile"
+) else (
+    if "%Target%" == "All" (
+        set Target="Makefile"
+    ) else (
+        set Target="%Target%.make"
+    )
+)
+
 cd build/gmake
-mingw32-make.exe
+mingw32-make.exe -f %Target%
