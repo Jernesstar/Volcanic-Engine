@@ -153,6 +153,8 @@ public:
 			Children.Find([&](auto& w) { return w->ID == id; });
 		if(found)
 			return Children[i];
+
+		VOLCANICORE_LOG_WARNING("Could not find widget '%s'", id.c_str());
 		return nullptr;
 	}
 

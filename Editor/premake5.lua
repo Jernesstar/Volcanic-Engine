@@ -85,8 +85,7 @@ project "Editor"
     defines {
         "NOMINMAX",
         "WIN32_LEAN_AND_MEAN",
-        "YAML_CPP_STATIC_DEFINE",
-        "CPPHTTPLIB_OPENSSL_SUPPORT",
+        "YAML_CPP_STATIC_DEFINE"
     }
 
     filter "toolset:msc or system:linux"
@@ -107,9 +106,10 @@ project "Editor"
             "gdi32",
             "kernel32",
             "psapi",
+            "z",
             "Ws2_32",
             "advapi32",
-            "rpcrt4"
+            "rpcrt4",
         }
 
     filter "toolset:gcc or toolset:clang"

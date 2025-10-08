@@ -52,6 +52,8 @@ static Ref<Texture> s_Logo;
 
 using namespace drogon;
 
+static std::thread s_ServerThread;
+
 void Editor::Open() {
 	Editor::RegisterInterface();
 
@@ -82,12 +84,26 @@ void Editor::Open() {
 
 	Application::PopDir();
 
-	app().registerHandler("/v1/rpc",
-		[](const HttpRequestPtr& req, Func<void, const HttpResponsePtr&>&& callback)
+	s_ServerThread = std::thread(
+		[]()
 		{
-			VOLCANICORE_LOG_INFO("Got RPC request: " + req->path());
-			callback(HttpResponse::newHttpJsonResponse("{ Response: 'OK' }"));
+			app().registerHandler("/v1/rpc",
+				[](const HttpRequestPtr& req, Func<void, const HttpResponsePtr&>&& callback)
+				{
+					Json::Value request(req->getBody());
+					auto method = request["Method"].asString();
+					auto data = request["Data"].asString();
+					VOLCANICORE_LOG_INFO("Method: '%s', Data: '%s'", method.c_str(), data.c_str());
+					Json::Value response;
+					response["Status"] = "Ok";
+					callback(HttpResponse::newHttpJsonResponse(response));
+				}, { HttpMethod::Post });
+
+			app().addListener("127.0.0.1", 8848)
+				.run();
 		});
+
+	s_ServerThread.detach();
 }
 
 void Editor::Close() {
@@ -279,7 +295,7 @@ void Editor::RenderStartScreen() {
 			auto w = s_StartWindow->Find("ProjectWindow");
 			w->Visible = true;
 		}
-		else if(s_StartWindow->Find("LavaFlowButton")->State.Clicked)
+		else if(s_StartWindow->Find("FlowButton")->State.Clicked)
 			mode = 2;
 		else if(s_StartWindow->Find("ComponentButton")->State.Clicked)
 			mode = 3;

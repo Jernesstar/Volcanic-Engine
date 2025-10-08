@@ -44,12 +44,12 @@
 [submodule "Editor/.vendor/glad"]
 	path = Editor/.vendor/glad
 	url = https://github.com/LavaFlow-Technologies/glad.git
-[submodule "Editor/.vendor/drogon"]
-	path = Editor/.vendor/drogon
-	url = https://github.com/LavaFlow-Technologies/drogon.git
 [submodule "Editor/.vendor/jsoncpp"]
 	path = Editor/.vendor/jsoncpp
 	url = https://github.com/open-source-parsers/jsoncpp.git
 [submodule "Editor/.vendor/c-ares"]
 	path = Editor/.vendor/c-ares
 	url = https://github.com/LavaFlow-Technologies/c-ares.git
+[submodule "Editor/.vendor/drogon"]
+	path = Editor/.vendor/drogon
+	url = https://github.com/LavaFlow-Technologies/drogon.git
