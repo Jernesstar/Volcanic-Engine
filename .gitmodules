@@ -24,7 +24,7 @@
 	url = https://github.com/jarikomppa/soloud.git
 [submodule "Editor/.vendor/stb_image"]
 	path = Editor/.vendor/stb_image
-	url = https://github.com/LavaFlow-Technologies/stb_image
+	url = https://github.com/LavaFlow-Technologies/stb_image.git
 [submodule "Editor/.vendor/imgui"]
 	path = Editor/.vendor/imgui
 	url = https://github.com/ocornut/imgui.git
@@ -40,7 +40,7 @@
 	url = https://github.com/juliettef/IconFontCppHeaders.git
 [submodule "Editor/.vendor/ImGuiColorTextEdit"]
 	path = Editor/.vendor/ImGuiColorTextEdit
-	url = https://github.com/LavaFlow-Technologies/ImGuiColorTextEdit.git
+	url = https://github.com/santaclose/ImGuiColorTextEdit.git
 [submodule "Editor/.vendor/glad"]
 	path = Editor/.vendor/glad
 	url = https://github.com/LavaFlow-Technologies/glad.git

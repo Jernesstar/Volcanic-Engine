@@ -31,15 +31,9 @@ using namespace Magma::Script;
 
 namespace Magma::UI {
 
-class Animation {
-public:
-	Animation() = default;
-	virtual ~Animation() = default;
-	virtual void Update(TimeStep ts) = 0;
-};
-
 enum class WidgetType {
 	None,
+	Root,
 	Window,
 	Container,
 	Dropdown,
@@ -63,6 +57,13 @@ struct UIState {
 	operator bool() const {
 		return Clicked || Held || Released || Hovered || NavFocused || Dragging;
 	}
+};
+
+class Animation {
+public:
+	Animation() = default;
+	virtual ~Animation() = default;
+	virtual void Update(TimeStep ts) = 0;
 };
 
 class Widget {
@@ -164,6 +165,17 @@ private:
 	}
 };
 
+class Root : public Widget {
+public:
+	Root(const std::string& id)
+		: Widget(id, WidgetType::Root) { }
+
+	void Load(const std::string& path);
+
+	void Begin() override;
+	void End() override;
+};
+
 class Window : public Widget {
 public:
 	bool MenuBar = false;
@@ -172,6 +184,10 @@ public:
 	bool AllowResize = false;
 	bool AllowMove = false;
 	bool AllowDock = false;
+	bool AllowClose = false;
+	bool AllowScroll = false;
+	bool AllowMinimize = false;
+	bool AllowMaximize = false;
 
 	Vec4 Color;
 

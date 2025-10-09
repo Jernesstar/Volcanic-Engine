@@ -26,7 +26,7 @@ include "VolcaniCore"
 include "Magma"
 include "Lava"
 include "Editor"
-include "Runtime"
+-- include "Runtime"
 
 RootPath = _MAIN_SCRIPT_DIR;
 VolcaniCoreVendorDir = "%{RootPath}/VolcaniCore/.vendor"

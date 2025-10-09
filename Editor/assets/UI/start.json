@@ -1,0 +1,32 @@
+{
+    "Root":
+    [
+        {
+            "Name": "Window",
+            "Type": "Window",
+            "Width": "auto",
+            "Height": "auto",
+            "Root": true,
+            "Children":
+            [
+                {
+                    "Name": "Button",
+                    "Type": "Button",
+                    "Children":
+                    [
+                        {
+                            "Name": "Text",
+                            "Type": "Text"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+
+        },
+        {
+
+        }
+    ]
+}

@@ -21,6 +21,7 @@
 #include <imgui/backends/imgui_impl_opengl3.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
 
+#include <Magma/Core/JSONSerializer.h>
 #include <VolcaniCore/Core/Application.h>
 #include <VolcaniCore/Event/Events.h>
 #include <VolcaniCore/Core/Input.h>
@@ -34,6 +35,80 @@ using namespace Magma;
 using namespace Magma::Script;
 
 namespace Magma::UI {
+
+void Root::Begin() { }
+
+void Root::End() { }
+
+void Traverse(Widget* parent, const rapidjson::Value& value) {
+	auto id = value["Name"].GetString();
+	auto type = value["Type"].GetString();
+
+	Ref<Widget> widget = nullptr;
+	if(type == "Window") {
+		widget = CreateRef<Window>(id);
+	}
+	else if(type == "Container") {
+		widget = CreateRef<Container>(id);
+	}
+	else if(type == "Dropdown") {
+		widget = CreateRef<Dropdown>(id);
+	}
+	else if(type == "Button") {
+		widget = CreateRef<Button>(id);
+	}
+	else if(type == "Image") {
+		widget = CreateRef<Image>(id);
+	}
+	else if(type == "Text") {
+		widget = CreateRef<Text>(id);
+	}
+	else if(type == "TextInput") {
+		widget = CreateRef<TextInput>(id);
+	}
+	else if(type == "FileDialog") {
+		widget = CreateRef<FileDialog>(id);
+	}
+	else if(type == "FileEditor") {
+		widget = CreateRef<FileEditor>(id);
+	}
+	else if(type == "Gizmo") {
+		widget = CreateRef<Gizmo>(id);
+	}
+}
+
+void Root::Load(const std::string& path) {
+	using namespace rapidjson;
+
+	if(path == "") {
+		VOLCANICORE_LOG_ERROR("Filename was empty");
+		return;
+	}
+
+	auto name = fs::path(path).stem().stem().stem().string();
+	if(!FileUtils::PathExists(path)) {
+		VOLCANICORE_LOG_ERROR(
+			"Could not find file with name %s", name.c_str());
+		return;
+	}
+
+	Document doc;
+	doc.Parse(FileUtils::ReadFile(path));
+
+	if(doc.HasParseError()) {
+		VOLCANICORE_LOG_INFO("Parsing error %i", (uint32_t)doc.GetParseError());
+		return;
+	}
+	if(!doc.IsObject()) {
+		VOLCANICORE_LOG_ERROR("File did not have root object");
+		return;
+	}
+
+	const auto& root = doc["Root"];
+	for(const auto& value : root.GetArray()) {
+		Traverse(this, value);
+	}
+}
 
 void Window::Begin() {
 	if(IsChild) {
@@ -63,8 +138,8 @@ void Window::Begin() {
 						 | ImGuiWindowFlags_NoNavFocus;
 
 		ImGui::SetNextWindowSize({ Width, Height });
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0f);
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 10.0f);
+		// ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0f);
+		// ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 10.0f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 		ImGui::PushStyleColor(ImGuiCol_WindowBg, Color);
 		// ImGui::PushStyleColor(ImGuiCol_Border, BorderColor);
@@ -99,7 +174,7 @@ void Window::Begin() {
 			ImGui::PopID();
 
 		ImGui::PopStyleColor();
-		ImGui::PopStyleVar(3 + IsRoot * 2);
+		ImGui::PopStyleVar(1 + IsRoot * 2);
 	}
 
 	State.Clicked = ImGui::IsMouseClicked(0) && ImGui::IsWindowHovered();
