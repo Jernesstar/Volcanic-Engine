@@ -6,7 +6,8 @@
 
 #include <Lava/Core/App.h>
 
-#include "Tab.h"
+#include "AI/AI.h"
+#include "UI/Tab.h"
 
 using namespace VolcaniCore;
 
@@ -82,6 +83,8 @@ private:
 	Project m_Project;
 	LavaFlow m_LavaFlow;
 	Component m_Component;
+
+	AI::Assistant m_Assistant;
 
 	Cache m_Cache;
 	uint64_t m_CurrentTab = 0;

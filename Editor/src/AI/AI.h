@@ -1,21 +1,27 @@
+#pragma once
+
 #include <VolcaniCore/Core/Defines.h>
 
-namespace Volcanic::AI {
+namespace Magma::AI {
 
 enum class TaskType {
 	Chat, // Entry point
 	Plan, // Schemas, Components, Flows
 	CodeGen, // Script register, add ECS system
-	Refactor, // Rewrite into new API
+	Refactor, // Rewrite
 	Research, // Google search, find similar solutions, LavaFlows
 };
 
-struct TaskDescriptor {
-	TaskType Type;
-	std::string Prompt;
-	std::string ProjectContext;
-	Map<std::string, std::string> Metadata;
-	bool PreferLocal = true;
+struct Response {
+
+};
+
+class Assistant {
+public:
+	Assistant() = default;
+	~Assistant() = default;
+
+	Response HandleRequest(const std::string& request);
 };
 
 }

@@ -32,6 +32,7 @@
 using namespace VolcaniCore;
 using namespace Magma;
 
+using namespace drogon;
 namespace fs = std::filesystem;
 
 namespace Magma {
@@ -49,6 +50,9 @@ static Ref<UI::Root> s_FlowEditorScreen;
 static Ref<UI::Root> s_ProjectEditorScreen;
 
 static Ref<Texture> s_Logo;
+
+static std::thread s_LLMThread;
+static std::thread s_HttpThread;
 
 void Editor::Open() {
 	Editor::RegisterInterface();
@@ -110,10 +114,25 @@ void Editor::Open() {
 	// 			.run();
 	// 	});
 
-	// s_ServerThread.detach();
+	s_LLMThread = std::thread(
+		[]()
+		{
+			system("llama-server --hf-repo ngxson/SmolLM2-360M-Instruct-Q8_0-GGUF --hf-file smollm2-360m-instruct-q8_0.gguf -c 2048 --main-gpu 1");
+		});
+	s_LLMThread.detach();
+
+	s_HttpThread = std::thread(
+		[]()
+		{
+			app().run();
+		});
+	s_HttpThread.detach();
 }
 
 void Editor::Close() {
+	(&s_LLMThread)->~thread();
+	(&s_HttpThread)->~thread();
+
 	CloseProject();
 	CloseLavaFlow();
 	// m_App.reset();
@@ -381,8 +400,21 @@ void Editor::RenderStartScreen() {
 				// 	};
 				// dialog.Draw();
 			}
-			if(ImGui::Button("FlowyAI")) {
-
+			if(ImGui::Button("MagmAI")) {
+				auto client = HttpClient::newHttpClient("127.0.0.1", 8080);
+				auto request = HttpRequest::newHttpRequest();
+				request->setPath("/completion");
+				request->setMethod(HttpMethod::Post);
+				request->setContentTypeCode(CT_APPLICATION_JSON);
+				request->setBody("{\"prompt\": \"What is the meaning of life?\"}");
+				client->sendRequest(request,
+					[](ReqResult res, const HttpResponsePtr& response)
+					{
+						if(res == ReqResult::Ok)
+							std::cout << response->getBody() << std::endl;
+						else
+							std::cout << "Error: " << res << std::endl;
+					});
 			}
 		}
 		ImGui::EndChild();
