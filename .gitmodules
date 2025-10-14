@@ -56,3 +56,9 @@
 [submodule "Editor/.vendor/jwt-cpp"]
 	path = Editor/.vendor/jwt-cpp
 	url = https://github.com/Thalhammer/jwt-cpp.git
+[submodule "Editor/.vendor/libgit2"]
+	path = Editor/.vendor/libgit2
+	url = https://github.com/LavaFlow-Technologies/libgit2.git
+[submodule "Editor/.vendor/clay"]
+	path = Editor/.vendor/clay
+	url = https://github.com/nicbarker/clay.git

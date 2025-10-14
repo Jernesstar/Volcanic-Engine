@@ -50,6 +50,7 @@ project "Editor"
         "%{Includes.soloud}",
         "%{Includes.miniz_cpp}",
 
+        "%{Includes.clay}",
         "%{Includes.imgui}",
         "%{Includes.imgui}/imgui",
         "%{Includes.ImGuiFileDialog}",
@@ -65,6 +66,7 @@ project "Editor"
 
         "glad",
         "efsw",
+        "libgit2",
         "soloud",
         "stb_image",
         "drogon",
@@ -124,6 +126,7 @@ include "Editor/.deps/glad"
 include "Editor/.deps/soloud"
 include "Editor/.deps/stb_image"
 include "Editor/.deps/efsw"
+include "Editor/.deps/libgit2"
 include "Editor/.deps/drogon"
 include "Editor/.deps/imgui"
 include "Editor/.deps/ImGuiFileDialog"

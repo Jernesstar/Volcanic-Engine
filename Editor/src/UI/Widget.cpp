@@ -21,6 +21,10 @@
 #include <imgui/backends/imgui_impl_opengl3.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
 
+#include <ImGuizmo/ImGuizmo.h>
+
+#include <clay/clay.h>
+
 #include <Magma/Core/JSONSerializer.h>
 #include <VolcaniCore/Core/Application.h>
 #include <VolcaniCore/Event/Events.h>
@@ -36,11 +40,7 @@ using namespace Magma::Script;
 
 namespace Magma::UI {
 
-void Root::Begin() { }
-
-void Root::End() { }
-
-void Traverse(Widget* parent, const rapidjson::Value& value) {
+void Traverse(Ref<Widget> parent, const rapidjson::Value& value) {
 	auto id = value["Name"].GetString();
 	auto type = value["Type"].GetString();
 
@@ -77,7 +77,81 @@ void Traverse(Widget* parent, const rapidjson::Value& value) {
 	}
 }
 
-void Root::Load(const std::string& path) {
+void UIManager::Init() {
+	int success = gladLoadGL();
+	VOLCANICORE_ASSERT(success, "Glad could not load OpenGL");
+	VOLCANICORE_LOG_INFO(
+		"Successfully loaded OpenGL\n"
+		"\tVersion: %s\n"
+		"\tGPU: %s", glGetString(GL_VERSION), glGetString(GL_RENDERER));
+
+	glEnable(GL_MULTISAMPLE);				// Smooth edges
+	glEnable(GL_FRAMEBUFFER_SRGB);			// Gamma correction
+	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS); // Smooth cubemap edges
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+
+	auto window = Application::GetWindow();
+
+	ImGuiIO& io = ImGui::GetIO();
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable
+					| ImGuiConfigFlags_ViewportsEnable
+					| ImGuiConfigFlags_NavEnableKeyboard
+					| ImGuiConfigFlags_NavEnableSetMousePos;
+	io.DisplaySize = ImVec2(window->GetWidth(), window->GetHeight());
+
+	ImGui_ImplGlfw_InitForOpenGL(window->GetNativeWindow(), true);
+	ImGui_ImplOpenGL3_Init("#version 460 core");
+
+	Events::RegisterListener<WindowResizedEvent>(
+		[](const WindowResizedEvent& event)
+		{
+			ImGuiIO& io = ImGui::GetIO();
+			io.DisplaySize = ImVec2(event.Width, event.Height);
+		});
+
+	ImGui::StyleColorsDark();
+
+	io.IniFilename = nullptr;
+
+	m_Root = CreateRef<Container>("Root");
+}
+
+void UIManager::Shutdown() {
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+}
+
+void UIManager::BeginFrame() {
+	glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	ImGui_ImplGlfw_NewFrame();
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui::NewFrame();
+	ImGuizmo::BeginFrame();
+}
+
+void UIManager::EndFrame() {
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+	GLFWwindow* context = glfwGetCurrentContext();
+	ImGui::UpdatePlatformWindows();
+	ImGui::RenderPlatformWindowsDefault();
+	glfwMakeContextCurrent(context);
+}
+
+void UIManager::Update(TimeStep ts) {
+	m_Root->Update(ts);
+}
+
+void UIManager::Render() {
+	m_Root->Render();
+}
+
+void UIManager::Load(const std::string& path) {
 	using namespace rapidjson;
 
 	if(path == "") {
@@ -106,9 +180,37 @@ void Root::Load(const std::string& path) {
 
 	const auto& root = doc["Root"];
 	for(const auto& value : root.GetArray()) {
-		Traverse(this, value);
+		Traverse(m_Root, value);
 	}
 }
+
+// void UIManager::RegisterInterface() {
+// 	auto* engine = ScriptEngine::Get();
+
+// 	engine->SetDefaultNamespace("Widget");
+
+// 	engine->RegisterFuncdef("void WindowCallback()");
+// 	engine->RegisterEnum("WindowFlag");
+// 	engine->RegisterEnumValue("WindowFlag", "MenuBar", 0);
+// 	engine->RegisterEnumValue("WindowFlag", "TitleBar", 1);
+// 	engine->RegisterObjectType("WindowWidget", 0, asOBJ_REF | asOBJ_NOCOUNT);
+// 	// engine->RegisterObjectMethod("WindowWidget", "void Render(WindowCallback@)",
+// 	// 	asFUNCTION(WindowWidgetRender), asCALL_CDECL_OBJLAST);
+// 	// engine->RegisterObjectMethod("WindowWidget", "WindowWidget@ With(WindowFlag)",
+// 	// 	asMETHOD(WindowWidget, With), asCALL_THISCALL);
+// 	engine->RegisterGlobalFunction("WindowWidget@ Window(string name)",
+// 		asFUNCTION(WidgetManager::Window), asCALL_CDECL);
+
+// 	engine->RegisterObjectType("Child", 0, asOBJ_REF | asOBJ_NOCOUNT);
+// 	engine->RegisterObjectType("Image", 0, asOBJ_REF | asOBJ_NOCOUNT);
+// 	engine->RegisterObjectType("Text", 0, asOBJ_REF | asOBJ_NOCOUNT);
+
+// 	engine->SetDefaultNamespace("");
+// }
+
+void Root::Begin() { }
+
+void Root::End() { }
 
 void Window::Begin() {
 	if(IsChild) {
@@ -332,126 +434,5 @@ void Gizmo::End() {
 
 // 	return state;
 // }
-
-void WidgetManager::Init() {
-	int success = gladLoadGL();
-	VOLCANICORE_ASSERT(success, "Glad could not load OpenGL");
-	VOLCANICORE_LOG_INFO(
-		"Successfully loaded OpenGL\n"
-		"\tVersion: %s\n"
-		"\tGPU: %s", glGetString(GL_VERSION), glGetString(GL_RENDERER));
-
-	glEnable(GL_MULTISAMPLE);				// Smooth edges
-	glEnable(GL_FRAMEBUFFER_SRGB);			// Gamma correction
-	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS); // Smooth cubemap edges
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-
-	auto window = Application::GetWindow();
-
-	ImGuiIO& io = ImGui::GetIO();
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable
-					| ImGuiConfigFlags_ViewportsEnable
-					| ImGuiConfigFlags_NavEnableKeyboard
-					| ImGuiConfigFlags_NavEnableSetMousePos;
-	io.DisplaySize = ImVec2(window->GetWidth(), window->GetHeight());
-
-	ImGui_ImplGlfw_InitForOpenGL(window->GetNativeWindow(), true);
-	ImGui_ImplOpenGL3_Init("#version 460 core");
-
-	Events::RegisterListener<KeyPressedEvent>(
-		[](KeyPressedEvent& event)
-		{
-			ImGuiIO& io = ImGui::GetIO();
-			// event.Handled = io.WantCaptureKeyboard;
-		});
-	Events::RegisterListener<KeyReleasedEvent>(
-		[](KeyReleasedEvent& event)
-		{
-			ImGuiIO& io = ImGui::GetIO();
-			// event.Handled = io.WantCaptureKeyboard;
-		});
-	Events::RegisterListener<MouseButtonPressedEvent>(
-		[](MouseButtonPressedEvent& event)
-		{
-			ImGuiIO& io = ImGui::GetIO();
-			// event.Handled = io.WantCaptureMouse;
-		});
-	Events::RegisterListener<MouseButtonReleasedEvent>(
-		[](MouseButtonReleasedEvent& event)
-		{
-			ImGuiIO& io = ImGui::GetIO();
-			// event.Handled = io.WantCaptureMouse;
-		});
-	Events::RegisterListener<MouseScrolledEvent>(
-		[](MouseScrolledEvent& event)
-		{
-			ImGuiIO& io = ImGui::GetIO();
-			// event.Handled = io.WantCaptureMouse;
-		});
-	Events::RegisterListener<MouseMovedEvent>(
-		[](MouseMovedEvent& event)
-		{
-			ImGuiIO& io = ImGui::GetIO();
-			// event.Handled = io.WantCaptureMouse;
-		});
-	Events::RegisterListener<WindowResizedEvent>(
-		[](const WindowResizedEvent& event)
-		{
-			ImGuiIO& io = ImGui::GetIO();
-			io.DisplaySize = ImVec2(event.Width, event.Height);
-		});
-
-	ImGui::StyleColorsDark();
-}
-
-void WidgetManager::Close() {
-	ImGui_ImplOpenGL3_Shutdown();
-	ImGui_ImplGlfw_Shutdown();
-	ImGui::DestroyContext();
-}
-
-void WidgetManager::BeginFrame() {
-	glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	ImGui_ImplGlfw_NewFrame();
-	ImGui_ImplOpenGL3_NewFrame();
-	ImGui::NewFrame();
-}
-
-void WidgetManager::EndFrame() {
-	ImGui::Render();
-	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-	GLFWwindow* context = glfwGetCurrentContext();
-	ImGui::UpdatePlatformWindows();
-	ImGui::RenderPlatformWindowsDefault();
-	glfwMakeContextCurrent(context);
-}
-
-void WidgetManager::RegisterInterface() {
-	auto* engine = ScriptEngine::Get();
-
-	// engine->SetDefaultNamespace("Widget");
-
-	// engine->RegisterFuncdef("void WindowCallback()");
-	// engine->RegisterEnum("WindowFlag");
-	// engine->RegisterEnumValue("WindowFlag", "MenuBar", 0);
-	// engine->RegisterEnumValue("WindowFlag", "TitleBar", 1);
-	// engine->RegisterObjectType("WindowWidget", 0, asOBJ_REF | asOBJ_NOCOUNT);
-	// // engine->RegisterObjectMethod("WindowWidget", "void Render(WindowCallback@)",
-	// // 	asFUNCTION(WindowWidgetRender), asCALL_CDECL_OBJLAST);
-	// // engine->RegisterObjectMethod("WindowWidget", "WindowWidget@ With(WindowFlag)",
-	// // 	asMETHOD(WindowWidget, With), asCALL_THISCALL);
-	// engine->RegisterGlobalFunction("WindowWidget@ Window(string name)",
-	// 	asFUNCTION(WidgetManager::Window), asCALL_CDECL);
-
-	// engine->RegisterObjectType("Child", 0, asOBJ_REF | asOBJ_NOCOUNT);
-	// engine->RegisterObjectType("Image", 0, asOBJ_REF | asOBJ_NOCOUNT);
-	// engine->RegisterObjectType("Text", 0, asOBJ_REF | asOBJ_NOCOUNT);
-
-	// engine->SetDefaultNamespace("");
-}
 
 }

@@ -84,8 +84,6 @@ private:
 	LavaFlow m_LavaFlow;
 	Component m_Component;
 
-	AI::Assistant m_Assistant;
-
 	Cache m_Cache;
 	uint64_t m_CurrentTab = 0;
 	List<UI::Tab> m_Tabs;

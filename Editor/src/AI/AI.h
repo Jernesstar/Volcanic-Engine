@@ -18,8 +18,8 @@ struct Response {
 
 class Assistant {
 public:
-	Assistant() = default;
-	~Assistant() = default;
+	Assistant();
+	~Assistant();
 
 	Response HandleRequest(const std::string& request);
 };

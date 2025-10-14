@@ -1,5 +1,3 @@
-#include <drogon/drogon.h>
-
 #include "Editor.h"
 
 #include <imgui/imgui.h>
@@ -9,8 +7,6 @@
 #include <fstream>
 #include <iostream>
 #include <regex>
-
-#include <miniz-cpp/zip_file.hpp>
 
 #include <VolcaniCore/Core/Application.h>
 #include <VolcaniCore/Core/Algo.h>
@@ -32,7 +28,6 @@
 using namespace VolcaniCore;
 using namespace Magma;
 
-using namespace drogon;
 namespace fs = std::filesystem;
 
 namespace Magma {
@@ -51,66 +46,26 @@ static Ref<UI::Root> s_ProjectEditorScreen;
 
 static Ref<Texture> s_Logo;
 
-static std::thread s_LLMThread;
-static std::thread s_HttpThread;
+static UI::UIManager* s_UIManager = nullptr;
 
 void Editor::Open() {
-	Editor::RegisterInterface();
+	// Editor::RegisterInterface();
 
-	m_App = CreateRef<Lava::App>();
+	s_UIManager = new UI::UIManager();
+	s_UIManager->Init();
+	s_UIManager->Load("Editor/assets/start.json");
 
 	Application::PushDir();
-	s_Logo =
-		AssetImporter::GetTexture("Editor/assets/images/VolcanicDisplay.png");
-
-	// if(FileUtils::PathExists("Editor/.cache/data.yml")) {
-	// 	YAML::Node file;
-	// 	try {
-	// 		file = YAML::LoadFile("Editor/.cache/data.yml");
-	// 	}
-	// 	catch(YAML::ParserException e) {
-	// 		VOLCANICORE_LOG_INFO("Malformed cache file");
-	// 		return;
-	// 	}
-	// 	catch(YAML::BadFile e) {
-	// 		VOLCANICORE_LOG_INFO("Bad cache file");
-	// 		return;
-	// 	}
-
-	// 	auto data = file["EditorData"];
-	// 	m_Cache.PastProjects = data["PastProjects"].as<List<std::string>>();
-	// 	m_Cache.PastLavaFlows = data["PastLavaFlows"].as<List<std::string>>();
-	// }
-
-	s_StartScreen->Load("Editor/assets/start.json");
-	s_ComponentEditorScreen->Load("Editor/assets/comp.json");
-	s_FlowEditorScreen->Load("Editor/assets/flow.json");
-	s_ProjectEditorScreen->Load("Editor/assets/proj.json");
-
+	s_Logo = AssetImporter::GetTexture("Editor/assets/images/VolcanicDisplay.png");
 	Application::PopDir();
-
-	s_LLMThread = std::thread(
-		[]()
-		{
-			system("llama-server --hf-repo ngxson/SmolLM2-360M-Instruct-Q8_0-GGUF --hf-file smollm2-360m-instruct-q8_0.gguf -c 2048 --main-gpu 1");
-		});
-	s_LLMThread.detach();
-
-	s_HttpThread = std::thread(
-		[]()
-		{
-			app().run();
-		});
-	s_HttpThread.detach();
 }
 
 void Editor::Close() {
-	(&s_LLMThread)->~thread();
-	(&s_HttpThread)->~thread();
-
 	CloseProject();
 	CloseLavaFlow();
-	// m_App.reset();
+
+	s_UIManager->Shutdown();
+	delete s_UIManager;
 }
 
 Ref<ScriptModule> Editor::GetModule(const std::string& name) {
@@ -149,11 +104,9 @@ void Editor::Load(const CommandLineArgs& args) {
 }
 
 void Editor::Update(TimeStep ts) {
-	if(Mode == EditorMode::Component)
-		s_ComponentEditorScreen->Update(ts);
-	else if(Mode == EditorMode::Flow)
-		s_FlowEditorScreen->Update(ts);
-	else if(Mode == EditorMode::Project) {
+	s_UIManager->Update(ts);
+
+	if(Mode == EditorMode::Project) {
 		s_ProjectEditorScreen->Update(ts);
 		for(auto& tab : m_Tabs)
 			tab.OnUpdate(ts);
@@ -161,6 +114,8 @@ void Editor::Update(TimeStep ts) {
 }
 
 void Editor::Render() {
+	s_UIManager->BeginFrame();
+
 	RenderTitleBar();
 
 	if(Mode == EditorMode::None)
@@ -171,6 +126,8 @@ void Editor::Render() {
 		RenderFlowEditor();
 	else if(Mode == EditorMode::Project)
 		RenderProjectEditor();
+
+	s_UIManager->EndFrame();
 }
 
 void Editor::RenderTitleBar() {
@@ -200,13 +157,6 @@ void Editor::RenderTitleBar() {
 		ImGui::PopStyleColor(1);
 		ImGui::SetCursorPos({ 5.0f, 5.0f });
 		ImGui::Image((ImTextureID)(intptr_t)s_Logo->ID, ImVec2(50.0f, 50.0f), ImVec2(0, 1), ImVec2(1, 0));
-		// auto image = s_WelcomeImage;
-		// image.x = 5;
-		// image.y = 5;
-		// image.Width = 50;
-		// image.Height = 50;
-		// image.UsePosition = true;
-		// image.Draw();
 		ImGui::SameLine();
 
 		ImGui::SetWindowFontScale(2.0f);
@@ -217,7 +167,7 @@ void Editor::RenderTitleBar() {
 		else if(Mode == EditorMode::Component)
 			ImGui::Text("Component Editor");
 		else
-			ImGui::Text("Magma Editor v0.1");
+			ImGui::Text("Magma Editor v0.1.0");
 		ImGui::SetWindowFontScale(1.0f);
 		ImGui::SameLine();
 
@@ -376,20 +326,7 @@ void Editor::RenderStartScreen() {
 				// dialog.Draw();
 			}
 			if(ImGui::Button("MagmAI")) {
-				auto client = HttpClient::newHttpClient("127.0.0.1", 8080);
-				auto request = HttpRequest::newHttpRequest();
-				request->setPath("/completion");
-				request->setMethod(HttpMethod::Post);
-				request->setContentTypeCode(CT_APPLICATION_JSON);
-				request->setBody("{\"prompt\": \"What is the meaning of life?\"}");
-				client->sendRequest(request,
-					[](ReqResult res, const HttpResponsePtr& response)
-					{
-						if(res == ReqResult::Ok)
-							std::cout << response->getBody() << std::endl;
-						else
-							std::cout << "Error: " << res << std::endl;
-					});
+				// m_Assistant.HandleRequest("What is the meaning of life?");
 			}
 		}
 		ImGui::EndChild();
@@ -806,9 +743,7 @@ void ProjectSaveRuntime(const Project& project) {
 }
 
 void Editor::RegisterInterface() {
-	UI::Panel::RegisterInterface();
-	UI::Tab::RegisterInterface();
-	UI::WidgetManager::RegisterInterface();
+
 }
 
 }

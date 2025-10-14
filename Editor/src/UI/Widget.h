@@ -25,11 +25,39 @@ using namespace VolcaniCore;
 
 #include <Magma/Script/ScriptEngine.h>
 
+#include "Core/Integration.h"
 #include "Core/AssetImporter.h"
 
 using namespace Magma::Script;
 
 namespace Magma::UI {
+
+class Widget;
+
+class UIManager : public Integration {
+public:
+	UIManager() = default;
+	~UIManager() = default;
+
+	void Init() override;
+	void Shutdown() override;
+	
+	void BeginFrame();
+	void EndFrame();
+	void Update(TimeStep ts);
+	void Render();
+
+	void Load(const std::string& path);
+
+	// static Window* Window(const std::string& name);
+	// static Container* Container(const std::string& name);
+	// static Dropdown* Dropdown(const std::string& name);
+	// static Text* Text(const std::string& name);
+	// static Image* Image(const std::string& name);
+
+private:
+	Ref<Widget> m_Root;
+};
 
 enum class WidgetType {
 	None,
@@ -169,8 +197,6 @@ class Root : public Widget {
 public:
 	Root(const std::string& id)
 		: Widget(id, WidgetType::Root) { }
-
-	void Load(const std::string& path);
 
 	void Begin() override;
 	void End() override;
@@ -319,21 +345,6 @@ public:
 
 	void Begin() override;
 	void End() override;
-};
-
-class WidgetManager {
-public:
-	static void Init();
-	static void Close();
-	static void BeginFrame();
-	static void EndFrame();
-	static void RegisterInterface();
-	
-	// static Window* Window(const std::string& name);
-	// static Container* Container(const std::string& name);
-	// static Dropdown* Dropdown(const std::string& name);
-	// static Text* Text(const std::string& name);
-	// static Image* Image(const std::string& name);
 };
 
 }

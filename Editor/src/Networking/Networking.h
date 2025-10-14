@@ -11,6 +11,15 @@ namespace Magma::Networking {
 
 using Bytes = Buffer<uint8_t>;
 
+class NetworkingManager {
+public:
+	NetworkingManager() = default;
+	~NetworkingManager() = default;
+
+	static void Init();
+	static void Shutdown();
+};
+
 enum class PayloadType {
 	Json,
 	Bytes,
