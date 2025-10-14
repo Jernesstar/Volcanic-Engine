@@ -122,6 +122,7 @@ void Window::Begin() {
 						 | ImGuiWindowFlags_NoCollapse;
 		ImVec2 size((float)Width, (float)Height);
 
+		ImGui::SetNextWindowPos({ x, y });
 		ImGui::PushStyleColor(ImGuiCol_FrameBg, Color);
 		ImGui::PushID(this);
 		ImGui::BeginChild("##Window", size, childFlags, windowFlags);
@@ -137,7 +138,6 @@ void Window::Begin() {
 						 | ImGuiWindowFlags_NoBringToFrontOnFocus
 						 | ImGuiWindowFlags_NoNavFocus;
 
-		ImGui::SetNextWindowSize({ Width, Height });
 		// ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0f);
 		// ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 10.0f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
@@ -146,19 +146,22 @@ void Window::Begin() {
 		if(IsRoot) {
 			const ImGuiViewport* viewport = ImGui::GetMainViewport();
 
-			ImGui::SetNextWindowPos(
-				{ viewport->Pos.x + x, viewport->Pos.y + y });
+			if(!x)
+				x = viewport->Pos.x;
+			if(!y)
+				y = viewport->Pos.y;
 
 			if(!Width)
 				Width = viewport->Size.x;
 			if(!Height)
 				Height = viewport->Size.y;
 
-			ImGui::SetNextWindowSize({ Width, Height });
 			ImGui::SetNextWindowViewport(viewport->ID);
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, { 0.0f, 0.0f });
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
 		}
+		ImGui::SetNextWindowSize({ Width, Height });
+		ImGui::SetNextWindowPos({ x, y });
 
 		if(!IsRoot)
 			ImGui::PushID(this);
@@ -206,6 +209,7 @@ void Dropdown::End() {
 }
 
 void Button::Begin() {
+	ImGui::SetCursorPos({ x, y });
 	ImGui::SetNextItemAllowOverlap();
 	ImGui::PushID(this);
 	ImGui::InvisibleButton("##Image", ImVec2(Width, Height));
@@ -221,6 +225,7 @@ void Button::End() {
 }
 
 void Image::Begin() {
+	ImGui::SetCursorPos({ x, y });
 	ImGui::Image(
 		(ImTextureID)(intptr_t)Content->ID, { Width, Height },
 		ImVec2(0, 1), ImVec2(1, 0));
@@ -231,6 +236,7 @@ void Image::End() {
 }
 
 void Text::Begin() {
+	ImGui::SetCursorPos({ x, y });
 	ImGui::SetWindowFontScale(Scale);
 	ImGui::Text(Label.c_str());
 }

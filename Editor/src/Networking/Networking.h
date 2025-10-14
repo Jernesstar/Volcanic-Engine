@@ -2,11 +2,20 @@
 
 #include <drogon/drogon.h>
 
+#include <VolcaniCore/Core/Buffer.h>
 #include <VolcaniCore/Core/Defines.h>
 
 using namespace VolcaniCore;
 
 namespace Magma::Networking {
+
+using Bytes = Buffer<uint8_t>;
+
+enum class PayloadType {
+	Json,
+	Bytes,
+	Text
+};
 
 class HttpClient {
 public:
@@ -19,16 +28,27 @@ public:
 	}
 
 	void Get(const std::string& path,
-			 const Func<void, const drogon::HttpResponsePtr&> callback);
-	void Post(const std::string& path, const std::string& body,
-			 const Func<void, const drogon::HttpResponsePtr&> callback);
-	void Put(const std::string& path,
-			 const Func<void, const drogon::HttpResponsePtr&> callback);
+			 const Func<void, const drogon::HttpResponsePtr&> cb);
+	void Post(const std::string& path, Bytes bytes, PayloadType type,
+			 const Func<void, const drogon::HttpResponsePtr&> cb);
+	void Put(const std::string& path, Bytes bytes, PayloadType type,
+			 const Func<void, const drogon::HttpResponsePtr&> cb);
 	void Delete(const std::string& path,
-			 const Func<void, const drogon::HttpResponsePtr&> callback);
+			 const Func<void, const drogon::HttpResponsePtr&> cb);
 
 private:
 	Ref<drogon::HttpClient> m_Client;
-}
+};
+
+class User {
+public:
+	User() = default;
+	~User() = default;
+
+	void Login(const std::string& username, const std::string& password);
+
+private:
+	bool m_LoggedIn = false;
+};
 
 }
