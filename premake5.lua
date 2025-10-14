@@ -26,6 +26,7 @@ include "VolcaniCore"
 include "Magma"
 include "Lava"
 include "Editor"
+include "MagmaServer"
 -- include "Runtime"
 
 RootPath = _MAIN_SCRIPT_DIR;
@@ -51,6 +52,7 @@ VendorPaths["rapidjson"]          = "%{MagmaVendorDir}/rapidjson"
 
 -- Editor libraries
 VendorPaths["drogon"]             = "%{EditorVendorDir}/drogon"
+VendorPaths["jwt_cpp"]            = "%{EditorVendorDir}/jwt-cpp"
 VendorPaths["stb_image"]          = "%{EditorVendorDir}/stb_image"
 VendorPaths["soloud"]             = "%{EditorVendorDir}/soloud"
 VendorPaths["efsw"]               = "%{EditorVendorDir}/efsw"
@@ -75,6 +77,7 @@ Includes["rapidjson"]             = "%{VendorPaths.rapidjson}/include"
 
 -- Editor libraries
 Includes["drogon"]                = "%{VendorPaths.drogon}/lib/inc"
+Includes["jwt_cpp"]               = "%{VendorPaths.jwt_cpp}/include"
 Includes["stb_image"]             = "%{VendorPaths.stb_image}/include"
 Includes["soloud"]                = "%{VendorPaths.soloud}/include"
 Includes["glad"]                  = "%{VendorPaths.glad}/include"

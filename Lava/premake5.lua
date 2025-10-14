@@ -35,8 +35,6 @@ project "Lava"
     links {
         "Magma",
         "VolcaniCore",
-
-        -- "yaml-cpp",
     }
 
     defines {

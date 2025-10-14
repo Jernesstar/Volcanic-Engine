@@ -40,7 +40,7 @@
 	url = https://github.com/juliettef/IconFontCppHeaders.git
 [submodule "Editor/.vendor/ImGuiColorTextEdit"]
 	path = Editor/.vendor/ImGuiColorTextEdit
-	url = https://github.com/santaclose/ImGuiColorTextEdit.git
+	url = https://github.com/LavaFlow-Technologies/ImGuiColorTextEdit.git
 [submodule "Editor/.vendor/glad"]
 	path = Editor/.vendor/glad
 	url = https://github.com/LavaFlow-Technologies/glad.git
@@ -53,3 +53,6 @@
 [submodule "Editor/.vendor/drogon"]
 	path = Editor/.vendor/drogon
 	url = https://github.com/LavaFlow-Technologies/drogon.git
+[submodule "Editor/.vendor/jwt-cpp"]
+	path = Editor/.vendor/jwt-cpp
+	url = https://github.com/Thalhammer/jwt-cpp.git

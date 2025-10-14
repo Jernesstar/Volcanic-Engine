@@ -1,16 +1,15 @@
-project "Runtime"
+project "MagmaServer"
     kind "ConsoleApp"
     language "C++"
     cppdialect "C++latest"
     exceptionhandling "On"
-    rtti "Off"
     staticruntime "Off"
 
-    objdir ("%{RootPath}/build/%{_ACTION}/Lava/obj")
-    targetdir ("%{RootPath}/build/%{_ACTION}/Lava/bin")
+    objdir ("%{RootPath}/build/%{_ACTION}/Server/obj")
+    targetdir ("%{RootPath}/build/%{_ACTION}/Server/bin")
 
     files {
-        "src/Runtime/**.cpp"
+        "main.cpp"
     }
 
     includedirs {
@@ -20,41 +19,36 @@ project "Runtime"
         "%{RootPath}/VolcaniCore/src/VolcaniCore",
         "%{RootPath}/VolcaniCore/src/impl",
 
-        "%{RootPath}/Magma/src",
-        "%{RootPath}/Magma/src/Magma",
-
-        "%{RootPath}/Lava/src",
-        "%{RootPath}/Lava/src/Lava",
-        "%{RootPath}/Lava/src/Lava/**",
-
-        "%{Includes.yaml_cpp}",
-        "%{Includes.rapidjson}",
-        
-        "%{Includes.angelscript}",
-        "%{VendorPaths.angelscript}",
-
         "%{Includes.glm}",
         "%{Includes.glfw}",
+
+        "%{Includes.drogon}",
+        "%{VendorPaths.drogon}/*",
+        "%{VendorPaths.drogon}/orm_lib/inc",
+        "%{VendorPaths.drogon}/nosql_lib/redis/inc",
+        "%{VendorPaths.drogon}/trantor",
+        "%{EditorVendorDir}/jsoncpp/include",
+        "%{Includes.jwt_cpp}",
     }
 
     links {
-        "Lava",
-        "Magma",
         "VolcaniCore",
 
         "glfw",
-        "glad",
+        "drogon",
 
-        "yaml-cpp",
-
-        "angelscript",
+        "ssl",
+        "crypto",
+        "crypt32",
     }
 
     defines {
         "NOMINMAX",
+        "WIN32_LEAN_AND_MEAN",
+        "YAML_CPP_STATIC_DEFINE"
     }
 
-    filter "action:vs* or system:linux"
+    filter "toolset:msc or system:linux"
         debugdir ".."
 
     filter "system:linux"
@@ -71,7 +65,10 @@ project "Runtime"
             "gdi32",
             "kernel32",
             "psapi",
+            "z",
             "Ws2_32",
+            "advapi32",
+            "rpcrt4",
         }
 
     filter "toolset:gcc or toolset:clang"

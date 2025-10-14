@@ -89,31 +89,6 @@ void Editor::Open() {
 
 	Application::PopDir();
 
-	// s_ServerThread = std::thread(
-	// 	[]()
-	// 	{
-	// 		app().registerHandler("/v1/rpc",
-	// 			[](const HttpRequestPtr& req, Func<void, const HttpResponsePtr&>&& callback)
-	// 			{
-	// 				Json::CharReaderBuilder builder;
-	// 				Json::CharReader* reader = builder.newCharReader();
-	// 				Json::Value request;
-	// 				reader->parse(req->bodyData(),
-	// 					req->bodyData() + req->bodyLength(), &request, nullptr);
-
-	// 				auto method = request["Method"].asString();
-	// 				auto data = request["Data"].asString();
-	// 				VOLCANICORE_LOG_INFO("Method: '%s', Data: '%s'", method.c_str(), data.c_str());
-
-	// 				Json::Value response;
-	// 				response["Status"] = "Ok";
-	// 				callback(HttpResponse::newHttpJsonResponse(response));
-	// 			}, { HttpMethod::Post });
-
-	// 		app().addListener("127.0.0.1", 8848)
-	// 			.run();
-	// 	});
-
 	s_LLMThread = std::thread(
 		[]()
 		{
