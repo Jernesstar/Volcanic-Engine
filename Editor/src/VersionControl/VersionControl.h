@@ -2,12 +2,14 @@
 
 #include "Core/Integration.h"
 
-namespace Magma::VersionControl {
+#include <git2.h>
 
-class VersionControlManager : public Integration {
+namespace Magma::VC {
+
+class VCManager : public Integration {
 public:
-	VersionControlManager() = default;
-	~VersionControlManager() = default;
+	VCManager() = default;
+	~VCManager() = default;
 
 	void Init() override;
 	void Shutdown() override;
@@ -18,15 +20,19 @@ public:
 	Repo();
 	~Repo();
 
+	void Init(const std::string& path);
 	void Open(const std::string& path);
-	void Clone(const std::string& url, const std::string& path);
-	void Pull();
-	void Push();
-	void Commit(const std::string& message);
-	void Add(const std::string& path);
-	void Remove(const std::string& path);
-	void Revert(const std::string& path);
-	void Checkout(const std::string& path);
+	// void Clone(const std::string& url, const std::string& path);
+	// void Pull();
+	// void Push();
+	// void Commit(const std::string& message);
+	// void Add(const std::string& path);
+	// void Remove(const std::string& path);
+	// void Revert(const std::string& path);
+	// void Checkout(const std::string& path);
+
+private:
+	git_repository *m_Repo = nullptr;
 };
 
 }

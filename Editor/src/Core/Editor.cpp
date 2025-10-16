@@ -20,6 +20,7 @@
 
 #include "UI/Widget.h"
 #include "AI/AI.h"
+#include "VersionControl/VersionControl.h"
 
 #include "AssetImporter.h"
 #include "ScriptManager.h"
@@ -47,6 +48,7 @@ static Ref<UI::Root> s_ProjectEditorScreen;
 static Ref<Texture> s_Logo;
 
 static UI::UIManager* s_UIManager = nullptr;
+static VC::VCManager* s_VCManager = nullptr;
 
 void Editor::Open() {
 	// Editor::RegisterInterface();
@@ -54,6 +56,9 @@ void Editor::Open() {
 	s_UIManager = new UI::UIManager();
 	s_UIManager->Init();
 	s_UIManager->Load("Editor/assets/start.json");
+
+	s_VCManager = new VC::VCManager();
+	s_VCManager->Init();
 
 	Application::PushDir();
 	s_Logo = AssetImporter::GetTexture("Editor/assets/images/VolcanicDisplay.png");
@@ -64,6 +69,8 @@ void Editor::Close() {
 	CloseProject();
 	CloseLavaFlow();
 
+	s_VCManager->Shutdown();
+	delete s_VCManager;
 	s_UIManager->Shutdown();
 	delete s_UIManager;
 }
@@ -327,6 +334,11 @@ void Editor::RenderStartScreen() {
 			}
 			if(ImGui::Button("MagmAI")) {
 				// m_Assistant.HandleRequest("What is the meaning of life?");
+			}
+			if(ImGui::Button("Repo")) {
+				VC::Repo repo;
+				auto path = Application::GetHomeDir() + "\\TestRepo";
+				repo.Init(path);
 			}
 		}
 		ImGui::EndChild();

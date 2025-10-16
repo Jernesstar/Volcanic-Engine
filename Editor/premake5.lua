@@ -40,6 +40,8 @@ project "Editor"
         "%{Includes.rapidjson}",
 
         "%{Includes.efsw}",
+        "%{Includes.libgit2}",
+
         "%{Includes.drogon}",
         "%{VendorPaths.drogon}/*",
         "%{VendorPaths.drogon}/orm_lib/inc",
