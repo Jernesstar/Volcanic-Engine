@@ -23,6 +23,7 @@
 
 #include <ImGuizmo/ImGuizmo.h>
 
+#define CLAY_IMPLEMENTATION
 #include <clay/clay.h>
 
 #include <Magma/Core/JSONSerializer.h>
@@ -40,42 +41,216 @@ using namespace Magma::Script;
 
 namespace Magma::UI {
 
-void Traverse(Ref<Widget> parent, const rapidjson::Value& value) {
-	auto id = value["Name"].GetString();
-	auto type = value["Type"].GetString();
+template<typename T>
+static T Get(const rapidjson::Value& val, const std::string& key, const T& df) {
+	if(val.IsNull())
+		return df;
+	if(val.HasMember(key))
+		return val[key].Get<T>();
+
+	return df;
+}
+
+static bool Traverse(Ref<Widget> parent, const rapidjson::Value& value) {
+	if(value.IsNull()) {
+		VOLCANICORE_LOG_ERROR("Value was null");
+		return false;
+	}
+	if(!value.HasMember("Name")) {
+		VOLCANICORE_LOG_ERROR("Missing property 'Name'");
+		return false;
+	}
+	if(!value.HasMember("Type")) {
+		VOLCANICORE_LOG_ERROR("Missing property 'Type'");
+		return false;
+	}
+
+	std::string id = value["Name"].GetString();
+	std::string type = value["Type"].GetString();
 
 	Ref<Widget> widget = nullptr;
+
 	if(type == "Window") {
 		widget = CreateRef<Window>(id);
+		auto w = widget->As<Window>();
+
+		if(value.HasMember("IsRoot") && value["IsRoot"].IsBool())
+			w->IsRoot = value["IsRoot"].GetBool();
+
+		if(value.HasMember("IsChild") && value["IsChild"].IsBool())
+			w->IsChild = value["IsChild"].GetBool();
+
+		if(value.HasMember("AllowScroll") && value["AllowScroll"].IsBool())
+			w->AllowScroll = value["AllowScroll"].GetBool();
+
+		if(value.HasMember("Width") && value["Width"].IsString())
+			if(value["Width"].GetString() == "auto")
+				w->Width = parent->Width;
+
+		if(value.HasMember("Height") && value["Height"].IsString())
+			if(value["Height"].GetString() == "auto")
+				w->Height = parent->Height;
+
+		if(value.HasMember("x") && value["x"].IsString())
+			if(value["x"].GetString() == "auto")
+				w->x = parent->x;
+
+		if(value.HasMember("y") && value["y"].IsString())
+			if(value["y"].GetString() == "auto")
+				w->y = parent->y;
+
+		if(value.HasMember("Color") && value["Color"].IsArray()) {
+			auto color = value["Color"].GetArray();
+			w->Color = {
+				color[0].GetFloat(),
+				color[1].GetFloat(),
+				color[2].GetFloat(),
+				color[3].GetFloat()
+			};
+		}
 	}
 	else if(type == "Container") {
 		widget = CreateRef<Container>(id);
+		auto w = widget->As<Container>();
+
 	}
 	else if(type == "Dropdown") {
 		widget = CreateRef<Dropdown>(id);
+		auto w = widget->As<Dropdown>();
+
 	}
 	else if(type == "Button") {
 		widget = CreateRef<Button>(id);
+		auto w = widget->As<Button>();
+
+		if(value.HasMember("Color") && value["Color"].IsArray()) {
+			auto color = value["Color"].GetArray();
+			w->Color = Vec4{
+				color[0].GetFloat(),
+				color[1].GetFloat(),
+				color[2].GetFloat(),
+				color[3].GetFloat()
+			} * 255.0f;
+		}
 	}
 	else if(type == "Image") {
 		widget = CreateRef<Image>(id);
+		auto w = widget->As<Image>();
+
+		if(value.HasMember("Asset") && value["Asset"].IsString()) {
+			auto path = value["Asset"].GetString();
+			Application::PushDir();
+			auto image = AssetImporter::GetTexture(path);
+			Application::PopDir();
+			w->Asset = image;
+		}
 	}
 	else if(type == "Text") {
 		widget = CreateRef<Text>(id);
+		auto w = widget->As<Text>();
+
+		if(value.HasMember("Label") && value["Label"].IsString())
+			w->Label = value["Label"].GetString();
 	}
 	else if(type == "TextInput") {
 		widget = CreateRef<TextInput>(id);
+		auto w = widget->As<TextInput>();
+
 	}
 	else if(type == "FileDialog") {
 		widget = CreateRef<FileDialog>(id);
+		auto w = widget->As<FileDialog>();
+
 	}
 	else if(type == "FileEditor") {
 		widget = CreateRef<FileEditor>(id);
+		auto w = widget->As<FileEditor>();
+
 	}
 	else if(type == "Gizmo") {
 		widget = CreateRef<Gizmo>(id);
+		auto w = widget->As<Gizmo>();
+
 	}
+	else {
+		VOLCANICORE_LOG_WARNING("Unknown widget type '%s'", type.c_str());
+		return false;
+	}
+
+	if(value.HasMember("Width") && value["Width"].IsNumber())
+		widget->Width = value["Width"].GetFloat();
+	if(value.HasMember("Height") && value["Height"].IsNumber())
+		widget->Height = value["Height"].GetFloat();
+	if(value.HasMember("x") && value["x"].IsNumber())
+		widget->x = value["x"].GetFloat();
+	if(value.HasMember("y") && value["y"].IsNumber())
+		widget->y = value["y"].GetFloat();
+	if(value.HasMember("Visible") && value["Visible"].IsBool())
+		widget->Visible = value["Visible"].GetBool();
+	if(value.HasMember("Enabled") && value["Enabled"].IsBool())
+		widget->Enabled = value["Enabled"].GetBool();
+
+	parent->Add(widget);
+
+	if(!value.HasMember("Children"))
+		return true;
+
+	for(const auto& child : value["Children"].GetArray())
+		if(!Traverse(widget, child))
+			return false;
+
+	return true;
 }
+
+static Ref<Widget> LoadPage(const std::string& path) {
+	using namespace rapidjson;
+
+	if(path == "") {
+		VOLCANICORE_LOG_ERROR("Path was empty");
+		return nullptr;
+	}
+
+	auto name = fs::path(path).stem().stem().stem().string();
+	if(!FileUtils::PathExists(path)) {
+		VOLCANICORE_LOG_ERROR(
+			"Could not find file with name '%s'", name.c_str());
+		return nullptr;
+	}
+
+	Document doc;
+	doc.Parse(FileUtils::ReadFile(path));
+
+	if(doc.HasParseError()) {
+		VOLCANICORE_LOG_INFO("Parsing error %i", (uint32_t)doc.GetParseError());
+		return nullptr;
+	}
+	if(!doc.IsObject()) {
+		VOLCANICORE_LOG_ERROR("File did not have root object");
+		return nullptr;
+	}
+	if(!doc.HasMember("Root")) {
+		VOLCANICORE_LOG_ERROR("File did not have \"Root\" object");
+		return nullptr;
+	}
+	if(!doc["Root"].IsArray()) {
+		VOLCANICORE_LOG_ERROR("Root object was not an array");
+		return nullptr;
+	}
+
+	auto root = CreateRef<Root>("Root");
+
+	for(const auto& value : doc["Root"].GetArray()) {
+		bool success = Traverse(root, value);
+		if(!success) {
+			VOLCANICORE_LOG_ERROR("Failed to load page");
+			return nullptr;
+		}
+	}
+
+	return root;
+}
+
+static Clay_Context* s_ClayContext;
 
 void UIManager::Init() {
 	int success = gladLoadGL();
@@ -116,7 +291,12 @@ void UIManager::Init() {
 
 	io.IniFilename = nullptr;
 
-	m_Root = CreateRef<Container>("Root");
+	uint64_t totalMemorySize = Clay_MinMemorySize();
+	Clay_Arena arena =
+		Clay_CreateArenaWithCapacityAndMemory(
+			totalMemorySize, malloc(totalMemorySize));
+
+	Clear();
 }
 
 void UIManager::Shutdown() {
@@ -152,36 +332,22 @@ void UIManager::Render() {
 }
 
 void UIManager::Load(const std::string& path) {
-	using namespace rapidjson;
-
-	if(path == "") {
-		VOLCANICORE_LOG_ERROR("Filename was empty");
+	auto root = LoadPage(path);
+	if(!root)
 		return;
-	}
 
-	auto name = fs::path(path).stem().stem().stem().string();
-	if(!FileUtils::PathExists(path)) {
-		VOLCANICORE_LOG_ERROR(
-			"Could not find file with name %s", name.c_str());
-		return;
-	}
+	VOLCANICORE_LOG_INFO("Loaded '%s'", path.c_str());
+	m_Root = root;
+	m_Path = path;
+}
 
-	Document doc;
-	doc.Parse(FileUtils::ReadFile(path));
+void UIManager::Reload() {
+	if(m_Path != "")
+		Load(m_Path);
+}
 
-	if(doc.HasParseError()) {
-		VOLCANICORE_LOG_INFO("Parsing error %i", (uint32_t)doc.GetParseError());
-		return;
-	}
-	if(!doc.IsObject()) {
-		VOLCANICORE_LOG_ERROR("File did not have root object");
-		return;
-	}
-
-	const auto& root = doc["Root"];
-	for(const auto& value : root.GetArray()) {
-		Traverse(m_Root, value);
-	}
+void UIManager::Clear() {
+	m_Root = CreateRef<Root>("Root");
 }
 
 // void UIManager::RegisterInterface() {
@@ -208,7 +374,72 @@ void UIManager::Load(const std::string& path) {
 // 	engine->SetDefaultNamespace("");
 // }
 
-void Root::Begin() { }
+void Widget::Update(TimeStep ts) {
+	if(!Enabled)
+		return;
+
+	if(State) {
+		if(IsNative)
+			OnEvent(State);
+		else if(OnEventScript.Func)
+			OnEventScript.CallVoid(State);
+		State = { };
+	}
+
+	for(auto& animations : Animations)
+		animations->Update(this, ts);
+	for(auto& widget : Children)
+		widget->Update(ts);
+}
+
+void Widget::Render() {
+	if(!Visible)
+		return;
+
+	Begin();
+	for(auto& widget : Children)
+		widget->Render();
+	End();
+}
+
+Widget* Widget::Add(Ref<Widget> widget) {
+	Children.Add(widget);
+	widget->Parent = this;
+	return this;
+}
+
+void Widget::Remove(const std::string& id) {
+	auto [found, i] =
+		Children.Find([&](auto& w) { return w->ID == id; });
+	if(found)
+		Children.Pop(i);
+
+	VOLCANICORE_LOG_WARNING("Could not remove widget '%s'", id.c_str());
+}
+
+Ref<Widget> Widget::Find(const std::string& id) {
+	for(auto child : Children) {
+		if(child->ID == id)
+			return child;
+
+		auto w = child->Find(id);
+		if(w)
+			return w;
+	}
+
+	return nullptr;
+}
+
+void Widget::Reposition() {
+
+}
+
+void Root::Begin() {
+	Width = ImGui::GetMainViewport()->Size.x;
+	Height = ImGui::GetMainViewport()->Size.y;
+	x = ImGui::GetMainViewport()->Pos.x;
+	y = ImGui::GetMainViewport()->Pos.y;
+}
 
 void Root::End() { }
 
@@ -216,35 +447,42 @@ void Window::Begin() {
 	if(IsChild) {
 		auto childFlags = ImGuiChildFlags_Border
 						| ImGuiChildFlags_FrameStyle
-						| ImGuiChildFlags_ResizeX
-						| ImGuiChildFlags_ResizeY;
-		auto windowFlags = ImGuiWindowFlags_NoScrollbar
-						 | ImGuiWindowFlags_NoScrollWithMouse
+						| !AllowResize * ImGuiChildFlags_ResizeX
+						| !AllowResize * ImGuiChildFlags_ResizeY;
+		auto windowFlags = ImGuiWindowFlags_NoDocking
 						 | ImGuiWindowFlags_NoTitleBar
-						 | ImGuiWindowFlags_NoCollapse;
-		ImVec2 size((float)Width, (float)Height);
+						 | ImGuiWindowFlags_NoCollapse
+						 | !AllowMove * ImGuiWindowFlags_NoMove
+						 | !AllowResize * ImGuiWindowFlags_NoResize
+						 | !AllowScroll * ImGuiWindowFlags_NoScrollWithMouse
+						 | !AllowScroll * ImGuiWindowFlags_NoScrollbar
+						 | ImGuiWindowFlags_NoBringToFrontOnFocus
+						 | ImGuiWindowFlags_NoNavFocus;
 
-		ImGui::SetNextWindowPos({ x, y });
+		ImGui::SetNextWindowPos({ Parent->x + x, Parent->y + y });
+		ImGui::SetNextWindowSize({ Width, Height });
 		ImGui::PushStyleColor(ImGuiCol_FrameBg, Color);
-		ImGui::PushID(this);
-		ImGui::BeginChild("##Window", size, childFlags, windowFlags);
-		ImGui::PopID();
+		ImGui::BeginChild(("##" + ID).c_str(), { }, childFlags, windowFlags);
 		ImGui::PopStyleColor();
 	}
 	else {
 		auto windowFlags = ImGuiWindowFlags_NoDocking
 						 | ImGuiWindowFlags_NoTitleBar
 						 | ImGuiWindowFlags_NoCollapse
-						 | ImGuiWindowFlags_NoResize
-						 | ImGuiWindowFlags_NoMove
+						 | !AllowMove * ImGuiWindowFlags_NoMove
+						 | !AllowResize * ImGuiWindowFlags_NoResize
+						 | !AllowScroll * ImGuiWindowFlags_NoScrollWithMouse
+						 | !AllowScroll * ImGuiWindowFlags_NoScrollbar
 						 | ImGuiWindowFlags_NoBringToFrontOnFocus
 						 | ImGuiWindowFlags_NoNavFocus;
 
 		// ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0f);
 		// ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 10.0f);
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, Color);
+		// ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 		// ImGui::PushStyleColor(ImGuiCol_Border, BorderColor);
+		ImGui::PushStyleColor(ImGuiCol_WindowBg, Color);
+
+		ImGui::SetNextWindowSize({ Width, Height });
 		if(IsRoot) {
 			const ImGuiViewport* viewport = ImGui::GetMainViewport();
 
@@ -259,27 +497,24 @@ void Window::Begin() {
 				Height = viewport->Size.y;
 
 			ImGui::SetNextWindowViewport(viewport->ID);
+			ImGui::SetNextWindowPos({ viewport->Pos.x, viewport->Pos.y });
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, { 0.0f, 0.0f });
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
 		}
-		ImGui::SetNextWindowSize({ Width, Height });
-		ImGui::SetNextWindowPos({ x, y });
+		else
+			ImGui::SetNextWindowPos({ Parent->x + x, Parent->y + y });
 
-		if(!IsRoot)
-			ImGui::PushID(this);
+		ImGui::Begin(("##" + ID).c_str(), nullptr, windowFlags);
 
-		ImGui::Begin("##Window", nullptr, windowFlags);
 		if(AllowDock) {
 			ImGuiID dockspaceID = ImGui::GetID("DockSpace");
 			ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f),
 				ImGuiDockNodeFlags_PassthruCentralNode);
 		}
 
-		if(!IsRoot)
-			ImGui::PopID();
-
 		ImGui::PopStyleColor();
-		ImGui::PopStyleVar(1 + IsRoot * 2);
+		ImGui::PopStyleVar(IsRoot * 3);
 	}
 
 	State.Clicked = ImGui::IsMouseClicked(0) && ImGui::IsWindowHovered();
@@ -291,7 +526,10 @@ void Window::Begin() {
 }
 
 void Window::End() {
-	ImGui::End();
+	if(IsChild)
+		ImGui::EndChild();
+	else
+		ImGui::End();
 }
 
 void Container::Begin() {
@@ -311,15 +549,18 @@ void Dropdown::End() {
 }
 
 void Button::Begin() {
-	ImGui::SetCursorPos({ x, y });
 	ImGui::SetNextItemAllowOverlap();
-	ImGui::PushID(this);
-	ImGui::InvisibleButton("##Image", ImVec2(Width, Height));
-	ImGui::PopID();
+	ImGui::SetCursorPos({ x, y });
+	ImGui::InvisibleButton(("##" + ID).c_str(), ImVec2(Width, Height));
+	State.Clicked = ImGui::IsItemClicked(0);
+	State.Hovered = ImGui::IsItemHovered();
+	State.Released = ImGui::IsMouseReleased(0) && ImGui::IsItemHovered();
+	State.Held = ImGui::IsItemActive();
+	State.Dragging = ImGui::IsItemActive();
+
 	auto* drawlist = ImGui::GetWindowDrawList();
-	drawlist->AddRectFilled(
-		ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
-		IM_COL32(Color.r, Color.g, Color.b, Color.a), 0.0f);
+	drawlist->AddRectFilled(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
+		IM_COL32(uint32_t(Color.r), uint32_t(Color.g), uint32_t(Color.b), uint32_t(Color.a)), 0.9f);
 }
 
 void Button::End() {
@@ -327,9 +568,9 @@ void Button::End() {
 }
 
 void Image::Begin() {
-	ImGui::SetCursorPos({ x, y });
+	ImGui::SetCursorPos({ Parent->x + x, Parent->y + y });
 	ImGui::Image(
-		(ImTextureID)(intptr_t)Content->ID, { Width, Height },
+		(ImTextureID)(intptr_t)Asset->ID, { Width, Height },
 		ImVec2(0, 1), ImVec2(1, 0));
 }
 
@@ -338,7 +579,7 @@ void Image::End() {
 }
 
 void Text::Begin() {
-	ImGui::SetCursorPos({ x, y });
+	ImGui::SetCursorPos({ Parent->x + x, Parent->y + y });
 	ImGui::SetWindowFontScale(Scale);
 	ImGui::Text(Label.c_str());
 }

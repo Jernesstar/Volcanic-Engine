@@ -1,6 +1,7 @@
 #pragma once
 
 #include <VolcaniCore/Core/Math.h>
+#include <VolcaniCore/Core/Defines.h>
 
 using namespace VolcaniCore;
 
@@ -32,33 +33,6 @@ using namespace Magma::Script;
 
 namespace Magma::UI {
 
-class Widget;
-
-class UIManager : public Integration {
-public:
-	UIManager() = default;
-	~UIManager() = default;
-
-	void Init() override;
-	void Shutdown() override;
-	
-	void BeginFrame();
-	void EndFrame();
-	void Update(TimeStep ts);
-	void Render();
-
-	void Load(const std::string& path);
-
-	// static Window* Window(const std::string& name);
-	// static Container* Container(const std::string& name);
-	// static Dropdown* Dropdown(const std::string& name);
-	// static Text* Text(const std::string& name);
-	// static Image* Image(const std::string& name);
-
-private:
-	Ref<Widget> m_Root;
-};
-
 enum class WidgetType {
 	None,
 	Root,
@@ -87,14 +61,40 @@ struct UIState {
 	}
 };
 
+class Widget;
+
 class Animation {
 public:
-	Animation() = default;
+	Animation(float time, float duration)
+		: m_Time(time), m_Duration(duration) { }
 	virtual ~Animation() = default;
-	virtual void Update(TimeStep ts) = 0;
+
+	virtual void Update(Widget* widget, TimeStep ts) = 0;
+
+	void Reset() { m_Time = 0.0f; }
+
+private:
+	float m_Time = 0.0f;
+	float m_Duration = 0.0f;
 };
 
-class Widget {
+class FadeIn : public Animation {
+	
+};
+
+class FadeOut : public Animation {
+	
+};
+
+class Scale : public Animation {
+	
+};
+
+class Translate : public Animation {
+	
+};
+
+class Widget : public Derivable<Widget> {
 public:
 	const std::string ID;
 	const WidgetType Type;
@@ -103,7 +103,7 @@ public:
 	List<Ref<Widget>> Children;
 	List<Ref<Animation>> Animations;
 
-	float Width = 0, Height = 0;
+	float Width = 5, Height = 5;
 	float x = 0, y = 0;
 	bool Visible = true;
 	bool Enabled = true;
@@ -111,8 +111,8 @@ public:
 	UIState State;
 
 	bool IsNative = true;
-	ScriptFunc OnEventScript;
-	Func<void, const UIState&> OnEvent;
+	ScriptFunc OnEventScript = { };
+	Func<void, const UIState&> OnEvent = [](const UIState&) { };
 
 public:
 	Widget(const std::string& id, WidgetType type)
@@ -124,43 +124,12 @@ public:
 	virtual void Begin() = 0;
 	virtual void End() = 0;
 
-	void Update(TimeStep ts) {
-		if(!Enabled)
-			return;
-
-		if(State) {
-			if(IsNative)
-				OnEvent(State);
-			else
-				OnEventScript.CallVoid(State);
-			State = { };
-		}
-
-		for(auto& animations : Animations)
-			animations->Update(ts);
-		for(auto& widget : Children)
-			widget->Update(ts);
-	}
-
-	void Render() {
-		if(!Visible)
-			return;
-
-		Begin();
-
-		for(auto& widget : Children)
-			widget->Render();
-
-		End();
-	} 
+	void Update(TimeStep ts);
+	void Render();
 
 	bool Is(WidgetType type) const { return Type == type; }
 
-	Widget* Add(Ref<Widget> widget) {
-		Children.Add(widget);
-		widget->Parent = this;
-		return this;
-	}
+	Widget* Add(Ref<Widget> widget);
 
 	template<typename TWidget>
 	requires std::derived_from<TWidget, Widget>
@@ -170,27 +139,11 @@ public:
 		return this;
 	}
 
-	void Remove(const std::string& id) {
-		auto [found, i] =
-			Children.Find([&](auto& w) { return w->ID == id; });
-		if(found)
-			Children.Pop(i);
-	}
-
-	Ref<Widget> Find(const std::string& id) {
-		auto [found, i] =
-			Children.Find([&](auto& w) { return w->ID == id; });
-		if(found)
-			return Children[i];
-
-		VOLCANICORE_LOG_WARNING("Could not find widget '%s'", id.c_str());
-		return nullptr;
-	}
+	Ref<Widget> Find(const std::string& id);
+	void Remove(const std::string& id);
 
 private:
-	void Reposition() {
-
-	}
+	void Reposition();
 };
 
 class Root : public Widget {
@@ -215,7 +168,7 @@ public:
 	bool AllowMinimize = false;
 	bool AllowMaximize = false;
 
-	Vec4 Color;
+	Vec4 Color = { };
 
 public:
 	Window(const std::string& id)
@@ -261,7 +214,7 @@ public:
 
 class Image : public Widget {
 public:
-	Ref<Magma::Texture> Content;
+	Ref<Magma::Texture> Asset;
 
 public:
 	Image(const std::string& id)
@@ -345,6 +298,36 @@ public:
 
 	void Begin() override;
 	void End() override;
+};
+
+class UIManager : public Integration {
+public:
+	UIManager() = default;
+	~UIManager() = default;
+
+	void Init() override;
+	void Shutdown() override;
+	
+	void BeginFrame();
+	void EndFrame();
+	void Update(TimeStep ts);
+	void Render();
+
+	void Load(const std::string& path);
+	void Reload();
+	void Clear();
+
+	Ref<Widget> GetRoot() { return m_Root; }
+
+	// static Window* Window(const std::string& name);
+	// static Container* Container(const std::string& name);
+	// static Dropdown* Dropdown(const std::string& name);
+	// static Text* Text(const std::string& name);
+	// static Image* Image(const std::string& name);
+
+private:
+	Ref<Widget> m_Root;
+	std::string m_Path;
 };
 
 }

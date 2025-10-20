@@ -9,6 +9,7 @@
 #include <regex>
 
 #include <VolcaniCore/Core/Application.h>
+#include <VolcaniCore/Event/Events.h>
 #include <VolcaniCore/Core/Algo.h>
 #include <VolcaniCore/Core/FileUtils.h>
 #include <VolcaniCore/Core/Log.h>
@@ -39,30 +40,44 @@ static void ProjectSaveRuntime(const Project& project);
 
 static Map<std::string, Ref<ScriptModule>> s_TabModules;
 
-static Ref<UI::Root> s_TitleBar;
-static Ref<UI::Root> s_StartScreen;
-static Ref<UI::Root> s_ComponentEditorScreen;
-static Ref<UI::Root> s_FlowEditorScreen;
-static Ref<UI::Root> s_ProjectEditorScreen;
-
 static Ref<Texture> s_Logo;
 
 static UI::UIManager* s_UIManager = nullptr;
 static VC::VCManager* s_VCManager = nullptr;
+// static AI::AIManager* s_AIManager = nullptr;
+// static Networking::NetworkingManager* s_NetManager = nullptr;
 
 void Editor::Open() {
 	// Editor::RegisterInterface();
 
+	// s_NetManager = new Networking::NetworkingManager();
+	// s_NetManager->Init();
+
 	s_UIManager = new UI::UIManager();
 	s_UIManager->Init();
-	s_UIManager->Load("Editor/assets/start.json");
+	s_UIManager->Load("Editor/assets/UI/start.json");
 
 	s_VCManager = new VC::VCManager();
 	s_VCManager->Init();
 
+	// s_AIManager = new AI::AIManager();
+	// s_AIManager->Init();
+
 	Application::PushDir();
-	s_Logo = AssetImporter::GetTexture("Editor/assets/images/VolcanicDisplay.png");
+	auto logo =
+		AssetImporter::GetImageData(
+			"Editor/assets/images/VolcanicDisplay.png", false);
 	Application::PopDir();
+
+	auto window = Application::GetWindow();
+	window->SetIcon(*(Icon*)&logo);
+
+	Events::RegisterListener<KeyPressedEvent>(
+		[this](const KeyPressedEvent& event)
+		{
+			if(event.Key == Key::R && !event.IsRepeat)
+				s_UIManager->Reload();
+		});
 }
 
 void Editor::Close() {
@@ -113,17 +128,15 @@ void Editor::Load(const CommandLineArgs& args) {
 void Editor::Update(TimeStep ts) {
 	s_UIManager->Update(ts);
 
-	if(Mode == EditorMode::Project) {
-		s_ProjectEditorScreen->Update(ts);
+	if(Mode == EditorMode::Project)
 		for(auto& tab : m_Tabs)
 			tab.OnUpdate(ts);
-	}
 }
 
 void Editor::Render() {
 	s_UIManager->BeginFrame();
 
-	RenderTitleBar();
+	s_UIManager->Render();
 
 	if(Mode == EditorMode::None)
 		RenderStartScreen();
@@ -137,399 +150,45 @@ void Editor::Render() {
 	s_UIManager->EndFrame();
 }
 
-void Editor::RenderTitleBar() {
-	// s_TitleBar->Render();
-
-	ImGuiWindowFlags titleBarFlags = ImGuiWindowFlags_NoTitleBar
-								   | ImGuiWindowFlags_NoCollapse
-								   | ImGuiWindowFlags_NoResize
-								   | ImGuiWindowFlags_NoMove
-								   | ImGuiWindowFlags_NoDocking
-								   | ImGuiWindowFlags_NoScrollbar
-								   | ImGuiWindowFlags_NoSavedSettings
-								   | ImGuiWindowFlags_NoScrollWithMouse;
-
-	const ImGuiViewport* viewport = ImGui::GetMainViewport();
-	ImGui::SetNextWindowPos(viewport->Pos);
-	ImGui::SetNextWindowSize({ viewport->Size.x, 60.0f });
-	ImGui::SetNextWindowViewport(viewport->ID);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, { 0.0f, 0.0f });
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, { 0.01f, 0.01f, 0.01f, 1.0f });
-
-	ImGui::Begin("##TitleBar", nullptr, titleBarFlags);
-	{
-		ImGui::PopStyleVar(3);
-		ImGui::PopStyleColor(1);
-		ImGui::SetCursorPos({ 5.0f, 5.0f });
-		ImGui::Image((ImTextureID)(intptr_t)s_Logo->ID, ImVec2(50.0f, 50.0f), ImVec2(0, 1), ImVec2(1, 0));
-		ImGui::SameLine();
-
-		ImGui::SetWindowFontScale(2.0f);
-		if(Mode == EditorMode::Project)
-			ImGui::Text("Project Editor");
-		else if(Mode == EditorMode::Flow)
-			ImGui::Text("Flow Editor");
-		else if(Mode == EditorMode::Component)
-			ImGui::Text("Component Editor");
-		else
-			ImGui::Text("Magma Editor v0.1.0");
-		ImGui::SetWindowFontScale(1.0f);
-		ImGui::SameLine();
-
-		ImVec2 menuSize = { ImGui::GetContentRegionAvail().x - 100.0f, 25.0f };
-		ImGui::BeginChild("##MenuBar", menuSize, 0,
-			titleBarFlags | ImGuiWindowFlags_MenuBar);
-		{
-			if(ImGui::BeginMenuBar()) {
-				if(ImGui::BeginMenu("Test")) {
-					ImGui::MenuItem("Item 1");
-					ImGui::EndMenu();
-				}
-				ImGui::EndMenuBar();
-			}
-
-			if(Mode == EditorMode::Project)
-				// m_ScriptObj.Call("OnRenderMenuBar");
-			;
-		}
-		ImGui::EndChild();
-
-		ImGui::SameLine();
-		ImGui::SetCursorPosX(
-			ImGui::GetCursorPos().x + ImGui::GetContentRegionAvail().x - 45.0f);
-		if(ImGui::Button("-"))
-			Application::GetWindow()->Minimize();
-		ImGui::SameLine();
-		if(ImGui::Button("X"))
-			Application::Close();
-
-		// ImVec2 tabBarSize = { ImGui::GetContentRegionAvail().x - 100.0f, 0.0f };
-		// ImGui::SetCursorPos({ 60.0f, 35.0f });
-		// if(Mode == EditorMode::Project
-		// && ImGui::BeginChild("##TabBar", tabBarSize))
-		// {
-		// 	auto tabBarFlags = ImGuiTabBarFlags_Reorderable
-		// 					 | ImGuiTabBarFlags_NoTooltip;
-		// 	if(ImGui::BeginTabBar("##Tabs", tabBarFlags)) {
-		// 		auto plusFlags = ImGuiTabItemFlags_Trailing
-		// 					   | ImGuiTabItemFlags_NoReorder;
-		// 		if(ImGui::TabItemButton("+", plusFlags))
-		// 			ImGui::OpenPopup("New Tab");
-		// 		NewTab();
-
-		// 		uint32_t tabToDelete = 0;
-		// 		for(uint32_t i = 0; i < m_Tabs.Count(); i++) {
-		// 			Tab& tab = m_Tabs[i];
-		// 			TabState state =
-		// 				UIRenderer::DrawTab(tab.Name, tab.Type != "Project");
-		// 			if(state.Closed)
-		// 				tabToDelete = i + 1;
-		// 			else if(state.Clicked)
-		// 				SetTab(i);
-		// 		}
-
-		// 		if(tabToDelete != 0)
-		// 			CloseTab(tabToDelete);
-
-		// 		ImGui::EndTabBar();
-		// 	}
-
-		// 	ImGui::EndChild();
-		// }
-	}
-	ImGui::End();
-}
-
 void Editor::RenderStartScreen() {
-	// static uint32_t mode = 0; // 1 = Project, 2 = Flow, 3 = Component
+	static uint32_t mode = 0; // 1 = Project, 2 = Flow, 3 = Component
 
-	// s_StartScreen->Render();
+	auto screen = s_UIManager->GetRoot();
+	bool click = false;
 
-	// if(s_StartScreen->Find("ProjectButton")->State.Clicked) {
-	// 	mode = 1;
-	// 	auto w = s_StartScreen->Find("ProjectWindow");
-	// 	w->Visible = true;
-	// }
-	// else if(s_StartScreen->Find("FlowButton")->State.Clicked)
-	// 	mode = 2;
-	// else if(s_StartScreen->Find("ComponentButton")->State.Clicked)
-	// 	mode = 3;
-
-	auto flags = ImGuiWindowFlags_NoDecoration
-			   | ImGuiWindowFlags_NoMove
-			   | ImGuiWindowFlags_NoDocking;
-
-	const ImGuiViewport* viewport = ImGui::GetMainViewport();
-	ImGui::SetNextWindowPos({ viewport->Pos.x, viewport->Pos.y + 60.0f });
-	ImGui::SetNextWindowSize({ viewport->Size.x, viewport->Size.y - 60.0f });
-	ImGui::SetNextWindowViewport(viewport->ID);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
-
-	ImGui::Begin("##StartScreen", nullptr, flags);
-	{
-		ImGui::PopStyleVar(3);
-
-		ImVec2 size = { 400, ImGui::GetContentRegionAvail().y };
-		auto childFlags = ImGuiChildFlags_Border;
-		ImGui::BeginChild("Options", size, childFlags);
-		{
-			if(ImGui::Button("New Project")) {
-
-			}
-			if(ImGui::Button("Open Project")) {
-				// FileDialog dialog;
-				// dialog.Width = 500;
-				// dialog.Height = 500;
-				// dialog.Title = "Open Project";
-				// dialog.StartPath = Application::GetHomeDir();
-				// dialog.Extensions = { "proj.yml" };
-				// dialog.OnSelect =
-				// 	[&](std::string& path)
-				// 	{
-				// 		Application::GetWindow()->Maximize();
-				// 		OpenProject(path);
-				// 		Mode = EditorMode::Project;
-				// 	};
-				// dialog.Draw();
-			}
-			if(ImGui::Button("New LavaFlow")) {
-
-			}
-			if(ImGui::Button("Open LavaFlow")) {
-			// 	FileDialog dialog;
-			// 	dialog.Width = 500;
-			// 	dialog.Height = 500;
-			// 	dialog.Title = "Open LavaFlow";
-			// 	dialog.StartPath = Application::GetHomeDir();
-			// 	dialog.Extensions = { "flow.yml" };
-			// 	dialog.OnSelect =
-			// 		[&](std::string& path)
-			// 		{
-			// 			OpenLavaFlow(path);
-			// 			Mode = EditorMode::Flow;
-			// 		};
-			// 	dialog.Draw();
-			}
-			if(ImGui::Button("New Component")) {
-				
-			}
-			if(ImGui::Button("Open Component")) {
-				// FileDialog dialog;
-				// dialog.Width = 500;
-				// dialog.Height = 500;
-				// dialog.Title = "Open Component";
-				// dialog.StartPath = Application::GetHomeDir();
-				// dialog.Extensions = { "comp.yml" };
-				// dialog.OnSelect =
-				// 	[&](std::string& path)
-				// 	{
-				// 		OpenComponent(path);
-				// 		Mode = EditorMode::Component;
-				// 	};
-				// dialog.Draw();
-			}
-			if(ImGui::Button("MagmAI")) {
-				// m_Assistant.HandleRequest("What is the meaning of life?");
-			}
-			if(ImGui::Button("Repo")) {
-				VC::Repo repo;
-				auto path = Application::GetHomeDir() + "\\TestRepo";
-				repo.Init(path);
-			}
-		}
-		ImGui::EndChild();
-
-		// s_WelcomeImage.Draw();
+	if(screen->Find("ProjectButton")->State.Clicked) {
+		click = true;
+		mode = 1;
 	}
-	ImGui::End();
+	else if(screen->Find("LavaFlowButton")->State.Clicked) {
+		click = true;
+		mode = 2;
+	}
+	else if(screen->Find("ComponentButton")->State.Clicked) {
+		click = true;
+		mode = 3;
+	}
+
+	if(click) {
+		Ref<UI::Widget> w;
+		w = screen->Find("ProjectWindow");
+		w->Visible = mode == 1;
+		w = screen->Find("LavaFlowWindow");
+		w->Visible = mode == 2;
+		w = screen->Find("ComponentWindow");
+		w->Visible = mode == 3;
+	}
 }
 
 void Editor::RenderComponentEditor() {
-	// s_ComponentEditorWindow->Render();
 
-	auto flags = ImGuiWindowFlags_NoDecoration
-			| ImGuiWindowFlags_NoMove
-			| ImGuiWindowFlags_NoDocking;
-
-	const ImGuiViewport* viewport = ImGui::GetMainViewport();
-	ImGui::SetNextWindowPos({ viewport->Pos.x, viewport->Pos.y + 60.0f });
-	ImGui::SetNextWindowSize({ viewport->Size.x, viewport->Size.y - 60.0f });
-	ImGui::SetNextWindowViewport(viewport->ID);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
-
-	ImGui::Begin("##ComponentEditor", nullptr, flags);
-	{
-		ImGui::PopStyleVar(3);
-
-		ImGui::Text("Name: %s", m_Component.Name.c_str());
-		ImGui::Text("Path: %s", m_Component.Path.c_str());
-
-		if(ImGui::Button("Generate Premake")) {
-			Application::PushDir();
-			auto proj = FileUtils::ReadFile("Editor/assets/scripts/component.lua");
-			auto core = FileUtils::ReadFile("Editor/assets/scripts/component-core.lua");
-			auto editor = FileUtils::ReadFile("Editor/assets/scripts/component-editor.lua");
-			// auto runtime = FileUtils::ReadFile("Editor/assets/scripts/component-runtime.lua");
-			Application::PopDir();
-
-			auto volcPath =
-				fs::path(Application::GetLibraryDir()) / "VolcaniCore" / "src";
-			auto magmaPath =
-				fs::path(Application::GetLibraryDir()) / "Magma" / "src";
-			Replace(proj, "${0}", m_Component.Name);
-			Replace(proj, "${1}", fs::path(m_Component.Path).generic_string());
-			Replace(proj, "${2}", volcPath.generic_string());
-			Replace(proj, "${3}", magmaPath.generic_string());
-
-			auto premakePath =
-				fs::path(m_Component.Path) / "Build" / "premake5.lua";
-			File premake(premakePath.string(), true);
-			premake.Write(proj);
-
-			for(auto dep : m_Component.CoreDeps)
-				premake.Write(
-					std::string("table.insert(CoreDeps, ") + "\"" + dep + "\")");
-			for(auto dep : m_Component.EditorDeps)
-				premake.Write(
-					std::string("table.insert(EditorDeps, ") + "\"" + dep + "\")");
-
-			for(auto dep : m_Component.CoreDeps) {
-				premake.Write(
-					std::string("VendorPaths[\"") + dep + "\"] = \"%{VendorPath}/" + dep + "\"");
-			}
-			for(auto dep : m_Component.EditorDeps) {
-				premake.Write(
-					std::string("VendorPaths[\"") + dep + "\"] = \"%{VendorPath}/" + dep + "\"");
-			}
-
-			// for(auto dep : m_Component.CoreDeps) {
-			// 	premake.Write(
-			// 		std::string("IncludePaths[\"") + dep + "\"] = \"%{VendorPath}/" + dep + "\"");
-			// }
-			// for(auto dep : m_Component.EditorDeps) {
-			// 	premake.Write(
-			// 		std::string("IncludePaths[\"") + dep + "\"] = \"%{VendorPath}/" + dep + "\"");
-			// }
-
-			for(auto dep : m_Component.CoreDeps)
-				premake.Write(std::string("include \"Dependencies/") + dep + "\"");
-			for(auto dep : m_Component.EditorDeps)
-				premake.Write(std::string("include \"Dependencies/") + dep + "\"");
-
-			Replace(core, "${0}", m_Component.Name);
-			Replace(editor, "${0}", m_Component.Name);
-
-			premake.Write(core);
-			premake.Write(editor);
-			VOLCANICORE_LOG_INFO("Completed: Generate Premake");
-		}
-
-		static std::string console;
-		if(ImGui::Button("Run Premake")) {
-			Application::PushDir();
-			std::string command;
-			command = ".vendor\\premake\\bin\\Windows\\premake5.exe gmake --file=\"";
-			command += (fs::path(m_Component.Path) / "Build" / "premake5.lua").string();
-			command += "\"";
-
-			command += " 2>&1";
-			FILE* pipe = _popen(command.c_str(), "r");
-
-			if(!pipe) {
-				VOLCANICORE_LOG_ERROR("Failed: Build for Windows");
-				return;
-			}
-			else {
-				char buffer[128];
-				
-				while(!feof(pipe)) {
-					if(fgets(buffer, 128, pipe) != nullptr)
-						console.append(buffer);
-				}
-			}
-
-			_pclose(pipe);
-			Application::PopDir();
-			VOLCANICORE_LOG_INFO("Completed: Run Premake");
-		}
-
-		if(ImGui::Button("Build for Windows")) {
-			std::string command;
-			command = "cd /D \"";
-			command += (fs::path(m_Component.Path) / "Build" / "Platform" / "gcc-Windows").make_preferred().string();
-			command += "\" && ";
-			command += "mingw32-make.exe -f Makefile";
-
-			command += " 2>&1";
-			FILE* pipe = _popen(command.c_str(), "r");
-
-			if(!pipe) {
-				VOLCANICORE_LOG_ERROR("Failed: Build for Windows");
-				return;
-			}
-			else {
-				char buffer[128];
-				
-				while(!feof(pipe)) {
-					if(fgets(buffer, 128, pipe) != nullptr)
-						console.append(buffer);
-				}
-			}
-
-			std::cout << console;
-			_pclose(pipe);
-			VOLCANICORE_LOG_INFO("Completed: Build for Windows");
-		}
-
-		if(ImGui::Button("Load Component")) {
-			auto path = fs::path(m_Component.Path) / "Build" / "Platform" / "gcc-Windows" / "lib" / m_Component.Name;
-			Lava::LoadComponent(path.string() + "-Core.dll");
-			VOLCANICORE_LOG_INFO("Completed: Load Component");
-		}
-
-		ImGui::SeparatorText("Dependencies");
-		ImGui::Text("Core");
-		ImGui::Indent();
-
-		if(ImGui::Button("Add Dependency##0")) {
-
-		}
-
-		for(auto dep : m_Component.CoreDeps)
-			ImGui::Text(dep.c_str());
-		ImGui::Unindent();
-
-		ImGui::Text("Editor");
-		ImGui::Indent();
-
-		if(ImGui::Button("Add Dependency##1")) {
-
-		}
-
-		for(auto dep : m_Component.EditorDeps)
-			ImGui::Text(dep.c_str());
-		ImGui::Unindent();
-
-		ImGui::BeginChild("##Console", { 900, 400 }, ImGuiChildFlags_Border | ImGuiChildFlags_ResizeX);
-		ImGui::TextUnformatted(console.c_str());
-		ImGui::EndChild();
-	}
-	ImGui::End();
 }
 
 void Editor::RenderFlowEditor() {
-	// s_FlowEditorWindow->Render();
 
 }
 
 void Editor::RenderProjectEditor() {
-	// s_AppEditorWindow->Render();
 
 }
 

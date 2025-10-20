@@ -2,31 +2,172 @@
     "Root":
     [
         {
-            "Name": "Window",
+            "Name": "TitleBar",
             "Type": "Window",
-            "Width": "auto",
-            "Height": "auto",
-            "Root": true,
+            "Width": 1400.0,
+            "Height": 60.0,
+            "x": 0.0,
+            "y": 0.0,
+
+            "IsRoot": false,
+            "AllowScroll": false,
+
+            "Color": [0.1, 0.1, 0.1, 1.0],
+
             "Children":
             [
                 {
-                    "Name": "Button",
-                    "Type": "Button",
-                    "Children":
-                    [
-                        {
-                            "Name": "Text",
-                            "Type": "Text"
-                        }
-                    ]
+                    "Name": "Logo",
+                    "Type": "Image",
+                    "Width": 50.0,
+                    "Height": 50.0,
+                    "x": 5.0,
+                    "y": 5.0,
+                    "Asset": "Editor/assets/images/VolcanicDisplay.png"
+                },
+                {
+                    "Name": "TitleText",
+                    "Type": "Text",
+                    "Label": "Magma Editor v0.1",
+
+                    "x": 60.0,
+                    "y": 15.0,
+
+                    "Scale": 2.0
                 }
             ]
         },
         {
+            "Name": "WelcomeWindow",
+            "Type": "Window",
+            "Width": 1400.0,
+            "Height": 740.0,
+            "x": 0.0,
+            "y": 60.0,
 
-        },
-        {
+            "IsRoot": false,
+            "AllowScroll": false,
 
+            "Color": [0.5, 0.5, 0.5, 1.0],
+
+            "Children":
+            [
+                {
+                    "Name": "ProjectButton",
+                    "Type": "Button",
+
+                    "x": 50.0,
+                    "y": 20.0,
+                    "Width": 90.0,
+                    "Height": 20.0,
+
+                    "Color": [0.0, 0.0, 0.0, 1.0],
+
+                    "Children":
+                    [
+                        {
+                            "Name": "ProjectText",
+                            "Type": "Text",
+                            "Label": "Project",
+
+                            "x": 21.0,
+                            "y": 5.0
+                        }
+                    ]
+                },
+                {
+                    "Name": "LavaFlowButton",
+                    "Type": "Button",
+
+                    "x": 270.0,
+                    "y": 20.0,
+                    "Width": 90.0,
+                    "Height": 20.0,
+
+                    "Color": [0.0, 0.0, 0.0, 1.0],
+
+                    "Children":
+                    [
+                        {
+                            "Name": "LavaFlowText",
+                            "Type": "Text",
+                            "Label": "LavaFlow",
+
+                            "x": 17.0,
+                            "y": 5.0
+                        }
+                    ]
+                },
+                {
+                    "Name": "ComponentButton",
+                    "Type": "Button",
+
+                    "x": 520.0,
+                    "y": 20.0,
+                    "Width": 90.0,
+                    "Height": 20.0,
+
+                    "Color": [0.0, 0.0, 0.0, 1.0],
+
+                    "Children":
+                    [
+                        {
+                            "Name": "ComponentText",
+                            "Type": "Text",
+                            "Label": "Component",
+
+                            "x": 14.0,
+                            "y": 5.0
+                        }
+                    ]
+                },
+                {
+                    "Name": "ProjectWindow",
+                    "Type": "Window",
+                    "Width": 1400.0,
+                    "Height": 740.0,
+                    "x": 0.0,
+                    "y": 170.0,
+
+                    "IsRoot": false,
+                    "IsChild": true,
+                    "AllowScroll": false,
+
+                    "Color": [1.0, 0.0, 0.0, 1.0]
+                },
+                {
+                    "Name": "LavaFlowWindow",
+                    "Type": "Window",
+                    "Width": 1400.0,
+                    "Height": 740.0,
+                    "x": 0.0,
+                    "y": 170.0,
+
+                    "Visible": false,
+
+                    "IsRoot": false,
+                    "IsChild": true,
+                    "AllowScroll": false,
+
+                    "Color": [0.0, 1.0, 0.0, 1.0]
+                },
+                {
+                    "Name": "ComponentWindow",
+                    "Type": "Window",
+                    "Width": 1400.0,
+                    "Height": 740.0,
+                    "x": 0.0,
+                    "y": 170.0,
+
+                    "Visible": false,
+
+                    "IsRoot": false,
+                    "IsChild": true,
+                    "AllowScroll": false,
+
+                    "Color": [0.0, 0.0, 1.0, 1.0]
+                }
+            ]
         }
     ]
 }

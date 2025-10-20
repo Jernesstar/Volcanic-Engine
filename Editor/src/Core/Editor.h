@@ -89,7 +89,6 @@ private:
 	List<UI::Tab> m_Tabs;
 	List<UI::Tab> m_ClosedTabs;
 
-	void RenderTitleBar();
 	void RenderStartScreen();
 	void RenderComponentEditor();
 	void RenderFlowEditor();
