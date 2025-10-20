@@ -11,6 +11,12 @@ namespace Magma::Networking {
 
 using Bytes = Buffer<uint8_t>;
 
+class TokenStore {
+public:
+	static void SaveToken(const std::string& service, const std::string& token);
+	static std::string LoadToken(const std::string& service);
+};
+
 class NetworkingManager {
 public:
 	NetworkingManager() = default;
@@ -18,6 +24,8 @@ public:
 
 	static void Init();
 	static void Shutdown();
+
+	void GitHubOAuth();
 };
 
 enum class PayloadType {

@@ -1,6 +1,10 @@
 #include "VersionControl.h"
 
+#include <VolcaniCore/Core/Application.h>
 #include <VolcaniCore/Core/Assert.h>
+#include <VolcaniCore/Core/FileUtils.h>
+
+#include "Networking/Networking.h"
 
 namespace Magma::VC {
 
@@ -32,6 +36,139 @@ void Repo::Init(const std::string& path) {
 
 void Repo::Open(const std::string& path) {
 	git_repository_open(&m_Repo, path.c_str());
+}
+
+void Repo::Clone(const std::string& url, const std::string& path) {
+	int error = git_clone(&m_Repo, url.c_str(), path.c_str(), nullptr);
+	if(error < 0) {
+		const git_error *e = git_error_last();
+		printf("Error %d/%d: %s\n", error, e->klass, e->message);
+		exit(error);
+	}
+}
+
+void Repo::SetRemote(const std::string& url) {
+	git_remote* remote = nullptr;
+	int error = git_remote_create(&remote, m_Repo, "origin", url.c_str());
+	if(error < 0) {
+		const git_error *e = git_error_last();
+		printf("Error %d/%d: %s\n", error, e->klass, e->message);
+	}
+
+	git_remote_free(remote);
+}
+
+void Repo::Stage() {
+	git_index *index = nullptr;
+	if(git_repository_index(&index, m_Repo) != 0)
+		return;
+	if(git_index_add_all(index, nullptr, 0, nullptr, nullptr) != 0) {
+		git_index_free(index);
+		return;
+	}
+	if(git_index_write(index) != 0) {
+		git_index_free(index);
+		return;
+	}
+
+	git_index_free(index);
+}
+
+void Repo::Commit(const std::string& message) {
+	// if(!m_Repo)
+	// 	return;
+
+	// git_index *index = nullptr;
+	// if(git_repository_index(&index, m_Repo) != 0)
+	// 	return;
+
+	// git_oid tree_oid;
+	// if(git_index_write_tree(&tree_oid, index) != 0) {
+	// 	git_index_free(index);
+	// 	return;
+	// }
+	// git_index_free(index);
+
+	// git_tree *tree = nullptr;
+	// if(git_tree_lookup(&tree, m_Repo, &tree_oid) != 0)
+	// 	return;
+
+	// git_signature *sig = nullptr;
+	// if(git_signature_now(&sig, authorName.c_str(), authorEmail.c_str()) != 0) {
+	// 	git_tree_free(tree);
+	// 	return;
+	// }
+
+	// git_reference *head_ref = nullptr;
+	// git_commit *parent = nullptr;
+	// int parent_count = 0;
+
+	// if(git_repository_head(&head_ref, m_Repo) == 0) {
+	// 	git_oid parent_oid;
+	// 	if(git_reference_name_to_id(&parent_oid, m_Repo, "HEAD") == 0) {
+	// 		if(git_commit_lookup(&parent, m_Repo, &parent_oid) == 0) parent_count = 1;
+	// 	}
+	// }
+
+	// git_oid commit_oid;
+	// int err = git_commit_create_v(
+	// 	&commit_oid,
+	// 	m_Repo,
+	// 	"HEAD",
+	// 	sig, sig,
+	// 	nullptr,
+	// 	message.c_str(),
+	// 	tree,
+	// 	parent_count,
+	// 	parent_count ? (const git_commit**)&parent : nullptr
+	// );
+
+	// if(parent) git_commit_free(parent);
+	// if(head_ref) git_reference_free(head_ref);
+	// git_signature_free(sig);
+	// git_tree_free(tree);
+}
+
+void Repo::Pull() {
+	git_remote* remote;
+	if(git_remote_lookup(&remote, m_Repo, "origin") < 0)
+		return;
+
+	git_fetch_options opts;
+	git_fetch_init_options(&opts, GIT_FETCH_OPTIONS_VERSION);
+	opts.callbacks.credentials = CredentialCallback;
+
+	int err = git_remote_fetch(remote, NULL, &opts, NULL);
+	git_remote_free(remote);
+}
+
+void Repo::Push() {
+	git_remote* remote;
+	if(git_remote_lookup(&remote, m_Repo, "origin") < 0)
+		return;
+
+	git_push_options opts;
+	git_push_init_options(&opts, GIT_PUSH_OPTIONS_VERSION);
+	opts.callbacks.credentials = CredentialCallback;
+
+	std::string branch = "main";
+	std::string refspec = "refs/heads/" + branch + ":refs/heads/" + branch;
+	auto refspec_cstr = refspec.data();
+	git_strarray refspecs[] = { &refspec_cstr, 1 };
+
+	int err = git_remote_push(remote, NULL, &opts);
+	git_remote_free(remote);
+}
+
+int Repo::CredentialCallback(git_credential** out, const char* url,
+	const char* usernameFromURL, unsigned int allowedTypes, void* payload)
+{
+	std::string token = Networking::TokenStore::LoadToken("github");
+	if (!token.empty())
+		return
+			git_credential_userpass_plaintext_new(out, "oauth2", token.c_str());
+
+	return GIT_PASSTHROUGH;
 }
 
 }

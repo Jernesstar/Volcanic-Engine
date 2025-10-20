@@ -560,7 +560,7 @@ void Button::Begin() {
 
 	auto* drawlist = ImGui::GetWindowDrawList();
 	drawlist->AddRectFilled(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
-		IM_COL32(uint32_t(Color.r), uint32_t(Color.g), uint32_t(Color.b), uint32_t(Color.a)), 0.9f);
+		IM_COL32(uint32_t(Color.r), uint32_t(Color.g), uint32_t(Color.b), uint32_t(Color.a)), 4.0f);
 }
 
 void Button::End() {

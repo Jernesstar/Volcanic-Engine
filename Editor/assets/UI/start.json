@@ -28,12 +28,84 @@
                 {
                     "Name": "TitleText",
                     "Type": "Text",
-                    "Label": "Magma Editor v0.1",
+                    "Label": "Magma Editor v0.1.0",
 
-                    "x": 60.0,
+                    "x": 70.0,
                     "y": 15.0,
 
                     "Scale": 2.0
+                },
+                {
+                    "Name": "MinimizeButton",
+                    "Type": "Button",
+
+                    "x": 1300.0,
+                    "y": 10.0,
+                    "Width": 30.0,
+                    "Height": 30.0,
+
+                    "Color": [0.0, 0.0, 0.0, 0.0],
+
+                    "Children":
+                    [
+                        {
+                            "Name": "MinimizeImage",
+                            "Type": "Image",
+                            "Width": 20.0,
+                            "Height": 20.0,
+                            "x": 5.0,
+                            "y": 5.0,
+                            "Asset": "Editor/assets/images/Minimize.png"
+                        }
+                    ]
+                },
+                {
+                    "Name": "CloseButton",
+                    "Type": "Button",
+
+                    "x": 1300.0,
+                    "y": 10.0,
+                    "Width": 30.0,
+                    "Height": 30.0,
+
+                    "Color": [0.0, 0.0, 0.0, 0.0],
+
+                    "Children":
+                    [
+                        {
+                            "Name": "CloseImage",
+                            "Type": "Image",
+                            "Width": 20.0,
+                            "Height": 20.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "Asset": "Editor/assets/images/Close.png"
+                        }
+                    ]
+                },
+                {
+                    "Name": "SignInButton",
+                    "Type": "Button",
+
+                    "x": 1360.0,
+                    "y": 25.0,
+                    "Width": 32.0,
+                    "Height": 32.0,
+
+                    "Color": [0.0, 1.0, 0.0, 0.0],
+
+                    "Children":
+                    [
+                        {
+                            "Name": "SignInImage",
+                            "Type": "Image",
+                            "Width": 30.0,
+                            "Height": 30.0,
+                            "x": 0.0,
+                            "y": 0.0,
+                            "Asset": "Editor/assets/images/Account.png"
+                        }
+                    ]
                 }
             ]
         },
@@ -71,7 +143,7 @@
                             "Label": "Project",
 
                             "x": 21.0,
-                            "y": 5.0
+                            "y": 3.0
                         }
                     ]
                 },
@@ -94,7 +166,7 @@
                             "Label": "LavaFlow",
 
                             "x": 17.0,
-                            "y": 5.0
+                            "y": 3.0
                         }
                     ]
                 },
@@ -117,7 +189,7 @@
                             "Label": "Component",
 
                             "x": 14.0,
-                            "y": 5.0
+                            "y": 3.0
                         }
                     ]
                 },
@@ -125,23 +197,73 @@
                     "Name": "ProjectWindow",
                     "Type": "Window",
                     "Width": 1400.0,
-                    "Height": 740.0,
-                    "x": 0.0,
-                    "y": 170.0,
+                    "Height": 720.0,
+                    "x": 260.0,
+                    "y": 200.0,
 
                     "IsRoot": false,
                     "IsChild": true,
                     "AllowScroll": false,
 
-                    "Color": [1.0, 0.0, 0.0, 1.0]
+                    "Color": [1.0, 0.0, 0.0, 1.0],
+
+                    "Children":
+                    [
+                        {
+                            "Name": "NewProjectButton",
+                            "Type": "Button",
+
+                            "x": 100.0,
+                            "y": 50.0,
+                            "Width": 130.0,
+                            "Height": 40.0,
+
+                            "Color": [0.0, 0.0, 0.0, 1.0],
+
+                            "Children":
+                            [
+                                {
+                                    "Name": "NewProjectText",
+                                    "Type": "Text",
+                                    "Label": "New Project",
+
+                                    "x": 25.0,
+                                    "y": 12.0
+                                }
+                            ]
+                        },
+                        {
+                            "Name": "OpenProjectButton",
+                            "Type": "Button",
+
+                            "x": 100.0,
+                            "y": 150.0,
+                            "Width": 130.0,
+                            "Height": 40.0,
+
+                            "Color": [0.0, 0.0, 0.0, 1.0],
+
+                            "Children":
+                            [
+                                {
+                                    "Name": "OpenProjectText",
+                                    "Type": "Text",
+                                    "Label": "Open Project",
+
+                                    "x": 23.0,
+                                    "y": 12.0
+                                }
+                            ]
+                        }
+                    ]
                 },
                 {
                     "Name": "LavaFlowWindow",
                     "Type": "Window",
                     "Width": 1400.0,
-                    "Height": 740.0,
-                    "x": 0.0,
-                    "y": 170.0,
+                    "Height": 720.0,
+                    "x": 260.0,
+                    "y": 200.0,
 
                     "Visible": false,
 
@@ -155,9 +277,9 @@
                     "Name": "ComponentWindow",
                     "Type": "Window",
                     "Width": 1400.0,
-                    "Height": 740.0,
-                    "x": 0.0,
-                    "y": 170.0,
+                    "Height": 720.0,
+                    "x": 260.0,
+                    "y": 200.0,
 
                     "Visible": false,
 
@@ -165,7 +287,34 @@
                     "IsChild": true,
                     "AllowScroll": false,
 
-                    "Color": [0.0, 0.0, 1.0, 1.0]
+                    "Color": [0.0, 0.0, 1.0, 1.0],
+
+                    "Children":
+                    [
+                        {
+                            "Name": "NewComponentButton",
+                            "Type": "Button",
+
+                            "x": 520.0,
+                            "y": 20.0,
+                            "Width": 80.0,
+                            "Height": 30.0,
+
+                            "Color": [0.0, 0.0, 0.0, 1.0],
+
+                            "Children":
+                            [
+                                {
+                                    "Name": "NewComponentText",
+                                    "Type": "Text",
+                                    "Label": "New Component",
+
+                                    "x": 14.0,
+                                    "y": 3.0
+                                }
+                            ]
+                        }
+                    ]
                 }
             ]
         }

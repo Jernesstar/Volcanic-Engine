@@ -9,7 +9,8 @@ project "MagmaServer"
     targetdir ("%{RootPath}/build/%{_ACTION}/Server/bin")
 
     files {
-        "main.cpp"
+        "**.h",
+        "**.cpp"
     }
 
     includedirs {

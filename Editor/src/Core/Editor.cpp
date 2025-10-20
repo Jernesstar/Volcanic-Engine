@@ -19,9 +19,10 @@
 
 #include <Lava/Core/Lava.h>
 
+#include "Networking/Networking.h"
 #include "UI/Widget.h"
-#include "AI/AI.h"
 #include "VersionControl/VersionControl.h"
+#include "AI/AI.h"
 
 #include "AssetImporter.h"
 #include "ScriptManager.h"
@@ -42,16 +43,16 @@ static Map<std::string, Ref<ScriptModule>> s_TabModules;
 
 static Ref<Texture> s_Logo;
 
+static Networking::NetworkingManager* s_NetManager = nullptr;
 static UI::UIManager* s_UIManager = nullptr;
 static VC::VCManager* s_VCManager = nullptr;
 // static AI::AIManager* s_AIManager = nullptr;
-// static Networking::NetworkingManager* s_NetManager = nullptr;
 
 void Editor::Open() {
 	// Editor::RegisterInterface();
 
-	// s_NetManager = new Networking::NetworkingManager();
-	// s_NetManager->Init();
+	s_NetManager = new Networking::NetworkingManager();
+	s_NetManager->Init();
 
 	s_UIManager = new UI::UIManager();
 	s_UIManager->Init();
@@ -88,6 +89,8 @@ void Editor::Close() {
 	delete s_VCManager;
 	s_UIManager->Shutdown();
 	delete s_UIManager;
+	s_NetManager->Shutdown();
+	delete s_NetManager;
 }
 
 Ref<ScriptModule> Editor::GetModule(const std::string& name) {
@@ -156,6 +159,14 @@ void Editor::RenderStartScreen() {
 	auto screen = s_UIManager->GetRoot();
 	bool click = false;
 
+	// if(screen->Find("CloseButton")->State.Clicked)
+	// 	Application::Close();
+	// if(screen->Find("MinimizeButton")->State.Clicked)
+	// 	Application::Minimize();
+
+	if(screen->Find("SignInButton")->State.Clicked)
+		s_NetManager->GitHubOAuth();
+
 	if(screen->Find("ProjectButton")->State.Clicked) {
 		click = true;
 		mode = 1;
@@ -167,6 +178,12 @@ void Editor::RenderStartScreen() {
 	else if(screen->Find("ComponentButton")->State.Clicked) {
 		click = true;
 		mode = 3;
+
+		VC::Repo repo;
+		auto home = Application::GetHomeDir();
+		repo.Init(home + "/TestProject");
+		repo.SetRemote("https://github.com/Jernesstar/TestProject.git");
+		repo.Push();
 	}
 
 	if(click) {
