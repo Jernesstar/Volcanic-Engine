@@ -50,6 +50,7 @@ ServerApp::ServerApp() {
 
 ServerApp::~ServerApp() {
 	VOLCANICORE_LOG_INFO("Stopping HTTP thread");
+	app().quit();
 }
 
 }

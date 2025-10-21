@@ -174,6 +174,11 @@ void Editor::RenderStartScreen() {
 	else if(screen->Find("LavaFlowButton")->State.Clicked) {
 		click = true;
 		mode = 2;
+
+		VC::Repo repo;
+		auto home = Application::GetHomeDir();
+		repo.Open(home + "\\TestProject");
+		repo.Push();
 	}
 	else if(screen->Find("ComponentButton")->State.Clicked) {
 		click = true;
@@ -183,7 +188,6 @@ void Editor::RenderStartScreen() {
 		auto home = Application::GetHomeDir();
 		repo.Init(home + "\\TestProject");
 		repo.SetRemote("https://github.com/Jernesstar/TestProject.git");
-		repo.Push();
 	}
 
 	if(click) {

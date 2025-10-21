@@ -7,6 +7,8 @@
 
 #include "List.h"
 
+#undef CreateFile
+
 namespace fs = std::filesystem;
 
 namespace VolcaniCore {

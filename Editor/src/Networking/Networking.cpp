@@ -5,6 +5,7 @@
 #include <VolcaniCore/Core/FileUtils.h>
 
 using namespace drogon;
+using namespace VolcaniCore;
 
 #define VOLCANIC_AUTH_URL "http://localhost:8848"
 
@@ -15,9 +16,10 @@ Ref<std::thread> s_HttpThread;
 void TokenStore::SaveToken(const std::string& service, const std::string& token) {
 	Application::PushDir();
 
-	fs::create_directories(fs::path("Editor") / ".cache" / "tokens");
-	fs::path path = fs::path("Editor") / ".cache" / "tokens" / service;
-	auto file = File(path.string() + ".token", true);
+	fs::path path = fs::path("Editor") / ".cache" / "tokens";
+	fs::create_directories(path);
+	fs::create_directories(path / service);
+	auto file = File(path / service / ".token", true);
 	file.Write(token);
 	file.Close();
 
@@ -27,7 +29,8 @@ void TokenStore::SaveToken(const std::string& service, const std::string& token)
 std::string TokenStore::LoadToken(const std::string& service) {
 	Application::PushDir();
 
-	File file((fs::path("Editor") / "tokens" / service).string() + ".token");
+	auto path = fs::path("Editor") / ".cache" / "tokens" / service / ".token";
+	File file(path, false);
 	std::string token = file.Get();
 
 	Application::PopDir();
@@ -63,8 +66,6 @@ void NetworkingManager::GitHubOAuth() {
 	bool polling = true;
 
 	while(polling) {
-		VOLCANICORE_LOG_INFO("Checking for token...");
-
 		auto client = drogon::HttpClient::newHttpClient("127.0.0.1", 8848);
 		auto req = HttpRequest::newHttpRequest();
 		req->setPath("/auth/github/token");
@@ -79,8 +80,7 @@ void NetworkingManager::GitHubOAuth() {
 				}
 
 				auto responseStr = std::string(resp->getBody().data());
-				VOLCANICORE_LOG_INFO("Response: %s", responseStr.c_str());
-	
+
 				Json::CharReaderBuilder builder;
 				Json::CharReader* reader = builder.newCharReader();
 				Json::Value response;
@@ -88,7 +88,7 @@ void NetworkingManager::GitHubOAuth() {
 					responseStr.c_str() + responseStr.size(), &response, nullptr);
 	
 				if(response["status"].asString() == "success") {
-					auto token = response["access_token"].asString();
+					std::string token = response["token"].asString();
 					TokenStore::SaveToken("github", token);
 					polling = false;
 					return;
