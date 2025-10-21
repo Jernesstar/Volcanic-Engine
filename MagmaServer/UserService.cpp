@@ -45,7 +45,7 @@ void UserService::Init() {
 			reader->parse(req->bodyData(),
 				req->bodyData() + req->bodyLength(), &request, nullptr);
 
-			auto& user = m_Users.Emplace();
+			auto& user = s_Users.Emplace();
 			user.Name = request["Name"].asString();
 			user.Username = request["Username"].asString();
 			user.Email = request["Email"].asString();
@@ -74,7 +74,7 @@ void UserService::Init() {
 			}
 
 			auto [found, i] =
-				m_Users.Find([&](auto& u) { return u.Email == email; });
+				s_Users.Find([&](auto& u) { return u.Email == email; });
 			if(!found) {
 				Json::Value response;
 				response["error"] = "not_found";
@@ -84,7 +84,7 @@ void UserService::Init() {
 				return;
 			}
 
-			auto& u = m_Users[i];
+			auto& u = s_Users[i];
 			if(u.PasswordHash != sha256_hex(password + "volcanic_salt")) {
 				Json::Value response;
 				response["error"] = "invalid";

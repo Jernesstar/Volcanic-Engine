@@ -181,7 +181,7 @@ void Editor::RenderStartScreen() {
 
 		VC::Repo repo;
 		auto home = Application::GetHomeDir();
-		repo.Init(home + "/TestProject");
+		repo.Init(home + "\\TestProject");
 		repo.SetRemote("https://github.com/Jernesstar/TestProject.git");
 		repo.Push();
 	}

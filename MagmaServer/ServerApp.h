@@ -3,6 +3,7 @@
 #include <drogon/drogon.h>
 
 #include <VolcaniCore/Core/Application.h>
+#include <VolcaniCore/Event/Events.h>
 
 #include "UserService.h"
 #include "GitHubOAuth.h"
@@ -32,11 +33,19 @@ ServerApp::ServerApp() {
 			// UserService::Init();
 
 			app()
+				.setThreadNum(4)
 				.addListener("127.0.0.1", 8848)
 				.run();
 		});
 
 	m_HttpThread.detach();
+
+	Events::RegisterListener<KeyPressedEvent>(
+		[&](const KeyPressedEvent& event)
+		{
+			if(event.Key == Key::Escape)
+				Application::Close();
+		});
 }
 
 ServerApp::~ServerApp() {

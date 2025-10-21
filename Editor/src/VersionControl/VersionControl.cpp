@@ -49,7 +49,9 @@ void Repo::Clone(const std::string& url, const std::string& path) {
 
 void Repo::SetRemote(const std::string& url) {
 	git_remote* remote = nullptr;
-	int error = git_remote_create(&remote, m_Repo, "origin", url.c_str());
+	int error =
+		git_remote_create_with_fetchspec(&remote, m_Repo,
+			"origin", url.c_str(), "+refs/heads/*:refs/custom/namespace/*");
 	if(error < 0) {
 		const git_error *e = git_error_last();
 		printf("Error %d/%d: %s\n", error, e->klass, e->message);
@@ -151,11 +153,6 @@ void Repo::Push() {
 	git_push_init_options(&opts, GIT_PUSH_OPTIONS_VERSION);
 	opts.callbacks.credentials = CredentialCallback;
 
-	std::string branch = "main";
-	std::string refspec = "refs/heads/" + branch + ":refs/heads/" + branch;
-	auto refspec_cstr = refspec.data();
-	git_strarray refspecs[] = { &refspec_cstr, 1 };
-
 	int err = git_remote_push(remote, NULL, &opts);
 	git_remote_free(remote);
 }
@@ -168,6 +165,7 @@ int Repo::CredentialCallback(git_credential** out, const char* url,
 		return
 			git_credential_userpass_plaintext_new(out, "oauth2", token.c_str());
 
+	VOLCANICORE_LOG_WARNING("Failed to load github token");
 	return GIT_PASSTHROUGH;
 }
 

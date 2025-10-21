@@ -6,6 +6,8 @@
 
 using namespace drogon;
 
+#define VOLCANIC_AUTH_URL "http://localhost:8848"
+
 namespace Magma::Networking {
 
 Ref<std::thread> s_HttpThread;
@@ -13,9 +15,11 @@ Ref<std::thread> s_HttpThread;
 void TokenStore::SaveToken(const std::string& service, const std::string& token) {
 	Application::PushDir();
 
-	fs::path path = fs::path("Editor") / "tokens" / service;
+	fs::create_directories(fs::path("Editor") / ".cache" / "tokens");
+	fs::path path = fs::path("Editor") / ".cache" / "tokens" / service;
 	auto file = File(path.string() + ".token", true);
 	file.Write(token);
+	file.Close();
 
 	Application::PopDir();
 }
@@ -31,14 +35,13 @@ std::string TokenStore::LoadToken(const std::string& service) {
 }
 
 void NetworkingManager::Init() {
-	// s_HttpThread = CreateRef<std::thread>(
-	// 	[]()
-	// 	{
-	// 		app().addListener("0.0.0.0", 5050);
-	// 		app().run();
-	// 	});
+	s_HttpThread = CreateRef<std::thread>(
+		[]()
+		{
+			app().run();
+		});
 
-	// s_HttpThread->detach();
+	s_HttpThread->detach();
 }
 
 void NetworkingManager::Shutdown() {
@@ -46,45 +49,58 @@ void NetworkingManager::Shutdown() {
 }
 
 void NetworkingManager::GitHubOAuth() {
-	// Start a local server to capture the token
-	std::thread listener(
-		[this]()
-		{
-			app().registerHandler("/token",
-				[this](const drogon::HttpRequestPtr& req, std::function<void(const drogon::HttpResponsePtr&)>&& callback)
-				{
-					auto token = req->getParameter("access_token");
-					if (!token.empty()) {
-						TokenStore::SaveToken("github", token);
-						std::cout << "✅ GitHub token received: " << token << std::endl;
+	std::string authURL = VOLCANIC_AUTH_URL"/auth/github/login";
 
-						auto resp = drogon::HttpResponse::newHttpResponse();
-						resp->setBody("<html><body><h3>Authentication Successful!</h3><p>You can close this window.</p></body></html>");
-						resp->setStatusCode(drogon::k200OK);
-						callback(resp);
+#ifdef _WIN32
+	system(("start " + authURL).c_str());
+#elif __APPLE__
+	system(("open " + authURL).c_str());
+#elif __linux__
+	system(("xdg-open " + authURL).c_str());
+#endif
 
-						// Stop the listener once the token is received
-						app().quit();
-					} else {
-						auto resp = drogon::HttpResponse::newHttpResponse();
-						resp->setBody("Missing access token");
-						resp->setStatusCode(drogon::k400BadRequest);
-						callback(resp);
-					}
-				},
-				{ HttpMethod::Get });
+	std::this_thread::sleep_for(std::chrono::seconds(4));
+	bool polling = true;
 
-			drogon::app().addListener("0.0.0.0", 5050).run();
-		}
-	);
+	while(polling) {
+		VOLCANICORE_LOG_INFO("Checking for token...");
 
-	listener.detach();
+		auto client = drogon::HttpClient::newHttpClient("127.0.0.1", 8848);
+		auto req = HttpRequest::newHttpRequest();
+		req->setPath("/auth/github/token");
+		req->setMethod(drogon::Get);
 
-	// Direct user to GitHub login
-	std::string authUrl = "http://localhost:8848/auth/github/login";
+		client->sendRequest(req,
+			[&polling](ReqResult result, const HttpResponsePtr& resp)
+			{
+				if(result != ReqResult::Ok) {
+					VOLCANICORE_LOG_INFO("Error: %s", to_string(result).c_str());
+					return;
+				}
 
-	// On real editor, open browser automatically:
-	system(("start " + authUrl).c_str());  // Windows
+				auto responseStr = std::string(resp->getBody().data());
+				VOLCANICORE_LOG_INFO("Response: %s", responseStr.c_str());
+	
+				Json::CharReaderBuilder builder;
+				Json::CharReader* reader = builder.newCharReader();
+				Json::Value response;
+				reader->parse(responseStr.c_str(),
+					responseStr.c_str() + responseStr.size(), &response, nullptr);
+	
+				if(response["status"].asString() == "success") {
+					auto token = response["access_token"].asString();
+					TokenStore::SaveToken("github", token);
+					polling = false;
+					return;
+				}
+				if(response["status"].asString() == "error") {
+					polling = false;
+					return;
+				}
+			});
+
+		std::this_thread::sleep_for(std::chrono::seconds(4));
+	}
 }
 
 void HttpClient::Get(const std::string& path,

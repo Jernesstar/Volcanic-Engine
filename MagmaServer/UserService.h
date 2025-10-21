@@ -23,7 +23,7 @@ public:
 	static void Init();
 
 private:
-	inline static List<User> m_Users;
+	inline static List<User> s_Users;
 };
 
 }
