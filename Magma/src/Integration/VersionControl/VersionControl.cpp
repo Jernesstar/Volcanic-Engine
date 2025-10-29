@@ -202,6 +202,7 @@ int Repo::CredentialCallback(git_credential** out, const char* url,
 		return git_cred_userpass_plaintext_new(out, "x-access-token", token.c_str());
 	}
 
+	VOLCANICORE_LOG_WARNING("Failed to authenticate");
 	return GIT_PASSTHROUGH;
 }
 

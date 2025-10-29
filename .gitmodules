@@ -1,5 +1,5 @@
-[submodule "VolcaniCore/.vendor/glfw"]
-	path = VolcaniCore/.vendor/glfw
+[submodule "VolcanicWindow/.vendor/glfw"]
+	path = VolcanicWindow/.vendor/glfw
 	url = https://github.com/glfw/glfw.git
 [submodule "VolcaniCore/.vendor/glm"]
 	path = VolcaniCore/.vendor/glm
@@ -10,55 +10,55 @@
 [submodule "Magma/.vendor/rapidjson"]
 	path = Magma/.vendor/rapidjson
 	url = https://github.com/Tencent/rapidjson.git
-[submodule "Magma/.vendor/angelscript"]
-	path = Magma/.vendor/angelscript
-	url = https://github.com/LavaFlow-Technologies/angelscript.git
-[submodule "Editor/.vendor/miniz-cpp"]
-	path = Editor/.vendor/miniz-cpp
+[submodule "Magma/.vendor/miniz-cpp"]
+	path = Magma/.vendor/miniz-cpp
 	url = https://github.com/tfussell/miniz-cpp.git
-[submodule "Editor/.vendor/efsw"]
-	path = Editor/.vendor/efsw
+[submodule "Magma/.vendor/efsw"]
+	path = Magma/.vendor/efsw
 	url = https://github.com/SpartanJ/efsw.git
-[submodule "Editor/.vendor/soloud"]
-	path = Editor/.vendor/soloud
+[submodule "Magma/.vendor/soloud"]
+	path = Magma/.vendor/soloud
 	url = https://github.com/jarikomppa/soloud.git
-[submodule "Editor/.vendor/stb_image"]
-	path = Editor/.vendor/stb_image
+[submodule "Magma/.vendor/stb_image"]
+	path = Magma/.vendor/stb_image
 	url = https://github.com/LavaFlow-Technologies/stb_image.git
-[submodule "Editor/.vendor/imgui"]
-	path = Editor/.vendor/imgui
+[submodule "Magma/.vendor/imgui"]
+	path = Magma/.vendor/imgui
 	url = https://github.com/ocornut/imgui.git
 	branch = docking
-[submodule "Editor/.vendor/ImGuiFileDialog"]
-	path = Editor/.vendor/ImGuiFileDialog
+[submodule "Magma/.vendor/ImGuiFileDialog"]
+	path = Magma/.vendor/ImGuiFileDialog
 	url = https://github.com/aiekick/ImGuiFileDialog.git
-[submodule "Editor/.vendor/ImGuizmo"]
-	path = Editor/.vendor/ImGuizmo
+[submodule "Magma/.vendor/ImGuizmo"]
+	path = Magma/.vendor/ImGuizmo
 	url = https://github.com/CedricGuillemet/ImGuizmo.git
-[submodule "Editor/.vendor/IconFontCppHeaders"]
-	path = Editor/.vendor/IconFontCppHeaders
+[submodule "Magma/.vendor/IconFontCppHeaders"]
+	path = Magma/.vendor/IconFontCppHeaders
 	url = https://github.com/juliettef/IconFontCppHeaders.git
-[submodule "Editor/.vendor/ImGuiColorTextEdit"]
-	path = Editor/.vendor/ImGuiColorTextEdit
+[submodule "Magma/.vendor/ImGuiColorTextEdit"]
+	path = Magma/.vendor/ImGuiColorTextEdit
 	url = https://github.com/LavaFlow-Technologies/ImGuiColorTextEdit.git
-[submodule "Editor/.vendor/glad"]
-	path = Editor/.vendor/glad
+[submodule "Magma/.vendor/glad"]
+	path = Magma/.vendor/glad
 	url = https://github.com/LavaFlow-Technologies/glad.git
-[submodule "Editor/.vendor/jsoncpp"]
-	path = Editor/.vendor/jsoncpp
+[submodule "Magma/.vendor/jsoncpp"]
+	path = Magma/.vendor/jsoncpp
 	url = https://github.com/open-source-parsers/jsoncpp.git
-[submodule "Editor/.vendor/c-ares"]
-	path = Editor/.vendor/c-ares
+[submodule "Magma/.vendor/c-ares"]
+	path = Magma/.vendor/c-ares
 	url = https://github.com/LavaFlow-Technologies/c-ares.git
-[submodule "Editor/.vendor/drogon"]
-	path = Editor/.vendor/drogon
+[submodule "Magma/.vendor/drogon"]
+	path = Magma/.vendor/drogon
 	url = https://github.com/LavaFlow-Technologies/drogon.git
-[submodule "Editor/.vendor/jwt-cpp"]
-	path = Editor/.vendor/jwt-cpp
+[submodule "Magma/.vendor/jwt-cpp"]
+	path = Magma/.vendor/jwt-cpp
 	url = https://github.com/Thalhammer/jwt-cpp.git
-[submodule "Editor/.vendor/libgit2"]
-	path = Editor/.vendor/libgit2
+[submodule "Magma/.vendor/libgit2"]
+	path = Magma/.vendor/libgit2
 	url = https://github.com/LavaFlow-Technologies/libgit2.git
-[submodule "Editor/.vendor/clay"]
-	path = Editor/.vendor/clay
+[submodule "Magma/.vendor/clay"]
+	path = Magma/.vendor/clay
 	url = https://github.com/nicbarker/clay.git
+[submodule "Lava/.vendor/angelscript"]
+	path = Lava/.vendor/angelscript
+	url = https://github.com/LavaFlow-Technologies/angelscript.git
