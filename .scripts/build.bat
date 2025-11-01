@@ -12,5 +12,5 @@ if "%Target%" == "" (
     )
 )
 
-cd build/gmake
+cd build
 mingw32-make.exe -f %Target%

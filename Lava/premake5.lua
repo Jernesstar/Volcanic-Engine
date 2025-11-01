@@ -4,8 +4,8 @@ project "Lava"
     cppdialect "C++latest"
     staticruntime "Off"
 
-    objdir ("%{RootPath}/build/%{_ACTION}/Lava/obj")
-    targetdir ("%{RootPath}/build/%{_ACTION}/Lava/lib")
+    objdir ("%{RootPath}/build/Lava/obj")
+    targetdir ("%{RootPath}/build/Lava/lib")
 
     files {
         "src/Lava/**.h",
@@ -18,7 +18,6 @@ project "Lava"
 
         "%{RootPath}/VolcaniCore/src",
         "%{RootPath}/VolcaniCore/src/VolcaniCore",
-        "%{RootPath}/VolcaniCore/src/impl",
 
         "%{RootPath}/Magma/src",
         "%{RootPath}/Magma/src/Magma",

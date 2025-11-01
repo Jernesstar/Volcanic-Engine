@@ -1,3 +1,3 @@
 #!/bin/bash
 
-.vendor/premake/bin/Linux/premake5.exe gmake2
+.vendor/premake/bin/Windows/premake5.exe gmake

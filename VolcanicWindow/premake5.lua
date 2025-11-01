@@ -1,26 +1,26 @@
-project "VolcaniCore"
+project "VolcanicWindow"
     kind "StaticLib"
     language "C++"
     cppdialect "C++latest"
     staticruntime "Off"
 
-    objdir ("%{RootPath}/build/VolcaniCore/obj")
-    targetdir ("%{RootPath}/build/VolcaniCore/lib")
+    objdir ("%{RootPath}/build/VolcanicWindow/obj")
+    targetdir ("%{RootPath}/build/VolcanicWindow/lib")
 
     files {
-        "src/**.h",
-        "src/**.cpp",
+        "src/VolcanicWindow/**.h",
+        "src/VolcanicWindow/**.cpp",
     }
 
     includedirs {
         "src/",
-        "src/VolcaniCore",
 
+        "%{Includes.glfw}",
         "%{Includes.glm}",
     }
 
     links {
-
+        "glfw",
     }
 
     filter "toolset:gcc or toolset:clang"
@@ -31,3 +31,6 @@ project "VolcaniCore"
 
     filter "system:windows"
         systemversion "latest"
+
+
+include "VolcanicWindow/.deps/glfw"

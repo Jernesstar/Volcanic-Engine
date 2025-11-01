@@ -1,12 +1,12 @@
 
-project "Editor"
+project "Magma"
     kind "ConsoleApp"
     language "C++"
     cppdialect "C++latest"
     staticruntime "Off"
 
-    objdir ("%{RootPath}/build/%{_ACTION}/Editor/obj")
-    targetdir ("%{RootPath}/build/%{_ACTION}/Editor/bin")
+    objdir ("%{RootPath}/build/Magma/obj")
+    targetdir ("%{RootPath}/build/Magma/bin")
 
     files {
         "src/**.h",
@@ -21,7 +21,7 @@ project "Editor"
 
         "%{RootPath}/VolcaniCore/src",
         "%{RootPath}/VolcaniCore/src/VolcaniCore",
-        "%{RootPath}/VolcaniCore/src/impl",
+        "%{RootPath}/VolcanicWindow/**",
 
         "%{RootPath}/Magma/src",
         "%{RootPath}/Magma/src/Magma",
@@ -53,16 +53,13 @@ project "Editor"
         "%{Includes.miniz_cpp}",
 
         "%{Includes.clay}",
-        "%{Includes.imgui}",
-        "%{Includes.imgui}/imgui",
-        "%{Includes.ImGuiFileDialog}",
         "%{Includes.IconFontCppHeaders}",
     }
 
     links {
         "Lava",
-        "Magma",
         "VolcaniCore",
+        "VolcanicWindow",
 
         "glfw",
 
@@ -72,11 +69,6 @@ project "Editor"
         "soloud",
         "stb_image",
         "drogon",
-
-        "imgui",
-        "ImGuiFileDialog",
-        "ImGuizmo",
-        "ImGuiColorTextEdit",
 
         "yaml-cpp",
         "angelscript",
@@ -124,13 +116,9 @@ project "Editor"
         }
 
 
-include "Editor/.deps/glad"
-include "Editor/.deps/soloud"
-include "Editor/.deps/stb_image"
-include "Editor/.deps/efsw"
-include "Editor/.deps/libgit2"
-include "Editor/.deps/drogon"
-include "Editor/.deps/imgui"
-include "Editor/.deps/ImGuiFileDialog"
-include "Editor/.deps/ImGuizmo"
-include "Editor/.deps/ImGuiColorTextEdit"
+include "Magma/.deps/glad"
+include "Magma/.deps/soloud"
+include "Magma/.deps/stb_image"
+include "Magma/.deps/efsw"
+include "Magma/.deps/libgit2"
+include "Magma/.deps/drogon"

@@ -1,5 +1,5 @@
 workspace "VolcanicEngine"
-    location ("build/%{_ACTION}")
+    location ("build")
     architecture "x86_64"
     configurations { "Debug", "Release" }
 
@@ -23,72 +23,63 @@ workspace "VolcanicEngine"
         startproject "Editor"
 
 include "VolcaniCore"
-include "Magma"
+include "VolcanicWindow"
 include "Lava"
-include "Editor"
-include "MagmaServer"
--- include "Runtime"
+include "Magma"
+include "Runtime"
+include "RuntimeWindow"
 
 RootPath = _MAIN_SCRIPT_DIR;
 VolcaniCoreVendorDir = "%{RootPath}/VolcaniCore/.vendor"
-MagmaVendorDir = "%{RootPath}/Magma/.vendor"
+VolcanicWindowVendorDir = "%{RootPath}/VolcanicWindow/.vendor"
 LavaVendorDir = "%{RootPath}/Lava/.vendor"
-EditorVendorDir = "%{RootPath}/Editor/.vendor"
-RuntimeVendorDir = "%{RootPath}/Runtime/.vendor"
+MagmaVendorDir = "%{RootPath}/Magma/.vendor"
 
 VendorPaths = {}
 Includes = {}
 
 -- VolcaniCore libraries
 VendorPaths["glm"]  = "%{VolcaniCoreVendorDir}/glm"
-VendorPaths["glfw"] = "%{VolcaniCoreVendorDir}/glfw"
 
--- Magma libraries
-VendorPaths["angelscript"]        = "%{MagmaVendorDir}/angelscript"
-VendorPaths["yaml_cpp"]           = "%{MagmaVendorDir}/yaml-cpp"
-VendorPaths["rapidjson"]          = "%{MagmaVendorDir}/rapidjson"
+-- VolcanicWindow libraries
+VendorPaths["glfw"] = "%{VolcanicWindowVendorDir}/glfw"
 
 -- Lava libraries
+VendorPaths["angelscript"]        = "%{LavaVendorDir}/angelscript"
 
--- Editor libraries
-VendorPaths["drogon"]             = "%{EditorVendorDir}/drogon"
-VendorPaths["jwt_cpp"]            = "%{EditorVendorDir}/jwt-cpp"
-VendorPaths["stb_image"]          = "%{EditorVendorDir}/stb_image"
-VendorPaths["soloud"]             = "%{EditorVendorDir}/soloud"
-VendorPaths["efsw"]               = "%{EditorVendorDir}/efsw"
-VendorPaths["libgit2"]            = "%{EditorVendorDir}/libgit2"
-VendorPaths["miniz_cpp"]          = "%{EditorVendorDir}/miniz-cpp"
-VendorPaths["glad"]               = "%{EditorVendorDir}/glad"
-VendorPaths["clay"]               = "%{EditorVendorDir}/clay"
-VendorPaths["imgui"]              = "%{EditorVendorDir}/imgui"
-VendorPaths["ImGuiFileDialog"]    = "%{EditorVendorDir}/ImGuiFileDialog"
-VendorPaths["ImGuizmo"]           = "%{EditorVendorDir}/ImGuizmo"
-VendorPaths["ImGuiColorTextEdit"] = "%{EditorVendorDir}/ImGuiColorTextEdit"
-VendorPaths["IconFontCppHeaders"] = "%{EditorVendorDir}/IconFontCppHeaders"
+-- Magma libraries
+VendorPaths["yaml_cpp"]           = "%{MagmaVendorDir}/yaml-cpp"
+VendorPaths["rapidjson"]          = "%{MagmaVendorDir}/rapidjson"
+VendorPaths["drogon"]             = "%{MagmaVendorDir}/drogon"
+VendorPaths["jwt_cpp"]            = "%{MagmaVendorDir}/jwt-cpp"
+VendorPaths["stb_image"]          = "%{MagmaVendorDir}/stb_image"
+VendorPaths["soloud"]             = "%{MagmaVendorDir}/soloud"
+VendorPaths["efsw"]               = "%{MagmaVendorDir}/efsw"
+VendorPaths["libgit2"]            = "%{MagmaVendorDir}/libgit2"
+VendorPaths["miniz_cpp"]          = "%{MagmaVendorDir}/miniz-cpp"
+VendorPaths["glad"]               = "%{MagmaVendorDir}/glad"
+VendorPaths["clay"]               = "%{MagmaVendorDir}/clay"
+VendorPaths["IconFontCppHeaders"] = "%{MagmaVendorDir}/IconFontCppHeaders"
 
 -- VolcaniCore libraries
 Includes["glm"]                   = "%{VendorPaths.glm}"
+
+-- VolcanicWindow libraries
 Includes["glfw"]                  = "%{VendorPaths.glfw}/include"
 
--- Magma libraries
+-- Lava libraries
 Includes["angelscript"]           = "%{VendorPaths.angelscript}/angelscript/include"
+
+-- Magma libraries
 Includes["yaml_cpp"]              = "%{VendorPaths.yaml_cpp}/include"
 Includes["rapidjson"]             = "%{VendorPaths.rapidjson}/include"
-
--- Lava libraries
-
--- Editor libraries
 Includes["drogon"]                = "%{VendorPaths.drogon}/lib/inc"
 Includes["jwt_cpp"]               = "%{VendorPaths.jwt_cpp}/include"
 Includes["stb_image"]             = "%{VendorPaths.stb_image}/include"
 Includes["soloud"]                = "%{VendorPaths.soloud}/include"
-Includes["glad"]                  = "%{VendorPaths.glad}/include"
 Includes["efsw"]                  = "%{VendorPaths.efsw}/include"
 Includes["libgit2"]               = "%{VendorPaths.libgit2}/include"
 Includes["miniz_cpp"]             = "%{VendorPaths.miniz_cpp}/include"
-Includes["clay"]                  = "%{EditorVendorDir}"
-Includes["imgui"]                 = "%{EditorVendorDir}"
-Includes["ImGuiFileDialog"]       = "%{EditorVendorDir}"
-Includes["ImGuizmo"]              = "%{EditorVendorDir}"
-Includes["ImGuiColorTextEdit"]    = "%{EditorVendorDir}"
-Includes["IconFontCppHeaders"]    = "%{EditorVendorDir}"
+Includes["glad"]                  = "%{VendorPaths.glad}/include"
+Includes["clay"]                  = "%{MagmaVendorDir}"
+Includes["IconFontCppHeaders"]    = "%{MagmaVendorDir}"
