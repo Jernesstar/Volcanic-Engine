@@ -2,10 +2,13 @@
 
 #include <functional>
 
-#include "Core/UUID.h"
-#include "Event/Event.h"
+#include "VolcaniCore/Core/UUID.h"
 
-namespace VolcaniCore {
+#include "Event.h"
+
+using namespace VolcaniCore;
+
+namespace VolcanicWindow {
 
 template<typename TEvent>
 requires std::derived_from<TEvent, Event>

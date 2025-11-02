@@ -2,9 +2,9 @@
 
 #include <angelscript.h>
 
-#include <Magma/Script/ScriptEngine.h>
+#include "Script/ScriptEngine.h"
 
-using namespace Magma::Script;
+using namespace Lava::Script;
 
 namespace Lava {
 

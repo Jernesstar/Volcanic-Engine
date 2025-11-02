@@ -22,37 +22,12 @@
 [submodule "Magma/.vendor/stb_image"]
 	path = Magma/.vendor/stb_image
 	url = https://github.com/LavaFlow-Technologies/stb_image.git
-[submodule "Magma/.vendor/imgui"]
-	path = Magma/.vendor/imgui
-	url = https://github.com/ocornut/imgui.git
-	branch = docking
-[submodule "Magma/.vendor/ImGuiFileDialog"]
-	path = Magma/.vendor/ImGuiFileDialog
-	url = https://github.com/aiekick/ImGuiFileDialog.git
-[submodule "Magma/.vendor/ImGuizmo"]
-	path = Magma/.vendor/ImGuizmo
-	url = https://github.com/CedricGuillemet/ImGuizmo.git
 [submodule "Magma/.vendor/IconFontCppHeaders"]
 	path = Magma/.vendor/IconFontCppHeaders
 	url = https://github.com/juliettef/IconFontCppHeaders.git
-[submodule "Magma/.vendor/ImGuiColorTextEdit"]
-	path = Magma/.vendor/ImGuiColorTextEdit
-	url = https://github.com/LavaFlow-Technologies/ImGuiColorTextEdit.git
 [submodule "Magma/.vendor/glad"]
 	path = Magma/.vendor/glad
 	url = https://github.com/LavaFlow-Technologies/glad.git
-[submodule "Magma/.vendor/jsoncpp"]
-	path = Magma/.vendor/jsoncpp
-	url = https://github.com/open-source-parsers/jsoncpp.git
-[submodule "Magma/.vendor/c-ares"]
-	path = Magma/.vendor/c-ares
-	url = https://github.com/LavaFlow-Technologies/c-ares.git
-[submodule "Magma/.vendor/drogon"]
-	path = Magma/.vendor/drogon
-	url = https://github.com/LavaFlow-Technologies/drogon.git
-[submodule "Magma/.vendor/jwt-cpp"]
-	path = Magma/.vendor/jwt-cpp
-	url = https://github.com/Thalhammer/jwt-cpp.git
 [submodule "Magma/.vendor/libgit2"]
 	path = Magma/.vendor/libgit2
 	url = https://github.com/LavaFlow-Technologies/libgit2.git
@@ -62,3 +37,6 @@
 [submodule "Lava/.vendor/angelscript"]
 	path = Lava/.vendor/angelscript
 	url = https://github.com/LavaFlow-Technologies/angelscript.git
+[submodule "Magma/.vendor/asio"]
+	path = Magma/.vendor/asio
+	url = https://github.com/chriskohlhoff/asio.git

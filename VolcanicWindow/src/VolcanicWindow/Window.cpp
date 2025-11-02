@@ -3,9 +3,9 @@
 #include "Application.h"
 #include "FileUtils.h"
 #include "Assert.h"
-#include "Event/Events.h"
+#include "Events.h"
 
-namespace VolcaniCore {
+namespace VolcanicWindow {
 
 static GLFWwindow* CreateWindow(WindowSpecification& spec) {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);

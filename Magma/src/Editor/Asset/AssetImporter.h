@@ -8,7 +8,7 @@
 #include <VolcaniCore/Core/Defines.h>
 #include <VolcaniCore/Core/Buffer.h>
 
-#include <Magma/Script/ScriptModule.h>
+// #include <Lava/Script/ScriptModule.h>
 
 using namespace VolcaniCore;
 
@@ -82,9 +82,9 @@ public:
 	static VolcaniCore::Buffer<float> GetAudioData(const std::string& path);
 	static Ref<Sound> GetAudio(const std::string& path);
 
-	static asIScriptModule* GetScriptData(const std::string& path,
-		bool* error = nullptr, std::string name = "");
-	static Ref<Script::ScriptModule> GetScript(const std::string& path);
+	// static asIScriptModule* GetScriptData(const std::string& path,
+	// 	bool* error = nullptr, std::string name = "");
+	// static Ref<Script::ScriptModule> GetScript(const std::string& path);
 };
 
 }

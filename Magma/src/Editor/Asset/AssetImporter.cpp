@@ -12,10 +12,10 @@
 #include <VolcaniCore/Core/Assert.h>
 #include <VolcaniCore/Core/FileUtils.h>
 
-#include "ScriptManager.h"
+// #include "ScriptManager.h"
 
 using namespace VolcaniCore;
-using namespace Magma::Script;
+// using namespace Lava::Script;
 
 namespace fs = std::filesystem;
 
@@ -55,19 +55,19 @@ Ref<Sound> AssetImporter::GetAudio(const std::string& path) {
 	return output;
 }
 
-asIScriptModule* AssetImporter::GetScriptData(const std::string& path,
-	bool* error, std::string name)
-{
-	return ScriptManager::LoadScript(path, false, error, name);
-}
+// asIScriptModule* AssetImporter::GetScriptData(const std::string& path,
+// 	bool* error, std::string name)
+// {
+// 	return ScriptManager::LoadScript(path, false, error, name);
+// }
 
-Ref<ScriptModule> AssetImporter::GetScript(const std::string& path) {
-	bool error;
-	asIScriptModule* handle = ScriptManager::LoadScript(path, true, &error);
-	if(error)
-		return nullptr;
+// Ref<ScriptModule> AssetImporter::GetScript(const std::string& path) {
+// 	bool error;
+// 	asIScriptModule* handle = ScriptManager::LoadScript(path, true, &error);
+// 	if(error)
+// 		return nullptr;
 
-	return CreateRef<ScriptModule>(handle);
-}
+// 	return CreateRef<ScriptModule>(handle);
+// }
 
 }

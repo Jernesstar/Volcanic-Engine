@@ -1,9 +1,11 @@
 #include "Events.h"
 
-#include "Core/Application.h"
-#include "Core/Assert.h"
-#include "Core/Input.h"
-#include "Core/Log.h"
+#include "VolcaniCore/Core/Assert.h"
+#include "VolcaniCore/Core/Log.h"
+
+#include "Application.h"
+
+#include "Input.h"
 
 #define GET_CALLBACKS(TEvent) \
 template<> \
@@ -11,7 +13,7 @@ Callbacks<TEvent>& Events::GetCallbacks<TEvent>() { \
 	return TEvent##Callbacks; \
 }
 
-namespace VolcaniCore {
+namespace VolcanicWindow {
 
 GET_CALLBACKS(KeyPressedEvent);
 GET_CALLBACKS(KeyReleasedEvent);
@@ -26,7 +28,7 @@ GET_CALLBACKS(WindowClosedEvent);
 GET_CALLBACKS(ApplicationUpdatedEvent);
 
 void Events::Init() {
-	GLFWwindow* window = Application::GetWindow()->GetNativeWindow();
+	GLFWwindow* window = Application::As<WindowApplication>()->GetWindow()->GetNativeWindow();
 
 	glfwSetErrorCallback(ErrorCallback);
 

@@ -1,6 +1,7 @@
 #pragma once
 
-#include <drogon/drogon.h>
+#include <asio.hpp>
+#include <asio/ssl.hpp>
 
 #include <VolcaniCore/Core/Buffer.h>
 #include <VolcaniCore/Core/Defines.h>
@@ -34,27 +35,26 @@ enum class PayloadType {
 	Text
 };
 
+enum class ResponseResult;
+
+struct Response {
+	Bytes Data;
+};
+
+using ResponseCB = Func<void, ResponseResult, Response>;
+
 class HttpClient {
 public:
-	HttpClient(const std::string& baseURL) {
-		m_Client = drogon::HttpClient::newHttpClient(baseURL);
-	}
+	HttpClient(const std::string& baseURL);
+	HttpClient(const std::string& ip, uint16_t port);
 
-	HttpClient(const std::string& ip, uint16_t port) {
-		m_Client = drogon::HttpClient::newHttpClient(ip, port);
-	}
-
-	void Get(const std::string& path,
-			 const Func<void, const drogon::HttpResponsePtr&> cb);
-	void Post(const std::string& path, Bytes bytes, PayloadType type,
-			 const Func<void, const drogon::HttpResponsePtr&> cb);
-	void Put(const std::string& path, Bytes bytes, PayloadType type,
-			 const Func<void, const drogon::HttpResponsePtr&> cb);
-	void Delete(const std::string& path,
-			 const Func<void, const drogon::HttpResponsePtr&> cb);
+	void Get(const std::string& path, const ResponseCB& cb);
+	void Post(const std::string& path, Bytes bytes, PayloadType type, const ResponseCB& cb);
+	void Put(const std::string& path, Bytes bytes, PayloadType type, const ResponseCB& cb);
+	void Delete(const std::string& path, const ResponseCB& cb);
 
 private:
-	Ref<drogon::HttpClient> m_Client;
+
 };
 
 class User {

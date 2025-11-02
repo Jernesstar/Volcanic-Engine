@@ -5,7 +5,7 @@
 
 #include "ScriptEngine.h"
 
-namespace Magma::Script {
+namespace Lava::Script {
 
 class ScriptClass;
 

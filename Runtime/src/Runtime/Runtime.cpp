@@ -1,7 +1,5 @@
 #include "Runtime.h"
 
-#include <VolcaniCore/Event/Events.h>
-
 #include <Lava/Core/Lava.h>
 
 namespace fs = std::filesystem;
@@ -11,15 +9,8 @@ namespace Lava {
 extern std::string FindExecutablePath();
 
 Runtime::Runtime(const CommandLineArgs& args)
-	: Application({ "Runtime", 1920, 1080, false, true })
+	: Application({ "Runtime" })
 {
-	Events::RegisterListener<KeyPressedEvent>(
-		[](const KeyPressedEvent& event)
-		{
-			if(event.Key == Key::Escape)
-				Application::Close();
-		});
-
 	std::string rootPath;
 	if(args["--project"]) {
 		auto volcPath = args["--project"].Args[0];

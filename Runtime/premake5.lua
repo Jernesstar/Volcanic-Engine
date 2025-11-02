@@ -6,47 +6,31 @@ project "Runtime"
     rtti "Off"
     staticruntime "Off"
 
-    objdir ("%{RootPath}/build/%{_ACTION}/Lava/obj")
-    targetdir ("%{RootPath}/build/%{_ACTION}/Lava/bin")
+    objdir ("%{RootPath}/build/Lava/obj")
+    targetdir ("%{RootPath}/build/Lava/bin")
 
     files {
-        "src/Runtime/**.cpp"
+        "src/**.cpp"
     }
 
     includedirs {
         "src",
 
-        "%{RootPath}/VolcaniCore/src",
-        "%{RootPath}/VolcaniCore/src/VolcaniCore",
-        "%{RootPath}/VolcaniCore/src/impl",
-
-        "%{RootPath}/Magma/src",
-        "%{RootPath}/Magma/src/Magma",
+        "%{RootPath}/VolcaniCore/**",
 
         "%{RootPath}/Lava/src",
-        "%{RootPath}/Lava/src/Lava",
-        "%{RootPath}/Lava/src/Lava/**",
+        "%{RootPath}/Lava/src/**",
 
-        "%{Includes.yaml_cpp}",
-        "%{Includes.rapidjson}",
-        
         "%{Includes.angelscript}",
         "%{VendorPaths.angelscript}",
+        "%{LavaVendorDir}",
 
         "%{Includes.glm}",
-        "%{Includes.glfw}",
     }
 
     links {
         "Lava",
-        "Magma",
         "VolcaniCore",
-
-        "glfw",
-        "glad",
-
-        "yaml-cpp",
-
         "angelscript",
     }
 

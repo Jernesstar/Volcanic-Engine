@@ -4,7 +4,7 @@
 
 #include "ScriptObject.h"
 
-namespace Magma::Script {
+namespace Lava::Script {
 
 class ScriptModule;
 

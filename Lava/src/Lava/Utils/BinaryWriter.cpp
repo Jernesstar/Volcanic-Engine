@@ -1,7 +1,7 @@
 
 #include "BinaryWriter.h"
 
-namespace Magma {
+namespace Lava {
 
 template<>
 BinaryWriter& BinaryWriter::WriteObject(const std::string& str) {

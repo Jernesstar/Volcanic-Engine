@@ -6,12 +6,12 @@
 #include <VolcaniCore/Core/List.h>
 #include <VolcaniCore/Core/TimeUtils.h>
 
-#include <Magma/Script/ScriptObject.h>
+#include <Lava/Script/ScriptObject.h>
 
 #include "Panel.h"
 
 using namespace VolcaniCore;
-using namespace Magma::Script;
+using namespace Lava::Script;
 
 namespace Magma::UI {
 

@@ -8,7 +8,7 @@
 
 #include <VolcaniCore/Core/Assert.h>
 
-namespace Magma {
+namespace Lava {
 
 DLL::DLL(const std::string& path)
 	: Path(path)

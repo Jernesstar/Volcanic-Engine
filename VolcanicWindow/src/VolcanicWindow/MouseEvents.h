@@ -1,9 +1,9 @@
 #pragma once
 
 #include "Event.h"
-#include "Core/Codes.h"
+#include "Codes.h"
 
-namespace VolcaniCore {
+namespace VolcanicWindow {
 
 struct MouseEvent : public Event {
 protected:

@@ -7,8 +7,7 @@ extern Application* CreateApplication(const CommandLineArgs& args);
 
 int main(int argc, char** argv) {
 	Application::SetCurrentDir();
-	Application::Init();
 	Application* app = CreateApplication(CommandLineArgs(argc, argv));
-	Application::Run();
+	app->Run();
 	Application::Close();
 }

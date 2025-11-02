@@ -3,9 +3,9 @@
 #include <string>
 
 #include "Event.h"
-#include "Core/Codes.h"
+#include "Codes.h"
 
-namespace VolcaniCore {
+namespace VolcanicWindow {
 
 struct KeyEvent : public Event {
 	const KeyCode Key;

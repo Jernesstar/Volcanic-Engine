@@ -35,19 +35,15 @@ project "Magma"
 
         "%{Includes.angelscript}",
         "%{MagmaVendorDir}",
+        "%{LavaVendorDir}",
 
         "%{Includes.yaml_cpp}",
         "%{Includes.rapidjson}",
 
         "%{Includes.efsw}",
         "%{Includes.libgit2}",
+        "%{Includes.asio}",
 
-        "%{Includes.drogon}",
-        "%{VendorPaths.drogon}/*",
-        "%{VendorPaths.drogon}/orm_lib/inc",
-        "%{VendorPaths.drogon}/nosql_lib/redis/inc",
-        "%{VendorPaths.drogon}/trantor",
-        "%{EditorVendorDir}/jsoncpp/include",
         "%{Includes.stb_image}",
         "%{Includes.soloud}",
         "%{Includes.miniz_cpp}",
@@ -68,14 +64,15 @@ project "Magma"
         "libgit2",
         "soloud",
         "stb_image",
-        "drogon",
+        "asio",
 
         "yaml-cpp",
         "angelscript",
 
         "ssl",
         "crypto",
-        "crypt32",
+
+        "z"
     }
 
     defines {
@@ -83,10 +80,6 @@ project "Magma"
         "WIN32_LEAN_AND_MEAN",
         "YAML_CPP_STATIC_DEFINE"
     }
-
-    filter "toolset:msc or system:linux"
-        links "PhysX"
-        debugdir ".."
 
     filter "system:linux"
         links {
@@ -106,6 +99,7 @@ project "Magma"
             "Ws2_32",
             "advapi32",
             "rpcrt4",
+            "crypt32",
         }
 
     filter "toolset:gcc or toolset:clang"
@@ -121,4 +115,5 @@ include "Magma/.deps/soloud"
 include "Magma/.deps/stb_image"
 include "Magma/.deps/efsw"
 include "Magma/.deps/libgit2"
-include "Magma/.deps/drogon"
+include "Magma/.deps/asio"
+include "Magma/.deps/yaml-cpp"

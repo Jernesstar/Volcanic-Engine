@@ -1,10 +1,15 @@
 #pragma once
 
 #include <angelscript.h>
+#include <angelscript/add_on/scripthandle/scripthandle.h>
+#include <angelscript/add_on/scriptstdstring/scriptstdstring.h>
+#include <angelscript/add_on/scripthelper/scripthelper.h>
+#include <angelscript/add_on/scriptmath/scriptmath.h>
+#include <angelscript/add_on/scriptarray/scriptarray.h>
 
 #include <VolcaniCore/Core/Defines.h>
 
-namespace Magma::Script {
+namespace Lava::Script {
 
 struct InterfaceBuilder {
 	const std::string Name;

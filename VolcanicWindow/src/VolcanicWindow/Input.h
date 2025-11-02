@@ -4,7 +4,9 @@
 
 #include "Codes.h"
 
-namespace VolcaniCore {
+using namespace VolcaniCore;
+
+namespace VolcanicWindow {
 
 class Input {
 public:

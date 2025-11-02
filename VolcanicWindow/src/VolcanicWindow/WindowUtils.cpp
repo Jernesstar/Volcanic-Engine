@@ -15,7 +15,7 @@
 #endif
 #include <GLFW/glfw3native.h>
 
-namespace VolcaniCore {
+namespace VolcanicWindow {
 
 void* GetNativeWindowHandle(GLFWwindow* window) {
 #if VOLCANICENGINE_LINUX

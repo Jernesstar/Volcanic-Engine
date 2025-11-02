@@ -1,35 +1,18 @@
 #pragma once
 
-#include <VolcaniCore/Core/Math.h>
 #include <VolcaniCore/Core/Defines.h>
-
-using namespace VolcaniCore;
-
-#define IM_VEC2_CLASS_EXTRA \
-	constexpr ImVec2(Vec2& v) : x(v.x), y(v.y) {} \
-	operator Vec2() const { return Vec2(x, y); }
-
-#define IM_VEC3_CLASS_EXTRA \
-	constexpr ImVec3(Vec3& v) : x(v.x), y(v.y), z(v.z) {} \
-	operator Vec3() const { return Vec3(x, y, z); }
-
-#define IM_VEC4_CLASS_EXTRA \
-	constexpr ImVec4(const Vec4& v) : x(v.x), y(v.y), z(v.z), w(v.w) {} \
-	operator Vec4() const { return Vec4(x, y, z, w); }
-
-#include <ImGuiFileDialog/ImGuiFileDialog.h>
-#include <ImGuiColorTextEdit/TextEditor.h>
-
+#include <VolcaniCore/Core/Template.h>
+#include <VolcaniCore/Core/Math.h>
 #include <VolcaniCore/Core/List.h>
 #include <VolcaniCore/Core/TimeUtils.h>
 #include <VolcaniCore/Core/FileUtils.h>
 
-#include <Magma/Script/ScriptEngine.h>
+#include <Lava/Script/ScriptEngine.h>
 
-#include "Core/Integration.h"
-#include "Core/AssetImporter.h"
+#include "Asset/AssetImporter.h"
 
-using namespace Magma::Script;
+using namespace VolcaniCore;
+using namespace Lava::Script;
 
 namespace Magma::UI {
 
@@ -261,9 +244,6 @@ public:
 
 	bool StartSelect = false;
 
-private:
-	IGFD::FileDialogConfig Config;
-
 public:
 	FileDialog(const std::string& id)
 		: Widget(id, WidgetType::FileDialog) { }
@@ -274,7 +254,6 @@ public:
 
 class FileEditor : public Widget {
 public:
-	TextEditor Editor;
 
 public:
 	FileEditor(const std::string& id)
@@ -300,24 +279,21 @@ public:
 	void End() override;
 };
 
-class UIManager : public Integration {
+class UIManager {
 public:
-	UIManager() = default;
-	~UIManager() = default;
+	static void Init();
+	static void Shutdown();
 
-	void Init() override;
-	void Shutdown() override;
-	
-	void BeginFrame();
-	void EndFrame();
-	void Update(TimeStep ts);
-	void Render();
+	static void BeginFrame();
+	static void EndFrame();
+	static void Update(TimeStep ts);
+	static void Render();
 
-	void Load(const std::string& path);
-	void Reload();
-	void Clear();
+	static void Load(const std::string& path);
+	static void Reload();
+	static void Clear();
 
-	Ref<Widget> GetRoot() { return m_Root; }
+	static Ref<Widget> GetRoot() { return m_Root; }
 
 	// static Window* Window(const std::string& name);
 	// static Container* Container(const std::string& name);
@@ -326,8 +302,8 @@ public:
 	// static Image* Image(const std::string& name);
 
 private:
-	Ref<Widget> m_Root;
-	std::string m_Path;
+	inline static Ref<Widget> m_Root;
+	inline static std::string m_Path;
 };
 
 }

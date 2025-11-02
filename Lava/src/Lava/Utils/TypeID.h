@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace VolcaniCore {
+namespace Lava {
 
 template<class T>
 class TypeIDGenerator {

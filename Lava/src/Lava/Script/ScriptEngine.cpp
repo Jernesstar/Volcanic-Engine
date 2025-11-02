@@ -9,7 +9,7 @@
 
 using namespace VolcaniCore;
 
-namespace Magma::Script {
+namespace Lava::Script {
 
 static asIScriptEngine* s_Engine;
 

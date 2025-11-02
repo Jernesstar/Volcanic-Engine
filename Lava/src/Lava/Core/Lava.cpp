@@ -1,17 +1,17 @@
 #include "Lava.h"
 
-#include <Magma/Core/DLL.h>
-#include <Magma/Script/ScriptEngine.h>
+#include "Script/ScriptEngine.h"
 
-#include "Component.h"
+#include "DLL.h"
 #include "ScriptGlue.h"
+#include "Component.h"
 
-using namespace Magma::Script;
+using namespace Lava::Script;
 
 namespace Lava {
 
 struct ComponentTuple {
-	Ref<Magma::DLL> DLL;
+	Ref<DLL> Lib;
 	Component* Comp;
 };
 
@@ -24,15 +24,15 @@ void InitComponents() {
 
 void LoadComponent(const std::string& path) {
 	auto [found, i] =
-		s_Components.Find([&](const auto& t) { return t.DLL->Path == path; });
+		s_Components.Find([&](const auto& t) { return t.Lib->Path == path; });
 	if(found) {
 		auto tuple = s_Components.Pop(i);
 		tuple.Comp->Shutdown();
 		delete tuple.Comp;
-		tuple.DLL.reset();
+		tuple.Lib.reset();
 	}
 
-	auto dll = CreateRef<Magma::DLL>(path);
+	auto dll = CreateRef<DLL>(path);
 	Component* component = dll->GetFunction<Component*>("CreateComponent")();
 	component->Init();
 	s_Components.Emplace(dll, component);
@@ -42,7 +42,7 @@ void CloseComponents() {
 	for(auto& tuple : s_Components) {
 		tuple.Comp->Shutdown();
 		delete tuple.Comp;
-		tuple.DLL.reset();
+		tuple.Lib.reset();
 	}
 
 	s_Components.Clear();

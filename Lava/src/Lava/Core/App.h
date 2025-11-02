@@ -3,12 +3,11 @@
 #include <VolcaniCore/Core/Defines.h>
 #include <VolcaniCore/Core/TimeUtils.h>
 
-#include <Magma/Core/Project.h>
-#include <Magma/Script/ScriptModule.h>
+#include "Core/Project.h"
+#include "Script/ScriptModule.h"
 
 using namespace VolcaniCore;
-using namespace Magma;
-using namespace Magma::Script;
+using namespace Lava::Script;
 
 namespace Lava {
 

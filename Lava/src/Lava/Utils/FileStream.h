@@ -2,7 +2,7 @@
 
 #include <fstream>
 
-namespace Magma {
+namespace Lava {
 
 class FileStream {
 public:

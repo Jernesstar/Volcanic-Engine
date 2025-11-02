@@ -5,9 +5,11 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
-#include "Buffer.h"
+#include "VolcaniCore/Core/Buffer.h"
 
-namespace VolcaniCore {
+using namespace VolcaniCore;
+
+namespace VolcanicWindow {
 
 struct WindowSpecification {
 	std::string Title;

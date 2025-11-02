@@ -3,7 +3,7 @@
 #include "Event.h"
 #include "Core/TimeUtils.h"
 
-namespace VolcaniCore {
+namespace VolcanicWindow {
 
 struct ApplicationEvent : public Event {
 protected:

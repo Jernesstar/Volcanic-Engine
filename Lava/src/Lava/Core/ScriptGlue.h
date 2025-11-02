@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Magma/Script/ScriptObject.h>
+#include "Script/ScriptObject.h"
 
-using namespace Magma::Script;
+using namespace Lava::Script;
 
 namespace Lava {
 

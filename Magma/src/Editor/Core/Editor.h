@@ -2,14 +2,15 @@
 
 #include <VolcaniCore/Core/CommandLineArgs.h>
 
-#include <Magma/Core/Project.h>
-
 #include <Lava/Core/App.h>
+#include <Lava/Core/Project.h>
 
-#include "AI/AI.h"
-#include "UI/Tab.h"
+#include "Integration/AI/AI.h"
+
+#include "Tab.h"
 
 using namespace VolcaniCore;
+using namespace Lava;
 
 namespace Magma {
 

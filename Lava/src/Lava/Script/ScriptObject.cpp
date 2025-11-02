@@ -10,7 +10,7 @@
 
 using namespace VolcaniCore;
 
-namespace Magma::Script {
+namespace Lava::Script {
 
 bool ScriptField::Is(ScriptQualifier q) {
 	switch(q) {

@@ -2,7 +2,7 @@
 
 #include <VolcaniCore/Core/Defines.h>
 
-namespace Magma {
+namespace Lava {
 
 template<typename TReturn, class ...Args>
 using FuncPtr = TReturn(*)(Args...);

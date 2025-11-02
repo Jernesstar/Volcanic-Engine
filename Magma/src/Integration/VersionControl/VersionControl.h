@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Integration.h"
+#include "Integration.h"
 
 #include <git2.h>
 

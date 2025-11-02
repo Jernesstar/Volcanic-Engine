@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Magma/Script/ScriptEngine.h>
+#include "Script/ScriptEngine.h"
 
 namespace Lava {
 

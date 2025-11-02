@@ -4,10 +4,8 @@
 #include <VolcaniCore/Core/CommandLineArgs.h>
 
 #include <Lava/Core/App.h>
-// #include <Lava/Ash/Ash.h>
 
 using namespace VolcaniCore;
-using namespace Magma;
 
 namespace Lava {
 

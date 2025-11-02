@@ -4,7 +4,6 @@
 #include <VolcaniCore/Core/Assert.h>
 #include <VolcaniCore/Core/FileUtils.h>
 
-using namespace drogon;
 using namespace VolcaniCore;
 
 #define VOLCANIC_AUTH_URL "http://localhost:8848"
@@ -41,7 +40,7 @@ void NetworkingManager::Init() {
 	s_HttpThread = CreateRef<std::thread>(
 		[]()
 		{
-			app().run();
+			// app().run();
 		});
 
 	s_HttpThread->detach();
@@ -66,74 +65,60 @@ void NetworkingManager::GitHubOAuth() {
 	bool polling = true;
 
 	while(polling) {
-		auto client = drogon::HttpClient::newHttpClient("127.0.0.1", 8848);
-		auto req = HttpRequest::newHttpRequest();
-		req->setPath("/auth/github/token");
-		req->setMethod(drogon::Get);
+		// auto client = drogon::HttpClient::newHttpClient("127.0.0.1", 8848);
+		// auto req = HttpRequest::newHttpRequest();
+		// req->setPath("/auth/github/token");
+		// req->setMethod(drogon::Get);
 
-		client->sendRequest(req,
-			[&polling](ReqResult result, const HttpResponsePtr& resp)
-			{
-				if(result != ReqResult::Ok) {
-					VOLCANICORE_LOG_INFO("Error: %s", to_string(result).c_str());
-					return;
-				}
+		// client->sendRequest(req,
+		// 	[&polling](ReqResult result, const HttpResponsePtr& resp)
+		// 	{
+		// 		if(result != ReqResult::Ok) {
+		// 			VOLCANICORE_LOG_INFO("Error: %s", to_string(result).c_str());
+		// 			return;
+		// 		}
 
-				auto responseStr = std::string(resp->getBody().data());
+		// 		auto responseStr = std::string(resp->getBody().data());
 
-				Json::CharReaderBuilder builder;
-				Json::CharReader* reader = builder.newCharReader();
-				Json::Value response;
-				reader->parse(responseStr.c_str(),
-					responseStr.c_str() + responseStr.size(), &response, nullptr);
+		// 		Json::CharReaderBuilder builder;
+		// 		Json::CharReader* reader = builder.newCharReader();
+		// 		Json::Value response;
+		// 		reader->parse(responseStr.c_str(),
+		// 			responseStr.c_str() + responseStr.size(), &response, nullptr);
 	
-				if(response["status"].asString() == "success") {
-					std::string token = response["token"].asString();
-					TokenStore::SaveToken("github", token);
-					polling = false;
-					return;
-				}
-				if(response["status"].asString() == "error") {
-					polling = false;
-					return;
-				}
-			});
+		// 		if(response["status"].asString() == "success") {
+		// 			std::string token = response["token"].asString();
+		// 			TokenStore::SaveToken("github", token);
+		// 			polling = false;
+		// 			return;
+		// 		}
+		// 		if(response["status"].asString() == "error") {
+		// 			polling = false;
+		// 			return;
+		// 		}
+		// 	});
 
 		std::this_thread::sleep_for(std::chrono::seconds(4));
 	}
 }
 
-void HttpClient::Get(const std::string& path,
-					 const Func<void, const drogon::HttpResponsePtr&> cb)
-{
-	auto req = HttpRequest::newHttpRequest();
-	req->setPath(path);
-	req->setMethod(HttpMethod::Get);
-	req->setContentTypeCode(CT_TEXT_PLAIN);
-	m_Client->sendRequest(req,
-		[&](ReqResult res, const HttpResponsePtr& response)
-		{
-			if(res == ReqResult::Ok)
-				cb(response);
-			else
-				cb(nullptr);
-		});
+void HttpClient::Get(const std::string& path, const ResponseCB& cb) {
+
 }
 
 void HttpClient::Post(const std::string& path, Bytes bytes, PayloadType type,
-					  const Func<void, const drogon::HttpResponsePtr&> cb)
+					  const ResponseCB& cb)
 {
 	
 }
 
 void HttpClient::Put(const std::string& path, Bytes bytes, PayloadType type,
-					 const Func<void, const drogon::HttpResponsePtr&> cb)
+					 const ResponseCB& cb)
 {
 }
 
-void HttpClient::Delete(const std::string& path,
-					const Func<void, const drogon::HttpResponsePtr&> cb)
-{
+void HttpClient::Delete(const std::string& path, const ResponseCB& cb) {
+
 }
 
 }

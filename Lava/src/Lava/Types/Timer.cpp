@@ -1,6 +1,6 @@
 #include "Timer.h"
 
-using namespace Magma::Script;
+using namespace Lava::Script;
 
 namespace Lava {
 

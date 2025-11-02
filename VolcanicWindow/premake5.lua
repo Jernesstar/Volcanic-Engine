@@ -15,6 +15,9 @@ project "VolcanicWindow"
     includedirs {
         "src/",
 
+        "%{RootPath}/VolcaniCore/src",
+        "%{RootPath}/VolcaniCore/src/**",
+
         "%{Includes.glfw}",
         "%{Includes.glm}",
     }

@@ -2,7 +2,7 @@
 
 #include "Application.h"
 
-namespace VolcaniCore {
+namespace VolcanicWindow {
 
 bool Input::KeyPressed(Key key) {
 	if(key == Key::Invalid)
@@ -15,36 +15,42 @@ bool Input::KeyPressed(Key key) {
 	if(key == Key::Alt)
 		return KeyPressed(Key::LeftAlt) || KeyPressed(Key::RightAlt);
 
-	auto window = Application::GetWindow()->GetNativeWindow();
+	auto window =
+		Application::As<WindowApplication>()->GetWindow()->GetNativeWindow();
 	auto state = glfwGetKey(window, (int)key);
 
 	return state == GLFW_PRESS;
 }
 
 void Input::SetCursorMode(CursorMode mode) {
-	GLFWwindow* window = Application::GetWindow()->GetNativeWindow();
+	GLFWwindow* window =
+		Application::As<WindowApplication>()->GetWindow()->GetNativeWindow();
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL + (int)mode);
 }
 
 CursorMode Input::GetCursorMode() {
-	GLFWwindow* window = Application::GetWindow()->GetNativeWindow();
+	GLFWwindow* window =
+		Application::As<WindowApplication>()->GetWindow()->GetNativeWindow();
 	return (CursorMode)glfwGetInputMode(window, GLFW_CURSOR);
 }
 
 bool Input::MouseButtonPressed(Mouse mouse_button) {
-	auto window = Application::GetWindow()->GetNativeWindow();
+	auto window =
+		Application::As<WindowApplication>()->GetWindow()->GetNativeWindow();
 	auto state = glfwGetMouseButton(window, (int)(mouse_button));
 
 	return state == GLFW_PRESS;
 }
 
 void Input::SetMousePosition(float x, float y) {
-	auto window = Application::GetWindow()->GetNativeWindow();
+	auto window =
+		Application::As<WindowApplication>()->GetWindow()->GetNativeWindow();
 	glfwSetCursorPos(window, x, y);
 }
 
 glm::vec2 Input::GetMousePosition() {
-	auto window = Application::GetWindow()->GetNativeWindow();
+	auto window =
+		Application::As<WindowApplication>()->GetWindow()->GetNativeWindow();
 	double x, y;
 	glfwGetCursorPos(window, &x, &y);
 

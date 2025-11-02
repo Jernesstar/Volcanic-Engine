@@ -1,6 +1,6 @@
 #include "ScriptModule.h"
 
-namespace Magma::Script {
+namespace Lava::Script {
 
 ScriptModule::ScriptModule(asIScriptModule* mod)
 	: m_Handle(mod)

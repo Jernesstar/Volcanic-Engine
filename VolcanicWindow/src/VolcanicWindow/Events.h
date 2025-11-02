@@ -5,8 +5,9 @@
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 
-#include "Core/Window.h"
-#include "Core/Defines.h"
+#include "VolcaniCore/Core/Defines.h"
+
+#include "Window.h"
 
 #include "Event.h"
 #include "KeyEvents.h"
@@ -15,7 +16,9 @@
 #include "ApplicationEvents.h"
 #include "EventCallback.h"
 
-namespace VolcaniCore {
+using namespace VolcaniCore;
+
+namespace VolcanicWindow {
 
 template<typename TEvent>
 using Callbacks = std::map<VolcaniCore::UUID, EventCallback<TEvent>>;

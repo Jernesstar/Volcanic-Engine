@@ -3,21 +3,14 @@
 #include "Application.h"
 #include "Assert.h"
 
-#include "Event/Events.h"
+// #include "Event/Events.h"
 
 namespace fs = std::filesystem;
 
 namespace VolcaniCore {
 
-void Application::Init() {
-	VOLCANICORE_ASSERT(glfwInit(), "Failed to initialize GLFW");
-}
-
 void Application::Close() {
 	delete s_Instance;
-
-	s_Window.reset();
-	glfwTerminate();
 	exit(0);
 }
 
@@ -25,27 +18,17 @@ Application* Application::Get() {
 	return s_Instance;
 }
 
-Ref<Window> Application::GetWindow() {
-	return s_Window;
-}
-
-Application::Application(const WindowSpecification& spec) {
+Application::Application(const AppSpecification& spec) {
 	s_Instance = this;
-	s_Window = CreateRef<Window>();
-	s_Window->Init(spec);
 }
 
 void Application::Run() {
-	while(s_Window->IsOpen()) {
+	while(true) {
 		TimePoint time = Time::GetTime();
-		TimeStep ts = time - s_LastFrame;
-		s_LastFrame = time;
-
-		Events::PollEvents();
+		TimeStep ts = time - m_LastFrame;
+		m_LastFrame = time;
 
 		s_Instance->OnUpdate(ts);
-
-		s_Window->Update();
 	}
 }
 

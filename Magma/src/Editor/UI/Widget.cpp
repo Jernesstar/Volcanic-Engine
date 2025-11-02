@@ -3,41 +3,23 @@
 #include <iostream>
 #include <fstream>
 
-#define GLM_ENABLE_EXPERIMENTAL
-
-#include <glm/gtc/quaternion.hpp>
-#include <glm/gtx/quaternion.hpp>
-
-#include <angelscript.h>
-#include <angelscript/add_on/scripthandle/scripthandle.h>
-#include <angelscript/add_on/scriptstdstring/scriptstdstring.h>
-#include <angelscript/add_on/scripthelper/scripthelper.h>
-#include <angelscript/add_on/scriptmath/scriptmath.h>
-#include <angelscript/add_on/scriptarray/scriptarray.h>
-
-#include <imgui/imgui.h>
-#include <imgui/imgui_internal.h>
-#include <imgui/backends/imgui_impl_glfw.h>
-#include <imgui/backends/imgui_impl_opengl3.h>
-#include <imgui/misc/cpp/imgui_stdlib.h>
-
-#include <ImGuizmo/ImGuizmo.h>
-
 #define CLAY_IMPLEMENTATION
 #include <clay/clay.h>
 
-#include <Magma/Core/JSONSerializer.h>
 #include <VolcaniCore/Core/Application.h>
-#include <VolcaniCore/Event/Events.h>
-#include <VolcaniCore/Core/Input.h>
+#include <VolcanicWindow/Application.h>
+#include <VolcanicWindow/Input.h>
+#include <VolcanicWindow/Events.h>
 
-#include <Magma/Script/ScriptModule.h>
-#include <Magma/Script/ScriptClass.h>
-#include <Magma/Script/ScriptObject.h>
+#include <Lava/Script/ScriptModule.h>
+#include <Lava/Script/ScriptClass.h>
+#include <Lava/Script/ScriptObject.h>
+
+#include "Utils/JSONSerializer.h"
 
 using namespace VolcaniCore;
 using namespace Magma;
-using namespace Magma::Script;
+using namespace Lava::Script;
 
 namespace Magma::UI {
 
@@ -265,32 +247,6 @@ void UIManager::Init() {
 	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS); // Smooth cubemap edges
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-
-	auto window = Application::GetWindow();
-
-	ImGuiIO& io = ImGui::GetIO();
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable
-					| ImGuiConfigFlags_ViewportsEnable
-					| ImGuiConfigFlags_NavEnableKeyboard
-					| ImGuiConfigFlags_NavEnableSetMousePos;
-	io.DisplaySize = ImVec2(window->GetWidth(), window->GetHeight());
-
-	ImGui_ImplGlfw_InitForOpenGL(window->GetNativeWindow(), true);
-	ImGui_ImplOpenGL3_Init("#version 460 core");
-
-	Events::RegisterListener<WindowResizedEvent>(
-		[](const WindowResizedEvent& event)
-		{
-			ImGuiIO& io = ImGui::GetIO();
-			io.DisplaySize = ImVec2(event.Width, event.Height);
-		});
-
-	ImGui::StyleColorsDark();
-
-	io.IniFilename = nullptr;
-
 	uint64_t totalMemorySize = Clay_MinMemorySize();
 	Clay_Arena arena =
 		Clay_CreateArenaWithCapacityAndMemory(
@@ -300,27 +256,16 @@ void UIManager::Init() {
 }
 
 void UIManager::Shutdown() {
-	ImGui_ImplOpenGL3_Shutdown();
-	ImGui_ImplGlfw_Shutdown();
-	ImGui::DestroyContext();
+
 }
 
 void UIManager::BeginFrame() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	ImGui_ImplGlfw_NewFrame();
-	ImGui_ImplOpenGL3_NewFrame();
-	ImGui::NewFrame();
-	ImGuizmo::BeginFrame();
+
 }
 
 void UIManager::EndFrame() {
-	ImGui::Render();
-	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-	GLFWwindow* context = glfwGetCurrentContext();
-	ImGui::UpdatePlatformWindows();
-	ImGui::RenderPlatformWindowsDefault();
-	glfwMakeContextCurrent(context);
 }
 
 void UIManager::Update(TimeStep ts) {
@@ -435,101 +380,17 @@ void Widget::Reposition() {
 }
 
 void Root::Begin() {
-	Width = ImGui::GetMainViewport()->Size.x;
-	Height = ImGui::GetMainViewport()->Size.y;
-	x = ImGui::GetMainViewport()->Pos.x;
-	y = ImGui::GetMainViewport()->Pos.y;
+
 }
 
 void Root::End() { }
 
 void Window::Begin() {
-	if(IsChild) {
-		auto childFlags = ImGuiChildFlags_Border
-						| ImGuiChildFlags_FrameStyle
-						| !AllowResize * ImGuiChildFlags_ResizeX
-						| !AllowResize * ImGuiChildFlags_ResizeY;
-		auto windowFlags = ImGuiWindowFlags_NoDocking
-						 | ImGuiWindowFlags_NoTitleBar
-						 | ImGuiWindowFlags_NoCollapse
-						 | !AllowMove * ImGuiWindowFlags_NoMove
-						 | !AllowResize * ImGuiWindowFlags_NoResize
-						 | !AllowScroll * ImGuiWindowFlags_NoScrollWithMouse
-						 | !AllowScroll * ImGuiWindowFlags_NoScrollbar
-						 | ImGuiWindowFlags_NoBringToFrontOnFocus
-						 | ImGuiWindowFlags_NoNavFocus;
 
-		ImGui::SetNextWindowPos({ Parent->x + x, Parent->y + y });
-		ImGui::SetNextWindowSize({ Width, Height });
-		ImGui::PushStyleColor(ImGuiCol_FrameBg, Color);
-		ImGui::BeginChild(("##" + ID).c_str(), { }, childFlags, windowFlags);
-		ImGui::PopStyleColor();
-	}
-	else {
-		auto windowFlags = ImGuiWindowFlags_NoDocking
-						 | ImGuiWindowFlags_NoTitleBar
-						 | ImGuiWindowFlags_NoCollapse
-						 | !AllowMove * ImGuiWindowFlags_NoMove
-						 | !AllowResize * ImGuiWindowFlags_NoResize
-						 | !AllowScroll * ImGuiWindowFlags_NoScrollWithMouse
-						 | !AllowScroll * ImGuiWindowFlags_NoScrollbar
-						 | ImGuiWindowFlags_NoBringToFrontOnFocus
-						 | ImGuiWindowFlags_NoNavFocus;
-
-		// ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0f);
-		// ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 10.0f);
-		// ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
-		// ImGui::PushStyleColor(ImGuiCol_Border, BorderColor);
-		ImGui::PushStyleColor(ImGuiCol_WindowBg, Color);
-
-		ImGui::SetNextWindowSize({ Width, Height });
-		if(IsRoot) {
-			const ImGuiViewport* viewport = ImGui::GetMainViewport();
-
-			if(!x)
-				x = viewport->Pos.x;
-			if(!y)
-				y = viewport->Pos.y;
-
-			if(!Width)
-				Width = viewport->Size.x;
-			if(!Height)
-				Height = viewport->Size.y;
-
-			ImGui::SetNextWindowViewport(viewport->ID);
-			ImGui::SetNextWindowPos({ viewport->Pos.x, viewport->Pos.y });
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowMinSize, { 0.0f, 0.0f });
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-		}
-		else
-			ImGui::SetNextWindowPos({ Parent->x + x, Parent->y + y });
-
-		ImGui::Begin(("##" + ID).c_str(), nullptr, windowFlags);
-
-		if(AllowDock) {
-			ImGuiID dockspaceID = ImGui::GetID("DockSpace");
-			ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f),
-				ImGuiDockNodeFlags_PassthruCentralNode);
-		}
-
-		ImGui::PopStyleColor();
-		ImGui::PopStyleVar(IsRoot * 3);
-	}
-
-	State.Clicked = ImGui::IsMouseClicked(0) && ImGui::IsWindowHovered();
-	State.Held = ImGui::IsMouseDown(0) && ImGui::IsWindowHovered();
-	State.Released = ImGui::IsMouseReleased(0) && ImGui::IsWindowHovered();
-	State.Hovered = ImGui::IsWindowHovered();
-	// State.NavFocused = ;
-	State.Dragging = ImGui::IsMouseDragging(0) && ImGui::IsWindowHovered();
 }
 
 void Window::End() {
-	if(IsChild)
-		ImGui::EndChild();
-	else
-		ImGui::End();
+
 }
 
 void Container::Begin() {
@@ -549,18 +410,7 @@ void Dropdown::End() {
 }
 
 void Button::Begin() {
-	ImGui::SetNextItemAllowOverlap();
-	ImGui::SetCursorPos({ x, y });
-	ImGui::InvisibleButton(("##" + ID).c_str(), ImVec2(Width, Height));
-	State.Clicked = ImGui::IsItemClicked(0);
-	State.Hovered = ImGui::IsItemHovered();
-	State.Released = ImGui::IsMouseReleased(0) && ImGui::IsItemHovered();
-	State.Held = ImGui::IsItemActive();
-	State.Dragging = ImGui::IsItemActive();
 
-	auto* drawlist = ImGui::GetWindowDrawList();
-	drawlist->AddRectFilled(ImGui::GetItemRectMin(), ImGui::GetItemRectMax(),
-		IM_COL32(uint32_t(Color.r), uint32_t(Color.g), uint32_t(Color.b), uint32_t(Color.a)), 4.0f);
 }
 
 void Button::End() {
@@ -568,10 +418,7 @@ void Button::End() {
 }
 
 void Image::Begin() {
-	ImGui::SetCursorPos({ Parent->x + x, Parent->y + y });
-	ImGui::Image(
-		(ImTextureID)(intptr_t)Asset->ID, { Width, Height },
-		ImVec2(0, 1), ImVec2(1, 0));
+
 }
 
 void Image::End() {
@@ -579,13 +426,11 @@ void Image::End() {
 }
 
 void Text::Begin() {
-	ImGui::SetCursorPos({ Parent->x + x, Parent->y + y });
-	ImGui::SetWindowFontScale(Scale);
-	ImGui::Text(Label.c_str());
+
 }
 
 void Text::End() {
-	ImGui::SetWindowFontScale(1.0f);
+
 }
 
 void TextInput::Begin() {
@@ -601,27 +446,7 @@ void FileDialog::Begin() {
 }
 
 void FileDialog::End() {
-	auto instance = ImGuiFileDialog::Instance();
-	if(StartSelect) {
-		IGFD::FileDialogConfig config;
-		config.path = StartPath;
-		std::string exts;
-		for(auto& ext : Extensions)
-			exts += "." + ext + ",";
-	
-		instance->OpenDialog(Title, Title, exts.c_str(), config);
-		StartSelect = false;
-	}
 
-	// Returns true when an action has been taken (select or cancel)
-	if(instance->Display(Title, ImGuiWindowFlags_NoCollapse, { Width, Height }))
-	{
-		if(instance->IsOk()) {
-			std::string path = instance->GetFilePathName();
-			OnSelect(path);
-		}
-		instance->Close();
-	}
 }
 
 void FileEditor::Begin() {
@@ -642,38 +467,6 @@ void Gizmo::End() {
 
 // void Tab::Begin() {
 
-// 	ImVec2 size = ImGui::CalcTextSize(name.c_str());
-// 	static const float tabHeight = 6.0f;
-// 	float radius = closeButton * tabHeight * 0.5f;
-// 	float padding = closeButton * tabHeight + 14;
-
-// 	ImGui::SetNextItemWidth(size.x + padding);
-
-// 	ImGui::PushID(s_Stack.Count());
-// 	bool tabItem =
-// 		ImGui::BeginTabItem(name.c_str(), nullptr,
-// 			closeButton * ImGuiTabItemFlags_NoReorder);
-// 	ImGui::PopID();
-
-// 	ImVec2 closeButtonPos;
-// 	closeButtonPos.x = ImGui::GetItemRectMax().x - 4.0f*radius;
-// 	closeButtonPos.y = ImGui::GetItemRectMin().y + radius;
-
-// 	// ImGuiTabBar* tabBar = ImGui::GetCurrentTabBar();
-
-// 	TabState state;
-// 	if(tabItem) {
-// 		state.Clicked = ImGui::IsItemClicked(0);
-// 		state.Hovered = ImGui::IsItemHovered();
-// 		ImGui::EndTabItem();
-// 	}
-
-// 	if(closeButton) {
-// 		auto closeButtonID = ImGui::GetID((int*)s_Stack.Count());
-// 		state.Closed = ImGui::CloseButton(closeButtonID, closeButtonPos);
-// 	}
-
-// 	return state;
 // }
 
 }

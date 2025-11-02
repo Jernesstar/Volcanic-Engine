@@ -14,25 +14,17 @@ project "Lava"
 
     includedirs {
         "src/**",
-        "src/Lava/",
 
         "%{RootPath}/VolcaniCore/src",
         "%{RootPath}/VolcaniCore/src/VolcaniCore",
 
-        "%{RootPath}/Magma/src",
-        "%{RootPath}/Magma/src/Magma",
-
-        "%{Includes.yaml_cpp}",
-        "%{Includes.rapidjson}",
-
         "%{Includes.glm}",
         "%{Includes.glfw}",
         "%{Includes.angelscript}",
-        "%{MagmaVendorDir}",
+        "%{LavaVendorDir}",
     }
 
     links {
-        "Magma",
         "VolcaniCore",
     }
 
@@ -49,3 +41,5 @@ project "Lava"
 
     filter "system:windows"
         systemversion "latest"
+
+include "Lava/.deps/angelscript"

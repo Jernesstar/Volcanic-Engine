@@ -23,7 +23,7 @@
                     "Height": 50.0,
                     "x": 5.0,
                     "y": 5.0,
-                    "Asset": "Editor/assets/images/VolcanicDisplay.png"
+                    "Asset": "Magma/assets/images/VolcanicDisplay.png"
                 },
                 {
                     "Name": "TitleText",
@@ -55,7 +55,7 @@
                             "Height": 20.0,
                             "x": 5.0,
                             "y": 5.0,
-                            "Asset": "Editor/assets/images/Minimize.png"
+                            "Asset": "Magma/assets/images/Minimize.png"
                         }
                     ]
                 },
@@ -79,7 +79,7 @@
                             "Height": 20.0,
                             "x": 0.0,
                             "y": 0.0,
-                            "Asset": "Editor/assets/images/Close.png"
+                            "Asset": "Magma/assets/images/Close.png"
                         }
                     ]
                 },
@@ -103,7 +103,7 @@
                             "Height": 30.0,
                             "x": 0.0,
                             "y": 0.0,
-                            "Asset": "Editor/assets/images/Account.png"
+                            "Asset": "Magma/assets/images/Account.png"
                         }
                     ]
                 }

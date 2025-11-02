@@ -1,6 +1,6 @@
 #include "BinaryReader.h"
 
-namespace Magma {
+namespace Lava {
 
 template<>
 BinaryReader& BinaryReader::ReadObject(std::string& str) {

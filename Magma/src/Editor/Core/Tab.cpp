@@ -2,8 +2,8 @@
 
 #include <VolcaniCore/Core/FileUtils.h>
 
-#include <Magma/Script/ScriptEngine.h>
-#include <Magma/Script/ScriptClass.h>
+#include <Lava/Script/ScriptEngine.h>
+#include <Lava/Script/ScriptClass.h>
 
 #include "Editor.h"
 #include "AssetImporter.h"
@@ -11,7 +11,7 @@
 
 namespace fs = std::filesystem;
 
-using namespace Magma::Script;
+using namespace Lava::Script;
 
 namespace Magma::UI {
 

@@ -1,6 +1,6 @@
 #pragma once
 
-namespace VolcaniCore {
+namespace VolcanicWindow {
 
 enum class EventCategory { Key, Mouse, Window, Application };
 

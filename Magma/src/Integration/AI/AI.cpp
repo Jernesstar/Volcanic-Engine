@@ -37,15 +37,16 @@ Response Assistant::HandleRequest(const std::string& request) {
 	Bytes data(request.length() * sizeof(char));
 	data.Set(request.data(), request.length());
 
-	auto client = HttpClient("127.0.0.1", 8080);
-	client.Post("/completion", std::move(data), PayloadType::Json,
-		[](const drogon::HttpResponsePtr& response)
-		{
-			if(response)
-				std::cout << response->getBody() << std::endl;
-			else
-				std::cout << "Error: " << std::endl;
-		});
+	// auto client = HttpClient("127.0.0.1", 8080);
+	// client.Post("/completion", std::move(data), PayloadType::Json,
+	// 	[](const drogon::HttpResponsePtr& response)
+	// 	{
+	// 		if(response)
+	// 			std::cout << response->getBody() << std::endl;
+	// 		else
+	// 			std::cout << "Error: " << std::endl;
+	// 	});
+
 }
 
 }

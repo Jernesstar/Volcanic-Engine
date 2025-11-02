@@ -15,16 +15,15 @@
 #include <angelscript/add_on/scriptmath/scriptmath.h>
 #include <angelscript/add_on/scriptarray/scriptarray.h>
 
-#include <VolcaniCore/Core/Input.h>
+// #include <VolcaniCore/Core/Input.h>
 #include <VolcaniCore/Core/Math.h>
-#include <VolcaniCore/Event/KeyEvents.h>
-#include <VolcaniCore/Event/MouseEvents.h>
+// #include <VolcaniCore/Event/KeyEvents.h>
+// #include <VolcaniCore/Event/MouseEvents.h>
 
-// #include <Magma/Core/AssetManager.h>
-#include <Magma/Script/ScriptEngine.h>
-#include <Magma/Script/ScriptModule.h>
-#include <Magma/Script/ScriptClass.h>
-#include <Magma/Script/ScriptObject.h>
+#include "Script/ScriptEngine.h"
+#include "Script/ScriptModule.h"
+#include "Script/ScriptClass.h"
+#include "Script/ScriptObject.h"
 
 #include "Types/GridSet.h"
 #include "Types/GridSet3D.h"
@@ -32,16 +31,14 @@
 
 #include "App.h"
 
-using namespace Magma;
-using namespace Magma::Script;
+using namespace Lava::Script;
 
 namespace Lava {
 
 static void RegisterGlobalFunctions();
 static void RegisterTypes();
 static void RegisterECS();
-static void RegisterPhysics();
-static void RegisterEvents();
+// static void RegisterEvents();
 
 void ScriptGlue::RegisterInterface() {
 	auto* engine = ScriptEngine::Get();
@@ -51,7 +48,7 @@ void ScriptGlue::RegisterInterface() {
 	RegisterScriptMath(engine);
 	RegisterScriptArray(engine, true);
 
-	RegisterEvents();
+	// RegisterEvents();
 	ScriptEngine::RegisterInterface("IApp")
 		.AddMethod("void OnLoad()")
 		.AddMethod("void OnClose()")
@@ -242,138 +239,138 @@ void RegisterTypes() {
 	// engine->SetDefaultNamespace("");
 }
 
-static KeyPressedEvent* KeyPressedEventCast(KeyEvent* event) {
-	if(event->Type != EventType::KeyPressed)
-		return nullptr;
-	return static_cast<KeyPressedEvent*>(event);
-}
+// static KeyPressedEvent* KeyPressedEventCast(KeyEvent* event) {
+// 	if(event->Type != EventType::KeyPressed)
+// 		return nullptr;
+// 	return static_cast<KeyPressedEvent*>(event);
+// }
 
-static KeyReleasedEvent* KeyReleasedEventCast(KeyEvent* event) {
-	if(event->Type != EventType::KeyReleased)
-		return nullptr;
-	return static_cast<KeyReleasedEvent*>(event);
-}
+// static KeyReleasedEvent* KeyReleasedEventCast(KeyEvent* event) {
+// 	if(event->Type != EventType::KeyReleased)
+// 		return nullptr;
+// 	return static_cast<KeyReleasedEvent*>(event);
+// }
 
-static KeyCharEvent* KeyCharacterEventCast(KeyEvent* event) {
-	if(event->Type != EventType::KeyChar)
-		return nullptr;
-	return static_cast<KeyCharEvent*>(event);
-}
+// static KeyCharEvent* KeyCharacterEventCast(KeyEvent* event) {
+// 	if(event->Type != EventType::KeyChar)
+// 		return nullptr;
+// 	return static_cast<KeyCharEvent*>(event);
+// }
 
-static MouseButtonPressedEvent* MousePressedEventCast(MouseEvent* event) {
-	if(event->Type != EventType::MouseButtonPressed)
-		return nullptr;
-	return static_cast<MouseButtonPressedEvent*>(event);
-}
+// static MouseButtonPressedEvent* MousePressedEventCast(MouseEvent* event) {
+// 	if(event->Type != EventType::MouseButtonPressed)
+// 		return nullptr;
+// 	return static_cast<MouseButtonPressedEvent*>(event);
+// }
 
-void RegisterEvents() {
-	auto* engine = ScriptEngine::Get();
+// void RegisterEvents() {
+// 	auto* engine = ScriptEngine::Get();
 
-	engine->RegisterEnum("Mouse");
-	engine->RegisterEnumValue("Mouse", "Left", 0);
-	engine->RegisterEnumValue("Mouse", "Right", 1);
-	engine->RegisterEnumValue("Mouse", "Middle", 2);
+// 	engine->RegisterEnum("Mouse");
+// 	engine->RegisterEnumValue("Mouse", "Left", 0);
+// 	engine->RegisterEnumValue("Mouse", "Right", 1);
+// 	engine->RegisterEnumValue("Mouse", "Middle", 2);
 
-	engine->RegisterEnum("Key");
-	engine->RegisterEnumValue("Key", "A", 65);
-	engine->RegisterEnumValue("Key", "B", 66);
-	engine->RegisterEnumValue("Key", "C", 67);
-	engine->RegisterEnumValue("Key", "D", 68);
-	engine->RegisterEnumValue("Key", "E", 69);
-	engine->RegisterEnumValue("Key", "F", 70);
-	engine->RegisterEnumValue("Key", "G", 71);
-	engine->RegisterEnumValue("Key", "H", 72);
-	engine->RegisterEnumValue("Key", "I", 73);
-	engine->RegisterEnumValue("Key", "J", 74);
-	engine->RegisterEnumValue("Key", "K", 75);
-	engine->RegisterEnumValue("Key", "L", 76);
-	engine->RegisterEnumValue("Key", "M", 77);
-	engine->RegisterEnumValue("Key", "N", 78);
-	engine->RegisterEnumValue("Key", "O", 79);
-	engine->RegisterEnumValue("Key", "P", 80);
-	engine->RegisterEnumValue("Key", "Q", 81);
-	engine->RegisterEnumValue("Key", "R", 82);
-	engine->RegisterEnumValue("Key", "S", 83);
-	engine->RegisterEnumValue("Key", "T", 84);
-	engine->RegisterEnumValue("Key", "U", 85);
-	engine->RegisterEnumValue("Key", "V", 86);
-	engine->RegisterEnumValue("Key", "W", 87);
-	engine->RegisterEnumValue("Key", "X", 88);
-	engine->RegisterEnumValue("Key", "Y", 89);
-	engine->RegisterEnumValue("Key", "Z", 90);
+// 	engine->RegisterEnum("Key");
+// 	engine->RegisterEnumValue("Key", "A", 65);
+// 	engine->RegisterEnumValue("Key", "B", 66);
+// 	engine->RegisterEnumValue("Key", "C", 67);
+// 	engine->RegisterEnumValue("Key", "D", 68);
+// 	engine->RegisterEnumValue("Key", "E", 69);
+// 	engine->RegisterEnumValue("Key", "F", 70);
+// 	engine->RegisterEnumValue("Key", "G", 71);
+// 	engine->RegisterEnumValue("Key", "H", 72);
+// 	engine->RegisterEnumValue("Key", "I", 73);
+// 	engine->RegisterEnumValue("Key", "J", 74);
+// 	engine->RegisterEnumValue("Key", "K", 75);
+// 	engine->RegisterEnumValue("Key", "L", 76);
+// 	engine->RegisterEnumValue("Key", "M", 77);
+// 	engine->RegisterEnumValue("Key", "N", 78);
+// 	engine->RegisterEnumValue("Key", "O", 79);
+// 	engine->RegisterEnumValue("Key", "P", 80);
+// 	engine->RegisterEnumValue("Key", "Q", 81);
+// 	engine->RegisterEnumValue("Key", "R", 82);
+// 	engine->RegisterEnumValue("Key", "S", 83);
+// 	engine->RegisterEnumValue("Key", "T", 84);
+// 	engine->RegisterEnumValue("Key", "U", 85);
+// 	engine->RegisterEnumValue("Key", "V", 86);
+// 	engine->RegisterEnumValue("Key", "W", 87);
+// 	engine->RegisterEnumValue("Key", "X", 88);
+// 	engine->RegisterEnumValue("Key", "Y", 89);
+// 	engine->RegisterEnumValue("Key", "Z", 90);
 
-	engine->RegisterEnumValue("Key", "Space", 32);
-	engine->RegisterEnumValue("Key", "Ctrl", 224 + 230);
-	engine->RegisterEnumValue("Key", "Shift", 225 + 229);
-	engine->RegisterEnumValue("Key", "Enter", 257);
+// 	engine->RegisterEnumValue("Key", "Space", 32);
+// 	engine->RegisterEnumValue("Key", "Ctrl", 224 + 230);
+// 	engine->RegisterEnumValue("Key", "Shift", 225 + 229);
+// 	engine->RegisterEnumValue("Key", "Enter", 257);
 
-	engine->RegisterEnumValue("Key", "Right", 262);
-	engine->RegisterEnumValue("Key", "Left",  263);
-	engine->RegisterEnumValue("Key", "Down",  264);
-	engine->RegisterEnumValue("Key", "Up",    265);
+// 	engine->RegisterEnumValue("Key", "Right", 262);
+// 	engine->RegisterEnumValue("Key", "Left",  263);
+// 	engine->RegisterEnumValue("Key", "Down",  264);
+// 	engine->RegisterEnumValue("Key", "Up",    265);
 
-	engine->SetDefaultNamespace("Input");
-	engine->RegisterGlobalFunction("bool KeyPressed(Key key)",
-		asFUNCTION(Input::KeyPressed), asCALL_CDECL);
-	engine->RegisterGlobalFunction("bool MousePressed(Mouse button)",
-		asFUNCTION(Input::MouseButtonPressed), asCALL_CDECL);
-	engine->SetDefaultNamespace("");
+// 	engine->SetDefaultNamespace("Input");
+// 	engine->RegisterGlobalFunction("bool KeyPressed(Key key)",
+// 		asFUNCTION(Input::KeyPressed), asCALL_CDECL);
+// 	engine->RegisterGlobalFunction("bool MousePressed(Mouse button)",
+// 		asFUNCTION(Input::MouseButtonPressed), asCALL_CDECL);
+// 	engine->SetDefaultNamespace("");
 
-	engine->RegisterEnum("EventType");
-	engine->RegisterEnumValue("EventType", "KeyPressed",	0);
-	engine->RegisterEnumValue("EventType", "KeyReleased",	1);
-	engine->RegisterEnumValue("EventType", "KeyCharacter",	2);
-	engine->RegisterEnumValue("EventType", "MouseMoved",	3);
-	engine->RegisterEnumValue("EventType", "MouseScrolled", 4);
-	engine->RegisterEnumValue("EventType", "MousePressed",	5);
-	engine->RegisterEnumValue("EventType", "MouseReleased", 6);
+// 	engine->RegisterEnum("EventType");
+// 	engine->RegisterEnumValue("EventType", "KeyPressed",	0);
+// 	engine->RegisterEnumValue("EventType", "KeyReleased",	1);
+// 	engine->RegisterEnumValue("EventType", "KeyCharacter",	2);
+// 	engine->RegisterEnumValue("EventType", "MouseMoved",	3);
+// 	engine->RegisterEnumValue("EventType", "MouseScrolled", 4);
+// 	engine->RegisterEnumValue("EventType", "MousePressed",	5);
+// 	engine->RegisterEnumValue("EventType", "MouseReleased", 6);
 
-	engine->RegisterObjectType("KeyEvent", 0, asOBJ_REF | asOBJ_NOCOUNT);
-	engine->RegisterObjectProperty("KeyEvent", "const EventType Type",
-		asOFFSET(KeyEvent, Type));
-	engine->RegisterObjectProperty("KeyEvent", "const Key Key",
-		asOFFSET(KeyEvent, Key));
+// 	engine->RegisterObjectType("KeyEvent", 0, asOBJ_REF | asOBJ_NOCOUNT);
+// 	engine->RegisterObjectProperty("KeyEvent", "const EventType Type",
+// 		asOFFSET(KeyEvent, Type));
+// 	engine->RegisterObjectProperty("KeyEvent", "const Key Key",
+// 		asOFFSET(KeyEvent, Key));
 
-	engine->RegisterObjectType("KeyPressedEvent", 0, asOBJ_REF | asOBJ_NOCOUNT);
-	engine->RegisterObjectProperty("KeyPressedEvent", "const EventType Type",
-		asOFFSET(KeyPressedEvent, Type));
-	engine->RegisterObjectProperty("KeyPressedEvent", "const Key Key",
-		asOFFSET(KeyPressedEvent, Key));
-	engine->RegisterObjectProperty("KeyPressedEvent", "const bool IsRepeat",
-		asOFFSET(KeyPressedEvent, IsRepeat));
+// 	engine->RegisterObjectType("KeyPressedEvent", 0, asOBJ_REF | asOBJ_NOCOUNT);
+// 	engine->RegisterObjectProperty("KeyPressedEvent", "const EventType Type",
+// 		asOFFSET(KeyPressedEvent, Type));
+// 	engine->RegisterObjectProperty("KeyPressedEvent", "const Key Key",
+// 		asOFFSET(KeyPressedEvent, Key));
+// 	engine->RegisterObjectProperty("KeyPressedEvent", "const bool IsRepeat",
+// 		asOFFSET(KeyPressedEvent, IsRepeat));
 
-	engine->RegisterObjectType("KeyReleasedEvent", 0, asOBJ_REF | asOBJ_NOCOUNT);
-	engine->RegisterObjectProperty("KeyReleasedEvent", "const EventType Type",
-		asOFFSET(KeyReleasedEvent, Type));
-	engine->RegisterObjectProperty("KeyReleasedEvent", "const Key Key",
-		asOFFSET(KeyReleasedEvent, Key));
+// 	engine->RegisterObjectType("KeyReleasedEvent", 0, asOBJ_REF | asOBJ_NOCOUNT);
+// 	engine->RegisterObjectProperty("KeyReleasedEvent", "const EventType Type",
+// 		asOFFSET(KeyReleasedEvent, Type));
+// 	engine->RegisterObjectProperty("KeyReleasedEvent", "const Key Key",
+// 		asOFFSET(KeyReleasedEvent, Key));
 
-	engine->RegisterObjectType("KeyCharacterEvent", 0, asOBJ_REF | asOBJ_NOCOUNT);
-	engine->RegisterObjectProperty("KeyCharacterEvent", "const EventType Type",
-		asOFFSET(KeyCharEvent, Type));
-	engine->RegisterObjectProperty("KeyCharacterEvent", "const Key Key",
-		asOFFSET(KeyCharEvent, Key));
-	engine->RegisterObjectMethod("KeyCharacterEvent", "string get_Char() const property",
-		asMETHOD(KeyCharEvent, ToString), asCALL_THISCALL);
+// 	engine->RegisterObjectType("KeyCharacterEvent", 0, asOBJ_REF | asOBJ_NOCOUNT);
+// 	engine->RegisterObjectProperty("KeyCharacterEvent", "const EventType Type",
+// 		asOFFSET(KeyCharEvent, Type));
+// 	engine->RegisterObjectProperty("KeyCharacterEvent", "const Key Key",
+// 		asOFFSET(KeyCharEvent, Key));
+// 	engine->RegisterObjectMethod("KeyCharacterEvent", "string get_Char() const property",
+// 		asMETHOD(KeyCharEvent, ToString), asCALL_THISCALL);
 
-	engine->RegisterObjectMethod("KeyEvent", "KeyPressedEvent@ opCast()",
-		asFUNCTION(KeyPressedEventCast), asCALL_CDECL_OBJLAST);
-	engine->RegisterObjectMethod("KeyEvent", "KeyReleasedEvent@ opCast()",
-		asFUNCTION(KeyReleasedEventCast), asCALL_CDECL_OBJLAST);
-	engine->RegisterObjectMethod("KeyEvent", "KeyCharacterEvent@ opCast()",
-		asFUNCTION(KeyCharacterEventCast), asCALL_CDECL_OBJLAST);
+// 	engine->RegisterObjectMethod("KeyEvent", "KeyPressedEvent@ opCast()",
+// 		asFUNCTION(KeyPressedEventCast), asCALL_CDECL_OBJLAST);
+// 	engine->RegisterObjectMethod("KeyEvent", "KeyReleasedEvent@ opCast()",
+// 		asFUNCTION(KeyReleasedEventCast), asCALL_CDECL_OBJLAST);
+// 	engine->RegisterObjectMethod("KeyEvent", "KeyCharacterEvent@ opCast()",
+// 		asFUNCTION(KeyCharacterEventCast), asCALL_CDECL_OBJLAST);
 
-	engine->RegisterObjectType("MouseEvent", 0, asOBJ_REF | asOBJ_NOCOUNT);
-	// engine->RegisterObjectProperty("MouseEvent", "const EventType Type",
-	// 	asOFFSET(MouseEvent, Type));
+// 	engine->RegisterObjectType("MouseEvent", 0, asOBJ_REF | asOBJ_NOCOUNT);
+// 	// engine->RegisterObjectProperty("MouseEvent", "const EventType Type",
+// 	// 	asOFFSET(MouseEvent, Type));
 
-	// engine->RegisterObjectType("MousePressedEvent", 0, asOBJ_REF | asOBJ_NOCOUNT);
-	// engine->RegisterObjectProperty("MousePressedEvent", "const EventType Type",
-	// 	asOFFSET(MouseButtonPressedEvent, Type));
-	// engine->RegisterObjectProperty("MousePressedEvent", "const Mouse Button",
-	// 	asOFFSET(MouseButtonPressedEvent, Button));
+// 	// engine->RegisterObjectType("MousePressedEvent", 0, asOBJ_REF | asOBJ_NOCOUNT);
+// 	// engine->RegisterObjectProperty("MousePressedEvent", "const EventType Type",
+// 	// 	asOFFSET(MouseButtonPressedEvent, Type));
+// 	// engine->RegisterObjectProperty("MousePressedEvent", "const Mouse Button",
+// 	// 	asOFFSET(MouseButtonPressedEvent, Button));
 
-}
+// }
 
 // static Component* EntityAddComponent(const std::string& name, Entity* entity) {
 

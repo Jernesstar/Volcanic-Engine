@@ -1,6 +1,6 @@
 #pragma once
 
-#include <VolcaniCore/Core/Application.h>
+#include <VolcanicWindow/Application.h>
 #include <VolcaniCore/Core/CommandLineArgs.h>
 
 #include "Editor.h"
@@ -9,12 +9,12 @@ using namespace VolcaniCore;
 
 namespace Magma {
 
-class EditorApp : public Application {
+class EditorApp : public VolcanicWindow::WindowApplication {
 public:
 	EditorApp(const CommandLineArgs& args);
 	~EditorApp();
 
-	void OnUpdate(TimeStep ts);
+	void OnUpdate(TimeStep ts) override;
 
 	Editor& GetEditor() { return m_Editor; }
 

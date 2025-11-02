@@ -5,7 +5,7 @@
 
 using namespace VolcaniCore;
 
-namespace Magma {
+namespace Lava {
 
 class Project {
 public:

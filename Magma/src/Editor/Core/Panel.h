@@ -4,10 +4,10 @@
 #include <VolcaniCore/Core/Template.h>
 #include <VolcaniCore/Core/TimeUtils.h>
 
-#include <Magma/Script/ScriptObject.h>
+#include <Lava/Script/ScriptObject.h>
 
 using namespace VolcaniCore;
-using namespace Magma::Script;
+using namespace Lava::Script;
 
 namespace Magma::UI {
 

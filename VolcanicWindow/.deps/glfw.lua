@@ -3,8 +3,8 @@ project "glfw"
     language "C"
     staticruntime "Off"
 
-    objdir ("%{RootPath}/build/%{_ACTION}/VolcaniCore/obj")
-    targetdir ("%{RootPath}/build/%{_ACTION}/VolcaniCore/lib")
+    objdir ("%{RootPath}/build/VolcaniCore/obj")
+    targetdir ("%{RootPath}/build/VolcaniCore/lib")
 
     files {
         "%{VendorPaths.glfw}/src/context.c",
@@ -62,5 +62,6 @@ project "glfw"
         }
 
         defines {
-            "_GLFW_X11"
+            "_GLFW_X11",
+            "GLFW_USE_GLX=ON"
         }

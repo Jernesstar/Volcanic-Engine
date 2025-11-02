@@ -1,16 +1,18 @@
 #include "EditorApp.h"
 
 #include <VolcaniCore/Core/Log.h>
-#include <VolcaniCore/Event/Events.h>
+#include <VolcanicWindow/Application.h>
+#include <VolcanicWindow/Events.h>
 
 #include <Lava/Core/Lava.h>
 
 using namespace VolcaniCore;
+using namespace VolcanicWindow;
 
 namespace Magma {
 
 EditorApp::EditorApp(const CommandLineArgs& args)
-	: Application({ "Magma Editor v0.1.0", 1400, 800, true })
+	: WindowApplication({ "Magma Editor v0.1.0", 1400, 800, true })
 {
 	Events::RegisterListener<KeyPressedEvent>(
 		[](const KeyPressedEvent& event)

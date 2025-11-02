@@ -8,7 +8,7 @@
 
 using namespace VolcaniCore;
 
-namespace Magma {
+namespace Lava {
 
 class BinaryReader : public FileStream {
 public:

@@ -1,35 +1,31 @@
 #include "Editor.h"
 
-#include <imgui/imgui.h>
-#include <imgui/imgui_internal.h>
-#include <imgui/misc/cpp/imgui_stdlib.h>
-
 #include <fstream>
 #include <iostream>
 #include <regex>
 
 #include <VolcaniCore/Core/Application.h>
-#include <VolcaniCore/Event/Events.h>
 #include <VolcaniCore/Core/Algo.h>
 #include <VolcaniCore/Core/FileUtils.h>
 #include <VolcaniCore/Core/Log.h>
-#include <VolcaniCore/Core/Input.h>
 
-#include <Magma/Core/YAMLSerializer.h>
+#include <VolcanicWindow/Application.h>
+#include <VolcanicWindow/Events.h>
+#include <VolcanicWindow/Input.h>
 
 #include <Lava/Core/Lava.h>
 
-#include "Networking/Networking.h"
-#include "UI/Widget.h"
-#include "VersionControl/VersionControl.h"
-#include "AI/AI.h"
+#include "Integration/AI/AI.h"
+#include "Integration/VersionControl/VersionControl.h"
+#include "Integration/Lang/ScriptManager.h"
 
-#include "AssetImporter.h"
-#include "ScriptManager.h"
-#include "Widget.h"
+#include "UI/Widget.h"
+#include "Networking/Networking.h"
+#include "Asset/AssetImporter.h"
+#include "Utils/YAMLSerializer.h"
 
 using namespace VolcaniCore;
-using namespace Magma;
+using namespace VolcanicWindow;
 
 namespace fs = std::filesystem;
 
@@ -43,42 +39,38 @@ static Map<std::string, Ref<ScriptModule>> s_TabModules;
 
 static Ref<Texture> s_Logo;
 
-static Networking::NetworkingManager* s_NetManager = nullptr;
-static UI::UIManager* s_UIManager = nullptr;
 static VC::VCManager* s_VCManager = nullptr;
 // static AI::AIManager* s_AIManager = nullptr;
+// static Lang::LangManager* s_LangManager = nullptr;
+// static Collab::CollabManager* s_CollabManager = nullptr;
 
 void Editor::Open() {
 	// Editor::RegisterInterface();
 
-	s_NetManager = new Networking::NetworkingManager();
-	s_NetManager->Init();
-
-	s_UIManager = new UI::UIManager();
-	s_UIManager->Init();
-	s_UIManager->Load("Editor/assets/UI/start.json");
-
-	s_VCManager = new VC::VCManager();
-	s_VCManager->Init();
-
-	// s_AIManager = new AI::AIManager();
-	// s_AIManager->Init();
+	UI::UIManager::Init();
+	UI::UIManager::Load("Magma/assets/UI/start.json");
 
 	Application::PushDir();
 	auto logo =
 		AssetImporter::GetImageData(
-			"Editor/assets/images/VolcanicDisplay.png", false);
+			"Magma/assets/images/VolcanicDisplay.png", false);
 	Application::PopDir();
 
-	auto window = Application::GetWindow();
+	auto window = Application::As<WindowApplication>()->GetWindow();
 	window->SetIcon(*(Icon*)&logo);
 
 	Events::RegisterListener<KeyPressedEvent>(
 		[this](const KeyPressedEvent& event)
 		{
 			if(event.Key == Key::R && !event.IsRepeat)
-				s_UIManager->Reload();
+				UI::UIManager::Reload();
 		});
+
+	s_VCManager = new VC::VCManager();
+	s_VCManager->Init();
+
+	// s_AIManager = new AI::AIManager();
+	// s_AIManager->Init();
 }
 
 void Editor::Close() {
@@ -87,10 +79,6 @@ void Editor::Close() {
 
 	s_VCManager->Shutdown();
 	delete s_VCManager;
-	s_UIManager->Shutdown();
-	delete s_UIManager;
-	s_NetManager->Shutdown();
-	delete s_NetManager;
 }
 
 Ref<ScriptModule> Editor::GetModule(const std::string& name) {
@@ -129,7 +117,7 @@ void Editor::Load(const CommandLineArgs& args) {
 }
 
 void Editor::Update(TimeStep ts) {
-	s_UIManager->Update(ts);
+	UI::UIManager::Update(ts);
 
 	if(Mode == EditorMode::Project)
 		for(auto& tab : m_Tabs)
@@ -137,9 +125,9 @@ void Editor::Update(TimeStep ts) {
 }
 
 void Editor::Render() {
-	s_UIManager->BeginFrame();
+	UI::UIManager::BeginFrame();
 
-	s_UIManager->Render();
+	UI::UIManager::Render();
 
 	if(Mode == EditorMode::None)
 		RenderStartScreen();
@@ -150,13 +138,13 @@ void Editor::Render() {
 	else if(Mode == EditorMode::Project)
 		RenderProjectEditor();
 
-	s_UIManager->EndFrame();
+	UI::UIManager::EndFrame();
 }
 
 void Editor::RenderStartScreen() {
 	static uint32_t mode = 0; // 1 = Project, 2 = Flow, 3 = Component
 
-	auto screen = s_UIManager->GetRoot();
+	auto screen = UI::UIManager::GetRoot();
 	bool click = false;
 
 	// if(screen->Find("CloseButton")->State.Clicked)
@@ -164,8 +152,8 @@ void Editor::RenderStartScreen() {
 	// if(screen->Find("MinimizeButton")->State.Clicked)
 	// 	Application::Minimize();
 
-	if(screen->Find("SignInButton")->State.Clicked)
-		s_NetManager->GitHubOAuth();
+	// if(screen->Find("SignInButton")->State.Clicked)
+	// 	Networking::NetworkingManager::GitHubOAuth();
 
 	if(screen->Find("ProjectButton")->State.Clicked) {
 		click = true;
@@ -175,19 +163,12 @@ void Editor::RenderStartScreen() {
 		click = true;
 		mode = 2;
 
-		VC::Repo repo;
-		auto home = Application::GetHomeDir();
-		repo.Open(home + "\\TestProject");
-		repo.Push();
+
 	}
 	else if(screen->Find("ComponentButton")->State.Clicked) {
 		click = true;
 		mode = 3;
 
-		VC::Repo repo;
-		auto home = Application::GetHomeDir();
-		repo.Init(home + "\\TestProject");
-		repo.SetRemote("https://github.com/Jernesstar/TestProject.git");
 	}
 
 	if(click) {
@@ -259,7 +240,7 @@ void Editor::SetTab(uint32_t idx) {
 		title += " - " + tab->Name;
 	}
 
-	Application::GetWindow()->SetTitle(title);
+	// Application::GetWindow()->SetTitle(title);
 }
 
 void Editor::NewProject() {

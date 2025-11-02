@@ -2,20 +2,31 @@
 
 #include "TimeUtils.h"
 #include "Defines.h"
-#include "Window.h"
 
 int main(int argc, char** argv);
 
 namespace VolcaniCore {
 
+struct AppSpecification {
+	std::string Name;
+};
+
 class Application {
 public:
-	Application(const WindowSpecification& spec = { "Application" });
+	Application(const AppSpecification& spec = { "Application" });
 	virtual ~Application() = default;
 
+	virtual void OnUpdate(TimeStep ts) = 0;
+
+protected:
+	virtual void Run();
+	TimePoint m_LastFrame{ Time::GetTime() };
+
+	inline static Application* s_Instance;
+
+public:
 	static void Close();
 	static Application* Get();
-	static Ref<Window> GetWindow();
 
 	static std::string GetHomeDir();
 	static std::string GetCurrentDir();
@@ -28,21 +39,12 @@ public:
 	requires std::derived_from<TDerived, Application>
 	static TDerived* As() { return (TDerived*)Get(); }
 
-protected:
-	virtual void OnUpdate(TimeStep ts) { }
-
 private:
-	static void Init();
-	static void Run();
 	static void SetCurrentDir();
 
 	inline static std::string s_LibraryPath;
 	inline static std::string s_Path;
 
-	inline static Application* s_Instance;
-	inline static Ref<Window> s_Window;
-
-	inline static TimePoint s_LastFrame{ Time::GetTime() };
 	friend int ::main(int argc, char** argv);
 };
 

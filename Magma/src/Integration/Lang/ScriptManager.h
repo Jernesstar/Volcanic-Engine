@@ -1,10 +1,11 @@
 #pragma once
 
-#include <Magma/Core/BinaryWriter.h>
-#include <Magma/Script/ScriptObject.h>
+#include <Lava/Script/ScriptObject.h>
+#include <Lava/Utils/BinaryWriter.h>
 
 using namespace VolcaniCore;
-using namespace Magma::Script;
+using namespace Lava;
+using namespace Lava::Script;
 
 namespace Magma {
 

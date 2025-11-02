@@ -2,7 +2,7 @@
 
 #include "Event.h"
 
-namespace VolcaniCore {
+namespace VolcanicWindow {
 
 struct WindowEvent : public Event {
 protected:
