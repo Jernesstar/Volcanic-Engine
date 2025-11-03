@@ -1,14 +1,8 @@
 #pragma once
 
-#include <map>
-
-#define GLFW_INCLUDE_NONE
-#include <GLFW/glfw3.h>
-
 #include "VolcaniCore/Core/Defines.h"
 
 #include "Window.h"
-
 #include "Event.h"
 #include "KeyEvents.h"
 #include "MouseEvents.h"
@@ -16,12 +10,13 @@
 #include "ApplicationEvents.h"
 #include "EventCallback.h"
 
-using namespace VolcaniCore;
+#define GLFW_INCLUDE_NONE
+#include <GLFW/glfw3.h>
 
 namespace VolcanicWindow {
 
 template<typename TEvent>
-using Callbacks = std::map<VolcaniCore::UUID, EventCallback<TEvent>>;
+using Callbacks = OMap<UUID, EventCallback<TEvent>>;
 
 class Events {
 public:

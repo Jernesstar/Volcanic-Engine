@@ -19,8 +19,8 @@ project "VolcaniCore"
         "%{Includes.glm}",
     }
 
-    links {
-
+    defines {
+        "GLM_FORCE_CXX20",
     }
 
     filter "toolset:gcc or toolset:clang"
@@ -31,3 +31,7 @@ project "VolcaniCore"
 
     filter "system:windows"
         systemversion "latest"
+
+        defines {
+            "GLM_FORCE_PLATFORM_WIN32",
+        }

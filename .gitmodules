@@ -1,6 +1,6 @@
 [submodule "VolcanicWindow/.vendor/glfw"]
 	path = VolcanicWindow/.vendor/glfw
-	url = https://github.com/glfw/glfw.git
+	url = https://github.com/LavaFlow-Technologies/glfw.git
 [submodule "VolcaniCore/.vendor/glm"]
 	path = VolcaniCore/.vendor/glm
 	url = https://github.com/g-truc/glm.git

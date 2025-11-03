@@ -16,7 +16,7 @@ project "asio"
     }
 
     defines {
-        "ASIO_STANDALONE",
+        -- "ASIO_STANDALONE",
         "ASIO_SEPARATE_COMPILATION",
     }
 

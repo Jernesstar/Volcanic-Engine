@@ -1,6 +1,6 @@
 #pragma once
 
-#include <glm/vec2.hpp>
+#include <VolcaniCore/Core/Math.h>
 
 #include "Codes.h"
 

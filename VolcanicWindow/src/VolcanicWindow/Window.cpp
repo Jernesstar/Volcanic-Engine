@@ -1,8 +1,9 @@
 #include "Window.h"
 
+#include "VolcaniCore/Core/FileUtils.h"
+#include "VolcaniCore/Core/Assert.h"
+
 #include "Application.h"
-#include "FileUtils.h"
-#include "Assert.h"
 #include "Events.h"
 
 namespace VolcanicWindow {

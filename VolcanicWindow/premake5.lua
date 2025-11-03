@@ -8,29 +8,29 @@ project "VolcanicWindow"
     targetdir ("%{RootPath}/build/VolcanicWindow/lib")
 
     files {
-        "src/VolcanicWindow/**.h",
-        "src/VolcanicWindow/**.cpp",
+        "src/**.h",
+        "src/**.cpp",
     }
 
     includedirs {
         "src/",
 
         "%{RootPath}/VolcaniCore/src",
-        "%{RootPath}/VolcaniCore/src/**",
+        "%{RootPath}/VolcaniCore/src/*",
 
-        "%{Includes.glfw}",
         "%{Includes.glm}",
+        "%{Includes.glfw}",
     }
 
     links {
         "glfw",
     }
 
-    filter "toolset:gcc or toolset:clang"
-        buildoptions {
-            "-Wno-format-security",
-            "-Wno-pointer-arith"
-        }
+    buildoptions {
+        "-Wno-format-security",
+        "-Wno-pointer-arith",
+        "-Wno-template-body"
+    }
 
     filter "system:windows"
         systemversion "latest"

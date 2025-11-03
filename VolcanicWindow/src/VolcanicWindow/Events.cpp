@@ -1,9 +1,8 @@
 #include "Events.h"
 
+#include "Application.h"
 #include "VolcaniCore/Core/Assert.h"
 #include "VolcaniCore/Core/Log.h"
-
-#include "Application.h"
 
 #include "Input.h"
 
