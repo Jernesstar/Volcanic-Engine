@@ -3,8 +3,8 @@ project "glfw"
     language "C"
     staticruntime "Off"
 
-    objdir ("%{RootPath}/build/VolcaniCore/obj")
-    targetdir ("%{RootPath}/build/VolcaniCore/lib")
+    objdir ("%{RootPath}/build/VolcanicWindow/obj")
+    targetdir ("%{RootPath}/build/VolcanicWindow/lib")
 
     files {
         "%{VendorPaths.glfw}/src/context.c",
@@ -12,14 +12,7 @@ project "glfw"
         "%{VendorPaths.glfw}/src/input.c",
         "%{VendorPaths.glfw}/src/monitor.c",
         "%{VendorPaths.glfw}/src/platform.c",
-        "%{VendorPaths.glfw}/src/vulkan.c",
-        "%{VendorPaths.glfw}/src/window.c",
-        "%{VendorPaths.glfw}/src/null_init.c",
-        "%{VendorPaths.glfw}/src/null_monitor.c",
-        "%{VendorPaths.glfw}/src/null_window.c",
-        "%{VendorPaths.glfw}/src/null_joystick.c",
-        "%{VendorPaths.glfw}/src/egl_context.c",
-        "%{VendorPaths.glfw}/src/osmesa_context.c"
+        "%{VendorPaths.glfw}/src/window.c"
     }
 
     includedirs {
@@ -49,19 +42,27 @@ project "glfw"
 
     filter "system:linux"
         files {
+            "%{VendorPaths.glfw}/src/glx_context.c",
+            "%{VendorPaths.glfw}/src/egl_context.c",
             "%{VendorPaths.glfw}/src/x11_init.c",
             "%{VendorPaths.glfw}/src/x11_monitor.c",
             "%{VendorPaths.glfw}/src/x11_window.c",
+            "%{VendorPaths.glfw}/src/wl_init.c",
+            "%{VendorPaths.glfw}/src/wl_monitor.c",
+            "%{VendorPaths.glfw}/src/wl_window.c",
             "%{VendorPaths.glfw}/src/xkb_unicode.c",
             "%{VendorPaths.glfw}/src/posix_module.c",
             "%{VendorPaths.glfw}/src/posix_time.c",
             "%{VendorPaths.glfw}/src/posix_thread.c",
             "%{VendorPaths.glfw}/src/posix_poll.c",
             "%{VendorPaths.glfw}/src/linux_joystick.c",
-            "%{VendorPaths.glfw}/src/glx_context.c"
+        }
+
+        includedirs {
+            "%{VendorPaths.glfw}/deps/wayland",
         }
 
         defines {
             "_GLFW_X11",
-            "GLFW_USE_GLX=ON"
+            "_GLFW_WAYLAND",
         }

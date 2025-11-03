@@ -19,7 +19,7 @@ WindowApplication::WindowApplication(const WindowSpecification& spec)
 
 WindowApplication::~WindowApplication() {
 	m_Window.reset();
-	glfwTerminate();
+	// glfwTerminate();
 }
 
 void WindowApplication::Run() {
