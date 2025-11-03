@@ -47,7 +47,6 @@ static VC::VCManager* s_VCManager = nullptr;
 void Editor::Open() {
 	// Editor::RegisterInterface();
 
-	UI::UIManager::Init();
 	UI::UIManager::Load("Magma/assets/UI/start.json");
 
 	Application::PushDir();
@@ -117,18 +116,12 @@ void Editor::Load(const CommandLineArgs& args) {
 }
 
 void Editor::Update(TimeStep ts) {
-	UI::UIManager::Update(ts);
-
 	if(Mode == EditorMode::Project)
 		for(auto& tab : m_Tabs)
 			tab.OnUpdate(ts);
 }
 
 void Editor::Render() {
-	UI::UIManager::BeginFrame();
-
-	UI::UIManager::Render();
-
 	if(Mode == EditorMode::None)
 		RenderStartScreen();
 	else if(Mode == EditorMode::Component)
@@ -137,8 +130,6 @@ void Editor::Render() {
 		RenderFlowEditor();
 	else if(Mode == EditorMode::Project)
 		RenderProjectEditor();
-
-	UI::UIManager::EndFrame();
 }
 
 void Editor::RenderStartScreen() {

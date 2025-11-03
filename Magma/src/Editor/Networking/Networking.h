@@ -1,16 +1,11 @@
 #pragma once
 
-#include <asio.hpp>
-#include <asio/ssl.hpp>
-
 #include <VolcaniCore/Core/Buffer.h>
 #include <VolcaniCore/Core/Defines.h>
 
 using namespace VolcaniCore;
 
 namespace Magma::Networking {
-
-using Bytes = Buffer<uint8_t>;
 
 class TokenStore {
 public:
@@ -29,13 +24,18 @@ public:
 	void GitHubOAuth();
 };
 
+using Bytes = Buffer<uint8_t>;
+
 enum class PayloadType {
 	Json,
 	Bytes,
 	Text
 };
 
-enum class ResponseResult;
+enum class ResponseResult {
+	Success,
+	Error
+};
 
 struct Response {
 	Bytes Data;
@@ -54,7 +54,9 @@ public:
 	void Delete(const std::string& path, const ResponseCB& cb);
 
 private:
-
+	std::string m_BaseURL = "";
+	std::string m_IP = "";
+	uint16_t m_Port = 0;
 };
 
 class User {

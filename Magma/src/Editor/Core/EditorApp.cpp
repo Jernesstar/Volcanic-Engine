@@ -6,6 +6,11 @@
 
 #include <Lava/Core/Lava.h>
 
+#include "UI/Widget.h"
+#include "Networking/Networking.h"
+#include "Asset/AssetImporter.h"
+#include "Utils/YAMLSerializer.h"
+
 using namespace VolcaniCore;
 using namespace VolcanicWindow;
 
@@ -23,6 +28,8 @@ EditorApp::EditorApp(const CommandLineArgs& args)
 
 	Lava::InitComponents();
 
+	UI::UIManager::Init();
+
 	m_Editor.Open();
 	m_Editor.Load(args);
 }
@@ -34,13 +41,17 @@ EditorApp::~EditorApp() {
 }
 
 void EditorApp::OnUpdate(TimeStep ts) {
+	UI::UIManager::Update(ts);
+	
 	Lava::BeginFrame();
 	Lava::Update(ts);
-
+	
 	m_Editor.Update(ts);
 	m_Editor.Render();
 
 	Lava::EndFrame();
+
+	UI::UIManager::Render();
 }
 
 }

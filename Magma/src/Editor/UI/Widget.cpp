@@ -18,6 +18,7 @@
 #include "Utils/JSONSerializer.h"
 
 using namespace VolcaniCore;
+using namespace VolcanicWindow;
 using namespace Magma;
 using namespace Lava::Script;
 
@@ -234,6 +235,23 @@ static Ref<Widget> LoadPage(const std::string& path) {
 
 static Clay_Context* s_ClayContext;
 
+static void HandleClayErrors(Clay_ErrorData errorData) {
+	// VOLCANICORE_LOG_ERROR("%s", errorData.errorText.chars);
+	// switch(errorData.errorType) {
+	// 	// etc
+	// }
+}
+
+// Example measure text function
+static inline Clay_Dimensions MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, uintptr_t userData) {
+	// Clay_TextElementConfig contains members such as fontId, fontSize, letterSpacing etc
+	// Note: Clay_String->chars is not guaranteed to be null terminated
+	return (Clay_Dimensions) {
+			.width = text.length * config->fontSize, // <- this will only work for monospace fonts, see the renderers/ directory for more advanced text measurement
+			.height = config->fontSize
+	};
+}
+
 void UIManager::Init() {
 	int success = gladLoadGL();
 	VOLCANICORE_ASSERT(success, "Glad could not load OpenGL");
@@ -252,6 +270,15 @@ void UIManager::Init() {
 		Clay_CreateArenaWithCapacityAndMemory(
 			totalMemorySize, malloc(totalMemorySize));
 
+	auto window = Application::As<WindowApplication>()->GetWindow();
+	float width = window->GetWidth();
+	float height = window->GetHeight();
+
+	// Note: screenWidth and screenHeight will need to come from your environment, Clay doesn't handle window related tasks
+	Clay_Initialize(arena,
+		(Clay_Dimensions) { width, height },
+		(Clay_ErrorHandler) { HandleClayErrors });
+
 	Clear();
 }
 
@@ -259,21 +286,51 @@ void UIManager::Shutdown() {
 
 }
 
-void UIManager::BeginFrame() {
-	glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-}
-
-void UIManager::EndFrame() {
-
-}
-
 void UIManager::Update(TimeStep ts) {
+	// float mouseWheelX = Input::GetMouseWheelX();
+	// float mouseWheelY = Input::GetMouseWheelY();
+
+	// // mouseover / click / touch events - needed for scrolling and debug tools
+	// Clay_UpdateScrollContainers(true,
+	// 	(Clay_Vector2) { mouseWheelX, mouseWheelY }, ts);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	auto window = Application::As<WindowApplication>()->GetWindow();
+	float width = window->GetWidth();
+	float height = window->GetHeight();
+
+	auto mousePositionX = Input::GetMouseX();
+	auto mousePositionY = Input::GetMouseY();
+	auto isMouseDown = Input::MouseButtonPressed(Mouse::LeftButton);
+
+	// support resizing
+	Clay_SetLayoutDimensions((Clay_Dimensions) { width, height });
+	// / click / touch events - needed for scrolling & debug tools
+	Clay_SetPointerState(
+		(Clay_Vector2) { mousePositionX, mousePositionY }, isMouseDown);
+
+	Clay_BeginLayout();
+
 	m_Root->Update(ts);
 }
 
 void UIManager::Render() {
 	m_Root->Render();
+
+	Clay_RenderCommandArray renderCommands = Clay_EndLayout();
+
+	for(int i = 0; i < renderCommands.length; i++) {
+		Clay_RenderCommand* cmd = &renderCommands.internalArray[i];
+
+		switch(cmd->commandType) {
+			case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
+				Clay_Color color = cmd->renderData.rectangle.backgroundColor;
+				glClearColor(color.r, color.g, color.b, color.a);
+				glClear(GL_COLOR_BUFFER_BIT);
+			}
+		}
+	}
 }
 
 void UIManager::Load(const std::string& path) {
@@ -385,12 +442,59 @@ void Root::Begin() {
 
 void Root::End() { }
 
-void Window::Begin() {
+const Clay_Color COLOR_LIGHT = (Clay_Color) {224, 215, 210, 255};
+const Clay_Color COLOR_RED = (Clay_Color) {168, 66, 28, 255};
+const Clay_Color COLOR_ORANGE = (Clay_Color) {225, 138, 50, 255};
 
+// Layout config is just a struct that can be declared statically, or inline
+Clay_ElementDeclaration sidebarItemConfig = (Clay_ElementDeclaration) {
+    .layout = {
+        .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_FIXED(50) }
+    },
+    .backgroundColor = COLOR_ORANGE
+};
+
+void Window::Begin() {
+	// Clay__OpenElementWithId(CLAY_SID(Clay_String(ID.c_str())));
+
+	// Clay__ConfigureOpenElement(
+	// 	(Clay__Clay_ElementDeclarationWrapper {
+	// 		{
+	// 			.layout = {
+	// 				.sizing = {
+	// 					(Clay_SizingAxis {
+	// 						.size = { .minMax = { 0 } },
+	// 						.type = CLAY__SIZING_TYPE_GROW
+	// 					}),
+	// 					(Clay_SizingAxis {
+	// 						.size = { .minMax = { 0 } },
+	// 						.type = CLAY__SIZING_TYPE_GROW
+	// 					})
+	// 				},
+	// 				.padding =
+	// 					(Clay__Clay_PaddingWrapper {
+	// 						{ 16, 16, 16, 16 }
+	// 					}).wrapped, .childGap = 16
+	// 				},
+	// 			.backgroundColor = { Color.r, Color.g, Color.b, Color.a },
+	// 		}
+	// 	}).wrapped);
+
+
+	// An example of laying out a UI with a fixed width sidebar and flexible width main content
+	CLAY(CLAY_SID(Clay_String(ID.c_str())), {
+		.layout = {
+			.sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) },
+			.padding = CLAY_PADDING_ALL(16), .childGap = 16
+		},
+		.backgroundColor = {250,250,255,255}
+	}) {
+
+	}
 }
 
 void Window::End() {
-
+	// Clay__CloseElement();
 }
 
 void Container::Begin() {
