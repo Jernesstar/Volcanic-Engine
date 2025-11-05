@@ -74,7 +74,7 @@ project "libgit2"
 
         defines {
             "WIN32",
-            "_WIN32_WINNT=0x0600",
+            -- "_WIN32_WINNT=0x0600",
             "_CRT_SECURE_NO_WARNINGS",
             "WIN32_LEAN_AND_MEAN",
             "__USE_MINGW_ANSI_STDIO=1",

@@ -42,7 +42,7 @@ project "Magma"
 
         "%{Includes.efsw}",
         "%{Includes.libgit2}",
-        "%{Includes.asio}",
+        "%{Includes.cpp_httplib}",
 
         "%{Includes.stb_image}",
         "%{Includes.soloud}",
@@ -64,7 +64,6 @@ project "Magma"
         "libgit2",
         "soloud",
         "stb_image",
-        "asio",
 
         "yaml-cpp",
         "angelscript",
@@ -78,7 +77,8 @@ project "Magma"
     defines {
         "NOMINMAX",
         "WIN32_LEAN_AND_MEAN",
-        "YAML_CPP_STATIC_DEFINE"
+        "YAML_CPP_STATIC_DEFINE",
+        "_WIN32_WINNT=0x0A00",
     }
 
     filter "system:linux"
@@ -115,5 +115,4 @@ include "Magma/.deps/soloud"
 include "Magma/.deps/stb_image"
 include "Magma/.deps/efsw"
 include "Magma/.deps/libgit2"
-include "Magma/.deps/asio"
 include "Magma/.deps/yaml-cpp"

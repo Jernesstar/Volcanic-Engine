@@ -1,5 +1,8 @@
 #pragma once
 
+#define CPPHTTPLIB_OPENSSL_SUPPORT
+#include <cpp-httplib/httplib.h>
+
 #include <VolcaniCore/Core/Buffer.h>
 #include <VolcaniCore/Core/Defines.h>
 
@@ -54,9 +57,16 @@ public:
 	void Delete(const std::string& path, const ResponseCB& cb);
 
 private:
-	std::string m_BaseURL = "";
-	std::string m_IP = "";
-	uint16_t m_Port = 0;
+	httplib::Client m_Client;
+};
+
+class HTTPServer {
+public:
+	HTTPServer(const std::string& ip, uint16_t port);
+	~HTTPServer();
+
+private:
+	httplib::Server m_Server;
 };
 
 class User {

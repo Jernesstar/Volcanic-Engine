@@ -9,7 +9,9 @@ workspace "VolcanicEngine"
     filter "system:windows"
         defines {
             "VOLCANICENGINE_WINDOWS",
-            "_DEBUG"
+            "_DEBUG",
+            "_WIN32",
+            "_WIN64",
         }
 
     filter "configurations:Debug"
@@ -50,7 +52,7 @@ VendorPaths["angelscript"]        = "%{LavaVendorDir}/angelscript"
 -- Magma libraries
 VendorPaths["yaml_cpp"]           = "%{MagmaVendorDir}/yaml-cpp"
 VendorPaths["rapidjson"]          = "%{MagmaVendorDir}/rapidjson"
-VendorPaths["asio"]               = "%{MagmaVendorDir}/asio"
+VendorPaths["cpp_httplib"]        = "%{MagmaVendorDir}/cpp-httplib"
 VendorPaths["stb_image"]          = "%{MagmaVendorDir}/stb_image"
 VendorPaths["soloud"]             = "%{MagmaVendorDir}/soloud"
 VendorPaths["efsw"]               = "%{MagmaVendorDir}/efsw"
@@ -72,7 +74,7 @@ Includes["angelscript"]           = "%{VendorPaths.angelscript}/angelscript/incl
 -- Magma libraries
 Includes["yaml_cpp"]              = "%{VendorPaths.yaml_cpp}/include"
 Includes["rapidjson"]             = "%{VendorPaths.rapidjson}/include"
-Includes["asio"]                  = "%{VendorPaths.asio}/include"
+Includes["cpp_httplib"]           = "%{MagmaVendorDir}"
 Includes["jwt_cpp"]               = "%{VendorPaths.jwt_cpp}/include"
 Includes["stb_image"]             = "%{VendorPaths.stb_image}/include"
 Includes["soloud"]                = "%{VendorPaths.soloud}/include"
