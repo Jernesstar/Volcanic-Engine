@@ -5,7 +5,7 @@
 #include <VolcaniCore/Core/FileUtils.h>
 
 #include <rapidjson/rapidjson.h>
-#include <rapidjson/Document.h>
+#include <rapidjson/document.h>
 
 using namespace VolcaniCore;
 
