@@ -243,7 +243,7 @@ static void HandleClayErrors(Clay_ErrorData errorData) {
 }
 
 // Example measure text function
-static inline Clay_Dimensions MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, uintptr_t userData) {
+static Clay_Dimensions MeasureText(Clay_StringSlice text, Clay_TextElementConfig* config, void* userData) {
 	// Clay_TextElementConfig contains members such as
 	// fontId, fontSize, letterSpacing etc
 	// Note: Clay_String->chars is not guaranteed to be null terminated
@@ -265,10 +265,11 @@ void UIManager::Init() {
 	float width = window->GetWidth();
 	float height = window->GetHeight();
 
-	// Note: screenWidth and screenHeight will need to come from your environment, Clay doesn't handle window related tasks
 	Clay_Initialize(arena,
 		(Clay_Dimensions) { width, height },
 		(Clay_ErrorHandler) { HandleClayErrors });
+
+	Clay_SetMeasureTextFunction(MeasureText, nullptr);
 
 	Clear();
 }
@@ -304,6 +305,31 @@ void UIManager::Update(TimeStep ts) {
 	m_Root->Update(ts);
 }
 
+typedef enum
+{
+    CUSTOM_ELEMENT_TYPE_GIF,
+    CUSTOM_ELEMENT_TYPE_VIDEO
+} CustomElementType;
+
+typedef struct
+{
+
+} CustomElement_GIF;
+
+typedef struct
+{
+
+} CustomElement_VIDEO;
+
+typedef struct
+{
+    CustomElementType type;
+    union {
+		CustomElement_GIF gif;
+		CustomElement_VIDEO video;
+    } customData;
+} CustomElement;
+
 void UIManager::Render() {
 	// m_Root->Render();
 
@@ -313,7 +339,8 @@ void UIManager::Render() {
 			.padding = CLAY_PADDING_ALL(16),
 			.childGap = 16,
 			.layoutDirection = CLAY_TOP_TO_BOTTOM,
-		}
+		},
+		.backgroundColor = { 0, 0, 0, 255 }
 	}) {
 		CLAY(CLAY_ID("TestWindow"), {
 			.layout = {
@@ -331,7 +358,15 @@ void UIManager::Render() {
 				.childGap = 16
 			},
 			.backgroundColor = { 0, 255, 255, 255 }
-		});
+		}) {
+			CLAY_TEXT(CLAY_STRING("Hello World"),
+				CLAY_TEXT_CONFIG({
+					.textColor = { 0, 0, 0, 255 },
+					.fontId = 0,
+					.fontSize = 24,
+				})
+			);
+		}
 	}
 
 	Clay_RenderCommandArray renderCommands = Clay_EndLayout();
@@ -431,18 +466,6 @@ Ref<Widget> Widget::Find(const std::string& id) {
 void Widget::Reposition() {
 
 }
-
-const Clay_Color COLOR_LIGHT = (Clay_Color) {224, 215, 210, 255};
-const Clay_Color COLOR_RED = (Clay_Color) {168, 66, 28, 255};
-const Clay_Color COLOR_ORANGE = (Clay_Color) {225, 138, 50, 255};
-
-// Layout config is just a struct that can be declared statically, or inline
-Clay_ElementDeclaration sidebarItemConfig = (Clay_ElementDeclaration) {
-	.layout = {
-		.sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_FIXED(50) }
-	},
-	.backgroundColor = COLOR_ORANGE
-};
 
 void Root::Begin() {
 	Clay__OpenElementWithId(CLAY_ID("Root"));
