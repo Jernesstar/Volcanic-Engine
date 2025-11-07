@@ -305,21 +305,52 @@ void UIManager::Update(TimeStep ts) {
 }
 
 void UIManager::Render() {
-	m_Root->Render();
+	// m_Root->Render();
+
+	CLAY(CLAY_ID("OuterContainer"), {
+		.layout = {
+			.sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) },
+			.padding = CLAY_PADDING_ALL(16),
+			.childGap = 16,
+			.layoutDirection = CLAY_TOP_TO_BOTTOM,
+		}
+	}) {
+		CLAY(CLAY_ID("TestWindow"), {
+			.layout = {
+				.sizing = { CLAY_SIZING_FIXED(300), CLAY_SIZING_FIXED(100) },
+				.padding = CLAY_PADDING_ALL(16),
+				.childGap = 16
+			},
+			.backgroundColor = { 255, 255, 255, 255 }
+		});
+
+		CLAY(CLAY_ID("TestWindow2"), {
+			.layout = {
+				.sizing = { CLAY_SIZING_FIXED(300), CLAY_SIZING_FIXED(300) },
+				.padding = CLAY_PADDING_ALL(16),
+				.childGap = 16
+			},
+			.backgroundColor = { 0, 255, 255, 255 }
+		});
+	}
 
 	Clay_RenderCommandArray renderCommands = Clay_EndLayout();
 
+	glEnable(GL_SCISSOR_TEST);
 	for(int i = 0; i < renderCommands.length; i++) {
 		Clay_RenderCommand* cmd = &renderCommands.internalArray[i];
 
 		switch(cmd->commandType) {
 			case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
-				Clay_Color color = cmd->renderData.rectangle.backgroundColor;
+				auto rect = cmd->renderData.rectangle;
+				Clay_Color color = rect.backgroundColor;
+				glScissor(cmd->boundingBox.x, cmd->boundingBox.y, cmd->boundingBox.width, cmd->boundingBox.height);
 				glClearColor(color.r, color.g, color.b, color.a);
 				glClear(GL_COLOR_BUFFER_BIT);
 			}
 		}
 	}
+	glDisable(GL_SCISSOR_TEST);
 }
 
 void UIManager::Load(const std::string& path) {
@@ -414,39 +445,39 @@ Clay_ElementDeclaration sidebarItemConfig = (Clay_ElementDeclaration) {
 };
 
 void Root::Begin() {
-	// Clay__OpenElementWithId(CLAY_ID("Root"));
-	// Clay__ConfigureOpenElement(
-	// 	CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
-	// 	{
-	// 		.layout = {
-	// 			.sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) },
-	// 			.padding = CLAY_PADDING_ALL(16), .childGap = 16
-	// 		},
-	// 		.backgroundColor = { 0, 0, 0, 0 }
-	// 	})
-	// );
+	Clay__OpenElementWithId(CLAY_ID("Root"));
+	Clay__ConfigureOpenElement(
+		CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
+		{
+			.layout = {
+				.sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) },
+				.padding = CLAY_PADDING_ALL(16), .childGap = 16
+			},
+			.backgroundColor = { 0, 0, 0, 0 }
+		})
+	);
 }
 
 void Root::End() {
-	// Clay__CloseElement();
+	Clay__CloseElement();
 }
 
 void Window::Begin() {
-	// Clay__OpenElementWithId(CLAY_SID(Clay_String(ID.c_str())));
-	// Clay__ConfigureOpenElement(
-	// 	CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
-	// 	{
-	// 		.layout = {
-	// 			.sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) },
-	// 			.padding = CLAY_PADDING_ALL(16), .childGap = 16
-	// 		},
-	// 		.backgroundColor = { 10, 10, 255, 255 }
-	// 	})
-	// );
+	Clay__OpenElementWithId(CLAY_SID(Clay_String(ID.c_str())));
+	Clay__ConfigureOpenElement(
+		CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
+		{
+			.layout = {
+				.sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) },
+				.padding = CLAY_PADDING_ALL(16), .childGap = 16
+			},
+			.backgroundColor = { 10, 10, 255, 255 }
+		})
+	);
 }
 
 void Window::End() {
-	// Clay__CloseElement();
+	Clay__CloseElement();
 }
 
 void Container::Begin() {
