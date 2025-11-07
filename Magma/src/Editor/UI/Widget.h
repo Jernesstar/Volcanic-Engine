@@ -282,7 +282,7 @@ public:
 class UIManager {
 public:
 	static void Init();
-	static void Shutdown();
+	static void Close();
 
 	static void Update(TimeStep ts);
 	static void Render();

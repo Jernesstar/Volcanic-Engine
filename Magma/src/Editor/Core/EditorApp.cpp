@@ -6,13 +6,18 @@
 
 #include <Lava/Core/Lava.h>
 
-#include "UI/Widget.h"
+// #include "Asset/Asset.h"
+#include "Graphics/Renderer.h"
 #include "Networking/Networking.h"
-#include "Asset/AssetImporter.h"
-#include "Utils/YAMLSerializer.h"
+#include "UI/Widget.h"
 
 using namespace VolcaniCore;
 using namespace VolcanicWindow;
+
+// using namespace Magma::Asset;
+using namespace Magma::UI;
+using namespace Magma::Graphics;
+using namespace Magma::Networking;
 
 namespace Magma {
 
@@ -28,7 +33,9 @@ EditorApp::EditorApp(const CommandLineArgs& args)
 
 	Lava::InitComponents();
 
-	UI::UIManager::Init();
+	// AssetManager::Init();
+	Renderer::Init();
+	UIManager::Init();
 
 	m_Editor.Open();
 	m_Editor.Load(args);
@@ -37,21 +44,27 @@ EditorApp::EditorApp(const CommandLineArgs& args)
 EditorApp::~EditorApp() {
 	m_Editor.Close();
 
+	UIManager::Close();
+	Renderer::Close();
+	// AssetManager::Close();
+
 	Lava::CloseComponents();
 }
 
 void EditorApp::OnUpdate(TimeStep ts) {
-	UI::UIManager::Update(ts);
-	
 	Lava::BeginFrame();
 	Lava::Update(ts);
-	
+
+	Renderer::StartFrame();
+
+	UIManager::Update(ts);
 	m_Editor.Update(ts);
 	m_Editor.Render();
+	UIManager::Render();
+
+	Renderer::EndFrame();
 
 	Lava::EndFrame();
-
-	UI::UIManager::Render();
 }
 
 }

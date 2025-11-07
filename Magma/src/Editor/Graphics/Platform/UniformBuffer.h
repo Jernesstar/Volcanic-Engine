@@ -10,15 +10,15 @@ using namespace VolcaniCore;
 
 namespace Magma::Graphics {
 
-class StorageBuffer : public Derivable<StorageBuffer> {
+class UniformBuffer : public Derivable<UniformBuffer> {
 public:
 	const BufferLayout Layout;
 	const uint64_t Count;
 
 public:
-	StorageBuffer(const BufferLayout& layout, uint64_t count = 1)
+	UniformBuffer(const BufferLayout& layout, uint64_t count = 1)
 		: Layout(layout), Count(count) { }
-	virtual ~StorageBuffer() = default;
+	virtual ~UniformBuffer() = default;
 
 	template<typename T>
 	void SetData(const Buffer<T>& buffer, uint64_t offset = 0) {
@@ -30,7 +30,7 @@ public:
 						 uint64_t offset = 0) = 0;
 };
 
-struct StorageBufferSpecification {
+struct UniformBufferSpecification {
 	BufferLayout Layout;
 	uint64_t Count = 1;
 };

@@ -95,7 +95,8 @@ HttpClient::HttpClient(const std::string& ip, uint16_t port)
 	: m_Client(ip, port) { }
 
 void HttpClient::Get(const std::string& path, const ResponseCB& cb) {
-	m_Client.Get(path);
+	auto res = m_Client.Get(path);
+
 }
 
 void HttpClient::Post(const std::string& path, Bytes bytes, PayloadType type,

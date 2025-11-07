@@ -19,13 +19,13 @@ workspace "${0}"
 
     filter "system:linux"
         defines {
-            "VOLCANICENGINE_LINUX",
+            "VOLCANIC_LINUX",
             "_GLFW_X11"
         }
 
     filter "system:windows"
         defines {
-            "VOLCANICENGINE_WINDOWS",
+            "VOLCANIC_WINDOWS",
             "_GLFW_WIN32",
         }
 

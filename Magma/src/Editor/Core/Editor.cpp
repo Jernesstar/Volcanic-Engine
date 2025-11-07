@@ -122,14 +122,14 @@ void Editor::Update(TimeStep ts) {
 }
 
 void Editor::Render() {
-	if(Mode == EditorMode::None)
-		RenderStartScreen();
-	else if(Mode == EditorMode::Component)
-		RenderComponentEditor();
-	else if(Mode == EditorMode::Flow)
-		RenderFlowEditor();
-	else if(Mode == EditorMode::Project)
-		RenderProjectEditor();
+	// if(Mode == EditorMode::None)
+	// 	RenderStartScreen();
+	// else if(Mode == EditorMode::Component)
+	// 	RenderComponentEditor();
+	// else if(Mode == EditorMode::Flow)
+	// 	RenderFlowEditor();
+	// else if(Mode == EditorMode::Project)
+	// 	RenderProjectEditor();
 }
 
 void Editor::RenderStartScreen() {

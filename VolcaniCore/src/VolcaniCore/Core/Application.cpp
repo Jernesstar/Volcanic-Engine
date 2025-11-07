@@ -35,9 +35,9 @@ void Application::Run() {
 static std::string s_OldPath;
 
 std::string Application::GetHomeDir() {
-#ifdef VOLCANICENGINE_WINDOWS
+#ifdef VOLCANIC_WINDOWS
 	return getenv("USERPROFILE");
-#elif VOLCANICENGINE_LINUX
+#elif VOLCANIC_LINUX
 	return getenv("HOME");
 #endif
 }

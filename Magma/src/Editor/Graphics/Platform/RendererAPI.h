@@ -2,14 +2,13 @@
 
 #include <VolcaniCore/Core/Defines.h>
 
-namespace Magma::Graphics {
+#include "Framebuffer.h"
+#include "Shader.h"
+#include "Texture.h"
+#include "StorageBuffer.h"
+#include "UniformBuffer.h"
 
-struct DebugInfo {
-	uint64_t DrawCallCount = 0;
-	uint64_t IndexCount    = 0;
-	uint64_t VertexCount   = 0;
-	uint64_t InstanceCount = 0;
-};
+namespace Magma::Graphics {
 
 class RendererAPI {
 public:
@@ -28,9 +27,16 @@ public:
 
 	virtual void StartFrame() = 0;
 	virtual void EndFrame() = 0;
-	virtual DebugInfo GetDebugInfo() = 0;
 
-	RendererAPI::Backend GetBackend() const { return m_Backend; }
+	static RendererAPI::Backend GetBackend() {
+		return s_Instance->m_Backend;
+	}
+
+	Ref<Framebuffer> CreateFramebuffer(const FramebufferSpecification& spec);
+	Ref<Shader> CreateShader(const ShaderSpecification& spec);
+	Ref<Texture> CreateTexture(const TextureSpecification& spec);
+	Ref<StorageBuffer> CreateStorageBuffer(const StorageBufferSpecification& spec);
+	Ref<UniformBuffer> CreateUniformBuffer(const UniformBufferSpecification& spec);
 
 protected:
 	const RendererAPI::Backend m_Backend;

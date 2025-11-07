@@ -2,16 +2,16 @@
 
 #include <VolcaniCore/Core/Defines.h>
 
-#ifdef VOLCANICENGINE_WINDOWS
+#ifdef VOLCANIC_WINDOWS
 	#include <windows.h>
-#elif VOLCANICENGINE_LINUX
+#elif VOLCANIC_LINUX
 	#include <unistd.h>
 #endif
 
 namespace Lava {
 
 std::string FindExecutablePath() {
-#ifdef VOLCANICENGINE_WINDOWS
+#ifdef VOLCANIC_WINDOWS
 #ifndef _MSC_VER
 	char buf[2*MAX_PATH];
 	size_t len = GetModuleFileName(0, buf, 2*MAX_PATH);
@@ -22,7 +22,7 @@ std::string FindExecutablePath() {
 	std::string s(w.begin(), w.end());
 	char* buf = (char*)s.c_str();
 #endif
-#elif VOLCANICENGINE_LINUX
+#elif VOLCANIC_LINUX
 	char buf[2*PATH_MAX];
 	size_t len = readlink("/proc/self/exe", buf, 2*PATH_MAX);
 // #elif VOLCANICENGINE_APPLE

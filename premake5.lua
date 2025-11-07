@@ -3,16 +3,19 @@ workspace "VolcanicEngine"
     architecture "x86_64"
     configurations { "Debug", "Release" }
 
-    filter "system:linux"
-        defines "VOLCANICENGINE_LINUX"
-
     filter "system:windows"
         defines {
-            "VOLCANICENGINE_WINDOWS",
+            "VOLCANIC_WINDOWS",
             "_DEBUG",
             "_WIN32",
             "_WIN64",
         }
+
+    filter "system:linux"
+        defines "VOLCANIC_LINUX"
+
+    filter "system:apple"
+        defines "VOLCANIC_APPLE"
 
     filter "configurations:Debug"
         optimize "Debug"

@@ -113,7 +113,7 @@ static bool Traverse(Ref<Widget> parent, const rapidjson::Value& value) {
 				color[1].GetFloat(),
 				color[2].GetFloat(),
 				color[3].GetFloat()
-			} * 255.0f;
+			};
 		}
 	}
 	else if(type == "Image") {
@@ -236,39 +236,30 @@ static Ref<Widget> LoadPage(const std::string& path) {
 static Clay_Context* s_ClayContext;
 
 static void HandleClayErrors(Clay_ErrorData errorData) {
-	// VOLCANICORE_LOG_ERROR("%s", errorData.errorText.chars);
-	// switch(errorData.errorType) {
-	// 	// etc
-	// }
+	VOLCANICORE_LOG_ERROR("%s", errorData.errorText.chars);
+	switch(errorData.errorType) {
+		// etc
+	}
 }
 
 // Example measure text function
 static inline Clay_Dimensions MeasureText(Clay_StringSlice text, Clay_TextElementConfig *config, uintptr_t userData) {
-	// Clay_TextElementConfig contains members such as fontId, fontSize, letterSpacing etc
+	// Clay_TextElementConfig contains members such as
+	// fontId, fontSize, letterSpacing etc
 	// Note: Clay_String->chars is not guaranteed to be null terminated
+	// This will only work for monospace fonts,
+	// see the renderers/ directory for more advanced text measurement
+
 	return (Clay_Dimensions) {
-			.width = text.length * config->fontSize, // <- this will only work for monospace fonts, see the renderers/ directory for more advanced text measurement
-			.height = config->fontSize
+		.width = (float)text.length * (float)config->fontSize,
+		.height = (float)config->fontSize
 	};
 }
 
 void UIManager::Init() {
-	int success = gladLoadGL();
-	VOLCANICORE_ASSERT(success, "Glad could not load OpenGL");
-	VOLCANICORE_LOG_INFO(
-		"Successfully loaded OpenGL\n"
-		"\tVersion: %s\n"
-		"\tGPU: %s", glGetString(GL_VERSION), glGetString(GL_RENDERER));
-
-	glEnable(GL_MULTISAMPLE);				// Smooth edges
-	glEnable(GL_FRAMEBUFFER_SRGB);			// Gamma correction
-	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS); // Smooth cubemap edges
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-
-	uint64_t totalMemorySize = Clay_MinMemorySize();
+	uint64_t size = Clay_MinMemorySize();
 	Clay_Arena arena =
-		Clay_CreateArenaWithCapacityAndMemory(
-			totalMemorySize, malloc(totalMemorySize));
+		Clay_CreateArenaWithCapacityAndMemory(size, malloc(size));
 
 	auto window = Application::As<WindowApplication>()->GetWindow();
 	float width = window->GetWidth();
@@ -282,7 +273,7 @@ void UIManager::Init() {
 	Clear();
 }
 
-void UIManager::Shutdown() {
+void UIManager::Close() {
 
 }
 
@@ -293,8 +284,6 @@ void UIManager::Update(TimeStep ts) {
 	// // mouseover / click / touch events - needed for scrolling and debug tools
 	// Clay_UpdateScrollContainers(true,
 	// 	(Clay_Vector2) { mouseWheelX, mouseWheelY }, ts);
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
 
 	auto window = Application::As<WindowApplication>()->GetWindow();
 	float width = window->GetWidth();
@@ -351,30 +340,6 @@ void UIManager::Reload() {
 void UIManager::Clear() {
 	m_Root = CreateRef<Root>("Root");
 }
-
-// void UIManager::RegisterInterface() {
-// 	auto* engine = ScriptEngine::Get();
-
-// 	engine->SetDefaultNamespace("Widget");
-
-// 	engine->RegisterFuncdef("void WindowCallback()");
-// 	engine->RegisterEnum("WindowFlag");
-// 	engine->RegisterEnumValue("WindowFlag", "MenuBar", 0);
-// 	engine->RegisterEnumValue("WindowFlag", "TitleBar", 1);
-// 	engine->RegisterObjectType("WindowWidget", 0, asOBJ_REF | asOBJ_NOCOUNT);
-// 	// engine->RegisterObjectMethod("WindowWidget", "void Render(WindowCallback@)",
-// 	// 	asFUNCTION(WindowWidgetRender), asCALL_CDECL_OBJLAST);
-// 	// engine->RegisterObjectMethod("WindowWidget", "WindowWidget@ With(WindowFlag)",
-// 	// 	asMETHOD(WindowWidget, With), asCALL_THISCALL);
-// 	engine->RegisterGlobalFunction("WindowWidget@ Window(string name)",
-// 		asFUNCTION(WidgetManager::Window), asCALL_CDECL);
-
-// 	engine->RegisterObjectType("Child", 0, asOBJ_REF | asOBJ_NOCOUNT);
-// 	engine->RegisterObjectType("Image", 0, asOBJ_REF | asOBJ_NOCOUNT);
-// 	engine->RegisterObjectType("Text", 0, asOBJ_REF | asOBJ_NOCOUNT);
-
-// 	engine->SetDefaultNamespace("");
-// }
 
 void Widget::Update(TimeStep ts) {
 	if(!Enabled)
@@ -436,61 +401,48 @@ void Widget::Reposition() {
 
 }
 
-void Root::Begin() {
-
-}
-
-void Root::End() { }
-
 const Clay_Color COLOR_LIGHT = (Clay_Color) {224, 215, 210, 255};
 const Clay_Color COLOR_RED = (Clay_Color) {168, 66, 28, 255};
 const Clay_Color COLOR_ORANGE = (Clay_Color) {225, 138, 50, 255};
 
 // Layout config is just a struct that can be declared statically, or inline
 Clay_ElementDeclaration sidebarItemConfig = (Clay_ElementDeclaration) {
-    .layout = {
-        .sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_FIXED(50) }
-    },
-    .backgroundColor = COLOR_ORANGE
+	.layout = {
+		.sizing = { .width = CLAY_SIZING_GROW(0), .height = CLAY_SIZING_FIXED(50) }
+	},
+	.backgroundColor = COLOR_ORANGE
 };
+
+void Root::Begin() {
+	// Clay__OpenElementWithId(CLAY_ID("Root"));
+	// Clay__ConfigureOpenElement(
+	// 	CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
+	// 	{
+	// 		.layout = {
+	// 			.sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) },
+	// 			.padding = CLAY_PADDING_ALL(16), .childGap = 16
+	// 		},
+	// 		.backgroundColor = { 0, 0, 0, 0 }
+	// 	})
+	// );
+}
+
+void Root::End() {
+	// Clay__CloseElement();
+}
 
 void Window::Begin() {
 	// Clay__OpenElementWithId(CLAY_SID(Clay_String(ID.c_str())));
-
 	// Clay__ConfigureOpenElement(
-	// 	(Clay__Clay_ElementDeclarationWrapper {
-	// 		{
-	// 			.layout = {
-	// 				.sizing = {
-	// 					(Clay_SizingAxis {
-	// 						.size = { .minMax = { 0 } },
-	// 						.type = CLAY__SIZING_TYPE_GROW
-	// 					}),
-	// 					(Clay_SizingAxis {
-	// 						.size = { .minMax = { 0 } },
-	// 						.type = CLAY__SIZING_TYPE_GROW
-	// 					})
-	// 				},
-	// 				.padding =
-	// 					(Clay__Clay_PaddingWrapper {
-	// 						{ 16, 16, 16, 16 }
-	// 					}).wrapped, .childGap = 16
-	// 				},
-	// 			.backgroundColor = { Color.r, Color.g, Color.b, Color.a },
-	// 		}
-	// 	}).wrapped);
-
-
-	// An example of laying out a UI with a fixed width sidebar and flexible width main content
-	CLAY(CLAY_SID(Clay_String(ID.c_str())), {
-		.layout = {
-			.sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) },
-			.padding = CLAY_PADDING_ALL(16), .childGap = 16
-		},
-		.backgroundColor = {250,250,255,255}
-	}) {
-
-	}
+	// 	CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
+	// 	{
+	// 		.layout = {
+	// 			.sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) },
+	// 			.padding = CLAY_PADDING_ALL(16), .childGap = 16
+	// 		},
+	// 		.backgroundColor = { 10, 10, 255, 255 }
+	// 	})
+	// );
 }
 
 void Window::End() {
@@ -571,6 +523,30 @@ void Gizmo::End() {
 
 // void Tab::Begin() {
 
+// }
+
+// void UIManager::RegisterInterface() {
+// 	auto* engine = ScriptEngine::Get();
+
+// 	engine->SetDefaultNamespace("Widget");
+
+// 	engine->RegisterFuncdef("void WindowCallback()");
+// 	engine->RegisterEnum("WindowFlag");
+// 	engine->RegisterEnumValue("WindowFlag", "MenuBar", 0);
+// 	engine->RegisterEnumValue("WindowFlag", "TitleBar", 1);
+// 	engine->RegisterObjectType("WindowWidget", 0, asOBJ_REF | asOBJ_NOCOUNT);
+// 	// engine->RegisterObjectMethod("WindowWidget", "void Render(WindowCallback@)",
+// 	// 	asFUNCTION(WindowWidgetRender), asCALL_CDECL_OBJLAST);
+// 	// engine->RegisterObjectMethod("WindowWidget", "WindowWidget@ With(WindowFlag)",
+// 	// 	asMETHOD(WindowWidget, With), asCALL_THISCALL);
+// 	engine->RegisterGlobalFunction("WindowWidget@ Window(string name)",
+// 		asFUNCTION(WidgetManager::Window), asCALL_CDECL);
+
+// 	engine->RegisterObjectType("Child", 0, asOBJ_REF | asOBJ_NOCOUNT);
+// 	engine->RegisterObjectType("Image", 0, asOBJ_REF | asOBJ_NOCOUNT);
+// 	engine->RegisterObjectType("Text", 0, asOBJ_REF | asOBJ_NOCOUNT);
+
+// 	engine->SetDefaultNamespace("");
 // }
 
 }

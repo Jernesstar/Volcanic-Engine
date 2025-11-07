@@ -13,8 +13,6 @@ public:
 
 	void StartFrame() override;
 	void EndFrame() override;
-	DebugInfo GetDebugInfo() override;
-
 
 private:
 	void Init() override;
