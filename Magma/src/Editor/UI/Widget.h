@@ -9,7 +9,7 @@
 
 #include <Lava/Script/ScriptEngine.h>
 
-#include "Asset/AssetImporter.h"
+#include "Asset/Asset.h"
 
 using namespace VolcaniCore;
 using namespace Lava::Script;
@@ -197,7 +197,7 @@ public:
 
 class Image : public Widget {
 public:
-	Ref<Magma::Texture> Asset;
+	Ref<Magma::Image> Asset;
 
 public:
 	Image(const std::string& id)

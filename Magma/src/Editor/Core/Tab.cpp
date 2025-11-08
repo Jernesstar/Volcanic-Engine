@@ -6,7 +6,7 @@
 #include <Lava/Script/ScriptClass.h>
 
 #include "Editor.h"
-#include "AssetImporter.h"
+#include "Asset.h"
 #include "ScriptManager.h"
 
 namespace fs = std::filesystem;

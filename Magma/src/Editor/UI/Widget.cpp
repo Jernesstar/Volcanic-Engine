@@ -123,7 +123,7 @@ static bool Traverse(Ref<Widget> parent, const rapidjson::Value& value) {
 		if(value.HasMember("Asset") && value["Asset"].IsString()) {
 			auto path = value["Asset"].GetString();
 			Application::PushDir();
-			auto image = AssetImporter::GetTexture(path);
+			auto image = AssetManager::LoadImage(path);
 			Application::PopDir();
 			w->Asset = image;
 		}
@@ -307,8 +307,8 @@ void UIManager::Update(TimeStep ts) {
 
 typedef enum
 {
-    CUSTOM_ELEMENT_TYPE_GIF,
-    CUSTOM_ELEMENT_TYPE_VIDEO
+	CUSTOM_ELEMENT_TYPE_GIF,
+	CUSTOM_ELEMENT_TYPE_VIDEO
 } CustomElementType;
 
 typedef struct
@@ -323,11 +323,11 @@ typedef struct
 
 typedef struct
 {
-    CustomElementType type;
-    union {
+	CustomElementType type;
+	union {
 		CustomElement_GIF gif;
 		CustomElement_VIDEO video;
-    } customData;
+	} customData;
 } CustomElement;
 
 void UIManager::Render() {
@@ -371,21 +371,42 @@ void UIManager::Render() {
 
 	Clay_RenderCommandArray renderCommands = Clay_EndLayout();
 
-	glEnable(GL_SCISSOR_TEST);
 	for(int i = 0; i < renderCommands.length; i++) {
 		Clay_RenderCommand* cmd = &renderCommands.internalArray[i];
 
 		switch(cmd->commandType) {
 			case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
 				auto rect = cmd->renderData.rectangle;
-				Clay_Color color = rect.backgroundColor;
-				glScissor(cmd->boundingBox.x, cmd->boundingBox.y, cmd->boundingBox.width, cmd->boundingBox.height);
-				glClearColor(color.r, color.g, color.b, color.a);
-				glClear(GL_COLOR_BUFFER_BIT);
+				// Renderer::DrawQuad();
+			}
+			case CLAY_RENDER_COMMAND_TYPE_BORDER: {
+
+			}
+			case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
+
+			}
+			case CLAY_RENDER_COMMAND_TYPE_TEXT: {
+
+			}
+			case CLAY_RENDER_COMMAND_TYPE_SCISSOR_START: {
+
+			}
+			case CLAY_RENDER_COMMAND_TYPE_SCISSOR_END: {
+
+			}
+			case CLAY_RENDER_COMMAND_TYPE_CUSTOM: {
+				auto data = (CustomElement*)cmd->renderData.custom.customData;
+				switch(data->type) {
+					case CUSTOM_ELEMENT_TYPE_GIF: {
+
+					}
+					case CUSTOM_ELEMENT_TYPE_VIDEO: {
+
+					}
+				}
 			}
 		}
 	}
-	glDisable(GL_SCISSOR_TEST);
 }
 
 void UIManager::Load(const std::string& path) {

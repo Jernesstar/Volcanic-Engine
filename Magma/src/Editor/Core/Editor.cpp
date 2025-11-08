@@ -21,7 +21,7 @@
 
 #include "UI/Widget.h"
 #include "Networking/Networking.h"
-#include "Asset/AssetImporter.h"
+#include "Asset/Asset.h"
 #include "Utils/YAMLSerializer.h"
 
 using namespace VolcaniCore;
@@ -37,8 +37,6 @@ static void ProjectSaveRuntime(const Project& project);
 
 static Map<std::string, Ref<ScriptModule>> s_TabModules;
 
-static Ref<Texture> s_Logo;
-
 static VC::VCManager* s_VCManager = nullptr;
 // static AI::AIManager* s_AIManager = nullptr;
 // static Lang::LangManager* s_LangManager = nullptr;
@@ -51,12 +49,12 @@ void Editor::Open() {
 
 	Application::PushDir();
 	auto logo =
-		AssetImporter::GetImageData(
+		AssetManager::LoadImage(
 			"Magma/assets/images/VolcanicDisplay.png", false);
 	Application::PopDir();
 
 	auto window = Application::As<WindowApplication>()->GetWindow();
-	window->SetIcon(*(Icon*)&logo);
+	window->SetIcon({ logo->Width, logo->Height, logo->Data.Copy() });
 
 	Events::RegisterListener<KeyPressedEvent>(
 		[this](const KeyPressedEvent& event)
