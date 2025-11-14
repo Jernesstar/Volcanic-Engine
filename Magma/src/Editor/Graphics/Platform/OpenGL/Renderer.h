@@ -11,12 +11,17 @@ public:
 	Renderer();
 	~Renderer() = default;
 
-	void StartFrame() override;
-	void EndFrame() override;
+	DrawBufferID NewBuffer(const DrawBufferSpec&) override;
+	void SetBufferData(DrawBufferID, DrawBufferIndex, Buffer<void>) override;
+
+	DrawPassID NewPass(const DrawPassSpec&) override;
+	DrawCommandID NewCommand(const DrawCommandSpec&) override;
 
 private:
 	void Init() override;
 	void Close() override;
+	void BeginFrame() override;
+	void EndFrame() override;
 };
 
 }

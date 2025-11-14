@@ -10,6 +10,7 @@
 #include <Lava/Script/ScriptEngine.h>
 
 #include "Asset/Asset.h"
+#include "Graphics/Platform/Texture.h"
 
 using namespace VolcaniCore;
 using namespace Lava::Script;
@@ -114,19 +115,27 @@ public:
 
 	Widget* Add(Ref<Widget> widget);
 
+	template<typename TWidget, typename ...Args>
+	requires std::derived_from<TWidget, Widget>
+	Widget* Add(Args&&... args) {
+		auto ptr =
+			Children.Emplace(
+				CreateRef<TWidget>(std::forward<Args>(args)...));
+		ptr->Parent = this;
+		return this;
+	}
+
+
 	template<typename TWidget>
 	requires std::derived_from<TWidget, Widget>
 	Widget* AddCopy(Ref<TWidget> widget) {
-		auto& ptr = Children.Emplace(CreateRef<Widget>(*widget));
+		auto ptr = Children.Emplace(CreateRef<Widget>(*widget));
 		ptr->Parent = this;
 		return this;
 	}
 
 	Ref<Widget> Find(const std::string& id);
 	void Remove(const std::string& id);
-
-private:
-	void Reposition();
 };
 
 class Root : public Widget {
@@ -163,6 +172,22 @@ public:
 
 class Container : public Widget {
 public:
+	enum class LayoutType {
+		Horizontal,
+		Vertical
+	} Layout = LayoutType::Horizontal;
+
+	enum class SizeType {
+		Fixed,
+		Stretch
+	};
+
+	SizeType SizeX = SizeType::Stretch;
+	SizeType SizeY = SizeType::Fixed;
+
+	Vec4 Color;
+
+public:
 	Container(const std::string& id)
 		: Widget(id, WidgetType::Container) { }
 
@@ -197,7 +222,7 @@ public:
 
 class Image : public Widget {
 public:
-	Ref<Magma::Image> Asset;
+	AssetID Texture;
 
 public:
 	Image(const std::string& id)
@@ -211,6 +236,8 @@ class Text : public Widget {
 public:
 	std::string Label;
 	float Scale = 1.0f;
+	Vec4 Color;
+	AssetID Font;
 
 public:
 	Text(const std::string& id)
@@ -287,11 +314,31 @@ public:
 	static void Update(TimeStep ts);
 	static void Render();
 
-	static void Load(const std::string& path);
-	static void Reload();
-	static void Clear();
+	static Ref<Widget> AddRoot(const std::string& name) {
+		auto ptr = m_Roots.Emplace(CreateRef<Root>(name));
+		return ptr;
+	}
 
-	static Ref<Widget> GetRoot() { return m_Root; }
+	static void SetRoot(const std::string& name) {
+		auto [found, i] = m_Roots.Find(
+			[&](const auto& widget) { return widget->ID == name; });
+		if(found)
+			m_CurrentRoot = i + 1;
+	}
+
+	static Ref<Widget> GetRoot() {
+		if(m_CurrentRoot)
+			return m_Roots[m_CurrentRoot - 1];
+		return nullptr;
+	}
+
+	static Ref<Widget> GetRoot(const std::string& name) {
+		auto [found, i] = m_Roots.Find(
+			[&](const auto& widget) { return widget->ID == name; });
+		if(found)
+			return m_Roots[i];
+		return nullptr;
+	}
 
 	// static Window* Window(const std::string& name);
 	// static Container* Container(const std::string& name);
@@ -300,8 +347,8 @@ public:
 	// static Image* Image(const std::string& name);
 
 private:
-	inline static Ref<Widget> m_Root;
-	inline static std::string m_Path;
+	inline static List<Ref<Widget>> m_Roots;
+	inline static u32 m_CurrentRoot = 0;
 };
 
 }

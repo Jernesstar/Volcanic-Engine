@@ -1,6 +1,45 @@
 {
-    "Root":
+    "Layout": [
+        {
+            "Name": "TopBar",
+            "Elements": [
+                "Logo",
+                "TitleBar",
+                "TitleText",
+                "MinimizeButton",
+                "MaximizeButton",
+                "CloseButton"
+            ]
+        },
+        {
+            "Name": "TypeBar",
+            "Elements": [
+                "ProjectButton",
+                "LavaFlowButton",
+                "ComponentButton"
+            ]
+        },
+        {
+            "Name": "MainViewport",
+            "Elements": [
+                "ProjectWindow",
+                "LavaFlowWindow",
+                "ComponentWindow"
+            ]
+        }
+    ],
+
+    "Widgets":
     [
+        {
+            "Name": "Logo",
+            "Type": "Image",
+            "Width": 50.0,
+            "Height": 50.0,
+            "x": 5.0,
+            "y": 5.0,
+            "Asset": "Magma/assets/images/VolcanicDisplay.png"
+        },
         {
             "Name": "TitleBar",
             "Type": "Window",
@@ -11,103 +50,73 @@
 
             "IsRoot": false,
             "AllowScroll": false,
+            "Color": [0.1, 0.1, 0.1, 1.0]
+        },
+        {
+            "Name": "TitleText",
+            "Type": "Text",
+            "Label": "Magma Editor v0.1.0",
 
-            "Color": [0.1, 0.1, 0.1, 1.0],
+            "x": 70.0,
+            "y": 15.0,
 
-            "Children":
-            [
-                {
-                    "Name": "Logo",
-                    "Type": "Image",
-                    "Width": 50.0,
-                    "Height": 50.0,
-                    "x": 5.0,
-                    "y": 5.0,
-                    "Asset": "Magma/assets/images/VolcanicDisplay.png"
-                },
-                {
-                    "Name": "TitleText",
-                    "Type": "Text",
-                    "Label": "Magma Editor v0.1.0",
+            "Scale": 2.0
+        },
+        {
+            "Name": "MinimizeImage",
+            "Type": "Image",
+            "Width": 20.0,
+            "Height": 20.0,
+            "x": 5.0,
+            "y": 5.0,
+            "Asset": "Magma/assets/images/Minimize.png"
+        },
+        {
+            "Name": "MinimizeButton",
+            "Type": "Button",
 
-                    "x": 70.0,
-                    "y": 15.0,
+            "x": 1300.0,
+            "y": 10.0,
+            "Width": 30.0,
+            "Height": 30.0
+        },
+        {
+            "Name": "CloseButton",
+            "Type": "Button",
 
-                    "Scale": 2.0
-                },
-                {
-                    "Name": "MinimizeButton",
-                    "Type": "Button",
+            "x": 1300.0,
+            "y": 10.0,
+            "Width": 30.0,
+            "Height": 30.0
+        },
+        {
+            "Name": "CloseImage",
+            "Type": "Image",
+            "Width": 20.0,
+            "Height": 20.0,
+            "x": 0.0,
+            "y": 0.0,
+            "Asset": "Magma/assets/images/Close.png"
+        },
+        {
+            "Name": "SignInButton",
+            "Type": "Button",
 
-                    "x": 1300.0,
-                    "y": 10.0,
-                    "Width": 30.0,
-                    "Height": 30.0,
+            "x": 1360.0,
+            "y": 25.0,
+            "Width": 32.0,
+            "Height": 32.0,
 
-                    "Color": [0.0, 0.0, 0.0, 0.0],
-
-                    "Children":
-                    [
-                        {
-                            "Name": "MinimizeImage",
-                            "Type": "Image",
-                            "Width": 20.0,
-                            "Height": 20.0,
-                            "x": 5.0,
-                            "y": 5.0,
-                            "Asset": "Magma/assets/images/Minimize.png"
-                        }
-                    ]
-                },
-                {
-                    "Name": "CloseButton",
-                    "Type": "Button",
-
-                    "x": 1300.0,
-                    "y": 10.0,
-                    "Width": 30.0,
-                    "Height": 30.0,
-
-                    "Color": [0.0, 0.0, 0.0, 0.0],
-
-                    "Children":
-                    [
-                        {
-                            "Name": "CloseImage",
-                            "Type": "Image",
-                            "Width": 20.0,
-                            "Height": 20.0,
-                            "x": 0.0,
-                            "y": 0.0,
-                            "Asset": "Magma/assets/images/Close.png"
-                        }
-                    ]
-                },
-                {
-                    "Name": "SignInButton",
-                    "Type": "Button",
-
-                    "x": 1360.0,
-                    "y": 25.0,
-                    "Width": 32.0,
-                    "Height": 32.0,
-
-                    "Color": [0.0, 1.0, 0.0, 0.0],
-
-                    "Children":
-                    [
-                        {
-                            "Name": "SignInImage",
-                            "Type": "Image",
-                            "Width": 30.0,
-                            "Height": 30.0,
-                            "x": 0.0,
-                            "y": 0.0,
-                            "Asset": "Magma/assets/images/Account.png"
-                        }
-                    ]
-                }
-            ]
+            "Color": [0.0, 1.0, 0.0, 0.0]
+        },
+        {
+            "Name": "SignInImage",
+            "Type": "Image",
+            "Width": 30.0,
+            "Height": 30.0,
+            "x": 0.0,
+            "y": 0.0,
+            "Asset": "Magma/assets/images/Account.png"
         },
         {
             "Name": "WelcomeWindow",
@@ -120,80 +129,64 @@
             "IsRoot": false,
             "AllowScroll": false,
 
-            "Color": [0.5, 0.5, 0.5, 1.0],
+            "Color": [0.5, 0.5, 0.5, 1.0]
+        },
+        {
+            "Name": "ProjectButton",
+            "Type": "Button",
 
-            "Children":
-            [
-                {
-                    "Name": "ProjectButton",
-                    "Type": "Button",
+            "x": 50.0,
+            "y": 20.0,
+            "Width": 90.0,
+            "Height": 20.0,
 
-                    "x": 50.0,
-                    "y": 20.0,
-                    "Width": 90.0,
-                    "Height": 20.0,
+            "Color": [0.0, 0.0, 0.0, 1.0]
+        },
+        {
+            "Name": "ProjectText",
+            "Type": "Text",
+            "Label": "Project",
 
-                    "Color": [0.0, 0.0, 0.0, 1.0],
+            "x": 21.0,
+            "y": 3.0
+        },
+        {
+            "Name": "LavaFlowButton",
+            "Type": "Button",
 
-                    "Children":
-                    [
-                        {
-                            "Name": "ProjectText",
-                            "Type": "Text",
-                            "Label": "Project",
+            "x": 270.0,
+            "y": 20.0,
+            "Width": 90.0,
+            "Height": 20.0,
 
-                            "x": 21.0,
-                            "y": 3.0
-                        }
-                    ]
-                },
-                {
-                    "Name": "LavaFlowButton",
-                    "Type": "Button",
+            "Color": [0.0, 0.0, 0.0, 1.0]
+        },
+        {
+            "Name": "LavaFlowText",
+            "Type": "Text",
+            "Label": "LavaFlow",
 
-                    "x": 270.0,
-                    "y": 20.0,
-                    "Width": 90.0,
-                    "Height": 20.0,
+            "x": 17.0,
+            "y": 3.0
+        },
+        {
+            "Name": "ComponentButton",
+            "Type": "Button",
 
-                    "Color": [0.0, 0.0, 0.0, 1.0],
+            "x": 520.0,
+            "y": 20.0,
+            "Width": 90.0,
+            "Height": 20.0,
 
-                    "Children":
-                    [
-                        {
-                            "Name": "LavaFlowText",
-                            "Type": "Text",
-                            "Label": "LavaFlow",
+            "Color": [0.0, 0.0, 0.0, 1.0]
+        },
+        {
+            "Name": "ComponentText",
+            "Type": "Text",
+            "Label": "Component",
 
-                            "x": 17.0,
-                            "y": 3.0
-                        }
-                    ]
-                },
-                {
-                    "Name": "ComponentButton",
-                    "Type": "Button",
-
-                    "x": 520.0,
-                    "y": 20.0,
-                    "Width": 90.0,
-                    "Height": 20.0,
-
-                    "Color": [0.0, 0.0, 0.0, 1.0],
-
-                    "Children":
-                    [
-                        {
-                            "Name": "ComponentText",
-                            "Type": "Text",
-                            "Label": "Component",
-
-                            "x": 14.0,
-                            "y": 3.0
-                        }
-                    ]
-                }
-            ]
+            "x": 14.0,
+            "y": 3.0
         }
     ]
 }

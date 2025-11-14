@@ -19,13 +19,20 @@
 #include "Integration/VersionControl/VersionControl.h"
 #include "Integration/Lang/ScriptManager.h"
 
-#include "UI/Widget.h"
-#include "Networking/Networking.h"
 #include "Asset/Asset.h"
+#include "UI/Widget.h"
+#include "Graphics/Renderer.h"
+#include "Graphics/Platform/RendererAPI.h"
+#include "Networking/Networking.h"
 #include "Utils/YAMLSerializer.h"
 
 using namespace VolcaniCore;
 using namespace VolcanicWindow;
+
+// using namespace Magma::Asset;
+using namespace Magma::UI;
+using namespace Magma::Graphics;
+using namespace Magma::Networking;
 
 namespace fs = std::filesystem;
 
@@ -45,8 +52,6 @@ static VC::VCManager* s_VCManager = nullptr;
 void Editor::Open() {
 	// Editor::RegisterInterface();
 
-	UI::UIManager::Load("Magma/assets/UI/start.json");
-
 	Application::PushDir();
 	auto logo =
 		AssetManager::LoadImage(
@@ -56,26 +61,59 @@ void Editor::Open() {
 	auto window = Application::As<WindowApplication>()->GetWindow();
 	window->SetIcon({ logo->Width, logo->Height, logo->Data.Copy() });
 
-	Events::RegisterListener<KeyPressedEvent>(
-		[this](const KeyPressedEvent& event)
-		{
-			if(event.Key == Key::R && !event.IsRepeat)
-				UI::UIManager::Reload();
-		});
+	// AssetManager::Init();
+	Renderer::Init();
+	UIManager::Init();
 
-	s_VCManager = new VC::VCManager();
-	s_VCManager->Init();
+	// Start
+	{
+		auto root = UIManager::AddRoot("Start");
 
-	// s_AIManager = new AI::AIManager();
-	// s_AIManager->Init();
+		auto logoUI = CreateRef<UI::Image>("Logo");
+		// logoUI->Asset = RendererAPI::CreateTexture(
+		// 	{ logo->Width, logo->Height, logo->Data.Copy() });
+		logoUI->Width = 50.0f;
+		logoUI->Height = 50.0f;
+		auto title = CreateRef<UI::Text>("Title");
+		title->Label = "Magma Editor v0.1.0";
+		title->Color = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+		auto topBar = CreateRef<UI::Container>("TopBar");
+		topBar->Height = 60.0f;
+		topBar->Color = { 0.3f, 0.3f, 0.3f, 1.0f };
+
+		topBar->Add(logoUI);
+		topBar->Add(title);
+
+		root->Add(topBar);
+	}
+
+	// Component
+	{
+		
+	}
+
+	// LavaFlow
+	{
+		
+	}
+
+	// Project
+	{
+		
+	}
+
+	UIManager::SetRoot("Start");
 }
 
 void Editor::Close() {
 	CloseProject();
 	CloseLavaFlow();
+	CloseComponent();
 
-	s_VCManager->Shutdown();
-	delete s_VCManager;
+	UIManager::Close();
+	Renderer::Close();
+	// AssetManager::Close();
 }
 
 Ref<ScriptModule> Editor::GetModule(const std::string& name) {
@@ -117,58 +155,63 @@ void Editor::Update(TimeStep ts) {
 	if(Mode == EditorMode::Project)
 		for(auto& tab : m_Tabs)
 			tab.OnUpdate(ts);
+
+	UIManager::Update(ts);
 }
 
 void Editor::Render() {
-	// if(Mode == EditorMode::None)
-	// 	RenderStartScreen();
-	// else if(Mode == EditorMode::Component)
-	// 	RenderComponentEditor();
-	// else if(Mode == EditorMode::Flow)
-	// 	RenderFlowEditor();
-	// else if(Mode == EditorMode::Project)
-	// 	RenderProjectEditor();
+	Renderer::BeginFrame();
+
+	if(Mode == EditorMode::None)
+		RenderStartScreen();
+	else if(Mode == EditorMode::Component)
+		RenderComponentEditor();
+	else if(Mode == EditorMode::Flow)
+		RenderFlowEditor();
+	else if(Mode == EditorMode::Project)
+		RenderProjectEditor();
+
+	UIManager::Render();
+
+	Renderer::EndFrame();
 }
 
 void Editor::RenderStartScreen() {
 	static uint32_t mode = 0; // 1 = Project, 2 = Flow, 3 = Component
 
-	auto screen = UI::UIManager::GetRoot();
+	auto root = UI::UIManager::GetRoot();
 	bool click = false;
 
-	// if(screen->Find("CloseButton")->State.Clicked)
+	// if(root->Find("CloseButton")->State.Clicked)
 	// 	Application::Close();
-	// if(screen->Find("MinimizeButton")->State.Clicked)
+	// if(root->Find("MinimizeButton")->State.Clicked)
 	// 	Application::Minimize();
 
-	// if(screen->Find("SignInButton")->State.Clicked)
-	// 	Networking::NetworkingManager::GitHubOAuth();
+	// if(root->Find("SignInButton")->State.Clicked)
+	// 	NetworkingManager::GitHubOAuth();
 
-	if(screen->Find("ProjectButton")->State.Clicked) {
-		click = true;
-		mode = 1;
-	}
-	else if(screen->Find("LavaFlowButton")->State.Clicked) {
-		click = true;
-		mode = 2;
+	// if(root->Find("ProjectButton")->State.Clicked) {
+	// 	click = true;
+	// 	mode = 1;
+	// }
+	// else if(root->Find("LavaFlowButton")->State.Clicked) {
+	// 	click = true;
+	// 	mode = 2;
+	// }
+	// else if(root->Find("ComponentButton")->State.Clicked) {
+	// 	click = true;
+	// 	mode = 3;
+	// }
 
-
-	}
-	else if(screen->Find("ComponentButton")->State.Clicked) {
-		click = true;
-		mode = 3;
-
-	}
-
-	if(click) {
-		Ref<UI::Widget> w;
-		w = screen->Find("ProjectWindow");
-		w->Visible = mode == 1;
-		w = screen->Find("LavaFlowWindow");
-		w->Visible = mode == 2;
-		w = screen->Find("ComponentWindow");
-		w->Visible = mode == 3;
-	}
+	// if(click) {
+	// 	Ref<UI::Widget> w;
+	// 	w = root->Find("ProjectWindow");
+	// 	w->Visible = mode == 1;
+	// 	w = root->Find("LavaFlowWindow");
+	// 	w->Visible = mode == 2;
+	// 	w = root->Find("ComponentWindow");
+	// 	w->Visible = mode == 3;
+	// }
 }
 
 void Editor::RenderComponentEditor() {

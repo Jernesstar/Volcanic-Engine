@@ -15,223 +15,17 @@
 #include <Lava/Script/ScriptClass.h>
 #include <Lava/Script/ScriptObject.h>
 
+#include "Graphics/Renderer.h"
 #include "Utils/JSONSerializer.h"
 
 using namespace VolcaniCore;
 using namespace VolcanicWindow;
 using namespace Magma;
+using namespace Magma::Graphics;
+
 using namespace Lava::Script;
 
 namespace Magma::UI {
-
-template<typename T>
-static T Get(const rapidjson::Value& val, const std::string& key, const T& df) {
-	if(val.IsNull())
-		return df;
-	if(val.HasMember(key))
-		return val[key].Get<T>();
-
-	return df;
-}
-
-static bool Traverse(Ref<Widget> parent, const rapidjson::Value& value) {
-	if(value.IsNull()) {
-		VOLCANICORE_LOG_ERROR("Value was null");
-		return false;
-	}
-	if(!value.HasMember("Name")) {
-		VOLCANICORE_LOG_ERROR("Missing property 'Name'");
-		return false;
-	}
-	if(!value.HasMember("Type")) {
-		VOLCANICORE_LOG_ERROR("Missing property 'Type'");
-		return false;
-	}
-
-	std::string id = value["Name"].GetString();
-	std::string type = value["Type"].GetString();
-
-	Ref<Widget> widget = nullptr;
-
-	if(type == "Window") {
-		widget = CreateRef<Window>(id);
-		auto w = widget->As<Window>();
-
-		if(value.HasMember("IsRoot") && value["IsRoot"].IsBool())
-			w->IsRoot = value["IsRoot"].GetBool();
-
-		if(value.HasMember("IsChild") && value["IsChild"].IsBool())
-			w->IsChild = value["IsChild"].GetBool();
-
-		if(value.HasMember("AllowScroll") && value["AllowScroll"].IsBool())
-			w->AllowScroll = value["AllowScroll"].GetBool();
-
-		if(value.HasMember("Width") && value["Width"].IsString())
-			if(value["Width"].GetString() == "auto")
-				w->Width = parent->Width;
-
-		if(value.HasMember("Height") && value["Height"].IsString())
-			if(value["Height"].GetString() == "auto")
-				w->Height = parent->Height;
-
-		if(value.HasMember("x") && value["x"].IsString())
-			if(value["x"].GetString() == "auto")
-				w->x = parent->x;
-
-		if(value.HasMember("y") && value["y"].IsString())
-			if(value["y"].GetString() == "auto")
-				w->y = parent->y;
-
-		if(value.HasMember("Color") && value["Color"].IsArray()) {
-			auto color = value["Color"].GetArray();
-			w->Color = {
-				color[0].GetFloat(),
-				color[1].GetFloat(),
-				color[2].GetFloat(),
-				color[3].GetFloat()
-			};
-		}
-	}
-	else if(type == "Container") {
-		widget = CreateRef<Container>(id);
-		auto w = widget->As<Container>();
-
-	}
-	else if(type == "Dropdown") {
-		widget = CreateRef<Dropdown>(id);
-		auto w = widget->As<Dropdown>();
-
-	}
-	else if(type == "Button") {
-		widget = CreateRef<Button>(id);
-		auto w = widget->As<Button>();
-
-		if(value.HasMember("Color") && value["Color"].IsArray()) {
-			auto color = value["Color"].GetArray();
-			w->Color = Vec4{
-				color[0].GetFloat(),
-				color[1].GetFloat(),
-				color[2].GetFloat(),
-				color[3].GetFloat()
-			};
-		}
-	}
-	else if(type == "Image") {
-		widget = CreateRef<Image>(id);
-		auto w = widget->As<Image>();
-
-		if(value.HasMember("Asset") && value["Asset"].IsString()) {
-			auto path = value["Asset"].GetString();
-			Application::PushDir();
-			auto image = AssetManager::LoadImage(path);
-			Application::PopDir();
-			w->Asset = image;
-		}
-	}
-	else if(type == "Text") {
-		widget = CreateRef<Text>(id);
-		auto w = widget->As<Text>();
-
-		if(value.HasMember("Label") && value["Label"].IsString())
-			w->Label = value["Label"].GetString();
-	}
-	else if(type == "TextInput") {
-		widget = CreateRef<TextInput>(id);
-		auto w = widget->As<TextInput>();
-
-	}
-	else if(type == "FileDialog") {
-		widget = CreateRef<FileDialog>(id);
-		auto w = widget->As<FileDialog>();
-
-	}
-	else if(type == "FileEditor") {
-		widget = CreateRef<FileEditor>(id);
-		auto w = widget->As<FileEditor>();
-
-	}
-	else if(type == "Gizmo") {
-		widget = CreateRef<Gizmo>(id);
-		auto w = widget->As<Gizmo>();
-
-	}
-	else {
-		VOLCANICORE_LOG_WARNING("Unknown widget type '%s'", type.c_str());
-		return false;
-	}
-
-	if(value.HasMember("Width") && value["Width"].IsNumber())
-		widget->Width = value["Width"].GetFloat();
-	if(value.HasMember("Height") && value["Height"].IsNumber())
-		widget->Height = value["Height"].GetFloat();
-	if(value.HasMember("x") && value["x"].IsNumber())
-		widget->x = value["x"].GetFloat();
-	if(value.HasMember("y") && value["y"].IsNumber())
-		widget->y = value["y"].GetFloat();
-	if(value.HasMember("Visible") && value["Visible"].IsBool())
-		widget->Visible = value["Visible"].GetBool();
-	if(value.HasMember("Enabled") && value["Enabled"].IsBool())
-		widget->Enabled = value["Enabled"].GetBool();
-
-	parent->Add(widget);
-
-	if(!value.HasMember("Children"))
-		return true;
-
-	for(const auto& child : value["Children"].GetArray())
-		if(!Traverse(widget, child))
-			return false;
-
-	return true;
-}
-
-static Ref<Widget> LoadPage(const std::string& path) {
-	using namespace rapidjson;
-
-	if(path == "") {
-		VOLCANICORE_LOG_ERROR("Path was empty");
-		return nullptr;
-	}
-
-	auto name = fs::path(path).stem().stem().stem().string();
-	if(!FileUtils::PathExists(path)) {
-		VOLCANICORE_LOG_ERROR(
-			"Could not find file with name '%s'", name.c_str());
-		return nullptr;
-	}
-
-	Document doc;
-	doc.Parse(FileUtils::ReadFile(path));
-
-	if(doc.HasParseError()) {
-		VOLCANICORE_LOG_INFO("Parsing error %i", (uint32_t)doc.GetParseError());
-		return nullptr;
-	}
-	if(!doc.IsObject()) {
-		VOLCANICORE_LOG_ERROR("File did not have root object");
-		return nullptr;
-	}
-	if(!doc.HasMember("Root")) {
-		VOLCANICORE_LOG_ERROR("File did not have \"Root\" object");
-		return nullptr;
-	}
-	if(!doc["Root"].IsArray()) {
-		VOLCANICORE_LOG_ERROR("Root object was not an array");
-		return nullptr;
-	}
-
-	auto root = CreateRef<Root>("Root");
-
-	for(const auto& value : doc["Root"].GetArray()) {
-		bool success = Traverse(root, value);
-		if(!success) {
-			VOLCANICORE_LOG_ERROR("Failed to load page");
-			return nullptr;
-		}
-	}
-
-	return root;
-}
 
 static Clay_Context* s_ClayContext;
 
@@ -270,8 +64,6 @@ void UIManager::Init() {
 		(Clay_ErrorHandler) { HandleClayErrors });
 
 	Clay_SetMeasureTextFunction(MeasureText, nullptr);
-
-	Clear();
 }
 
 void UIManager::Close() {
@@ -294,15 +86,12 @@ void UIManager::Update(TimeStep ts) {
 	auto mousePositionY = Input::GetMouseY();
 	auto isMouseDown = Input::MouseButtonPressed(Mouse::LeftButton);
 
-	// support resizing
 	Clay_SetLayoutDimensions((Clay_Dimensions) { width, height });
 	// / click / touch events - needed for scrolling & debug tools
 	Clay_SetPointerState(
 		(Clay_Vector2) { mousePositionX, mousePositionY }, isMouseDown);
 
 	Clay_BeginLayout();
-
-	m_Root->Update(ts);
 }
 
 typedef enum
@@ -331,43 +120,7 @@ typedef struct
 } CustomElement;
 
 void UIManager::Render() {
-	// m_Root->Render();
-
-	CLAY(CLAY_ID("OuterContainer"), {
-		.layout = {
-			.sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) },
-			.padding = CLAY_PADDING_ALL(16),
-			.childGap = 16,
-			.layoutDirection = CLAY_TOP_TO_BOTTOM,
-		},
-		.backgroundColor = { 0, 0, 0, 255 }
-	}) {
-		CLAY(CLAY_ID("TestWindow"), {
-			.layout = {
-				.sizing = { CLAY_SIZING_FIXED(300), CLAY_SIZING_FIXED(100) },
-				.padding = CLAY_PADDING_ALL(16),
-				.childGap = 16
-			},
-			.backgroundColor = { 255, 255, 255, 255 }
-		});
-
-		CLAY(CLAY_ID("TestWindow2"), {
-			.layout = {
-				.sizing = { CLAY_SIZING_FIXED(300), CLAY_SIZING_FIXED(300) },
-				.padding = CLAY_PADDING_ALL(16),
-				.childGap = 16
-			},
-			.backgroundColor = { 0, 255, 255, 255 }
-		}) {
-			CLAY_TEXT(CLAY_STRING("Hello World"),
-				CLAY_TEXT_CONFIG({
-					.textColor = { 0, 0, 0, 255 },
-					.fontId = 0,
-					.fontSize = 24,
-				})
-			);
-		}
-	}
+	GetRoot()->Render();
 
 	Clay_RenderCommandArray renderCommands = Clay_EndLayout();
 
@@ -376,8 +129,20 @@ void UIManager::Render() {
 
 		switch(cmd->commandType) {
 			case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
+				auto box = cmd->boundingBox;
 				auto rect = cmd->renderData.rectangle;
-				// Renderer::DrawQuad();
+				Renderer::DrawQuad({
+					.PosX = box.x,
+					.PosY = box.y,
+					.Width = box.width,
+					.Height = box.height,
+					.Color = {
+						rect.backgroundColor.r,
+						rect.backgroundColor.g,
+						rect.backgroundColor.b,
+						rect.backgroundColor.a
+					}
+				});
 			}
 			case CLAY_RENDER_COMMAND_TYPE_BORDER: {
 
@@ -407,25 +172,6 @@ void UIManager::Render() {
 			}
 		}
 	}
-}
-
-void UIManager::Load(const std::string& path) {
-	auto root = LoadPage(path);
-	if(!root)
-		return;
-
-	VOLCANICORE_LOG_INFO("Loaded '%s'", path.c_str());
-	m_Root = root;
-	m_Path = path;
-}
-
-void UIManager::Reload() {
-	if(m_Path != "")
-		Load(m_Path);
-}
-
-void UIManager::Clear() {
-	m_Root = CreateRef<Root>("Root");
 }
 
 void Widget::Update(TimeStep ts) {
@@ -484,20 +230,19 @@ Ref<Widget> Widget::Find(const std::string& id) {
 	return nullptr;
 }
 
-void Widget::Reposition() {
-
-}
-
 void Root::Begin() {
 	Clay__OpenElementWithId(CLAY_ID("Root"));
 	Clay__ConfigureOpenElement(
 		CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
 		{
 			.layout = {
-				.sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) },
-				.padding = CLAY_PADDING_ALL(16), .childGap = 16
+				.sizing = {
+					CLAY_SIZING_GROW(),
+					CLAY_SIZING_GROW()
+				},
+				.layoutDirection = CLAY_TOP_TO_BOTTOM
 			},
-			.backgroundColor = { 0, 0, 0, 0 }
+			.backgroundColor = { 0.0f, 0.0f, 0.0f, 0.0f }
 		})
 	);
 }
@@ -512,10 +257,14 @@ void Window::Begin() {
 		CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
 		{
 			.layout = {
-				.sizing = { CLAY_SIZING_GROW(0), CLAY_SIZING_GROW(0) },
-				.padding = CLAY_PADDING_ALL(16), .childGap = 16
+				.sizing = {
+					CLAY_SIZING_FIXED(Width),
+					CLAY_SIZING_FIXED(Height)
+				},
+				// .padding = CLAY_PADDING_ALL(16),
+				// .childGap = 16
 			},
-			.backgroundColor = { 10, 10, 255, 255 }
+			.backgroundColor = { Color.r, Color.g, Color.b, Color.a }
 		})
 	);
 }
@@ -525,11 +274,28 @@ void Window::End() {
 }
 
 void Container::Begin() {
-
+	Clay__OpenElementWithId(CLAY_SID(Clay_String(ID.c_str())));
+	Clay__ConfigureOpenElement(
+		CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
+		{
+			.layout = {
+				.sizing = {
+					SizeX == SizeType::Fixed ?
+						CLAY_SIZING_FIXED(Width) : CLAY_SIZING_GROW(),
+					SizeY == SizeType::Fixed ?
+						CLAY_SIZING_FIXED(Height) : CLAY_SIZING_GROW()
+				},
+				.layoutDirection =
+					Layout == LayoutType::Horizontal ?
+								  CLAY_LEFT_TO_RIGHT : CLAY_TOP_TO_BOTTOM,
+			},
+			.backgroundColor = { Color.r, Color.g, Color.b, Color.a }
+		})
+	);
 }
 
 void Container::End() {
-
+	Clay__CloseElement();
 }
 
 void Dropdown::Begin() {
@@ -549,19 +315,38 @@ void Button::End() {
 }
 
 void Image::Begin() {
-
+	Clay__OpenElementWithId(CLAY_SID(Clay_String(ID.c_str())));
+	Clay__ConfigureOpenElement(
+		CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
+		{
+			.layout = {
+				.sizing = {
+					CLAY_SIZING_FIXED(Width),
+					CLAY_SIZING_FIXED(Height)
+				}
+			},
+			.image = { .imageData = (void*)Texture }
+		})
+	);
 }
 
 void Image::End() {
-
+	Clay__CloseElement();
 }
 
 void Text::Begin() {
-
+	Clay__OpenElementWithId(CLAY_SID(Clay_String(ID.c_str())));
+	CLAY_TEXT(CLAY_STRING("Text"),
+		CLAY_TEXT_CONFIG({
+			.textColor = { Color.r, Color.g, Color.b, Color.a },
+			.fontId = (u16)Font,
+			.fontSize = (u16)Scale,
+		})
+	);
 }
 
 void Text::End() {
-
+	Clay__CloseElement();
 }
 
 void TextInput::Begin() {

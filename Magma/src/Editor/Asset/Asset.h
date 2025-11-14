@@ -23,6 +23,8 @@ enum AssetType {
 	CUSTOM
 };
 
+typedef u32 AssetID;
+
 class Asset : public Derivable<Asset> {
 public:
 	const AssetType Type;

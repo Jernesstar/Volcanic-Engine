@@ -18,13 +18,9 @@ public:
 
 class NetworkingManager {
 public:
-	NetworkingManager() = default;
-	~NetworkingManager() = default;
-
 	static void Init();
 	static void Shutdown();
-
-	void GitHubOAuth();
+	static void GitHubOAuth();
 };
 
 using Bytes = Buffer<uint8_t>;
