@@ -1,5 +1,5 @@
 <Root id="Start">
-    <Container id="TopBar" height=60>
+    <Container id="TopBar" rounding=10.0 height=60>
         
     </Container>
 </Root>

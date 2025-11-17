@@ -4,6 +4,14 @@
 
 namespace Magma {
 
+void AssetManager::Init() {
+
+}
+
+void AssetManager::Close() {
+
+}
+
 class AudioEngine {
 public:
 	static void Init() {
@@ -24,14 +32,9 @@ private:
 	inline static SoLoud::Soloud* s_Engine;
 };
 
-
-void Sound::Play(float volume) {
-	AudioEngine::Get()->play(m_Sound, volume);
-}
-
-Ref<Image> AssetManager::LoadImage(const std::string& path, bool flip) {
+Ref<ImageAsset> AssetImporter::LoadImage(const std::string& path, bool flip) {
 	stbi_set_flip_vertically_on_load((int)flip);
-	Ref<Image> image = CreateRef<Image>();
+	Ref<ImageAsset> image = CreateRef<ImageAsset>();
 	int width, height, bpp;
 	uint8_t* pixels = stbi_load(path.c_str(), &width, &height, &bpp, 4);
 	if(!pixels) {
@@ -45,7 +48,7 @@ Ref<Image> AssetManager::LoadImage(const std::string& path, bool flip) {
 	return image;
 }
 
-// Buffer<float> AssetImporter::GetAudioData(const std::string& path) {
+// Buffer<float> AssetImporter::GetData(const std::string& path) {
 // 	SoLoud::Wav sound;
 // 	VOLCANICORE_ASSERT(sound.load(path.c_str()) == 0);
 // 	Buffer<float> data(sound.mSampleCount);

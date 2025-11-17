@@ -54,18 +54,18 @@ void Editor::Open() {
 
 	Application::PushDir();
 	auto logo =
-		AssetManager::LoadImage(
+		AssetImporter::LoadImage(
 			"Magma/assets/images/VolcanicDisplay.png", false);
 
 	auto window = Application::As<WindowApplication>()->GetWindow();
 	window->SetIcon({ logo->Width, logo->Height, logo->Data.Copy() });
 
-	// AssetManager::Init();
+	AssetManager::Init();
 	Renderer::Init();
 	WidgetManager::Init();
 
-	WidgetManager::Load("Magma/assets/ui/start.asx");
-	WidgetManager::SetRoot("Start");
+	// WidgetManager::Load("Magma/assets/ui/start.asx");
+	// WidgetManager::SetRoot("Start");
 
 	Application::PopDir();
 }
@@ -77,7 +77,7 @@ void Editor::Close() {
 
 	WidgetManager::Close();
 	Renderer::Close();
-	// AssetManager::Close();
+	AssetManager::Close();
 }
 
 Ref<ScriptModule> Editor::GetModule(const std::string& name) {

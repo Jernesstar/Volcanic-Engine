@@ -50,10 +50,6 @@ static Clay_Dimensions MeasureText(Clay_StringSlice text, Clay_TextElementConfig
 	};
 }
 
-void WidgetManager::Load(const std::string& path) {
-	
-}
-
 void WidgetManager::Init() {
 	uint64_t size = Clay_MinMemorySize();
 	Clay_Arena arena =
@@ -72,6 +68,11 @@ void WidgetManager::Init() {
 
 void WidgetManager::Close() {
 
+}
+
+void WidgetManager::Load(const std::string& path) {
+	m_Roots.Emplace(CreateRef<Root>("Root"));
+	m_CurrentRoot = 1;
 }
 
 void WidgetManager::Update(TimeStep ts) {
@@ -124,6 +125,9 @@ typedef struct
 } CustomElement;
 
 void WidgetManager::Render() {
+	if(!m_CurrentRoot)
+		return;
+
 	GetRoot()->Render();
 
 	Clay_RenderCommandArray renderCommands = Clay_EndLayout();

@@ -20,7 +20,9 @@ enum AssetType {
 	Video,
 	Mesh,
 	Shader,
-	Sound,
+	Font,
+	Audio,
+	AudioStream,
 	Script,
 	Custom
 };
@@ -30,6 +32,7 @@ typedef u32 AssetID;
 class Asset : public Derivable<Asset> {
 public:
 	const AssetType Type;
+	AssetID ID;
 
 public:
 	Asset(AssetType type)
@@ -57,16 +60,72 @@ public:
 		: Asset(AssetType::GIF) { }
 };
 
-class SoundAsset : public Asset {
+class AudioAsset : public Asset {
 public:
-	SoundAsset()
-		: Asset(AssetType::Sound) { }
+	Buffer<float> Data;
+	u32 Channels, SampleRate;
 
-	void Play(float volume = -1.0f);
-	SoLoud::Wav& GetInternal() { return m_Sound; }
+public:
+	AudioAsset()
+		: Asset(AssetType::Audio) { }
+};
+
+class AssetRegistry : public Derivable<AssetRegistry> {
+public:
+	virtual void Load(const std::string& path) = 0;
+	virtual Ref<Asset> GetAsset(AssetID id) = 0;
+	virtual void LoadAsset(AssetID id) = 0;
+	virtual void UnloadAsset(AssetID id) = 0;
+
+protected:
+	Map<AssetID, bool> s_AssetRegistry;
+	Map<AssetID, Ref<Asset>> s_AssetCache;
+};
+
+class EditorAssetRegistry : public AssetRegistry {
+public:
+	EditorAssetRegistry() = default;
+	~EditorAssetRegistry() = default;
+
+	void Load(const std::string& path) override;
+	Ref<Asset> GetAsset(AssetID id) override;
+	void LoadAsset(AssetID id) override;
+	void UnloadAsset(AssetID id) override;
 
 private:
-	SoLoud::Wav m_Sound;
+	Map<AssetID, std::string> m_AssetPaths;
+};
+
+class RuntimeAssetRegistry : public AssetRegistry {
+public:
+	RuntimeAssetRegistry() = default;
+	~RuntimeAssetRegistry() = default;
+
+	void Load(const std::string& path) override;
+	Ref<Asset> GetAsset(AssetID id) override;
+	void LoadAsset(AssetID id) override;
+	void UnloadAsset(AssetID id) override;
+
+private:
+	Map<AssetID, u32> m_AssetOffsets;
+};
+
+class AssetManager {
+public:
+	static void Init();
+	static void Close();
+
+	static Ref<Asset> GetAsset(AssetID id);
+	static void LoadAsset(AssetID id);
+	static void UnloadAsset(AssetID id);
+
+private:
+	Ref<AssetRegistry> m_AssetRegistry;
+};
+
+class AssetImporter {
+public:
+	static Ref<ImageAsset> LoadImage(const std::string& path, bool flip = false);
 };
 
 }
