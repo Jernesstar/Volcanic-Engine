@@ -306,13 +306,15 @@ public:
 	void End() override;
 };
 
-class UIManager {
+class WidgetManager {
 public:
 	static void Init();
 	static void Close();
 
 	static void Update(TimeStep ts);
 	static void Render();
+
+	static void Load(const std::string& path);
 
 	static Ref<Widget> AddRoot(const std::string& name) {
 		auto ptr = m_Roots.Emplace(CreateRef<Root>(name));

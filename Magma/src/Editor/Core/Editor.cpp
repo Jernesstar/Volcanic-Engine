@@ -20,7 +20,7 @@
 #include "Integration/Lang/ScriptManager.h"
 
 #include "Asset/Asset.h"
-#include "UI/Widget.h"
+#include "Widget/Widget.h"
 #include "Graphics/Renderer.h"
 #include "Graphics/Platform/RendererAPI.h"
 #include "Networking/Networking.h"
@@ -56,54 +56,18 @@ void Editor::Open() {
 	auto logo =
 		AssetManager::LoadImage(
 			"Magma/assets/images/VolcanicDisplay.png", false);
-	Application::PopDir();
 
 	auto window = Application::As<WindowApplication>()->GetWindow();
 	window->SetIcon({ logo->Width, logo->Height, logo->Data.Copy() });
 
 	// AssetManager::Init();
 	Renderer::Init();
-	UIManager::Init();
+	WidgetManager::Init();
 
-	// Start
-	{
-		auto root = UIManager::AddRoot("Start");
+	WidgetManager::Load("Magma/assets/ui/start.asx");
+	WidgetManager::SetRoot("Start");
 
-		auto logoUI = CreateRef<UI::Image>("Logo");
-		// logoUI->Asset = RendererAPI::CreateTexture(
-		// 	{ logo->Width, logo->Height, logo->Data.Copy() });
-		logoUI->Width = 50.0f;
-		logoUI->Height = 50.0f;
-		auto title = CreateRef<UI::Text>("Title");
-		title->Label = "Magma Editor v0.1.0";
-		title->Color = { 1.0f, 1.0f, 1.0f, 1.0f };
-
-		auto topBar = CreateRef<UI::Container>("TopBar");
-		topBar->Height = 60.0f;
-		topBar->Color = { 0.3f, 0.3f, 0.3f, 1.0f };
-
-		topBar->Add(logoUI);
-		topBar->Add(title);
-
-		root->Add(topBar);
-	}
-
-	// Component
-	{
-		
-	}
-
-	// LavaFlow
-	{
-		
-	}
-
-	// Project
-	{
-		
-	}
-
-	UIManager::SetRoot("Start");
+	Application::PopDir();
 }
 
 void Editor::Close() {
@@ -111,7 +75,7 @@ void Editor::Close() {
 	CloseLavaFlow();
 	CloseComponent();
 
-	UIManager::Close();
+	WidgetManager::Close();
 	Renderer::Close();
 	// AssetManager::Close();
 }
@@ -156,7 +120,7 @@ void Editor::Update(TimeStep ts) {
 		for(auto& tab : m_Tabs)
 			tab.OnUpdate(ts);
 
-	UIManager::Update(ts);
+	WidgetManager::Update(ts);
 }
 
 void Editor::Render() {
@@ -171,7 +135,7 @@ void Editor::Render() {
 	else if(Mode == EditorMode::Project)
 		RenderProjectEditor();
 
-	UIManager::Render();
+	WidgetManager::Render();
 
 	Renderer::EndFrame();
 }
@@ -179,7 +143,7 @@ void Editor::Render() {
 void Editor::RenderStartScreen() {
 	static uint32_t mode = 0; // 1 = Project, 2 = Flow, 3 = Component
 
-	auto root = UI::UIManager::GetRoot();
+	auto root = UI::WidgetManager::GetRoot();
 	bool click = false;
 
 	// if(root->Find("CloseButton")->State.Clicked)

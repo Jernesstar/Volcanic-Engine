@@ -53,6 +53,7 @@ VendorPaths["glfw"] = "%{VolcanicWindowVendorDir}/glfw"
 VendorPaths["angelscript"]        = "%{LavaVendorDir}/angelscript"
 
 -- Magma libraries
+VendorPaths["pugixml"]            = "%{MagmaVendorDir}/pugixml"
 VendorPaths["yaml_cpp"]           = "%{MagmaVendorDir}/yaml-cpp"
 VendorPaths["rapidjson"]          = "%{MagmaVendorDir}/rapidjson"
 VendorPaths["cpp_httplib"]        = "%{MagmaVendorDir}/cpp-httplib"
@@ -75,6 +76,7 @@ Includes["glfw"]                  = "%{VendorPaths.glfw}/include"
 Includes["angelscript"]           = "%{VendorPaths.angelscript}/angelscript/include"
 
 -- Magma libraries
+Includes["pugixml"]               = "%{VendorPaths.pugixml}/src"
 Includes["yaml_cpp"]              = "%{VendorPaths.yaml_cpp}/include"
 Includes["rapidjson"]             = "%{VendorPaths.rapidjson}/include"
 Includes["cpp_httplib"]           = "%{MagmaVendorDir}"

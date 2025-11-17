@@ -50,7 +50,11 @@ static Clay_Dimensions MeasureText(Clay_StringSlice text, Clay_TextElementConfig
 	};
 }
 
-void UIManager::Init() {
+void WidgetManager::Load(const std::string& path) {
+	
+}
+
+void WidgetManager::Init() {
 	uint64_t size = Clay_MinMemorySize();
 	Clay_Arena arena =
 		Clay_CreateArenaWithCapacityAndMemory(size, malloc(size));
@@ -66,11 +70,11 @@ void UIManager::Init() {
 	Clay_SetMeasureTextFunction(MeasureText, nullptr);
 }
 
-void UIManager::Close() {
+void WidgetManager::Close() {
 
 }
 
-void UIManager::Update(TimeStep ts) {
+void WidgetManager::Update(TimeStep ts) {
 	// float mouseWheelX = Input::GetMouseWheelX();
 	// float mouseWheelY = Input::GetMouseWheelY();
 
@@ -119,7 +123,7 @@ typedef struct
 	} customData;
 } CustomElement;
 
-void UIManager::Render() {
+void WidgetManager::Render() {
 	GetRoot()->Render();
 
 	Clay_RenderCommandArray renderCommands = Clay_EndLayout();
@@ -385,7 +389,7 @@ void Gizmo::End() {
 
 // }
 
-// void UIManager::RegisterInterface() {
+// void WidgetManager::RegisterInterface() {
 // 	auto* engine = ScriptEngine::Get();
 
 // 	engine->SetDefaultNamespace("Widget");

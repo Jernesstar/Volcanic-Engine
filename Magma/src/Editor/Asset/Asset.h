@@ -14,13 +14,15 @@ using namespace VolcaniCore;
 namespace Magma {
 
 enum AssetType {
-	IMAGE,
+	Unknown,
+	Image,
 	GIF,
-	VIDEO,
-	MESH,
-	SHADER,
-	SOUND,
-	CUSTOM
+	Video,
+	Mesh,
+	Shader,
+	Sound,
+	Script,
+	Custom
 };
 
 typedef u32 AssetID;
@@ -35,43 +37,36 @@ public:
 	~Asset() = default;
 };
 
-class Image : public Asset {
+class ImageAsset : public Asset {
 public:
 	uint32_t Width, Height;
 	Buffer<uint8_t> Data;
 
 public:
-	Image()
-		: Asset(AssetType::IMAGE) { }
+	ImageAsset()
+		: Asset(AssetType::Image) { }
 };
 
-class GIF : public Asset {
+class GIFAsset : public Asset {
 public:
-	List<Image> Frames;
+	uint32_t Width, Height;
+	List<Buffer<uint8_t>> Data;
 
 public:
-	GIF()
+	GIFAsset()
 		: Asset(AssetType::GIF) { }
 };
 
-class Sound : public Asset {
+class SoundAsset : public Asset {
 public:
-	Sound()
-		: Asset(AssetType::SOUND) { }
+	SoundAsset()
+		: Asset(AssetType::Sound) { }
 
 	void Play(float volume = -1.0f);
 	SoLoud::Wav& GetInternal() { return m_Sound; }
 
 private:
 	SoLoud::Wav m_Sound;
-};
-
-class AssetManager {
-public:
-	static Ref<Image> LoadImage(const std::string& path, bool flip = false);
-
-public:
-	inline static Map<std::string, Ref<Asset>> s_Assets;
 };
 
 }

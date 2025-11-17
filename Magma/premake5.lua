@@ -37,6 +37,7 @@ project "Magma"
         "%{MagmaVendorDir}",
         "%{LavaVendorDir}",
 
+        "%{Includes.pugixml}",
         "%{Includes.yaml_cpp}",
         "%{Includes.rapidjson}",
 
@@ -116,3 +117,4 @@ include "Magma/.deps/stb_image"
 include "Magma/.deps/efsw"
 include "Magma/.deps/libgit2"
 include "Magma/.deps/yaml-cpp"
+include "Magma/.deps/pugixml"
