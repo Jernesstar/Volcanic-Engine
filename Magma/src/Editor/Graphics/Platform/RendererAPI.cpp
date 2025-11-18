@@ -44,15 +44,15 @@ Ref<Framebuffer> RendererAPI::CreateFramebuffer(const FramebufferSpecification& 
 }
 
 Ref<Shader> RendererAPI::CreateShader(const ShaderSpecification& spec) {
-	// switch(GetBackend()) {
-	// 	case RendererAPI::Backend::OpenGL:
-	// 		return CreateRef<OpenGL::Shader>(spec);
-	// 	// case RendererAPI::Backend::Metal:
-	// 	// 	return CreateRef<Metal::Shader>(spec);
-	// 	default:
-	// 		VOLCANICORE_ASSERT(false, "Unknown renderer API");
-	// 		return nullptr;
-	// }
+	switch(GetBackend()) {
+		case RendererAPI::Backend::OpenGL:
+			return CreateRef<OpenGL::Shader>(spec.Files);
+		// case RendererAPI::Backend::Metal:
+		// 	return CreateRef<Metal::Shader>(spec);
+		default:
+			VOLCANICORE_ASSERT(false, "Unknown renderer API");
+			return nullptr;
+	}
 }
 
 Ref<Texture> RendererAPI::CreateTexture(const TextureSpecification& spec) {

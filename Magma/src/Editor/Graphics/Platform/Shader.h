@@ -8,9 +8,11 @@ using namespace VolcaniCore;
 namespace Magma::Graphics {
 
 enum class ShaderFileType { Vertex, Fragment, Geometry, Compute, Unknown };
+enum class ShaderDataType { Text, Binary };
 
 struct ShaderFile {
-	const ShaderFileType Type;
+	const ShaderFileType FileType;
+	const ShaderDataType DataType;
 	Buffer<void> Data;
 };
 
@@ -35,7 +37,7 @@ public:
 };
 
 struct ShaderSpecification {
-
+	List<ShaderFile> Files;
 };
 
 }
