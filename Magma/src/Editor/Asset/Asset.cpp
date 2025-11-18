@@ -4,6 +4,38 @@
 
 namespace Magma {
 
+void EditorAssetRegistry::Load(const std::string& path) {
+
+}
+
+Ref<Asset> EditorAssetRegistry::GetAsset(AssetID id) {
+	
+}
+
+void EditorAssetRegistry::LoadAsset(AssetID id) {
+	
+}
+
+void EditorAssetRegistry::UnloadAsset(AssetID id) {
+	
+}
+
+void RuntimeAssetRegistry::Load(const std::string& path) {
+	
+}
+
+Ref<Asset> RuntimeAssetRegistry::GetAsset(AssetID id) {
+	
+}
+
+void RuntimeAssetRegistry::LoadAsset(AssetID id) {
+	
+}
+
+void RuntimeAssetRegistry::UnloadAsset(AssetID id) {
+	
+}
+
 void AssetManager::Init() {
 
 }

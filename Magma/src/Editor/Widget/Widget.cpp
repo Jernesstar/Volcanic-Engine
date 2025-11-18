@@ -6,6 +6,8 @@
 #define CLAY_IMPLEMENTATION
 #include <clay/clay.h>
 
+#include <pugixml.hpp>
+
 #include <VolcaniCore/Core/Application.h>
 #include <VolcanicWindow/Application.h>
 #include <VolcanicWindow/Input.h>
@@ -67,12 +69,24 @@ void WidgetManager::Init() {
 }
 
 void WidgetManager::Close() {
-
+	m_Roots.Clear();
 }
 
 void WidgetManager::Load(const std::string& path) {
 	m_Roots.Emplace(CreateRef<Root>("Root"));
 	m_CurrentRoot = 1;
+	auto root = GetRoot();
+
+	std::ifstream stream(path);
+	pugi::xml_document doc;
+	pugi::xml_parse_result res = doc.load(stream);
+	if(!res) {
+		std::cout << "XML [" << path << "] parsed with errors, attr value: ["
+				  << doc.child("node").attribute("attr").value() << "]\n";
+		std::cout << "Error description: " << res.description() << "\n";
+		std::cout << "Error offset: " << res.offset
+				  << " (error at [..." << path.substr(res.offset) << "]\n\n";
+	}
 }
 
 void WidgetManager::Update(TimeStep ts) {

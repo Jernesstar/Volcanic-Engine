@@ -64,8 +64,9 @@ void Editor::Open() {
 	Renderer::Init();
 	WidgetManager::Init();
 
-	// WidgetManager::Load("Magma/assets/ui/start.asx");
-	// WidgetManager::SetRoot("Start");
+	WidgetManager::Load("Magma/assets/ui/start.asx");
+	// WidgetManager::Load("Magma/assets/ui/component.asx");
+	// WidgetManager::Load("Magma/assets/ui/lavaflow.asx");
 
 	Application::PopDir();
 }

@@ -1,5 +1,35 @@
 <Root id="Start">
-    <Container id="TopBar" rounding=10.0 height=60>
-        
+    <Container id="TopBar" height=60.0>
+        <Image asset="images/logo.png" width=50.0 height=50.0/>
+        <Text scale=2.0>
+            Magma Editor v0.1
+        <Text/>
+        <Button>
+            <Script>
+                void onClick()
+                {
+                    ApplicationWindow.Minimize();
+                }
+            </Script>
+            <Image asset="images/minimize.png"/>
+        </Button>
+        <Button>
+            <Script>
+                void onClick()
+                {
+                    ApplicationWindow.Maximize();
+                }
+            </Script>
+            <Image asset="images/maximize.png"/>
+        </Button>
+        <Button>
+            <Script>
+                void onClick()
+                {
+                    Application.ForceClose();
+                }
+            </Script>
+            <Image asset="images/maximize.png"/>
+        </Button>
     </Container>
 </Root>
