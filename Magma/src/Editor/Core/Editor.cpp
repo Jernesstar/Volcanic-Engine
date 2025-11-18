@@ -19,12 +19,16 @@
 #include "Integration/VersionControl/VersionControl.h"
 #include "Integration/Lang/ScriptManager.h"
 
-#include "Asset/Asset.h"
+#include "Utils/YAMLSerializer.h"
 #include "Widget/Widget.h"
 #include "Graphics/Renderer.h"
 #include "Graphics/Platform/RendererAPI.h"
 #include "Networking/Networking.h"
-#include "Utils/YAMLSerializer.h"
+#include "Asset/Asset.h"
+
+#undef LoadImage
+#undef LoadImageW
+#undef LoadImageA
 
 using namespace VolcaniCore;
 using namespace VolcanicWindow;

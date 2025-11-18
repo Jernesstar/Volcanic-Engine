@@ -20,6 +20,10 @@ void EditorAssetRegistry::UnloadAsset(AssetID id) {
 	
 }
 
+AssetID EditorAssetRegistry::GetAssetID(const std::string& path) {
+	return 0;
+}
+
 void RuntimeAssetRegistry::Load(const std::string& path) {
 	
 }
@@ -36,6 +40,7 @@ void RuntimeAssetRegistry::UnloadAsset(AssetID id) {
 	
 }
 
+
 void AssetManager::Init() {
 
 }
@@ -44,25 +49,29 @@ void AssetManager::Close() {
 
 }
 
-class AudioEngine {
-public:
-	static void Init() {
-		s_Engine = new SoLoud::Soloud;
-		s_Engine->init();
-	}
+Ref<AssetRegistry> AssetManager::GetRegistry() {
+	return s_AssetRegistry;
+}
 
-	static void Shutdown() {
-		s_Engine->deinit();
-		delete s_Engine;
-	}
+// class AudioEngine {
+// public:
+// 	static void Init() {
+// 		s_Engine = new SoLoud::Soloud;
+// 		s_Engine->init();
+// 	}
 
-	static SoLoud::Soloud* Get() {
-		return s_Engine;
-	}
+// 	static void Shutdown() {
+// 		s_Engine->deinit();
+// 		delete s_Engine;
+// 	}
 
-private:
-	inline static SoLoud::Soloud* s_Engine;
-};
+// 	static SoLoud::Soloud* Get() {
+// 		return s_Engine;
+// 	}
+
+// private:
+// 	inline static SoLoud::Soloud* s_Engine;
+// };
 
 Ref<ImageAsset> AssetImporter::LoadImage(const std::string& path, bool flip) {
 	stbi_set_flip_vertically_on_load((int)flip);

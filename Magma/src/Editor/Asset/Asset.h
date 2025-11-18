@@ -1,13 +1,11 @@
 #pragma once
 
-#include <soloud.h>
-#include <soloud_wav.h>
-
 #include <VolcaniCore/Core/Template.h>
 #include <VolcaniCore/Core/Defines.h>
 #include <VolcaniCore/Core/List.h>
 
 // #include <Lava/Script/ScriptModule.h>
+
 
 using namespace VolcaniCore;
 
@@ -92,6 +90,8 @@ public:
 	void LoadAsset(AssetID id) override;
 	void UnloadAsset(AssetID id) override;
 
+	AssetID GetAssetID(const std::string& path);
+
 private:
 	Map<AssetID, std::string> m_AssetPaths;
 };
@@ -114,13 +114,14 @@ class AssetManager {
 public:
 	static void Init();
 	static void Close();
+	static Ref<AssetRegistry> GetRegistry();
 
 	static Ref<Asset> GetAsset(AssetID id);
 	static void LoadAsset(AssetID id);
 	static void UnloadAsset(AssetID id);
 
 private:
-	Ref<AssetRegistry> m_AssetRegistry;
+	inline static Ref<AssetRegistry> s_AssetRegistry;
 };
 
 class AssetImporter {

@@ -93,10 +93,7 @@ public:
 	bool Enabled = true;
 
 	UIState State;
-
-	bool IsNative = true;
-	ScriptFunc OnEventScript = { };
-	Func<void, const UIState&> OnEvent = [](const UIState&) { };
+	ScriptFunc OnEvent = { };
 
 public:
 	Widget(const std::string& id, WidgetType type)
@@ -185,7 +182,7 @@ public:
 	SizeType SizeX = SizeType::Stretch;
 	SizeType SizeY = SizeType::Fixed;
 
-	Vec4 Color;
+	Vec4 Color = { };
 
 public:
 	Container(const std::string& id)
@@ -210,7 +207,7 @@ public:
 
 class Button : public Widget {
 public:
-	Vec4 Color;
+	Vec4 Color = { };
 
 public:
 	Button(const std::string& id)
@@ -236,7 +233,7 @@ class Text : public Widget {
 public:
 	std::string Label;
 	float Scale = 1.0f;
-	Vec4 Color;
+	Vec4 Color = { };
 	AssetID Font;
 
 public:

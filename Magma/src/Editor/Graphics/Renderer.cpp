@@ -4,6 +4,8 @@
 
 namespace Magma::Graphics {
 
+static DrawPassID BasePass;
+
 void Renderer::Init() {
 #if defined(VOLCANIC_APPLE)
 	RendererAPI::Create(RendererAPI::Backend::Metal);
@@ -11,7 +13,7 @@ void Renderer::Init() {
 	RendererAPI::Create(RendererAPI::Backend::OpenGL);
 #endif
 
-
+	BasePass = RendererAPI::Get()->NewPass({});
 }
 
 void Renderer::Close() {
@@ -32,12 +34,13 @@ void Renderer::DrawQuad(const Quad& quad) {
 	auto cmd =
 		RendererAPI::Get()->NewCommand({
 			.Clear = true,
-			.ClearColor = {
-				quad.Color.r,
-				quad.Color.g,
-				quad.Color.b,
-				quad.Color.a
-			},
+			.ClearColor = { 1.0, 1.0, 1.0, 1.0 },
+			// .ClearColor = {
+			// 	quad.Color.r,
+			// 	quad.Color.g,
+			// 	quad.Color.b,
+			// 	quad.Color.a
+			// },
 			.Scissor = true,
 			.ScissorX = quad.PosX,
 			.ScissorY = quad.PosY,

@@ -72,21 +72,152 @@ void WidgetManager::Close() {
 	m_Roots.Clear();
 }
 
-void WidgetManager::Load(const std::string& path) {
-	m_Roots.Emplace(CreateRef<Root>("Root"));
-	m_CurrentRoot = 1;
-	auto root = GetRoot();
+static u32 ImageIndex = 0;
+static u32 TextIndex = 0;
+static u32 ButtonIndex = 0;
+static u32 WindowIndex = 0;
 
-	std::ifstream stream(path);
+static void ParseElement(Ref<Widget> parent, pugi::xml_node node) {
+	if(!node)
+		return;
+
+	std::string id;
+	std::string type = node.name();
+	if(type == "Script")
+		return;
+
+	if(node.attribute("id"))
+		id = node.attribute("id").as_string();
+	else {
+		u32* index = nullptr;
+		if(type == "Image")
+			index = &ImageIndex;
+		else if(type == "Text")
+			index = &TextIndex;
+		else if(type == "Button")
+			index = &ButtonIndex;
+		else if(type == "Window")
+			index = &WindowIndex;
+
+		id = std::string(node.name()) + "-" + std::to_string((*index)++);
+	}
+	VOLCANICORE_LOG_INFO("%s", id.c_str());
+
+	Ref<Widget> widget;
+	if(type == "Image") {
+		widget = CreateRef<Image>(id);
+		auto w = widget->As<Image>();
+
+		if(node.attribute("asset")) {
+			auto path = node.attribute("asset").as_string();
+			auto reg = AssetManager::GetRegistry()->As<EditorAssetRegistry>();
+			w->Texture = reg->GetAssetID(path);
+		}
+	}
+	else if(type == "Text") {
+		widget = CreateRef<Text>(id);
+		auto w = widget->As<Text>();
+
+		if(node.attribute("label")) {
+			w->Label = node.attribute("label").as_string();
+		}
+		if(node.attribute("scale")) {
+			w->Scale = node.attribute("scale").as_float();
+		}
+		if(node.attribute("font")) {
+			auto path = node.attribute("font").as_string();
+			auto reg = AssetManager::GetRegistry()->As<EditorAssetRegistry>();
+			w->Font = reg->GetAssetID(path);
+		}
+	}
+	else if(type == "Button") {
+		widget = CreateRef<Button>(id);
+		auto w = widget->As<Button>();
+
+		if(node.attribute("color")) {
+			// w->Color = node.attribute("color").as_string();
+		}
+	}
+	else if(type == "Window") {
+		widget = CreateRef<Window>(id);
+		auto w = widget->As<Window>();
+
+	}
+	else if(type == "Container") {
+		widget = CreateRef<Container>(id);
+		auto w = widget->As<Container>();
+
+		if(node.attribute("width_type")) {
+			std::string type = node.attribute("width_type").as_string();
+			if(type == "fixed")
+				w->SizeX = Container::SizeType::Fixed;
+			else
+				w->SizeX = Container::SizeType::Stretch;
+		}
+		if(node.attribute("height_type")) {
+			std::string type = node.attribute("height_type").as_string();
+			if(type == "fixed")
+				w->SizeY = Container::SizeType::Fixed;
+			else
+				w->SizeY = Container::SizeType::Stretch;
+		}
+		if(node.attribute("color")) {
+			// w->Color = node.attribute("color").as_string();
+		}
+	}
+	else
+		return;
+
+	if(node.child("Script")) {
+		auto scriptNode = node.child("Script");
+		std::string script = scriptNode.child_value();
+
+		// Create ScriptModule from name
+		// Load script data
+		// Compile script
+		// Create ScriptObject
+		VOLCANICORE_LOG_INFO("Script: %s", script.c_str());
+	}
+
+	if(node.attribute("width"))
+		widget->Width = node.attribute("width").as_float();
+	if(node.attribute("height"))
+		widget->Height = node.attribute("height").as_float();
+	if(node.attribute("visible"))
+		widget->Visible = node.attribute("visible").as_bool();
+	if(node.attribute("enabled"))
+		widget->Enabled = node.attribute("enabled").as_bool();
+
+	parent->Add(widget);
+
+	for(pugi::xml_node child = node.first_child(); child; child = child.next_sibling())
+		ParseElement(widget, child);
+}
+
+void WidgetManager::Load(const std::string& path) {
+	TextIndex = 0;
+	ImageIndex = 0;
+	ButtonIndex = 0;
+	WindowIndex = 0;
+
 	pugi::xml_document doc;
-	pugi::xml_parse_result res = doc.load(stream);
+	pugi::xml_parse_result res = doc.load_file(path.c_str());
 	if(!res) {
 		std::cout << "XML [" << path << "] parsed with errors, attr value: ["
 				  << doc.child("node").attribute("attr").value() << "]\n";
 		std::cout << "Error description: " << res.description() << "\n";
-		std::cout << "Error offset: " << res.offset
-				  << " (error at [..." << path.substr(res.offset) << "]\n\n";
+		std::cout << "Error offset: " << res.offset << "\n";
 	}
+
+	pugi::xml_node node = doc.child("Root");
+	auto root = CreateRef<Root>(node.attribute("id").as_string());
+
+	for(pugi::xml_node child = node.first_child(); child; child = child.next_sibling())
+		ParseElement(root, child);
+
+	m_Roots.Push(root);
+	m_CurrentRoot = 1;
+	VOLCANICORE_LOG_INFO("Successfully loaded UI");
 }
 
 void WidgetManager::Update(TimeStep ts) {
@@ -201,10 +332,8 @@ void Widget::Update(TimeStep ts) {
 		return;
 
 	if(State) {
-		if(IsNative)
-			OnEvent(State);
-		else if(OnEventScript.Func)
-			OnEventScript.CallVoid(State);
+		if(OnEvent.Func)
+			OnEvent.CallVoid(State);
 		State = { };
 	}
 
@@ -253,7 +382,7 @@ Ref<Widget> Widget::Find(const std::string& id) {
 }
 
 void Root::Begin() {
-	Clay__OpenElementWithId(CLAY_ID("Root"));
+	Clay__OpenElementWithId(CLAY_SID(Clay_String(ID.c_str())));
 	Clay__ConfigureOpenElement(
 		CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
 		{

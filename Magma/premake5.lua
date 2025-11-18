@@ -67,6 +67,7 @@ project "Magma"
         "stb_image",
 
         "yaml-cpp",
+        "pugixml",
         "angelscript",
 
         "ssl",
