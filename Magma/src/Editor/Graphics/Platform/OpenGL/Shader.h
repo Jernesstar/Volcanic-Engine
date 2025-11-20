@@ -24,16 +24,16 @@ public:
 		List<u32> ids(shaders.Count());
 
 		for(const auto& shader : shaders) {
-			u32 type = GetShaderType(shader.Type);
+			u32 type = GetShaderType(shader.FileType);
 			u32 shaderID = glCreateShader(type);
 
-			if(shader.Data.GetSizeT() == sizeof(u32)) {
+			if(shader.DataType == ShaderDataType::Binary) {
 				// Expects uint8_t, so using GetMaxSize = GetMaxCount * 4
 				glShaderBinary(1, &shaderID, GL_SHADER_BINARY_FORMAT_SPIR_V,
 					shader.Data.Get(), (GLsizei)shader.Data.GetMaxSize());
 				glSpecializeShader(shaderID, "main", 0, nullptr, nullptr);
 			}
-			else {
+			else if(shader.DataType == ShaderDataType::Text) {
 				const char* address = (const char*)shader.Data.Get();
 				glShaderSource(shaderID, 1, &address, nullptr);
 				glCompileShader(shaderID);

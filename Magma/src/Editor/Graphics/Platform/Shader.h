@@ -14,6 +14,20 @@ struct ShaderFile {
 	const ShaderFileType FileType;
 	const ShaderDataType DataType;
 	Buffer<void> Data;
+
+	ShaderFile(ShaderFileType fileType, const std::string& data)
+		: FileType(fileType), DataType(ShaderDataType::Text),
+			Data(sizeof(char), data.length() + 1)
+	{
+		Data.Set((void*)data.c_str(), data.length() + 1);
+	}
+
+	ShaderFile(ShaderFileType fileType, Buffer<u32> data)
+		: FileType(fileType), DataType(ShaderDataType::Binary),
+			Data(sizeof(u32), data.GetCount())
+		{
+			Data.Set((void*)data.Get(), data.GetCount());
+		}
 };
 
 class Shader : public Derivable<Shader> {

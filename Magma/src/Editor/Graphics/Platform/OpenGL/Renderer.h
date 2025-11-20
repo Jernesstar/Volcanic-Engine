@@ -14,8 +14,9 @@ public:
 	DrawBufferID NewBuffer(const DrawBufferSpec&) override;
 	void SetBufferData(DrawBufferID, DrawBufferIndex, Buffer<void>) override;
 
-	DrawPassID NewPass(const DrawPassSpec&) override;
-	DrawCommandID NewCommand(const DrawCommandSpec&) override;
+	DrawPass* NewPass(DrawBufferID) override;
+	DrawCommand* NewCommand(DrawPass*) override;
+	DrawCall* NewCall(DrawCommand*) override;
 
 private:
 	void Init() override;

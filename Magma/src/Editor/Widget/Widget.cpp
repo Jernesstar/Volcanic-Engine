@@ -101,7 +101,6 @@ static void ParseElement(Ref<Widget> parent, pugi::xml_node node) {
 
 		id = std::string(node.name()) + "-" + std::to_string((*index)++);
 	}
-	VOLCANICORE_LOG_INFO("%s", id.c_str());
 
 	Ref<Widget> widget;
 	if(type == "Image") {
@@ -382,7 +381,7 @@ Ref<Widget> Widget::Find(const std::string& id) {
 }
 
 void Root::Begin() {
-	Clay__OpenElementWithId(CLAY_SID(Clay_String(ID.c_str())));
+	Clay__OpenElement();
 	Clay__ConfigureOpenElement(
 		CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
 		{
@@ -403,7 +402,7 @@ void Root::End() {
 }
 
 void Window::Begin() {
-	Clay__OpenElementWithId(CLAY_SID(Clay_String(ID.c_str())));
+	Clay__OpenElement();
 	Clay__ConfigureOpenElement(
 		CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
 		{
@@ -425,7 +424,7 @@ void Window::End() {
 }
 
 void Container::Begin() {
-	Clay__OpenElementWithId(CLAY_SID(Clay_String(ID.c_str())));
+	Clay__OpenElement();
 	Clay__ConfigureOpenElement(
 		CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
 		{
@@ -466,7 +465,7 @@ void Button::End() {
 }
 
 void Image::Begin() {
-	Clay__OpenElementWithId(CLAY_SID(Clay_String(ID.c_str())));
+	Clay__OpenElement();
 	Clay__ConfigureOpenElement(
 		CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
 		{
@@ -486,8 +485,7 @@ void Image::End() {
 }
 
 void Text::Begin() {
-	Clay__OpenElementWithId(CLAY_SID(Clay_String(ID.c_str())));
-	CLAY_TEXT(CLAY_STRING("Text"),
+	CLAY_TEXT(Clay_String(Label.c_str()),
 		CLAY_TEXT_CONFIG({
 			.textColor = { Color.r, Color.g, Color.b, Color.a },
 			.fontId = (u16)Font,
@@ -497,7 +495,7 @@ void Text::Begin() {
 }
 
 void Text::End() {
-	Clay__CloseElement();
+
 }
 
 void TextInput::Begin() {

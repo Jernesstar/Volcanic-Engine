@@ -5,7 +5,7 @@
 namespace Magma::Graphics {
 
 static DrawBufferID BaseBuffer;
-static DrawPassID BasePass;
+static DrawPass* BasePass;
 
 void Renderer::Init() {
 #if defined(VOLCANIC_APPLE)
@@ -31,7 +31,7 @@ void Renderer::Init() {
 			}
 		});
 
-	const char* vertexShaderStr = R"(
+	std::string vertexShaderStr = R"(
 		#version 460 core
 
 		layout(location = 0) in vec2 a_TexCoords;
@@ -45,7 +45,7 @@ void Renderer::Init() {
 		}
 	)";
 
-	const char* fragmentShaderStr = R"(
+	std::string fragmentShaderStr = R"(
 		#version 460 core
 
 		layout(location = 0) uniform sampler2D u_ScreenTexture;
@@ -60,32 +60,19 @@ void Renderer::Init() {
 		}
 	)";
 
-	Buffer<void> vertexShader;
-	Buffer<void> fragmentShader;
-	fragmentShader.Set(fragmentShaderStr, strlen(fragmentShaderStr));
+	List<ShaderFile> files;
+	files.Emplace(ShaderFileType::Vertex, vertexShaderStr);
+	// files.Emplace(ShaderFileType::Fragment, fragmentShaderStr);
 
-	Ref<Shader> shader =
-		RendererAPI::Get()->CreateShader({
-			.Files = {
-				{
-					ShaderFileType::Vertex,
-					ShaderDataType::Text,
-					Buffer<void>((void*)vertexShaderStr, sizeof(char), strlen(vertexShaderStr))
-				},
-				{
-					ShaderFileType::Fragment,
-					ShaderDataType::Text,
-					Buffer<void>((void*)vertexShaderStr, sizeof(char), strlen(vertexShaderStr))
-				}
-			}
-		});
+	// Ref<Shader> shader =
+	// 	RendererAPI::Get()->CreateShader({ .Files = files });
 
-	BasePass =
-		RendererAPI::Get()->NewPass({
-			.Buffer = BaseBuffer,
-			.Output = nullptr,
-			.Pipeline = shader
-		});
+	// BasePass =
+	// 	RendererAPI::Get()->NewPass({
+	// 		.Buffer = BaseBuffer,
+	// 		.Output = nullptr,
+	// 		.Pipeline = shader
+	// 	});
 }
 
 void Renderer::Close() {
@@ -103,17 +90,7 @@ void Renderer::EndFrame() {
 }
 
 void Renderer::DrawQuad(const Quad& quad) {
-	auto cmd =
-		RendererAPI::Get()->NewCommand({
-			.Pass = BasePass,
-			.Clear = true,
-			// .ClearColor = {
-			// 	quad.Color.r,
-			// 	quad.Color.g,
-			// 	quad.Color.b,
-			// 	quad.Color.a
-			// },
-		});
+
 }
 
 }

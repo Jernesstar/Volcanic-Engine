@@ -10,22 +10,15 @@ namespace OpenGL {
 
 struct DrawBuffer {
 	Ref<VertexArray> Array;
-};
-
-struct DrawPass {
-
-};
-
-struct DrawCommand {
-	bool Clear = false;
-	Vec4 ClearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
-	bool Scissor = false;
-	f32 ScissorX = 0, ScissorY = 0, ScissorW = 0, ScissorH = 0;
+	Buffer<uint32_t> Indices;
+	Buffer<void> Vertices;
+	Buffer<void> Instances;
 };
 
 static List<DrawBuffer> s_Buffers;
 static List<DrawPass> s_Passes;
 static List<DrawCommand> s_Commands;
+static List<DrawCall> s_Calls;
 
 Renderer::Renderer()
 	: RendererAPI(RendererAPI::Backend::OpenGL)
@@ -75,29 +68,52 @@ void Renderer::EndFrame() {
 }
 
 DrawBufferID Renderer::NewBuffer(const DrawBufferSpec& spec) {
+	auto& buffer =
+		s_Buffers.Emplace(nullptr,
+			Buffer<uint32_t>(spec.IndexCount),
+			Buffer<void>(spec.VertexCount, spec.Vertex.Stride),
+			Buffer<void>(spec.InstanceCount, spec.Instance.Stride));
 
+	buffer.Array = CreateRef<VertexArray>();
+
+	if(spec.VertexCount)
+		buffer.Array->AddVertexBuffer(
+			CreateRef<VertexBuffer>(spec.Vertex, spec.VertexCount));
+	if(spec.IndexCount)
+		buffer.Array->SetIndexBuffer(CreateRef<IndexBuffer>(spec.IndexCount));
+	if(spec.InstanceCount)
+		buffer.Array->AddVertexBuffer(
+			CreateRef<VertexBuffer>(spec.Instance, spec.InstanceCount));
+
+	return s_Buffers.Count();
 }
 
 void Renderer::SetBufferData(DrawBufferID id, DrawBufferIndex index, Buffer<void> data) {
+	auto* buffer = s_Buffers.At(id);
 
+	switch(index) {
+		case DrawBufferIndex::Vertex:
+			buffer->Vertices.Set(data.Get(), data.GetCount());
+			break;
+		case DrawBufferIndex::Index:
+			buffer->Indices.Set(data.Get(), data.GetCount());
+			break;
+		case DrawBufferIndex::Instance:
+			buffer->Instances.Set(data.Get(), data.GetCount());
+			break;
+	}
 }
 
-DrawPassID Renderer::NewPass(const DrawPassSpec& spec) {
-
+DrawPass* Renderer::NewPass(DrawBufferID id) {
+	return &s_Passes.Emplace();
 }
 
-DrawCommandID Renderer::NewCommand(const DrawCommandSpec& spec) {
-	auto& cmd = s_Commands.Emplace();
+DrawCommand* Renderer::NewCommand(DrawPass* pass) {
+	return &s_Commands.Emplace();
+}
 
-	cmd.Clear = spec.Clear;
-	cmd.ClearColor = spec.ClearColor;
-	cmd.Scissor = spec.Scissor;
-	cmd.ScissorX = spec.ScissorX;
-	cmd.ScissorY = spec.ScissorY;
-	cmd.ScissorW = spec.ScissorW;
-	cmd.ScissorH = spec.ScissorH;
-
-	return s_Commands.Count();
+DrawCall* Renderer::NewCall(DrawCommand* cmd) {
+	return &s_Calls.Emplace();
 }
 
 }
