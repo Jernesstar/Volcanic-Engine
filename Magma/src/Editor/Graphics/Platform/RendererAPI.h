@@ -10,8 +10,9 @@
 
 namespace Magma::Graphics {
 
-enum DrawBufferIndex : u8 { Vertex, Index, Instance };
-typedef u32 DrawBufferID;
+enum DrawBufferIndex : u8 {
+	Vertex, Index, Instance
+};
 
 struct DrawBufferSpec {
 	u32 IndexCount;
@@ -21,8 +22,21 @@ struct DrawBufferSpec {
 	BufferLayout Instance;
 };
 
+class DrawBuffer {
+public:
+	const DrawBufferSpec Spec;
+
+public:
+	DrawBuffer(const DrawBufferSpec& spec)
+		: Spec(spec) { };
+	virtual ~DrawBuffer() = default;
+
+	virtual void SetData(DrawBufferIndex, Buffer<void> data) = 0;
+	virtual void Clear() = 0;
+};
+
 struct DrawPass {
-	DrawBufferID Buffer;
+	DrawBuffer* Buffer;
 	Ref<Framebuffer> Output;
 	Ref<Shader> Pipeline;
 };
@@ -106,68 +120,75 @@ enum class DepthTestingMode { On, Off };
 enum class BlendingMode { Off, Greatest, Additive };
 enum class CullingMode { Off, Front, Back };
 
+enum class DrawPrimitive { Point, Line, Triangle, Cubemap };
+enum class DrawPartition { Single, Instanced, MultiDraw };
+
+struct DrawCall;
+
+// A draw command is a series of draw calls
+// With a shared set of uniforms, usually utilized for
+// a specific piece of geometry
 struct DrawCommand {
 	DrawPass* Pass;
 
 	DrawUniforms Uniforms;
+	List<DrawCall> DrawCalls;
+
+	// The buffer domain of the draw command
+	u32 VerticesIndex = 0;
+	u32 IndicesIndex  = 0;
+	u32 InstancesIndex = 0;
 
 	bool Clear = false;
 	Vec4 ClearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+
 	bool Scissor = false;
 	f32 ScissorX  = 0.0f, ScissorY  = 0.0f, ScissorW  = 0.0f, ScissorH  = 0.0f;
+
+	bool Viewport = false;
 	f32 ViewportX = 0.0f, ViewportY = 0.0f, ViewportW = 0.0f, ViewportH = 0.0f;
+
+	bool Compute = false;
 	u32 ComputeX = 0, ComputeY = 0, ComputeZ = 0;
 
 	DepthTestingMode DepthTesting = DepthTestingMode::On;
 	BlendingMode Blending = BlendingMode::Off;
 	CullingMode Culling = CullingMode::Off;
-};
 
-enum class DrawPrimitive { Point, Line, Triangle, Cubemap };
-enum class DrawPartition { Single, Instanced, MultiDraw };
+	DrawCall* NewCall() {
+		return &DrawCalls.Emplace();
+	}
+};
 
 struct DrawCall {
 	DrawCommand* Command;
 
-	u32 IndexOffset = 0;
-	u32 IndexCount = 0;
-	u32 VertexOffset = 0;
-	u32 VertexCount = 0;
+	u32 IndexOffset    = 0;
+	u32 IndexCount     = 0;
+	u32 VertexOffset   = 0;
+	u32 VertexCount    = 0;
 	u32 InstanceOffset = 0;
-	u32 InstanceCount = 0;
+	u32 InstanceCount  = 0;
 
 	DrawPrimitive Primitive = DrawPrimitive::Triangle;
 	DrawPartition Partition = DrawPartition::Single;
 };
 
+enum class RendererBackend { OpenGL, Metal, DirectX };
+
 class RendererAPI {
 public:
-	enum class Backend { OpenGL, Metal };
-
-public:
-	virtual DrawBufferID NewBuffer(const DrawBufferSpec&) = 0;
-	virtual void SetBufferData(DrawBufferID, DrawBufferIndex, Buffer<void> data) = 0;
-
-	virtual DrawPass* NewPass(DrawBufferID) = 0;
-	virtual DrawCommand* NewCommand(DrawPass*) = 0;
-	virtual DrawCall* NewCall(DrawCommand*) = 0;
-
-public:
 	static Ref<RendererAPI> Get() { return s_Instance; }
-	static RendererAPI::Backend GetBackend() { return Get()->m_Backend; }
+	static RendererBackend GetBackend() { return s_Backend; }
 
-	static Ref<Framebuffer> CreateFramebuffer(const FramebufferSpecification&);
-	static Ref<Shader> CreateShader(const ShaderSpecification&);
-	static Ref<Texture> CreateTexture(const TextureSpecification&);
-	static Ref<StorageBuffer> CreateStorageBuffer(const StorageBufferSpecification&);
-	static Ref<UniformBuffer> CreateUniformBuffer(const UniformBufferSpecification&);
-
-protected:
-	const RendererAPI::Backend m_Backend;
+	static Ref<Framebuffer> CreateFramebuffer(const FramebufferSpec&);
+	static Ref<Shader> CreateShader(const ShaderSpec&);
+	static Ref<Texture> CreateTexture(const TextureSpec&);
+	static Ref<UniformBuffer> CreateUniformBuffer(const UniformBufferSpec&);
+	static Ref<StorageBuffer> CreateStorageBuffer(const StorageBufferSpec&);
 
 protected:
-	RendererAPI(RendererAPI::Backend backend)
-		: m_Backend(backend) { }
+	RendererAPI() = default;
 	virtual ~RendererAPI() = default;
 
 	virtual void Init() = 0;
@@ -175,11 +196,16 @@ protected:
 	virtual void BeginFrame() = 0;
 	virtual void EndFrame() = 0;
 
-private:
-	inline static Ref<RendererAPI> s_Instance;
+	virtual DrawBuffer* NewBuffer(const DrawBufferSpec&) = 0;
+	virtual DrawPass* NewPass(DrawBuffer*) = 0;
+	virtual DrawCommand* NewCommand(DrawPass*) = 0;
 
 private:
-	static void Create(RendererAPI::Backend backend);
+	inline static Ref<RendererAPI> s_Instance;
+	inline static RendererBackend s_Backend;
+
+private:
+	static void Create(RendererBackend backend);
 	static void Shutdown();
 
 	friend class Renderer;

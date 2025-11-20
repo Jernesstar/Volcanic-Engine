@@ -13,12 +13,12 @@ namespace OpenGL {
 
 class VertexBuffer {
 public:
-	const BufferLayout Layout;
+	const Graphics::BufferLayout Layout;
 	const uint32_t Count;
 	const uint32_t Size;
 
 public:
-	VertexBuffer(const BufferLayout& layout,
+	VertexBuffer(const Graphics::BufferLayout& layout,
 				 uint32_t count, const void* data = nullptr)
 		: Layout(layout), Count(count), Size(count * layout.Stride)
 	{
@@ -30,7 +30,7 @@ public:
 	}
 
 	template<typename T>
-	VertexBuffer(const BufferLayout& layout, Buffer<T> buffer)
+	VertexBuffer(const Graphics::BufferLayout& layout, Buffer<T> buffer)
 		: Layout(layout), Count(buffer.GetCount()), Size(buffer.GetSize())
 	{
 		VOLCANICORE_ASSERT(layout.Stride == sizeof(T));
@@ -43,7 +43,7 @@ public:
 	}
 
 	template<typename T, std::size_t TCount>
-	VertexBuffer(const BufferLayout& layout, const T (&vertices)[TCount])
+	VertexBuffer(const Graphics::BufferLayout& layout, const T (&vertices)[TCount])
 		: Layout(layout), Count(TCount), Size(TCount * layout.Stride)
 	{
 		glCreateBuffers(1, &m_BufferID);

@@ -21,9 +21,9 @@ public:
 	enum class Type { Texture, RenderBuffer };
 
 public:
-	Attachment(AttachmentTarget target, Attachment::Type type,
+	Attachment(Graphics::AttachmentTarget target, Attachment::Type type,
 			   u32 width = 0, u32 height = 0, u32 id = 0)
-		: Graphics::Attachment(AttachmentTarget::Color),
+		: Graphics::Attachment(target),
 			m_Type(type), m_Width(width), m_Height(height), m_RendererID(id)
 	{
 		
@@ -57,16 +57,20 @@ private:
 
 class Framebuffer : public Graphics::Framebuffer {
 public:
-	Framebuffer(u32 width, u32 height)
-		: Graphics::Framebuffer(width, height)
+	Framebuffer(const Graphics::FramebufferSpec& spec)
+		: Graphics::Framebuffer(spec)
 	{
 		glGenFramebuffers(1, &m_BufferID);
 		glBindFramebuffer(GL_FRAMEBUFFER, m_BufferID);
 
 		m_Attachments.Add(
-			CreateRef<Attachment>(AttachmentTarget::Color, Attachment::Type::Texture));
+			CreateRef<Attachment>(Graphics::AttachmentTarget::Color,
+								  Attachment::Type::Texture)
+		);
 		m_Attachments.Add(
-			CreateRef<Attachment>(AttachmentTarget::Depth, Attachment::Type::Texture));
+			CreateRef<Attachment>(Graphics::AttachmentTarget::Depth,
+								  Attachment::Type::Texture)
+		);
 
 		CreateColorAttachment();
 		CreateDepthAttachment();
@@ -91,30 +95,37 @@ public:
 	void Bind() const { glBindFramebuffer(GL_FRAMEBUFFER, m_BufferID); }
 	void Unbind() const { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
 
-	bool Has(AttachmentTarget target) const override {
+	bool Has(Graphics::AttachmentTarget t) const override {
 		for(auto& att : m_Attachments) {
-			if(att->Target == target)
+			if(att->Target == t)
 				return true;
 		}
 
 		return false;
 	}
 
-	Ref<Attachment> GetAttachment(AttachmentTarget target, u32 index = 0) {
+	void Add(Graphics::AttachmentTarget t, Ref<Graphics::Attachment> att) override {
+
+	}
+
+	void Attach(Graphics::AttachmentTarget t, u32 idx, u32 dst) override {
+
+	}
+
+	Ref<Graphics::Attachment> Get(Graphics::AttachmentTarget t, u32 idx = 0) const override {
+
+		return nullptr;
+	}
+
+	Ref<Attachment> GetAttachment(Graphics::AttachmentTarget t, u32 idx = 0) {
 		u32 i = 0;
 		for(auto att : m_Attachments) {
-			if(att->Target == target && i++ == index)
+			if(att->Target == t && i++ == idx)
 				return att;
 		}
 
 		return nullptr;
 	}
-
-	// void Add(AttachmentTarget target, Ref<Graphics::Attachment> att) override;
-	// void Attach(AttachmentTarget target, u32 idx, u32 dst) override;
-	// Ref<Graphics::Attachment> Get(AttachmentTarget target, u32 idx = 0) const override;
-
-	// void Bind(AttachmentTarget target, u32 slot, u32 index = 0) const;
 
 private:
 	void CreateColorAttachment(u32 index = 0) {

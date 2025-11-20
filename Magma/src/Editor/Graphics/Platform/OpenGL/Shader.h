@@ -4,14 +4,16 @@
 
 #include "Platform/Shader.h"
 
+using namespace Magma;
+
 namespace OpenGL {
 
-u32 GetShaderType(ShaderFileType type) {
+static u32 GetShaderType(Graphics::ShaderFileType type) {
 	switch(type) {
-		case ShaderFileType::Vertex:   return GL_VERTEX_SHADER;
-		case ShaderFileType::Fragment: return GL_FRAGMENT_SHADER;
-		case ShaderFileType::Geometry: return GL_GEOMETRY_SHADER;
-		case ShaderFileType::Compute:  return GL_COMPUTE_SHADER;
+		case Graphics::ShaderFileType::Vertex:   return GL_VERTEX_SHADER;
+		case Graphics::ShaderFileType::Fragment: return GL_FRAGMENT_SHADER;
+		case Graphics::ShaderFileType::Geometry: return GL_GEOMETRY_SHADER;
+		case Graphics::ShaderFileType::Compute:  return GL_COMPUTE_SHADER;
 	}
 
 	return 0;
@@ -19,24 +21,32 @@ u32 GetShaderType(ShaderFileType type) {
 
 class Shader : public Graphics::Shader {
 public:
-	Shader(const List<ShaderFile>& shaders) {
+	Shader(const Graphics::ShaderSpec& spec)
+		: Graphics::Shader(spec)
+	{
 		m_ProgramID = glCreateProgram();
-		List<u32> ids(shaders.Count());
+	}
+	~Shader() {
+		glDeleteProgram(m_ProgramID);
+	}
 
-		for(const auto& shader : shaders) {
+	void SetShaderData(List<Graphics::ShaderFile>&& files) override {
+		List<u32> ids(files.Count());
+
+		for(const auto& shader : files) {
 			u32 type = GetShaderType(shader.FileType);
 			u32 shaderID = glCreateShader(type);
 
-			if(shader.DataType == ShaderDataType::Binary) {
-				// Expects uint8_t, so using GetMaxSize = GetMaxCount * 4
-				glShaderBinary(1, &shaderID, GL_SHADER_BINARY_FORMAT_SPIR_V,
-					shader.Data.Get(), (GLsizei)shader.Data.GetMaxSize());
-				glSpecializeShader(shaderID, "main", 0, nullptr, nullptr);
-			}
-			else if(shader.DataType == ShaderDataType::Text) {
+			if(shader.DataType == Graphics::ShaderDataType::Text) {
 				const char* address = (const char*)shader.Data.Get();
 				glShaderSource(shaderID, 1, &address, nullptr);
 				glCompileShader(shaderID);
+			}
+			else if(shader.DataType == Graphics::ShaderDataType::Binary) {
+				// Expects u8, so here we use Count = GetMaxSize = GetMaxCount * 4
+				glShaderBinary(1, &shaderID, GL_SHADER_BINARY_FORMAT_SPIR_V,
+					shader.Data.Get(), (GLsizei)shader.Data.GetMaxSize());
+				glSpecializeShader(shaderID, "main", 0, nullptr, nullptr);
 			}
 
 			int result;
@@ -77,9 +87,6 @@ public:
 			glDetachShader(m_ProgramID, shaderID);
 			glDeleteShader(shaderID);
 		}
-	}
-	~Shader() {
-		glDeleteProgram(m_ProgramID);
 	}
 
 	void SetInt(const std::string& name, i32 _int) {

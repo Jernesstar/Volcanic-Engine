@@ -175,7 +175,6 @@ static void ParseElement(Ref<Widget> parent, pugi::xml_node node) {
 		// Load script data
 		// Compile script
 		// Create ScriptObject
-		VOLCANICORE_LOG_INFO("Script: %s", script.c_str());
 	}
 
 	if(node.attribute("width"))

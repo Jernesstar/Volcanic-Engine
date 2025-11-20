@@ -2,21 +2,18 @@
 
 #include "RendererAPI.h"
 
-using namespace Magma::Graphics;
+using namespace Magma;
 
 namespace OpenGL {
 
-class Renderer : public RendererAPI {
+class Renderer : public Graphics::RendererAPI {
 public:
 	Renderer();
 	~Renderer() = default;
 
-	DrawBufferID NewBuffer(const DrawBufferSpec&) override;
-	void SetBufferData(DrawBufferID, DrawBufferIndex, Buffer<void>) override;
-
-	DrawPass* NewPass(DrawBufferID) override;
-	DrawCommand* NewCommand(DrawPass*) override;
-	DrawCall* NewCall(DrawCommand*) override;
+	Graphics::DrawBuffer* NewBuffer(const Graphics::DrawBufferSpec&) override;
+	Graphics::DrawPass* NewPass(Graphics::DrawBuffer*) override;
+	Graphics::DrawCommand* NewCommand(Graphics::DrawPass*) override;
 
 private:
 	void Init() override;

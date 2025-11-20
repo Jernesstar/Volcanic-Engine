@@ -8,22 +8,22 @@ using namespace Magma;
 
 namespace OpenGL {
 
-inline constexpr u32 GetType(Graphics::Texture::Type type) {
+static constexpr u32 GetType(Graphics::TextureType type) {
 	switch(type) {
-		case Graphics::Texture::Type::RGBA:
+		case Graphics::TextureType::RGBA:
 			return GL_RGBA;
-		case Graphics::Texture::Type::Depth:
+		case Graphics::TextureType::Depth:
 			return GL_DEPTH_COMPONENT;
 	}
 }
 
-inline constexpr u32 GetFormat(Graphics::Texture::Format format) {
+static constexpr u32 GetFormat(Graphics::TextureFormat format) {
 	switch(format) {
-		case Graphics::Texture::Format::Normal:
+		case Graphics::TextureFormat::Normal:
 			return GL_RGBA8;
-		case Graphics::Texture::Format::Float:
+		case Graphics::TextureFormat::Float:
 			return GL_RGBA16F;
-		case Graphics::Texture::Format::Depth:
+		case Graphics::TextureFormat::Depth:
 			return GL_DEPTH_COMPONENT32F;
 	}
 
@@ -32,12 +32,17 @@ inline constexpr u32 GetFormat(Graphics::Texture::Format format) {
 
 class Texture : public Graphics::Texture {
 public:
-	Texture(u32 width, u32 height, Format format, Sampling sampling) {
-		auto internalFormat = GetFormat(format);
-		auto filter = sampling == Sampling::Linear ? GL_LINEAR : GL_NEAREST;
+	Texture(const Graphics::TextureSpec& spec)
+		: Graphics::Texture(spec)
+	{
+		auto internalFormat = GetFormat(spec.Format);
+		auto filter =
+			spec.Sampling == Graphics::TextureSampling::Linear ?
+													 GL_LINEAR : GL_NEAREST;
 
 		glCreateTextures(GL_TEXTURE_2D, 1, &m_TextureID);
-		glTextureStorage2D(m_TextureID, 1, internalFormat, width, height);
+		glTextureStorage2D(m_TextureID, 1, internalFormat,
+						   spec.Width, spec.Height);
 		glTextureParameteri(m_TextureID, GL_TEXTURE_MIN_FILTER, filter);
 		glTextureParameteri(m_TextureID, GL_TEXTURE_MAG_FILTER, filter);
 		glTextureParameteri(m_TextureID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -54,7 +59,7 @@ public:
 	}
 
 	void SetData(const void* data) override {
-		glTextureSubImage2D(m_TextureID, 0, 0, 0, m_Width, m_Height,
+		glTextureSubImage2D(m_TextureID, 0, 0, 0, Spec.Width, Spec.Height,
 							GL_RGBA, GL_UNSIGNED_BYTE, data);
 	}
 

@@ -11,15 +11,12 @@ namespace OpenGL {
 
 class StorageBuffer : public Graphics::StorageBuffer {
 public:
-	const uint64_t Size;
-
-public:
-	StorageBuffer(const BufferLayout& layout, uint64_t count, const void* data)
-		: Graphics::StorageBuffer(layout, count), Size(layout.Stride)
+	StorageBuffer(const Graphics::StorageBufferSpec& spec)
+		: Graphics::StorageBuffer(spec)
 	{
 		glCreateBuffers(1, &m_BufferID);
-		glNamedBufferStorage(m_BufferID, count * Size, data,
-			GL_DYNAMIC_STORAGE_BIT);
+		glNamedBufferStorage(m_BufferID, spec.Layout.Stride * spec.Count,
+							 nullptr, GL_DYNAMIC_STORAGE_BIT);
 	}
 
 	~StorageBuffer() {
@@ -29,7 +26,8 @@ public:
 	void SetData(const void* data, uint64_t count = 1,
 				 uint64_t offset = 0) override
 	{
-		glNamedBufferSubData(m_BufferID, offset * Size, Size * count, data);
+		glNamedBufferSubData(m_BufferID, offset * Spec.Layout.Stride,
+							 count * Spec.Layout.Stride, data);
 	}
 
 	void Bind(uint32_t binding) {

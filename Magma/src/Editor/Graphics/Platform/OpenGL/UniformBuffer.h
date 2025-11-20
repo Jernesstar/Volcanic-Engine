@@ -12,15 +12,12 @@ namespace OpenGL {
 
 class UniformBuffer : public Graphics::UniformBuffer {
 public:
-	const uint64_t Size;
-
-public:
-	UniformBuffer(const Graphics::BufferLayout& layout,
-				  uint64_t count, const void* data)
-		: Graphics::UniformBuffer(layout, count), Size(layout.Stride)
+	UniformBuffer(const Graphics::UniformBufferSpec& spec)
+		: Graphics::UniformBuffer(spec)
 	{
 		glCreateBuffers(1, &m_BufferID);
-		glNamedBufferData(m_BufferID, Size * count, data, GL_DYNAMIC_DRAW);
+		glNamedBufferData(m_BufferID, Spec.Layout.Stride * Spec.Count,
+						  nullptr, GL_DYNAMIC_DRAW);
 	}
 
 	~UniformBuffer() {
@@ -30,7 +27,9 @@ public:
 	void SetData(const void* data, uint64_t count = 1,
 				 uint64_t offset = 0) override
 	{
-		glNamedBufferSubData(m_BufferID, offset * Size, count * Size, data);
+		glNamedBufferSubData(m_BufferID,
+							 offset * Spec.Layout.Stride,
+							 count * Spec.Layout.Stride, data);
 	}
 
 	void Bind(uint32_t binding) {

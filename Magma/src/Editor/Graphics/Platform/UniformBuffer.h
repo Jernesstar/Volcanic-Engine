@@ -10,29 +10,27 @@ using namespace VolcaniCore;
 
 namespace Magma::Graphics {
 
+struct UniformBufferSpec {
+	BufferLayout Layout;
+	u64 Count = 1;
+};
+
 class UniformBuffer : public Derivable<UniformBuffer> {
 public:
-	const BufferLayout Layout;
-	const uint64_t Count;
+	const UniformBufferSpec Spec;
 
 public:
-	UniformBuffer(const BufferLayout& layout, uint64_t count = 1)
-		: Layout(layout), Count(count) { }
+	UniformBuffer(const UniformBufferSpec& spec)
+		: Spec(spec) { }
 	virtual ~UniformBuffer() = default;
 
 	template<typename T>
-	void SetData(const Buffer<T>& buffer, uint64_t offset = 0) {
-		VOLCANICORE_ASSERT(sizeof(T) == Layout.Stride);
+	void SetData(const Buffer<T>& buffer, u64 offset = 0) {
+		VOLCANICORE_ASSERT(sizeof(T) == Spec.Layout.Stride);
 		SetData(buffer.Get(), buffer.GetCount(), offset);
 	}
 
-	virtual void SetData(const void* data, uint64_t count = 1,
-						 uint64_t offset = 0) = 0;
-};
-
-struct UniformBufferSpecification {
-	BufferLayout Layout;
-	uint64_t Count = 1;
+	virtual void SetData(const void* data, u64 count = 1, u64 offset = 0) = 0;
 };
 
 }

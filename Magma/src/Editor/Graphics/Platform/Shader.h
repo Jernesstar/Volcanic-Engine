@@ -2,6 +2,8 @@
 
 #include <VolcaniCore/Core/Math.h>
 #include <VolcaniCore/Core/Template.h>
+#include <VolcaniCore/Core/Defines.h>
+#include <VolcaniCore/Core/List.h>
 
 using namespace VolcaniCore;
 
@@ -30,10 +32,20 @@ struct ShaderFile {
 		}
 };
 
+struct ShaderSpec {
+
+};
+
 class Shader : public Derivable<Shader> {
 public:
-	Shader() = default;
+	const ShaderSpec Spec;
+
+public:
+	Shader(const ShaderSpec& spec)
+		: Spec(spec) { };
 	virtual ~Shader() = default;
+
+	virtual void SetShaderData(List<ShaderFile>&& files) = 0;
 
 	virtual void SetInt(const std::string& name, i32 _int) = 0;
 	virtual void SetFloat(const std::string& name, f32 _float) = 0;
@@ -46,12 +58,8 @@ public:
 	virtual void SetMat3(const std::string& name, const Mat3& mat) = 0;
 	virtual void SetMat4(const std::string& name, const Mat4& mat) = 0;
 
-	virtual void SetUniformBuffer(const std::string& name, uint32_t binding) = 0;
-	virtual void SetStorageBuffer(const std::string& name, uint32_t binding) = 0;
-};
-
-struct ShaderSpecification {
-	List<ShaderFile> Files;
+	virtual void SetUniformBuffer(const std::string& name, u32 binding) = 0;
+	virtual void SetStorageBuffer(const std::string& name, u32 binding) = 0;
 };
 
 }

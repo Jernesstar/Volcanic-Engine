@@ -8,26 +8,31 @@ using namespace VolcaniCore;
 
 namespace Magma::Graphics {
 
+enum class TextureType { RGBA, Depth, Stencil };
+enum class TextureFormat { Normal, Float, Depth };
+enum class TextureSampling { Nearest, Linear };
+
 struct ImageData {
-	uint32_t Width, Height;
-	Buffer<uint8_t> Data;
+	u32 Width, Height, Channels, BPP;
+	Buffer<u8> Data;
+};
+
+struct TextureSpec {
+	u32 Width = 0;
+	u32 Height = 0;
+
+	TextureType Type = TextureType::RGBA;
+	TextureFormat Format = TextureFormat::Normal;
+	TextureSampling Sampling = TextureSampling::Nearest;
 };
 
 class Texture : public Derivable<Texture> {
 public:
-	enum class Type { RGBA, Depth, Stencil };
-	enum class Format { Normal, Float, Depth };
-	enum class Sampling { Nearest, Linear };
+	const TextureSpec Spec;
 
 public:
-	Texture() = default;
-	Texture(uint32_t width, uint32_t height)
-		: m_Width(width), m_Height(height) { }
-	// Texture(const ImageData& data)
-	// 	: m_Width(data.Width), m_Height(data.Height) { }
-
-	uint32_t GetWidth() const { return m_Width; }
-	uint32_t GetHeight() const { return m_Height; }
+	Texture(const TextureSpec& spec)
+		: Spec(spec) { }
 
 	virtual void SetData(const void* data) = 0;
 
@@ -35,15 +40,6 @@ public:
 	void SetData(const Buffer<T>& buffer) {
 		SetData(buffer.Get());
 	}
-
-protected:
-	uint32_t m_Width = 0, m_Height = 0;
-};
-
-struct TextureSpecification {
-	Texture::Type Type = Texture::Type::RGBA;
-	Texture::Format Format = Texture::Format::Normal;
-	Texture::Sampling Sampling = Texture::Sampling::Nearest;
 };
 
 }
