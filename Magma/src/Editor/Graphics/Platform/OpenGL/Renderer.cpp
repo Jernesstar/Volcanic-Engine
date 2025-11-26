@@ -29,8 +29,8 @@ public:
 	DrawBuffer(const DrawBufferSpec& spec)
 		: Graphics::DrawBuffer(spec),
 			Indices(spec.IndexCount),
-			Vertices(spec.VertexCount, spec.Vertex.Stride),
-			Instances(spec.InstanceCount, spec.Instance.Stride)
+			Vertices(spec.Vertex.Stride || 1, spec.VertexCount),
+			Instances(spec.Instance.Stride || 1, spec.InstanceCount)
 	{
 		Array = CreateRef<VertexArray>();
 	}
@@ -77,7 +77,10 @@ void Renderer::Init() {
 }
 
 void Renderer::Close() {
+	for(auto buffer : s_Buffers)
+		delete buffer;
 
+	s_Buffers.Clear();
 }
 
 void Renderer::BeginFrame() {
@@ -250,7 +253,14 @@ void Renderer::EndFrame() {
 
 	for(auto& cmd : s_Commands) {
 		SetOptions(cmd);
-		SetUniforms(cmd);
+
+		auto shader = cmd.Pass->Pipeline;
+		if(shader) {
+			shader->As<OpenGL::Shader>()->Bind();
+			SetUniforms(cmd);
+		}
+		else
+			glUseProgram(0);
 
 		for(auto& call : cmd.DrawCalls)
 			SubmitDrawCall(cmd, call);

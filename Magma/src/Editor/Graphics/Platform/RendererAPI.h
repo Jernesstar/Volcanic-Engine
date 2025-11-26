@@ -36,9 +36,9 @@ public:
 };
 
 struct DrawPass {
-	DrawBuffer* Buffer;
-	Ref<Framebuffer> Output;
-	Ref<Shader> Pipeline;
+	DrawBuffer* Buffer = nullptr;
+	Ref<Framebuffer> Output = nullptr;
+	Ref<Shader> Pipeline = nullptr;
 };
 
 struct TextureSlot {
@@ -120,16 +120,13 @@ enum class DepthTestingMode { On, Off };
 enum class BlendingMode { Off, Greatest, Additive };
 enum class CullingMode { Off, Front, Back };
 
-enum class DrawPrimitive { Point, Line, Triangle, Cubemap };
-enum class DrawPartition { Single, Instanced, MultiDraw };
-
 struct DrawCall;
 
 // A draw command is a series of draw calls
 // With a shared set of uniforms, usually utilized for
 // a specific piece of geometry
 struct DrawCommand {
-	DrawPass* Pass;
+	DrawPass* Pass = nullptr;
 
 	DrawUniforms Uniforms;
 	List<DrawCall> DrawCalls;
@@ -160,8 +157,11 @@ struct DrawCommand {
 	}
 };
 
+enum class DrawPrimitive { Point, Line, Triangle, Cubemap };
+enum class DrawPartition { Single, Instanced, MultiDraw };
+
 struct DrawCall {
-	DrawCommand* Command;
+	DrawCommand* Command = nullptr;
 
 	u32 IndexOffset    = 0;
 	u32 IndexCount     = 0;

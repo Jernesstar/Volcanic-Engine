@@ -1,6 +1,12 @@
 #include "Renderer.h"
 
+#include <VolcaniCore/Core/Application.h>
+#include <VolcanicWindow/Application.h>
+
 #include "Platform/RendererAPI.h"
+
+using namespace VolcaniCore;
+using namespace VolcanicWindow;
 
 namespace Magma::Graphics {
 
@@ -17,20 +23,26 @@ void Renderer::Init() {
 
 	BaseBuffer =
 		RendererAPI::Get()->NewBuffer({
-			.IndexCount = 100,
-			.VertexCount = 1000,
-			.InstanceCount = 1000,
+			.VertexCount = 6,
 			.Vertex = {
-				{ "Position", BufferDataType::Vec3 },
 				{ "TexCoords", BufferDataType::Vec2 },
-				{ "Color", BufferDataType::Vec4 },
-				{ "Texture", BufferDataType::Int },
-				{ "Normal", BufferDataType::Vec3 },
-			},
-			.Instance = {
-				{ "Position", BufferDataType::Vec3 },
 			}
 		});
+
+	float screenCoords[] =
+	{
+		0.0f, 1.0f,
+		0.0f, 0.0f,
+		1.0f, 0.0f,
+
+		1.0f, 0.0f,
+		1.0f, 1.0f,
+		0.0f, 1.0f
+	};
+
+	Buffer<void> buffer(sizeof(Vec2), 6);
+	buffer.Set(screenCoords, 6);
+	BaseBuffer->SetData(DrawBufferIndex::Vertex, std::move(buffer));
 
 	std::string vertexShaderStr = R"(
 		#version 460 core
@@ -48,8 +60,6 @@ void Renderer::Init() {
 
 	std::string fragmentShaderStr = R"(
 		#version 460 core
-
-		layout(location = 0) uniform sampler2D u_ScreenTexture;
 
 		layout(location = 0) in vec2 v_TexCoords;
 
@@ -80,6 +90,21 @@ void Renderer::BeginFrame() {
 	BasePass = RendererAPI::Get()->NewPass(BaseBuffer);
 	BasePass->Pipeline = BaseShader;
 	BasePass->Output = nullptr;
+
+	DrawCommand* cmd = RendererAPI::Get()->NewCommand(BasePass);
+	auto window = Application::As<WindowApplication>()->GetWindow();
+	cmd->Clear = true;
+	cmd->Viewport = true;
+	cmd->ViewportW = window->GetWidth();
+	cmd->ViewportH = window->GetHeight();
+	cmd->DepthTesting = DepthTestingMode::Off;
+	cmd->Culling = CullingMode::Off;
+	cmd->Blending = BlendingMode::Greatest;
+
+	DrawCall* call = cmd->NewCall();
+	call->Primitive = DrawPrimitive::Triangle;
+	call->Partition = DrawPartition::Single;
+	call->VertexCount = 6;
 }
 
 void Renderer::EndFrame() {
@@ -88,25 +113,7 @@ void Renderer::EndFrame() {
 }
 
 void Renderer::DrawQuad(const Quad& quad) {
-	Buffer<void> data(sizeof(Vec2), 4);
-	data.Set(&quad.PosX, 2);
-	BaseBuffer->SetData(DrawBufferIndex::Vertex, std::move(data));
 
-	DrawCommand* cmd = RendererAPI::Get()->NewCommand(BasePass);
-	cmd->Clear = true;
-	cmd->Viewport = true;
-	cmd->ViewportX = 0;
-	cmd->ViewportY = 0;
-	cmd->ViewportW = 1280;
-	cmd->ViewportH = 720;
-
-	DrawCall* call = cmd->NewCall();
-
-	call->Primitive = DrawPrimitive::Triangle;
-	call->VertexOffset = 0;
-	call->VertexCount = 4;
-	call->IndexOffset = 0;
-	call->IndexCount = 6;
 }
 
 }
