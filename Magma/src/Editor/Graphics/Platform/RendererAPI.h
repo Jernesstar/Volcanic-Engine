@@ -15,14 +15,17 @@ enum DrawBufferIndex : u8 {
 };
 
 struct DrawBufferSpec {
-	u32 IndexCount;
-	u32 VertexCount;
-	u32 InstanceCount;
-	BufferLayout Vertex;
-	BufferLayout Instance;
+	u32 IndexCount = 0;
+	bool DynamicIndices = true;
+	u32 VertexCount = 0;
+	bool DynamicVertices = true;
+	u32 InstanceCount = 0;
+	bool DynamicInstances = true;
+	BufferLayout VertexLayout = { };
+	BufferLayout InstanceLayout = { };
 };
 
-class DrawBuffer {
+class DrawBuffer : public Derivable<DrawBuffer> {
 public:
 	const DrawBufferSpec Spec;
 

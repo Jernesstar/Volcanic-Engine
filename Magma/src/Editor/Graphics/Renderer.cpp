@@ -24,8 +24,13 @@ void Renderer::Init() {
 	BaseBuffer =
 		RendererAPI::Get()->NewBuffer({
 			.VertexCount = 6,
-			.Vertex = {
-				{ "TexCoords", BufferDataType::Vec2 },
+			.DynamicVertices = false,
+			.VertexLayout = {
+				{
+					{ "TexCoords", BufferDataType::Vec2 }
+				},
+				false, // Dynamic
+				false // Instanced
 			}
 		});
 
@@ -41,7 +46,7 @@ void Renderer::Init() {
 	};
 
 	Buffer<void> buffer(sizeof(Vec2), 6);
-	buffer.Set(screenCoords, 6);
+	buffer.Set(&screenCoords[0], 6);
 	BaseBuffer->SetData(DrawBufferIndex::Vertex, std::move(buffer));
 
 	std::string vertexShaderStr = R"(
@@ -94,12 +99,13 @@ void Renderer::BeginFrame() {
 	DrawCommand* cmd = RendererAPI::Get()->NewCommand(BasePass);
 	auto window = Application::As<WindowApplication>()->GetWindow();
 	cmd->Clear = true;
+	cmd->ClearColor = { 1.0f, 1.0f, 1.0f, 1.0f };
 	cmd->Viewport = true;
 	cmd->ViewportW = window->GetWidth();
 	cmd->ViewportH = window->GetHeight();
 	cmd->DepthTesting = DepthTestingMode::Off;
-	cmd->Culling = CullingMode::Off;
 	cmd->Blending = BlendingMode::Greatest;
+	cmd->Culling = CullingMode::Off;
 
 	DrawCall* call = cmd->NewCall();
 	call->Primitive = DrawPrimitive::Triangle;

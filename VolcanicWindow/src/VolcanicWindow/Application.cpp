@@ -11,6 +11,10 @@ namespace VolcanicWindow {
 WindowApplication::WindowApplication(const WindowSpecification& spec)
 	: Application({ spec.Title })
 {
+#ifdef VOLCANIC_LINUX
+	glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+#endif
+
 	VOLCANICORE_ASSERT(glfwInit(), "Failed to initialize GLFW");
 
 	m_Window = CreateRef<Window>();

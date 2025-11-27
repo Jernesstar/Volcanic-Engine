@@ -59,11 +59,11 @@ public:
 		buffer->Bind();
 
 		auto& layout = buffer->Layout;
-		uint64_t stride = layout.Stride;
-		uint64_t offset = 0;
+		u64 stride = layout.Stride;
+		u64 offset = 0;
 
 		for(auto& element : layout) {
-			uint64_t count = element.Count;
+			u64 count = element.Count;
 			bool normalized = element.Normalized ? GL_TRUE : GL_FALSE;
 
 			switch(element.Type) {
@@ -82,7 +82,7 @@ public:
 					glEnableVertexAttribArray(m_BufferIndex);
 					glVertexAttribPointer(m_BufferIndex, count, GL_FLOAT,
 										normalized, stride, (void*)offset);
-					if(layout.StructureOfArrays) // Instanced
+					if(layout.Instanced)
 						glVertexAttribDivisor(m_BufferIndex, 1);
 
 					m_BufferIndex++;
@@ -92,10 +92,10 @@ public:
 				case Graphics::BufferDataType::Mat3:
 				case Graphics::BufferDataType::Mat4:
 				{
-					bool instanced = layout.StructureOfArrays;
-					uint64_t vecSize = sizeof(float) * count;
+					bool instanced = layout.Instanced;
+					u64 vecSize = sizeof(float) * count;
 
-					for(uint64_t i = 0; i < count; i++) {
+					for(u64 i = 0; i < count; i++) {
 						glEnableVertexAttribArray(m_BufferIndex);
 						glVertexAttribPointer(
 							m_BufferIndex, count, GL_FLOAT, normalized, stride,

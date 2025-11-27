@@ -61,8 +61,8 @@ void Editor::Open() {
 		AssetImporter::LoadImage(
 			"Magma/assets/images/VolcanicDisplay.png", false);
 
-	auto window = Application::As<WindowApplication>()->GetWindow();
-	window->SetIcon({ logo->Width, logo->Height, logo->Data.Copy() });
+	// auto window = Application::As<WindowApplication>()->GetWindow();
+	// window->SetIcon({ logo->Width, logo->Height, logo->Data.Copy() });
 
 	AssetManager::Init();
 	Renderer::Init();

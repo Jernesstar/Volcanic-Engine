@@ -21,32 +21,55 @@ public:
 	Buffer<uint32_t> Indices;
 	Buffer<void> Vertices;
 	Buffer<void> Instances;
-	u32 MaxIndexCount;
-	u32 MaxVertexCount;
-	u32 MaxInstanceCount;
 
 public:
 	DrawBuffer(const DrawBufferSpec& spec)
-		: Graphics::DrawBuffer(spec),
-			Indices(spec.IndexCount),
-			Vertices(spec.Vertex.Stride || 1, spec.VertexCount),
-			Instances(spec.Instance.Stride || 1, spec.InstanceCount)
+		: Graphics::DrawBuffer(spec)
 	{
 		Array = CreateRef<VertexArray>();
+		if(spec.IndexCount) {
+			Array->SetIndexBuffer(
+				CreateRef<IndexBuffer>(spec.IndexCount, true));
+			Indices = Buffer<uint32_t>(spec.IndexCount);
+		}
+		if(spec.VertexCount) {
+			Array->AddVertexBuffer(
+				CreateRef<VertexBuffer>(spec.VertexLayout, spec.VertexCount));
+			Vertices
+				= Buffer<void>(spec.VertexLayout.Stride, spec.VertexCount);
+		}
+		if(spec.InstanceCount) {
+			Array->AddVertexBuffer(
+				CreateRef<VertexBuffer>(
+					spec.InstanceLayout, spec.InstanceCount));
+			Instances
+				= Buffer<void>(spec.InstanceLayout.Stride, spec.InstanceCount);
+		}
 	}
 	~DrawBuffer() = default;
 
 	void SetData(DrawBufferIndex index, Buffer<void> data) override {
 		switch(index) {
-			case DrawBufferIndex::Vertex:
-				Vertices.Set(data.Get(), data.GetCount());
-				break;
-			case DrawBufferIndex::Index:
+			case DrawBufferIndex::Index: {
 				Indices.Set(data.Get(), data.GetCount());
+				if(!Spec.DynamicIndices)
+					Array->GetIndexBuffer()->SetData(Indices);
 				break;
-			case DrawBufferIndex::Instance:
+			}
+			case DrawBufferIndex::Vertex: {
+				Vertices.Set(data.Get(), data.GetCount());
+				if(!Spec.DynamicVertices)
+					Array->GetVertexBuffer(0)->SetData(Vertices);
+				break;
+			}
+			case DrawBufferIndex::Instance: {
 				Instances.Set(data.Get(), data.GetCount());
+				if(!Spec.DynamicInstances) {
+					u32 idx = Spec.VertexCount != 0;
+					Array->GetVertexBuffer(idx)->SetData(Instances);
+				}
 				break;
+			}
 		}
 	}
 
@@ -137,6 +160,9 @@ static void SetOptions(DrawCommand& cmd) {
 		glEnable(GL_SCISSOR_TEST);
 		glScissor(cmd.ScissorX, cmd.ScissorY, cmd.ScissorW, cmd.ScissorH);
 	}
+	else
+		glDisable(GL_SCISSOR_TEST);
+
 	if(cmd.Viewport)
 		glViewport(cmd.ViewportX, cmd.ViewportY, cmd.ViewportW, cmd.ViewportH);
 	if(cmd.Clear) {
@@ -146,7 +172,7 @@ static void SetOptions(DrawCommand& cmd) {
 
 	if(cmd.DepthTesting == DepthTestingMode::On)
 		glEnable(GL_DEPTH_TEST);
-	else if(cmd.DepthTesting == DepthTestingMode::Off)
+	else
 		glDisable(GL_DEPTH_TEST);
 
 	if(cmd.Blending == BlendingMode::Off)
@@ -200,16 +226,6 @@ static void SubmitDrawCall(DrawCommand& cmd, DrawCall& call) {
 			break;
 	}
 
-	if(call.Partition == DrawPartition::MultiDraw) {
-		// if(call.IndexCount == 0)
-		// 	glMultiDrawArraysIndirect();
-		// else
-		// 	glMultiDrawElementsIndirect();
-
-		// Add indirect objects. When full, make draw call and clear
-		return;
-	}
-
 	if(call.Partition == DrawPartition::Single) {
 		if(call.IndexCount == 0)
 			glDrawArrays(primitive, cmd.VerticesIndex + call.VertexOffset,
@@ -217,7 +233,7 @@ static void SubmitDrawCall(DrawCommand& cmd, DrawCall& call) {
 		else
 			glDrawElementsBaseVertex(
 				primitive, call.IndexCount, GL_UNSIGNED_INT,
-				(void*)(sizeof(uint32_t) * (cmd.IndicesIndex + call.IndexOffset)),
+				(void*)(sizeof(u32) * (cmd.IndicesIndex + call.IndexOffset)),
 				cmd.VerticesIndex + call.VertexOffset);
 	}
 	else if(call.Partition == DrawPartition::Instanced) {
@@ -228,9 +244,17 @@ static void SubmitDrawCall(DrawCommand& cmd, DrawCall& call) {
 		else
 			glDrawElementsInstancedBaseVertexBaseInstance(
 				primitive, call.IndexCount, GL_UNSIGNED_INT,
-				(void*)(sizeof(uint32_t) * (cmd.IndicesIndex + call.IndexOffset)),
+				(void*)(sizeof(u32) * (cmd.IndicesIndex + call.IndexOffset)),
 				call.InstanceCount, cmd.VerticesIndex + call.VertexOffset,
 				call.InstanceOffset);
+	}
+	else if(call.Partition == DrawPartition::MultiDraw) {
+		// if(call.IndexCount == 0)
+		// 	glMultiDrawArraysIndirect();
+		// else
+		// 	glMultiDrawElementsIndirect();
+
+		// Add indirect objects. When full, make draw call and clear
 	}
 }
 
@@ -239,14 +263,12 @@ void Renderer::EndFrame() {
 		return;
 
 	for(auto& buffer : s_Buffers) {
-		if(buffer->Indices.GetCount() && buffer->MaxIndexCount)
+		if(buffer->Spec.DynamicIndices && buffer->Spec.IndexCount)
 			buffer->Array->GetIndexBuffer()->SetData(buffer->Indices);
-		if(buffer->Vertices.GetCount() && buffer->MaxVertexCount)
+		if(buffer->Spec.DynamicVertices && buffer->Spec.VertexCount)
 			buffer->Array->GetVertexBuffer(0)->SetData(buffer->Vertices);
-		if(buffer->Instances.GetCount() && buffer->MaxInstanceCount) {
-			// If the vertex buffer is empty, the instance buffer will be the
-			// first buffer in the array
-			u32 idx = buffer->MaxVertexCount != 0;
+		if(buffer->Spec.DynamicInstances && buffer->Spec.InstanceCount) {
+			u32 idx = buffer->Spec.VertexCount != 0;
 			buffer->Array->GetVertexBuffer(idx)->SetData(buffer->Instances);
 		}
 	}
@@ -262,15 +284,25 @@ void Renderer::EndFrame() {
 		else
 			glUseProgram(0);
 
+		auto out = cmd.Pass->Output;
+		if(out) {
+			out->As<OpenGL::Framebuffer>()->Bind();
+		}
+		else
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		auto buffer = cmd.Pass->Buffer;
+		if(buffer) {
+			buffer->As<OpenGL::DrawBuffer>()->Array->Bind();
+		}
+		else
+			glBindVertexArray(0);
+
 		for(auto& call : cmd.DrawCalls)
 			SubmitDrawCall(cmd, call);
-
-		if(cmd.Scissor)
-			glDisable(GL_SCISSOR_TEST);
 	}
 
 	s_Commands.Clear();
-	s_Passes.Clear();
 }
 
 Graphics::DrawBuffer* Renderer::NewBuffer(const Graphics::DrawBufferSpec& s) {

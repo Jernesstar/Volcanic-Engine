@@ -13,8 +13,8 @@ struct BufferElement {
 	const std::string Name;
 	const BufferDataType Type;
 	const bool Normalized;
-	const uint32_t Size;
-	const uint32_t Count;
+	const u32 Size;
+	const u32 Count;
 
 	BufferElement(const std::string& name, BufferDataType type,
 				  bool normalized = true)
@@ -29,7 +29,7 @@ struct BufferElement {
 	}
 
 private:
-	static uint32_t CalcSize(BufferDataType type) {
+	static u32 CalcSize(BufferDataType type) {
 		switch(type) {
 			case BufferDataType::Int:	return 4;
 			case BufferDataType::Float: return 4;
@@ -43,7 +43,7 @@ private:
 
 		return 0;
 	}
-	static uint32_t CalcCount(BufferDataType type) {
+	static u32 CalcCount(BufferDataType type) {
 		switch(type) {
 			case BufferDataType::Int:	return 1;
 			case BufferDataType::Float: return 1;
@@ -62,21 +62,21 @@ private:
 class BufferLayout {
 public:
 	const List<BufferElement> Elements;
-	const uint32_t Stride;
+	const u32 Stride;
 	const bool Dynamic;
-	const bool StructureOfArrays;
+	const bool Instanced;
 
 public:
 	BufferLayout(const std::initializer_list<BufferElement>& elements,
-				 bool dynamic = true, bool structureOfArrays = false)
+				 bool dynamic = true, bool instanced = false)
 		: Elements(elements), Stride(CalcStride(elements)),
-			Dynamic(dynamic), StructureOfArrays(structureOfArrays) { }
+			Dynamic(dynamic), Instanced(instanced) { }
 
 	bool operator ==(const BufferLayout& other) const {
 		return Elements == other.Elements
 			&& Stride == other.Stride
 			&& Dynamic == other.Dynamic
-			&& StructureOfArrays == other.StructureOfArrays;
+			&& Instanced == other.Instanced;
 	}
 
 	List<BufferElement>::const_iterator begin() const {
@@ -87,8 +87,8 @@ public:
 	}
 
 private:
-	uint32_t CalcStride(const List<BufferElement>& elements) {
-		uint32_t stride = 0;
+	u32 CalcStride(const List<BufferElement>& elements) {
+		u32 stride = 0;
 		for(auto& element : elements)
 			stride += element.Size;
 		return stride;
