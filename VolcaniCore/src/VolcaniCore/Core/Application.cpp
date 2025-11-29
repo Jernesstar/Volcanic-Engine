@@ -9,9 +9,9 @@ namespace fs = std::filesystem;
 
 namespace VolcaniCore {
 
-void Application::Close() {
+void Application::Close(u32 code) {
 	delete s_Instance;
-	exit(0);
+	exit(code);
 }
 
 Application* Application::Get() {

@@ -34,7 +34,7 @@ public:
 		: Spec(spec) { };
 	virtual ~DrawBuffer() = default;
 
-	virtual void SetData(DrawBufferIndex, Buffer<void> data) = 0;
+	virtual void Add(DrawBufferIndex, const void* data, u64 count) = 0;
 	virtual void Clear() = 0;
 };
 
@@ -84,38 +84,49 @@ struct DrawUniforms {
 		|| Mat2Uniforms.size() || Mat3Uniforms.size() || Mat4Uniforms.size();
 	}
 
-	void SetInput(const std::string& name, i32 data) {
+	DrawUniforms& Set(const std::string& name, i32 data) {
 		IntUniforms[name] = data;
+		return *this;
 	}
-	void SetInput(const std::string& name, f32 data) {
+	DrawUniforms& Set(const std::string& name, f32 data) {
 		FloatUniforms[name] = data;
+		return *this;
 	}
-	void SetInput(const std::string& name, const TextureSlot& data) {
+	DrawUniforms& Set(const std::string& name, const TextureSlot& data) {
 		TextureUniforms[name] = data;
+		return *this;
 	}
-	void SetInput(const std::string& name, const Vec2& data) {
+	DrawUniforms& Set(const std::string& name, const Vec2& data) {
 		Vec2Uniforms[name] = data;
+		return *this;
 	}
-	void SetInput(const std::string& name, const Vec3& data) {
+	DrawUniforms& Set(const std::string& name, const Vec3& data) {
 		Vec3Uniforms[name] = data;
+		return *this;
 	}
-	void SetInput(const std::string& name, const Vec4& data) {
+	DrawUniforms& Set(const std::string& name, const Vec4& data) {
 		Vec4Uniforms[name] = data;
+		return *this;
 	}
-	void SetInput(const std::string& name, const Mat2& data) {
+	DrawUniforms& Set(const std::string& name, const Mat2& data) {
 		Mat2Uniforms[name] = data;
+		return *this;
 	}
-	void SetInput(const std::string& name, const Mat3& data) {
+	DrawUniforms& Set(const std::string& name, const Mat3& data) {
 		Mat3Uniforms[name] = data;
+		return *this;
 	}
-	void SetInput(const std::string& name, const Mat4& data) {
+	DrawUniforms& Set(const std::string& name, const Mat4& data) {
 		Mat4Uniforms[name] = data;
+		return *this;
 	}
-	void SetInput(const UniformSlot& data) {
+	DrawUniforms& Set(const UniformSlot& data) {
 		UniformBuffers.Add(data);
+		return *this;
 	}
-	void SetInput(const StorageSlot& data) {
+	DrawUniforms& Set(const StorageSlot& data) {
 		StorageBuffers.Add(data);
+		return *this;
 	}
 };
 

@@ -4,11 +4,15 @@
 
 #include "Log.h"
 #include "Defines.h"
+#include "Application.h"
 
 #define VOLCANICORE_INTERNAL_ASSERT_CHECK(condition, message, ...) \
 { \
-	if(!(condition)) { VOLCANICORE_LOG_ERROR(message, ## __VA_ARGS__); } \
-} \
+	if(!(condition)) { \
+		VOLCANICORE_LOG_ERROR(message, ## __VA_ARGS__); \
+		VolcaniCore::Application::Close(); \
+	} \
+}
 
 #define VOLCANICORE_ASSERT_ARGS(condition, message, ...) \
 	VOLCANICORE_INTERNAL_ASSERT_CHECK(condition, message, ## __VA_ARGS__)

@@ -9,7 +9,7 @@ void EditorAssetRegistry::Load(const std::string& path) {
 }
 
 Ref<Asset> EditorAssetRegistry::GetAsset(AssetID id) {
-	
+	return nullptr;
 }
 
 void EditorAssetRegistry::LoadAsset(AssetID id) {
@@ -29,7 +29,7 @@ void RuntimeAssetRegistry::Load(const std::string& path) {
 }
 
 Ref<Asset> RuntimeAssetRegistry::GetAsset(AssetID id) {
-	
+	return nullptr;
 }
 
 void RuntimeAssetRegistry::LoadAsset(AssetID id) {

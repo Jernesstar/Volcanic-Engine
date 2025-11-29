@@ -410,8 +410,8 @@ void Window::Begin() {
 					CLAY_SIZING_FIXED(Width),
 					CLAY_SIZING_FIXED(Height)
 				},
-				// .padding = CLAY_PADDING_ALL(16),
-				// .childGap = 16
+				.padding = CLAY_PADDING_ALL(16),
+				.childGap = 16
 			},
 			.backgroundColor = { Color.r, Color.g, Color.b, Color.a }
 		})

@@ -48,22 +48,22 @@ public:
 	}
 	~DrawBuffer() = default;
 
-	void SetData(DrawBufferIndex index, Buffer<void> data) override {
+	void Add(DrawBufferIndex index, const void* data, u64 count) override {
 		switch(index) {
 			case DrawBufferIndex::Index: {
-				Indices.Set(data.Get(), data.GetCount());
+				Indices.Add(data, count);
 				if(!Spec.DynamicIndices)
 					Array->GetIndexBuffer()->SetData(Indices);
 				break;
 			}
 			case DrawBufferIndex::Vertex: {
-				Vertices.Set(data.Get(), data.GetCount());
+				Vertices.Add(data, count);
 				if(!Spec.DynamicVertices)
 					Array->GetVertexBuffer(0)->SetData(Vertices);
 				break;
 			}
 			case DrawBufferIndex::Instance: {
-				Instances.Set(data.Get(), data.GetCount());
+				Instances.Add(data, count);
 				if(!Spec.DynamicInstances) {
 					u32 idx = Spec.VertexCount != 0;
 					Array->GetVertexBuffer(idx)->SetData(Instances);
@@ -312,10 +312,12 @@ Graphics::DrawBuffer* Renderer::NewBuffer(const Graphics::DrawBufferSpec& s) {
 }
 
 Graphics::DrawPass* Renderer::NewPass(Graphics::DrawBuffer* buffer) {
+	VOLCANICORE_ASSERT(buffer);
 	return &s_Passes.Emplace(buffer);
 }
 
 Graphics::DrawCommand* Renderer::NewCommand(Graphics::DrawPass* pass) {
+	VOLCANICORE_ASSERT(pass);
 	return &s_Commands.Emplace(pass);
 }
 

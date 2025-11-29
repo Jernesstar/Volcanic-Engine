@@ -25,7 +25,7 @@ protected:
 	inline static Application* s_Instance;
 
 public:
-	static void Close();
+	static void Close(u32 code = 0);
 	static Application* Get();
 
 	static std::string GetHomeDir();
