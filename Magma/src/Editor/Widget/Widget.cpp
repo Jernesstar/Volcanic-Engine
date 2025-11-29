@@ -277,10 +277,10 @@ void WidgetManager::Render() {
 
 	for(int i = 0; i < renderCommands.length; i++) {
 		Clay_RenderCommand* cmd = &renderCommands.internalArray[i];
+		auto box = cmd->boundingBox;
 
 		switch(cmd->commandType) {
 			case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
-				auto box = cmd->boundingBox;
 				auto rect = cmd->renderData.rectangle;
 				Renderer::DrawQuad({
 					.PosX = box.x,
@@ -299,7 +299,13 @@ void WidgetManager::Render() {
 
 			}
 			case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
-
+				auto image = cmd->renderData.image;
+				Renderer::DrawQuad({
+					.PosX = box.x,
+					.PosY = box.y,
+					.Width = box.width,
+					.Height = box.height,
+				});
 			}
 			case CLAY_RENDER_COMMAND_TYPE_TEXT: {
 
@@ -391,7 +397,7 @@ void Root::Begin() {
 				},
 				.layoutDirection = CLAY_TOP_TO_BOTTOM
 			},
-			.backgroundColor = { 0.0f, 0.0f, 0.0f, 0.0f }
+			.backgroundColor = { 1.0f, 0.0f, 0.0f, 0.0f }
 		})
 	);
 }
@@ -401,50 +407,50 @@ void Root::End() {
 }
 
 void Window::Begin() {
-	Clay__OpenElement();
-	Clay__ConfigureOpenElement(
-		CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
-		{
-			.layout = {
-				.sizing = {
-					CLAY_SIZING_FIXED(Width),
-					CLAY_SIZING_FIXED(Height)
-				},
-				.padding = CLAY_PADDING_ALL(16),
-				.childGap = 16
-			},
-			.backgroundColor = { Color.r, Color.g, Color.b, Color.a }
-		})
-	);
+	// Clay__OpenElement();
+	// Clay__ConfigureOpenElement(
+	// 	CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
+	// 	{
+	// 		.layout = {
+	// 			.sizing = {
+	// 				CLAY_SIZING_FIXED(Width),
+	// 				CLAY_SIZING_FIXED(Height)
+	// 			},
+	// 			.padding = CLAY_PADDING_ALL(16),
+	// 			.childGap = 16
+	// 		},
+	// 		.backgroundColor = { Color.r, Color.g, Color.b, Color.a }
+	// 	})
+	// );
 }
 
 void Window::End() {
-	Clay__CloseElement();
+	// Clay__CloseElement();
 }
 
 void Container::Begin() {
-	Clay__OpenElement();
-	Clay__ConfigureOpenElement(
-		CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
-		{
-			.layout = {
-				.sizing = {
-					SizeX == SizeType::Fixed ?
-						CLAY_SIZING_FIXED(Width) : CLAY_SIZING_GROW(),
-					SizeY == SizeType::Fixed ?
-						CLAY_SIZING_FIXED(Height) : CLAY_SIZING_GROW()
-				},
-				.layoutDirection =
-					Layout == LayoutType::Horizontal ?
-								  CLAY_LEFT_TO_RIGHT : CLAY_TOP_TO_BOTTOM,
-			},
-			.backgroundColor = { Color.r, Color.g, Color.b, Color.a }
-		})
-	);
+	// Clay__OpenElement();
+	// Clay__ConfigureOpenElement(
+	// 	CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
+	// 	{
+	// 		.layout = {
+	// 			.sizing = {
+	// 				SizeX == SizeType::Fixed ?
+	// 					CLAY_SIZING_FIXED(Width) : CLAY_SIZING_GROW(),
+	// 				SizeY == SizeType::Fixed ?
+	// 					CLAY_SIZING_FIXED(Height) : CLAY_SIZING_GROW()
+	// 			},
+	// 			.layoutDirection =
+	// 				Layout == LayoutType::Horizontal ?
+	// 							  CLAY_LEFT_TO_RIGHT : CLAY_TOP_TO_BOTTOM,
+	// 		},
+	// 		.backgroundColor = { Color.r, Color.g, Color.b, Color.a }
+	// 	})
+	// );
 }
 
 void Container::End() {
-	Clay__CloseElement();
+	// Clay__CloseElement();
 }
 
 void Dropdown::Begin() {
@@ -464,33 +470,33 @@ void Button::End() {
 }
 
 void Image::Begin() {
-	Clay__OpenElement();
-	Clay__ConfigureOpenElement(
-		CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
-		{
-			.layout = {
-				.sizing = {
-					CLAY_SIZING_FIXED(Width),
-					CLAY_SIZING_FIXED(Height)
-				}
-			},
-			.image = { .imageData = (void*)Texture }
-		})
-	);
+	// Clay__OpenElement();
+	// Clay__ConfigureOpenElement(
+	// 	CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
+	// 	{
+	// 		.layout = {
+	// 			.sizing = {
+	// 				CLAY_SIZING_FIXED(Width),
+	// 				CLAY_SIZING_FIXED(Height)
+	// 			}
+	// 		},
+	// 		.image = { .imageData = (void*)Texture }
+	// 	})
+	// );
 }
 
 void Image::End() {
-	Clay__CloseElement();
+	// Clay__CloseElement();
 }
 
 void Text::Begin() {
-	CLAY_TEXT(Clay_String(Label.c_str()),
-		CLAY_TEXT_CONFIG({
-			.textColor = { Color.r, Color.g, Color.b, Color.a },
-			.fontId = (u16)Font,
-			.fontSize = (u16)Scale,
-		})
-	);
+	// CLAY_TEXT(Clay_String(Label.c_str()),
+	// 	CLAY_TEXT_CONFIG({
+	// 		.textColor = { Color.r, Color.g, Color.b, Color.a },
+	// 		.fontId = (u16)Font,
+	// 		.fontSize = (u16)Scale,
+	// 	})
+	// );
 }
 
 void Text::End() {

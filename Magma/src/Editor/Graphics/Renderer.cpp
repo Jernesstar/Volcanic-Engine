@@ -125,14 +125,14 @@ void Renderer::Init() {
 
 		void main()
 		{
-			vec2 pos = a_PositionDimension.xy / u_ScreenSize.xy;
-			vec2 dim = a_PositionDimension.zw;
+			vec2 pos = 2.0 * (a_PositionDimension.xy / u_ScreenSize.xy) - 1.0;
+			vec2 dim = a_PositionDimension.zw / u_ScreenSize.xy;
 			vec2 vertex = Vertices[Indices[gl_VertexID]];
 
-			vec2 finalPos = (2.0 * pos - 1.0) + vertex * dim;
-			gl_Position = vec4(vertex, 0.0, 1.0);
+			vec2 finalPos = pos + vertex * dim;
+			gl_Position = vec4(finalPos, 0.0, 1.0);
 
-			v_TexCoords = vertex;
+			v_TexCoords = (vertex + 1.0) / 2.0;
 			v_Color = a_Color;
 		}
 	)";
@@ -174,7 +174,7 @@ void Renderer::BeginFrame() {
 	RectCommand = RendererAPI::Get()->NewCommand(RectPass);
 	auto window = Application::As<WindowApplication>()->GetWindow();
 	RectCommand->Clear = true;
-	RectCommand->ClearColor = { 1.0f, 1.0f, 1.0f, 1.0f };
+	RectCommand->ClearColor = { 0.0f, 0.0f, 0.0f, 0.0f };
 	RectCommand->Viewport = true;
 	RectCommand->ViewportW = window->GetWidth();
 	RectCommand->ViewportH = window->GetHeight();
@@ -192,6 +192,7 @@ void Renderer::BeginFrame() {
 }
 
 void Renderer::EndFrame() {
+	DrawQuad({ 100, 100, 100, 100, Vec4(1.0f) });
 
 	RendererAPI::Get()->EndFrame();
 }
