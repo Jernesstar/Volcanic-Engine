@@ -56,7 +56,8 @@ static GLFWwindow* CreateWindow(WindowSpecification& spec) {
 	}
 
 	glfwMakeContextCurrent(window);
-	glfwSwapInterval(0);
+	if(!spec.VSync)
+		glfwSwapInterval(0);
 
 	return window;
 }

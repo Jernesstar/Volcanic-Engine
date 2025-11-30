@@ -9,6 +9,7 @@ namespace VolcaniCore {
 
 struct AppSpecification {
 	std::string Name;
+	u32 TickRate = 0; // = 0 => Fast as possible; = n => n ticks per sec
 };
 
 class Application {
@@ -23,6 +24,7 @@ protected:
 	TimePoint m_LastFrame{ Time::GetTime() };
 
 	inline static Application* s_Instance;
+	inline static AppSpecification s_Spec;
 
 public:
 	static void Close(u32 code = 0);

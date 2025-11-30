@@ -157,7 +157,7 @@ public:
 	bool AllowMinimize = false;
 	bool AllowMaximize = false;
 
-	Vec4 Color = { };
+	Vec4 Color = { 1.0f, 0.0f, 0.0f, 1.0f };
 
 public:
 	Window(const std::string& id)
@@ -182,7 +182,7 @@ public:
 	SizeType SizeX = SizeType::Stretch;
 	SizeType SizeY = SizeType::Fixed;
 
-	Vec4 Color = { };
+	Vec4 Color = { 0.0f, 1.0f, 0.0f, 1.0f };
 
 public:
 	Container(const std::string& id)
@@ -233,7 +233,7 @@ class Text : public Widget {
 public:
 	std::string Label;
 	float Scale = 1.0f;
-	Vec4 Color = { };
+	Vec4 Color = { 0.0f, 0.0f, 1.0f, 1.0f };
 	AssetID Font;
 
 public:

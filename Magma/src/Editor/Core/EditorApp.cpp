@@ -12,7 +12,14 @@ using namespace VolcanicWindow;
 namespace Magma {
 
 EditorApp::EditorApp(const CommandLineArgs& args)
-	: WindowApplication({ "Magma Editor v0.1.0", 1400, 800, true })
+	: WindowApplication({
+		.Title = "Magma Editor v0.1.0",
+		.Width = 1400,
+		.Height = 800,
+		.TickRate = 60,
+		.VSync = true,
+		.Undecorated = true
+	})
 {
 	Events::RegisterListener<KeyPressedEvent>(
 		[](const KeyPressedEvent& event)

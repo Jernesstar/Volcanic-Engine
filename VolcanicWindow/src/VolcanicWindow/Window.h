@@ -13,8 +13,10 @@ namespace VolcanicWindow {
 
 struct WindowSpecification {
 	std::string Title;
-	uint32_t Width = 800;
-	uint32_t Height = 600;
+	u32 Width = 800;
+	u32 Height = 600;
+	u32 TickRate = 0;
+	bool VSync = false;
 	bool Undecorated = false;
 	bool SplashScreen = false;
 	bool Fullscreen = false;
@@ -23,8 +25,8 @@ struct WindowSpecification {
 };
 
 struct Icon {
-	uint32_t Width;
-	uint32_t Height;
+	u32 Width;
+	u32 Height;
 	Buffer<uint8_t> Data;
 };
 
@@ -42,13 +44,13 @@ public:
 	void Minimize();
 	void Fullscreen(bool enable = true);
 	void UndoSplashScreen();
-	void Resize(uint32_t width, uint32_t height);
+	void Resize(u32 width, u32 height);
 	void SetIcon(const Icon& icon);
 	void SetTitle(const std::string& title);
 
 	const WindowSpecification& GetSpec() const { return m_Spec; }
-	uint32_t GetWidth() const { return m_Spec.Width; }
-	uint32_t GetHeight() const { return m_Spec.Height; }
+	u32 GetWidth() const { return m_Spec.Width; }
+	u32 GetHeight() const { return m_Spec.Height; }
 
 	GLFWwindow* GetNativeWindow() const { return m_NativeWindow; }
 

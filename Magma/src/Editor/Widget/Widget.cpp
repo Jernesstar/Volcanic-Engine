@@ -53,13 +53,12 @@ static Clay_Dimensions MeasureText(Clay_StringSlice text, Clay_TextElementConfig
 }
 
 void WidgetManager::Init() {
-	uint64_t size = Clay_MinMemorySize();
-	Clay_Arena arena =
-		Clay_CreateArenaWithCapacityAndMemory(size, malloc(size));
+	u64 size = 4 * Clay_MinMemorySize();
+	auto arena = Clay_CreateArenaWithCapacityAndMemory(size, malloc(size));
 
 	auto window = Application::As<WindowApplication>()->GetWindow();
-	float width = window->GetWidth();
-	float height = window->GetHeight();
+	float width = (float)window->GetWidth();
+	float height = (float)window->GetHeight();
 
 	s_ClayContext = Clay_Initialize(arena,
 		(Clay_Dimensions) { width, height },
@@ -275,16 +274,7 @@ void WidgetManager::Render() {
 
 	Clay_BeginLayout();
 
-	CLAY(CLAY_ID("MainContent"), {
-		.layout = {
-			.sizing = {
-				.width = CLAY_SIZING_GROW(0),
-				.height = CLAY_SIZING_GROW(0)
-			}
-		},
-		.backgroundColor = { 1.0f, 0.0f, 0.0f, 0.0f }
-	}) {}
-	// GetRoot()->Render();
+	GetRoot()->Render();
 
 	Clay_RenderCommandArray renderCommands = Clay_EndLayout();
 
@@ -399,6 +389,10 @@ Ref<Widget> Widget::Find(const std::string& id) {
 }
 
 void Root::Begin() {
+	auto window = Application::As<WindowApplication>()->GetWindow();
+	float width = window->GetWidth();
+	float height = window->GetHeight();
+
 	Clay__OpenElement();
 	Clay__ConfigureOpenElement(
 		CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
@@ -410,7 +404,7 @@ void Root::Begin() {
 				},
 				.layoutDirection = CLAY_TOP_TO_BOTTOM
 			},
-			.backgroundColor = { 1.0f, 0.0f, 0.0f, 0.0f }
+			.backgroundColor = { 1.0f, 1.0f, 1.0f, 1.0f }
 		})
 	);
 }
@@ -420,50 +414,50 @@ void Root::End() {
 }
 
 void Window::Begin() {
-	// Clay__OpenElement();
-	// Clay__ConfigureOpenElement(
-	// 	CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
-	// 	{
-	// 		.layout = {
-	// 			.sizing = {
-	// 				CLAY_SIZING_FIXED(Width),
-	// 				CLAY_SIZING_FIXED(Height)
-	// 			},
-	// 			.padding = CLAY_PADDING_ALL(16),
-	// 			.childGap = 16
-	// 		},
-	// 		.backgroundColor = { Color.r, Color.g, Color.b, Color.a }
-	// 	})
-	// );
+	Clay__OpenElement();
+	Clay__ConfigureOpenElement(
+		CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
+		{
+			.layout = {
+				.sizing = {
+					CLAY_SIZING_FIXED(Width),
+					CLAY_SIZING_FIXED(Height)
+				},
+				.padding = CLAY_PADDING_ALL(16),
+				.childGap = 16
+			},
+			.backgroundColor = { Color.r, Color.g, Color.b, Color.a }
+		})
+	);
 }
 
 void Window::End() {
-	// Clay__CloseElement();
+	Clay__CloseElement();
 }
 
 void Container::Begin() {
-	// Clay__OpenElement();
-	// Clay__ConfigureOpenElement(
-	// 	CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
-	// 	{
-	// 		.layout = {
-	// 			.sizing = {
-	// 				SizeX == SizeType::Fixed ?
-	// 					CLAY_SIZING_FIXED(Width) : CLAY_SIZING_GROW(),
-	// 				SizeY == SizeType::Fixed ?
-	// 					CLAY_SIZING_FIXED(Height) : CLAY_SIZING_GROW()
-	// 			},
-	// 			.layoutDirection =
-	// 				Layout == LayoutType::Horizontal ?
-	// 							  CLAY_LEFT_TO_RIGHT : CLAY_TOP_TO_BOTTOM,
-	// 		},
-	// 		.backgroundColor = { Color.r, Color.g, Color.b, Color.a }
-	// 	})
-	// );
+	Clay__OpenElement();
+	Clay__ConfigureOpenElement(
+		CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
+		{
+			.layout = {
+				.sizing = {
+					SizeX == SizeType::Fixed ?
+						CLAY_SIZING_FIXED(Width) : CLAY_SIZING_GROW(),
+					SizeY == SizeType::Fixed ?
+						CLAY_SIZING_FIXED(Height) : CLAY_SIZING_GROW()
+				},
+				.layoutDirection =
+					Layout == LayoutType::Horizontal ?
+								  CLAY_LEFT_TO_RIGHT : CLAY_TOP_TO_BOTTOM,
+			},
+			.backgroundColor = { Color.r, Color.g, Color.b, Color.a }
+		})
+	);
 }
 
 void Container::End() {
-	// Clay__CloseElement();
+	Clay__CloseElement();
 }
 
 void Dropdown::Begin() {
@@ -475,41 +469,55 @@ void Dropdown::End() {
 }
 
 void Button::Begin() {
-
+	Clay__OpenElement();
+	Clay__ConfigureOpenElement(
+		CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
+		{
+			.layout = {
+				.sizing = {
+					CLAY_SIZING_FIXED(Width),
+					CLAY_SIZING_FIXED(Height)
+				},
+				.padding = CLAY_PADDING_ALL(16),
+				.childGap = 16
+			},
+			.backgroundColor = { Color.r, Color.g, Color.b, Color.a }
+		})
+	);
 }
 
 void Button::End() {
-
+	Clay__CloseElement();
 }
 
 void Image::Begin() {
-	// Clay__OpenElement();
-	// Clay__ConfigureOpenElement(
-	// 	CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
-	// 	{
-	// 		.layout = {
-	// 			.sizing = {
-	// 				CLAY_SIZING_FIXED(Width),
-	// 				CLAY_SIZING_FIXED(Height)
-	// 			}
-	// 		},
-	// 		.image = { .imageData = (void*)Texture }
-	// 	})
-	// );
+	Clay__OpenElement();
+	Clay__ConfigureOpenElement(
+		CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
+		{
+			.layout = {
+				.sizing = {
+					CLAY_SIZING_FIXED(Width),
+					CLAY_SIZING_FIXED(Height)
+				}
+			},
+			.image = { .imageData = (void*)Texture }
+		})
+	);
 }
 
 void Image::End() {
-	// Clay__CloseElement();
+	Clay__CloseElement();
 }
 
 void Text::Begin() {
-	// CLAY_TEXT(Clay_String(Label.c_str()),
-	// 	CLAY_TEXT_CONFIG({
-	// 		.textColor = { Color.r, Color.g, Color.b, Color.a },
-	// 		.fontId = (u16)Font,
-	// 		.fontSize = (u16)Scale,
-	// 	})
-	// );
+	CLAY_TEXT(Clay_String(Label.c_str()),
+		CLAY_TEXT_CONFIG({
+			.textColor = { Color.r, Color.g, Color.b, Color.a },
+			.fontId = (u16)Font,
+			.fontSize = (u16)Scale,
+		})
+	);
 }
 
 void Text::End() {

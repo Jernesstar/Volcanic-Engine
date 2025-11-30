@@ -1,9 +1,9 @@
 #include <cstdlib>
+#include <chrono>
+#include <thread>
 
 #include "Application.h"
 #include "Assert.h"
-
-// #include "Event/Events.h"
 
 namespace fs = std::filesystem;
 
@@ -20,6 +20,7 @@ Application* Application::Get() {
 
 Application::Application(const AppSpecification& spec) {
 	s_Instance = this;
+	s_Spec = spec;
 }
 
 void Application::Run() {
@@ -29,6 +30,16 @@ void Application::Run() {
 		m_LastFrame = time;
 
 		s_Instance->OnUpdate(ts);
+
+		if(!s_Spec.TickRate)
+			continue;
+
+		f32 targetDelta = (1.0f / float(s_Spec.TickRate)) * 1000.0f;
+		if (ts < targetDelta) {
+			f32 sleep = targetDelta - ts;
+			auto timeMS = std::chrono::milliseconds(static_cast<u32>(sleep));
+			std::this_thread::sleep_for(timeMS);
+		}
 	}
 }
 

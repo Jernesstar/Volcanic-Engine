@@ -1,5 +1,5 @@
 <Root id="Start">
-    <Container id="TopBar" height="60.0" color="[0.0, 0.0, 0.0, 1.0]">
+    <Container id="TopBar" height="60.0">
         <Image asset="images/logo.png" width="50.0" height="50.0"/>
         <Text label="Magma Editor v0.1" scale="2.0"/>
 

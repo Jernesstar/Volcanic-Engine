@@ -147,7 +147,7 @@ void Renderer::Init() {
 
 		void main()
 		{
-			FragColor = vec4(v_TexCoords, 1.0, 1.0);
+			FragColor = vec4(v_Color);
 		}
 	)";
 
