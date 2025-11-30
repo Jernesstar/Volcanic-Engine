@@ -61,9 +61,11 @@ void WidgetManager::Init() {
 	float width = window->GetWidth();
 	float height = window->GetHeight();
 
-	Clay_Initialize(arena,
+	s_ClayContext = Clay_Initialize(arena,
 		(Clay_Dimensions) { width, height },
 		(Clay_ErrorHandler) { HandleClayErrors });
+
+	VOLCANICORE_ASSERT(s_ClayContext);
 
 	Clay_SetMeasureTextFunction(MeasureText, nullptr);
 }
@@ -239,7 +241,7 @@ void WidgetManager::Update(TimeStep ts) {
 	Clay_SetPointerState(
 		(Clay_Vector2) { mousePositionX, mousePositionY }, isMouseDown);
 
-	Clay_BeginLayout();
+	// GetRoot()->Update(ts);
 }
 
 typedef enum
@@ -271,7 +273,18 @@ void WidgetManager::Render() {
 	if(!m_CurrentRoot)
 		return;
 
-	GetRoot()->Render();
+	Clay_BeginLayout();
+
+	CLAY(CLAY_ID("MainContent"), {
+		.layout = {
+			.sizing = {
+				.width = CLAY_SIZING_GROW(0),
+				.height = CLAY_SIZING_GROW(0)
+			}
+		},
+		.backgroundColor = { 1.0f, 0.0f, 0.0f, 0.0f }
+	}) {}
+	// GetRoot()->Render();
 
 	Clay_RenderCommandArray renderCommands = Clay_EndLayout();
 
