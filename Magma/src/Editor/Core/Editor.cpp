@@ -73,6 +73,13 @@ void Editor::Open() {
 	// WidgetManager::Load("Magma/assets/UI/lavaflow.asx");
 
 	Application::PopDir();
+
+	Events::RegisterListener<KeyPressedEvent>(
+		[](const KeyPressedEvent& event)
+		{
+			if(event.Key == Key::R)
+				WidgetManager::Reload();
+		});
 }
 
 void Editor::Close() {

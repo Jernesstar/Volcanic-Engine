@@ -1,9 +1,9 @@
 <Root id="Start">
-    <Container id="TopBar" height="60.0">
+    <Container id="TopBar" height="60.0" width_type="stretch" height_type="fixed" padding="16" childGap="16">
         <Image asset="images/logo.png" width="50.0" height="50.0"/>
         <Text label="Magma Editor v0.1" scale="2.0"/>
 
-        <Button width="40.0" height="30.0">
+        <Button width="30.0" height="30.0">
             <Script class="Button">
                 void onClick()
                 {
@@ -13,7 +13,7 @@
             <Image asset="images/minimize.png"/>
         </Button>
 
-        <Button width="40.0" height="30.0">
+        <Button width="30.0" height="30.0">
             <Script>
                 void onClick()
                 {
@@ -39,33 +39,17 @@
         </Button>
     </Container>
 
-    <Container id="ModeButtons">
-        <Button>
+    <Container id="ModeButtons" height="20.0" height_type="fixed" width_type="stretch" padding="16" childGap="30">
+        <Button width="30.0" height="30.0">
             <Text label="Project" font="assets/default.ttf"/>
         </Button>
 
-        <Button>
+        <Button width="30.0" height="30.0">
             <Text label="LavaFlow" font="assets/default.ttf"/>
         </Button>
 
-        <Button>
+        <Button width="30.0" height="30.0">
             <Text label="Component" font="assets/default.ttf"/>
         </Button>
     </Container>
-
-    <Window id="MainViewport">
-        <Window id="ProjectWindow">
-            <Button>
-                <Text label="New Project"/>
-            </Button>
-        </Window>
-
-        <Window id="LavaFlowWindow">
-
-        </Window>
-
-        <Window id="ComponentWindow">
-
-        </Window>
-    </Window>
 </Root>

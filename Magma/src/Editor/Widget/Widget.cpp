@@ -70,7 +70,7 @@ void WidgetManager::Init() {
 }
 
 void WidgetManager::Close() {
-	m_Roots.Clear();
+	m_Root.reset();
 }
 
 static u32 ImageIndex = 0;
@@ -161,8 +161,11 @@ static void ParseElement(Ref<Widget> parent, pugi::xml_node node) {
 			else
 				w->SizeY = Container::SizeType::Stretch;
 		}
-		if(node.attribute("color")) {
-			// w->Color = node.attribute("color").as_string();
+		if(node.attribute("padding")) {
+			w->Padding = node.attribute("padding").as_uint();
+		}
+		if(node.attribute("childGap")) {
+			w->Padding = node.attribute("childGap").as_uint();
 		}
 	}
 	else
@@ -214,9 +217,13 @@ void WidgetManager::Load(const std::string& path) {
 	for(pugi::xml_node child = node.first_child(); child; child = child.next_sibling())
 		ParseElement(root, child);
 
-	m_Roots.Push(root);
-	m_CurrentRoot = 1;
+	m_Root = root;
+	m_RootPath = path;
 	VOLCANICORE_LOG_INFO("Successfully loaded UI");
+}
+
+void WidgetManager::Reload() {
+	Load(m_RootPath);
 }
 
 void WidgetManager::Update(TimeStep ts) {
@@ -269,7 +276,7 @@ typedef struct
 } CustomElement;
 
 void WidgetManager::Render() {
-	if(!m_CurrentRoot)
+	if(!m_Root)
 		return;
 
 	Clay_BeginLayout();
@@ -277,6 +284,10 @@ void WidgetManager::Render() {
 	GetRoot()->Render();
 
 	Clay_RenderCommandArray renderCommands = Clay_EndLayout();
+
+	auto window = Application::As<WindowApplication>()->GetWindow();
+	float width = window->GetWidth();
+	float height = window->GetHeight();
 
 	for(int i = 0; i < renderCommands.length; i++) {
 		Clay_RenderCommand* cmd = &renderCommands.internalArray[i];
@@ -287,7 +298,7 @@ void WidgetManager::Render() {
 				auto rect = cmd->renderData.rectangle;
 				Renderer::DrawQuad({
 					.PosX = box.x,
-					.PosY = box.y,
+					.PosY = height - box.y,
 					.Width = box.width,
 					.Height = box.height,
 					.Color = {
@@ -305,7 +316,7 @@ void WidgetManager::Render() {
 				auto image = cmd->renderData.image;
 				Renderer::DrawQuad({
 					.PosX = box.x,
-					.PosY = box.y,
+					.PosY = height - box.y,
 					.Width = box.width,
 					.Height = box.height,
 				});
@@ -402,9 +413,11 @@ void Root::Begin() {
 					CLAY_SIZING_GROW(),
 					CLAY_SIZING_GROW()
 				},
-				.layoutDirection = CLAY_TOP_TO_BOTTOM
+				.padding = CLAY_PADDING_ALL(16),
+				.childGap = 16,
+				.layoutDirection = CLAY_TOP_TO_BOTTOM,
 			},
-			.backgroundColor = { 1.0f, 1.0f, 1.0f, 1.0f }
+			.backgroundColor = { 0.0f, 0.0f, 0.0f, 1.0f }
 		})
 	);
 }
@@ -420,13 +433,13 @@ void Window::Begin() {
 		{
 			.layout = {
 				.sizing = {
-					CLAY_SIZING_FIXED(Width),
-					CLAY_SIZING_FIXED(Height)
+					Width ? CLAY_SIZING_FIXED(Width) : CLAY_SIZING_GROW(0),
+					Height ? CLAY_SIZING_FIXED(Height) : CLAY_SIZING_GROW(0)
 				},
 				.padding = CLAY_PADDING_ALL(16),
 				.childGap = 16
 			},
-			.backgroundColor = { Color.r, Color.g, Color.b, Color.a }
+			.backgroundColor = { Color.r, Color.g, Color.b, Color.a ? Color.a : 1.0f }
 		})
 	);
 }
@@ -447,11 +460,13 @@ void Container::Begin() {
 					SizeY == SizeType::Fixed ?
 						CLAY_SIZING_FIXED(Height) : CLAY_SIZING_GROW()
 				},
+				.padding = CLAY_PADDING_ALL(Padding),
+				.childGap = ChildGap,
 				.layoutDirection =
 					Layout == LayoutType::Horizontal ?
 								  CLAY_LEFT_TO_RIGHT : CLAY_TOP_TO_BOTTOM,
 			},
-			.backgroundColor = { Color.r, Color.g, Color.b, Color.a }
+			.backgroundColor = { Color.r, Color.g, Color.b, Color.a ? Color.a : 1.0f }
 		})
 	);
 }
@@ -481,7 +496,7 @@ void Button::Begin() {
 				.padding = CLAY_PADDING_ALL(16),
 				.childGap = 16
 			},
-			.backgroundColor = { Color.r, Color.g, Color.b, Color.a }
+			.backgroundColor = { Color.r, Color.g, Color.b, Color.a ? Color.a : 1.0f }
 		})
 	);
 }

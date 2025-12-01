@@ -87,7 +87,7 @@ public:
 	List<Ref<Widget>> Children;
 	List<Ref<Animation>> Animations;
 
-	float Width = 5, Height = 5;
+	float Width = 0, Height = 0;
 	float x = 0, y = 0;
 	bool Visible = true;
 	bool Enabled = true;
@@ -181,6 +181,8 @@ public:
 
 	SizeType SizeX = SizeType::Stretch;
 	SizeType SizeY = SizeType::Fixed;
+	u16 Padding = 0;
+	u16 ChildGap = 0;
 
 	Vec4 Color = { 0.0f, 1.0f, 0.0f, 1.0f };
 
@@ -207,7 +209,7 @@ public:
 
 class Button : public Widget {
 public:
-	Vec4 Color = { };
+	Vec4 Color = { 1.0f, 1.0f, 0.0f, 1.0f};
 
 public:
 	Button(const std::string& id)
@@ -312,32 +314,9 @@ public:
 	static void Render();
 
 	static void Load(const std::string& path);
+	static void Reload();
 
-	static Ref<Widget> AddRoot(const std::string& name) {
-		auto ptr = m_Roots.Emplace(CreateRef<Root>(name));
-		return ptr;
-	}
-
-	static void SetRoot(const std::string& name) {
-		auto [found, i] = m_Roots.Find(
-			[&](const auto& widget) { return widget->ID == name; });
-		if(found)
-			m_CurrentRoot = i + 1;
-	}
-
-	static Ref<Widget> GetRoot() {
-		if(m_CurrentRoot)
-			return m_Roots[m_CurrentRoot - 1];
-		return nullptr;
-	}
-
-	static Ref<Widget> GetRoot(const std::string& name) {
-		auto [found, i] = m_Roots.Find(
-			[&](const auto& widget) { return widget->ID == name; });
-		if(found)
-			return m_Roots[i];
-		return nullptr;
-	}
+	static Ref<Widget> GetRoot() { return m_Root; }
 
 	// static Window* Window(const std::string& name);
 	// static Container* Container(const std::string& name);
@@ -346,8 +325,8 @@ public:
 	// static Image* Image(const std::string& name);
 
 private:
-	inline static List<Ref<Widget>> m_Roots;
-	inline static u32 m_CurrentRoot = 0;
+	inline static Ref<Widget> m_Root;
+	inline static std::string m_RootPath = "";
 };
 
 }

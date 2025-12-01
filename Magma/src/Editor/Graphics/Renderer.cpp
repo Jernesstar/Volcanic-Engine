@@ -192,8 +192,6 @@ void Renderer::BeginFrame() {
 }
 
 void Renderer::EndFrame() {
-	DrawQuad({ 100, 100, 100, 100, Vec4(1.0f) });
-
 	RendererAPI::Get()->EndFrame();
 }
 
