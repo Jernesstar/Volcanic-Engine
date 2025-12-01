@@ -26,7 +26,7 @@ project "freetype"
         "%{VendorPaths.freetype}/src/smooth/smooth.c",
         "%{VendorPaths.freetype}/src/autofit/autofit.c",
         "%{VendorPaths.freetype}/src/svg/svg.c",
-        "%{VendorPaths.freetypef}/src/sdf/sdf.c",
+        "%{VendorPaths.freetype}/src/sdf/sdf.c",
         "%{VendorPaths.freetype}/src/pshinter/pshmod.c",
     }
 

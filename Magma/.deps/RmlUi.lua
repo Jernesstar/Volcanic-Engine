@@ -10,7 +10,6 @@ project "RmlUi"
         "%{VendorPaths.RmlUi}/**.h",
         "%{VendorPaths.RmlUi}/Source/Core/**.cpp",
         "%{VendorPaths.RmlUi}/Backends/RmlUi_Platform_GLFW.cpp",
-        "%{VendorPaths.RmlUi}/Backends/RmlUi_Renderer_GL3.cpp",
     }
 
     includedirs {

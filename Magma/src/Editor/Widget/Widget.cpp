@@ -113,23 +113,29 @@ public:
 };
 
 void WidgetManager::Init() {
-	// s_SystemInterface = new SystemInterface_GLFW();
-	// Rml::SetSystemInterface(s_SystemInterface);
-
-	// s_RenderInterface = new WidgetRendererInterface();
-	// Rml::SetRenderInterface(s_RenderInterface);
-
+	s_SystemInterface = new SystemInterface_GLFW();
+	Rml::SetSystemInterface(s_SystemInterface);
+	s_RenderInterface = new WidgetRendererInterface();
+	Rml::SetRenderInterface(s_RenderInterface);
 	Rml::Initialise();
 
-	// Rml::Context* context =
-	// 	Rml::CreateContext("main", Rml::Vector2i(window_width, window_height));
+	auto window = Application::As<WindowApplication>()->GetWindow();
+	f32 width = window->GetWidth();
+	f32 height = window->GetHeight();
 
+	Rml::Context* context =
+		Rml::CreateContext("main", Rml::Vector2i(width, height));
+
+	if(!context) {
+		VOLCANICORE_LOG_ERROR("Could not create RmlUI context!");
+		return;
+	}
 }
 
 void WidgetManager::Close() {
 	m_Root.reset();
 
-	// Rml::Shutdown();
+	Rml::Shutdown();
 
 	delete s_SystemInterface;
 	s_SystemInterface = nullptr;
