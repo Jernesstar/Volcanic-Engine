@@ -59,7 +59,7 @@ void Repo::SetRemote(const std::string& url) {
 			"origin", url.c_str(), "+refs/heads/*:refs/custom/namespace/*");
 	if(error < 0) {
 		const git_error* e = git_error_last();
-		printf("Repo::SetReemote Error %d/%d: %s\n", error, e->klass, e->message);
+		printf("Repo::SetRemote Error %d/%d: %s\n", error, e->klass, e->message);
 	}
 
 	git_remote_free(remote);

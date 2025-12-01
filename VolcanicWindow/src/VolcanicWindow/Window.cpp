@@ -157,4 +157,16 @@ void Window::SetTitle(const std::string& title) {
 	glfwSetWindowTitle(m_NativeWindow, title.c_str());
 }
 
+u32 Window::GetWidth() const {
+	int width, height;
+	glfwGetWindowSize(m_NativeWindow, &width, &height);
+	return static_cast<u32>(width);
+}
+
+u32 Window::GetHeight() const {
+	int width, height;
+	glfwGetWindowSize(m_NativeWindow, &width, &height);
+	return static_cast<u32>(height);
+}
+
 }

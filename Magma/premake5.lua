@@ -49,8 +49,7 @@ project "Magma"
         "%{Includes.soloud}",
         "%{Includes.miniz_cpp}",
 
-        "%{Includes.clay}",
-        "%{Includes.IconFontCppHeaders}",
+        "%{Includes.RmlUi}",
     }
 
     links {
@@ -66,6 +65,8 @@ project "Magma"
         "soloud",
         "stb_image",
 
+        "RmlUi",
+        "freetype",
         "yaml-cpp",
         "pugixml",
         "angelscript",
@@ -81,6 +82,7 @@ project "Magma"
         "WIN32_LEAN_AND_MEAN",
         "YAML_CPP_STATIC_DEFINE",
         "_WIN32_WINNT=0x0A00",
+        "RMLUI_STATIC_LIB"
     }
 
     filter "system:linux"
@@ -118,4 +120,6 @@ include "Magma/.deps/stb_image"
 include "Magma/.deps/efsw"
 include "Magma/.deps/libgit2"
 include "Magma/.deps/yaml-cpp"
+include "Magma/.deps/RmlUi"
+include "Magma/.deps/freetype"
 include "Magma/.deps/pugixml"

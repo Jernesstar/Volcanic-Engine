@@ -39,8 +39,9 @@ public:
 	static void RegisterInterface();
 
 public:
-	enum class EditorMode { None, Component, Flow, Project };
-	EditorMode Mode = EditorMode::None;
+	enum class EditorMode { 
+		None, Component, Flow, Project
+	} Mode = EditorMode::None;
 
 public:
 	Editor() { s_Instance = this; }

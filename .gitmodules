@@ -22,18 +22,12 @@
 [submodule "Magma/.vendor/stb_image"]
 	path = Magma/.vendor/stb_image
 	url = https://github.com/LavaFlow-Technologies/stb_image.git
-[submodule "Magma/.vendor/IconFontCppHeaders"]
-	path = Magma/.vendor/IconFontCppHeaders
-	url = https://github.com/juliettef/IconFontCppHeaders.git
 [submodule "Magma/.vendor/glad"]
 	path = Magma/.vendor/glad
 	url = https://github.com/LavaFlow-Technologies/glad.git
 [submodule "Magma/.vendor/libgit2"]
 	path = Magma/.vendor/libgit2
 	url = https://github.com/LavaFlow-Technologies/libgit2.git
-[submodule "Magma/.vendor/clay"]
-	path = Magma/.vendor/clay
-	url = https://github.com/nicbarker/clay.git
 [submodule "Lava/.vendor/angelscript"]
 	path = Lava/.vendor/angelscript
 	url = https://github.com/LavaFlow-Technologies/angelscript.git
@@ -43,3 +37,9 @@
 [submodule "Magma/.vendor/pugixml"]
 	path = Magma/.vendor/pugixml
 	url = https://github.com/zeux/pugixml.git
+[submodule "Magma/.vendor/RmlUi"]
+	path = Magma/.vendor/RmlUi
+	url = https://github.com/mikke89/RmlUi.git
+[submodule "Magma/.vendor/freetype"]
+	path = Magma/.vendor/freetype
+	url = https://github.com/freetype/freetype.git

@@ -48,9 +48,10 @@ public:
 	void SetIcon(const Icon& icon);
 	void SetTitle(const std::string& title);
 
+	u32 GetWidth() const;
+	u32 GetHeight() const;
+
 	const WindowSpecification& GetSpec() const { return m_Spec; }
-	u32 GetWidth() const { return m_Spec.Width; }
-	u32 GetHeight() const { return m_Spec.Height; }
 
 	GLFWwindow* GetNativeWindow() const { return m_NativeWindow; }
 

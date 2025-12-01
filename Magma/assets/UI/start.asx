@@ -1,5 +1,5 @@
 <Root id="Start">
-    <Container id="TopBar" height="60.0" width_type="stretch" height_type="fixed" padding="16" childGap="16">
+    <Container id="TopBar" height="70.0" width_type="stretch" height_type="fixed" padding="10" childGap="15">
         <Image asset="images/logo.png" width="50.0" height="50.0"/>
         <Text label="Magma Editor v0.1" scale="2.0"/>
 
@@ -23,7 +23,7 @@
             <Image asset="images/maximize.png"/>
         </Button>
 
-        <Button width="40.0" height="30.0">
+        <Button width="30.0" height="30.0">
             <Script>
                 void onClick()
                 {
@@ -39,7 +39,7 @@
         </Button>
     </Container>
 
-    <Container id="ModeButtons" height="20.0" height_type="fixed" width_type="stretch" padding="16" childGap="30">
+    <Container id="ModeButtons" height="60.0" height_type="fixed" width_type="stretch" padding="12" childGap="20">
         <Button width="30.0" height="30.0">
             <Text label="Project" font="assets/default.ttf"/>
         </Button>

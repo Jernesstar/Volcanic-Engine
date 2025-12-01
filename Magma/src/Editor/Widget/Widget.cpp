@@ -3,10 +3,9 @@
 #include <iostream>
 #include <fstream>
 
-#define CLAY_IMPLEMENTATION
-#include <clay/clay.h>
-
 #include <pugixml.hpp>
+#include <RmlUi/Core.h>
+#include <RmlUi/Backends/RmlUi_Platform_GLFW.h>
 
 #include <VolcaniCore/Core/Application.h>
 #include <VolcanicWindow/Application.h>
@@ -27,50 +26,115 @@ using namespace Magma::Graphics;
 
 using namespace Lava::Script;
 
+using namespace Rml;
+
 namespace Magma::UI {
 
-static Clay_Context* s_ClayContext;
+Rml::SystemInterface* s_SystemInterface = nullptr;
+Rml::RenderInterface* s_RenderInterface = nullptr;
 
-static void HandleClayErrors(Clay_ErrorData errorData) {
-	VOLCANICORE_LOG_ERROR("%s", errorData.errorText.chars);
-	switch(errorData.errorType) {
-		// etc
+class WidgetRendererInterface : public Rml::RenderInterface {
+public:
+	WidgetRendererInterface() = default;
+	~WidgetRendererInterface() = default;
+
+	CompiledGeometryHandle CompileGeometry(Span<const Vertex> vertices, Span<const int> indices) override {
+
 	}
-}
+	void RenderGeometry(CompiledGeometryHandle geometry, Vector2f translation, TextureHandle texture) override {
 
-// Example measure text function
-static Clay_Dimensions MeasureText(Clay_StringSlice text, Clay_TextElementConfig* config, void* userData) {
-	// Clay_TextElementConfig contains members such as
-	// fontId, fontSize, letterSpacing etc
-	// Note: Clay_String->chars is not guaranteed to be null terminated
-	// This will only work for monospace fonts,
-	// see the renderers/ directory for more advanced text measurement
+	}
+	void ReleaseGeometry(CompiledGeometryHandle geometry) override {
 
-	return (Clay_Dimensions) {
-		.width = (float)text.length * (float)config->fontSize,
-		.height = (float)config->fontSize
-	};
-}
+	}
+
+	TextureHandle LoadTexture(Vector2i& texture_dimensions, const String& source) override {
+
+	}
+	TextureHandle GenerateTexture(Span<const byte> source, Vector2i source_dimensions) override {
+
+	}
+	void ReleaseTexture(TextureHandle texture) override {
+
+	}
+
+	void EnableScissorRegion(bool enable) override {
+
+	}
+	void SetScissorRegion(Rectanglei region) override {
+
+	}
+
+	void EnableClipMask(bool enable) override {
+
+	}
+	void RenderToClipMask(ClipMaskOperation operation, CompiledGeometryHandle geometry, Vector2f translation) override {
+
+	}
+
+	void SetTransform(const Matrix4f* transform) override {
+
+	}
+
+	LayerHandle PushLayer() override {
+
+	}
+	void CompositeLayers(LayerHandle source, LayerHandle destination, BlendMode blend_mode, Span<const CompiledFilterHandle> filters) override {
+
+	}
+	void PopLayer() override {
+
+	}
+
+	TextureHandle SaveLayerAsTexture() override {
+
+	}
+
+	CompiledFilterHandle SaveLayerAsMaskImage() override {
+
+	}
+
+	CompiledFilterHandle CompileFilter(const String& name, const Dictionary& parameters) override {
+
+	}
+	void ReleaseFilter(CompiledFilterHandle filter) override {
+
+	}
+
+	CompiledShaderHandle CompileShader(const String& name, const Dictionary& parameters) override {
+
+	}
+	void RenderShader(CompiledShaderHandle shader, CompiledGeometryHandle geometry, Vector2f translation, TextureHandle texture) override {
+
+	}
+	void ReleaseShader(CompiledShaderHandle shader) override {
+
+	}
+};
 
 void WidgetManager::Init() {
-	u64 size = 4 * Clay_MinMemorySize();
-	auto arena = Clay_CreateArenaWithCapacityAndMemory(size, malloc(size));
+	// s_SystemInterface = new SystemInterface_GLFW();
+	// Rml::SetSystemInterface(s_SystemInterface);
 
-	auto window = Application::As<WindowApplication>()->GetWindow();
-	float width = (float)window->GetWidth();
-	float height = (float)window->GetHeight();
+	// s_RenderInterface = new WidgetRendererInterface();
+	// Rml::SetRenderInterface(s_RenderInterface);
 
-	s_ClayContext = Clay_Initialize(arena,
-		(Clay_Dimensions) { width, height },
-		(Clay_ErrorHandler) { HandleClayErrors });
+	Rml::Initialise();
 
-	VOLCANICORE_ASSERT(s_ClayContext);
+	// Rml::Context* context =
+	// 	Rml::CreateContext("main", Rml::Vector2i(window_width, window_height));
 
-	Clay_SetMeasureTextFunction(MeasureText, nullptr);
 }
 
 void WidgetManager::Close() {
 	m_Root.reset();
+
+	// Rml::Shutdown();
+
+	delete s_SystemInterface;
+	s_SystemInterface = nullptr;
+	delete s_RenderInterface;
+	s_RenderInterface = nullptr;
 }
 
 static u32 ImageIndex = 0;
@@ -165,7 +229,7 @@ static void ParseElement(Ref<Widget> parent, pugi::xml_node node) {
 			w->Padding = node.attribute("padding").as_uint();
 		}
 		if(node.attribute("childGap")) {
-			w->Padding = node.attribute("childGap").as_uint();
+			w->ChildGap = node.attribute("childGap").as_uint();
 		}
 	}
 	else
@@ -197,6 +261,9 @@ static void ParseElement(Ref<Widget> parent, pugi::xml_node node) {
 }
 
 void WidgetManager::Load(const std::string& path) {
+	if(m_Root)
+		m_Root.reset();
+
 	TextIndex = 0;
 	ImageIndex = 0;
 	ButtonIndex = 0;
@@ -227,25 +294,6 @@ void WidgetManager::Reload() {
 }
 
 void WidgetManager::Update(TimeStep ts) {
-	// float mouseWheelX = Input::GetMouseWheelX();
-	// float mouseWheelY = Input::GetMouseWheelY();
-
-	// // mouseover / click / touch events - needed for scrolling and debug tools
-	// Clay_UpdateScrollContainers(true,
-	// 	(Clay_Vector2) { mouseWheelX, mouseWheelY }, ts);
-
-	auto window = Application::As<WindowApplication>()->GetWindow();
-	float width = window->GetWidth();
-	float height = window->GetHeight();
-
-	auto mousePositionX = Input::GetMouseX();
-	auto mousePositionY = Input::GetMouseY();
-	auto isMouseDown = Input::MouseButtonPressed(Mouse::LeftButton);
-
-	Clay_SetLayoutDimensions((Clay_Dimensions) { width, height });
-	// / click / touch events - needed for scrolling & debug tools
-	Clay_SetPointerState(
-		(Clay_Vector2) { mousePositionX, mousePositionY }, isMouseDown);
 
 	// GetRoot()->Update(ts);
 }
@@ -279,70 +327,6 @@ void WidgetManager::Render() {
 	if(!m_Root)
 		return;
 
-	Clay_BeginLayout();
-
-	GetRoot()->Render();
-
-	Clay_RenderCommandArray renderCommands = Clay_EndLayout();
-
-	auto window = Application::As<WindowApplication>()->GetWindow();
-	float width = window->GetWidth();
-	float height = window->GetHeight();
-
-	for(int i = 0; i < renderCommands.length; i++) {
-		Clay_RenderCommand* cmd = &renderCommands.internalArray[i];
-		auto box = cmd->boundingBox;
-
-		switch(cmd->commandType) {
-			case CLAY_RENDER_COMMAND_TYPE_RECTANGLE: {
-				auto rect = cmd->renderData.rectangle;
-				Renderer::DrawQuad({
-					.PosX = box.x,
-					.PosY = height - box.y,
-					.Width = box.width,
-					.Height = box.height,
-					.Color = {
-						rect.backgroundColor.r,
-						rect.backgroundColor.g,
-						rect.backgroundColor.b,
-						rect.backgroundColor.a
-					}
-				});
-			}
-			case CLAY_RENDER_COMMAND_TYPE_BORDER: {
-
-			}
-			case CLAY_RENDER_COMMAND_TYPE_IMAGE: {
-				auto image = cmd->renderData.image;
-				Renderer::DrawQuad({
-					.PosX = box.x,
-					.PosY = height - box.y,
-					.Width = box.width,
-					.Height = box.height,
-				});
-			}
-			case CLAY_RENDER_COMMAND_TYPE_TEXT: {
-
-			}
-			case CLAY_RENDER_COMMAND_TYPE_SCISSOR_START: {
-
-			}
-			case CLAY_RENDER_COMMAND_TYPE_SCISSOR_END: {
-
-			}
-			case CLAY_RENDER_COMMAND_TYPE_CUSTOM: {
-				auto data = (CustomElement*)cmd->renderData.custom.customData;
-				switch(data->type) {
-					case CUSTOM_ELEMENT_TYPE_GIF: {
-
-					}
-					case CUSTOM_ELEMENT_TYPE_VIDEO: {
-
-					}
-				}
-			}
-		}
-	}
 }
 
 void Widget::Update(TimeStep ts) {
@@ -400,79 +384,27 @@ Ref<Widget> Widget::Find(const std::string& id) {
 }
 
 void Root::Begin() {
-	auto window = Application::As<WindowApplication>()->GetWindow();
-	float width = window->GetWidth();
-	float height = window->GetHeight();
 
-	Clay__OpenElement();
-	Clay__ConfigureOpenElement(
-		CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
-		{
-			.layout = {
-				.sizing = {
-					CLAY_SIZING_GROW(),
-					CLAY_SIZING_GROW()
-				},
-				.padding = CLAY_PADDING_ALL(16),
-				.childGap = 16,
-				.layoutDirection = CLAY_TOP_TO_BOTTOM,
-			},
-			.backgroundColor = { 0.0f, 0.0f, 0.0f, 1.0f }
-		})
-	);
 }
 
 void Root::End() {
-	Clay__CloseElement();
+
 }
 
 void Window::Begin() {
-	Clay__OpenElement();
-	Clay__ConfigureOpenElement(
-		CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
-		{
-			.layout = {
-				.sizing = {
-					Width ? CLAY_SIZING_FIXED(Width) : CLAY_SIZING_GROW(0),
-					Height ? CLAY_SIZING_FIXED(Height) : CLAY_SIZING_GROW(0)
-				},
-				.padding = CLAY_PADDING_ALL(16),
-				.childGap = 16
-			},
-			.backgroundColor = { Color.r, Color.g, Color.b, Color.a ? Color.a : 1.0f }
-		})
-	);
+
 }
 
 void Window::End() {
-	Clay__CloseElement();
+
 }
 
 void Container::Begin() {
-	Clay__OpenElement();
-	Clay__ConfigureOpenElement(
-		CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
-		{
-			.layout = {
-				.sizing = {
-					SizeX == SizeType::Fixed ?
-						CLAY_SIZING_FIXED(Width) : CLAY_SIZING_GROW(),
-					SizeY == SizeType::Fixed ?
-						CLAY_SIZING_FIXED(Height) : CLAY_SIZING_GROW()
-				},
-				.padding = CLAY_PADDING_ALL(Padding),
-				.childGap = ChildGap,
-				.layoutDirection =
-					Layout == LayoutType::Horizontal ?
-								  CLAY_LEFT_TO_RIGHT : CLAY_TOP_TO_BOTTOM,
-			},
-			.backgroundColor = { Color.r, Color.g, Color.b, Color.a ? Color.a : 1.0f }
-		})
-	);
+
 }
 
 void Container::End() {
-	Clay__CloseElement();
+
 }
 
 void Dropdown::Begin() {
@@ -484,55 +416,21 @@ void Dropdown::End() {
 }
 
 void Button::Begin() {
-	Clay__OpenElement();
-	Clay__ConfigureOpenElement(
-		CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
-		{
-			.layout = {
-				.sizing = {
-					CLAY_SIZING_FIXED(Width),
-					CLAY_SIZING_FIXED(Height)
-				},
-				.padding = CLAY_PADDING_ALL(16),
-				.childGap = 16
-			},
-			.backgroundColor = { Color.r, Color.g, Color.b, Color.a ? Color.a : 1.0f }
-		})
-	);
+
 }
 
 void Button::End() {
-	Clay__CloseElement();
 }
 
 void Image::Begin() {
-	Clay__OpenElement();
-	Clay__ConfigureOpenElement(
-		CLAY__CONFIG_WRAPPER(Clay_ElementDeclaration,
-		{
-			.layout = {
-				.sizing = {
-					CLAY_SIZING_FIXED(Width),
-					CLAY_SIZING_FIXED(Height)
-				}
-			},
-			.image = { .imageData = (void*)Texture }
-		})
-	);
+
 }
 
 void Image::End() {
-	Clay__CloseElement();
 }
 
 void Text::Begin() {
-	CLAY_TEXT(Clay_String(Label.c_str()),
-		CLAY_TEXT_CONFIG({
-			.textColor = { Color.r, Color.g, Color.b, Color.a },
-			.fontId = (u16)Font,
-			.fontSize = (u16)Scale,
-		})
-	);
+
 }
 
 void Text::End() {
@@ -562,41 +460,5 @@ void FileEditor::Begin() {
 void FileEditor::End() {
 
 }
-
-void Gizmo::Begin() {
-
-}
-
-void Gizmo::End() {
-
-}
-
-// void Tab::Begin() {
-
-// }
-
-// void WidgetManager::RegisterInterface() {
-// 	auto* engine = ScriptEngine::Get();
-
-// 	engine->SetDefaultNamespace("Widget");
-
-// 	engine->RegisterFuncdef("void WindowCallback()");
-// 	engine->RegisterEnum("WindowFlag");
-// 	engine->RegisterEnumValue("WindowFlag", "MenuBar", 0);
-// 	engine->RegisterEnumValue("WindowFlag", "TitleBar", 1);
-// 	engine->RegisterObjectType("WindowWidget", 0, asOBJ_REF | asOBJ_NOCOUNT);
-// 	// engine->RegisterObjectMethod("WindowWidget", "void Render(WindowCallback@)",
-// 	// 	asFUNCTION(WindowWidgetRender), asCALL_CDECL_OBJLAST);
-// 	// engine->RegisterObjectMethod("WindowWidget", "WindowWidget@ With(WindowFlag)",
-// 	// 	asMETHOD(WindowWidget, With), asCALL_THISCALL);
-// 	engine->RegisterGlobalFunction("WindowWidget@ Window(string name)",
-// 		asFUNCTION(WidgetManager::Window), asCALL_CDECL);
-
-// 	engine->RegisterObjectType("Child", 0, asOBJ_REF | asOBJ_NOCOUNT);
-// 	engine->RegisterObjectType("Image", 0, asOBJ_REF | asOBJ_NOCOUNT);
-// 	engine->RegisterObjectType("Text", 0, asOBJ_REF | asOBJ_NOCOUNT);
-
-// 	engine->SetDefaultNamespace("");
-// }
 
 }
