@@ -26,9 +26,32 @@ public:
 using Bytes = Buffer<uint8_t>;
 
 enum class PayloadType {
-	Json,
-	Bytes,
-	Text
+	JSON,
+	XML,
+	Text,
+	Binary
+};
+
+struct Request {
+	std::string Path;
+	PayloadType Type;
+	std::string Body;
+	httplib::Headers Headers;
+
+	void AddHeader(const std::string& key, const std::string& value) {
+		Headers.insert({ key, value });
+	}
+
+	bool HasHeader(const std::string& key) const {
+		return Headers.find(key) != Headers.end();
+	}
+
+	std::string GetHeader(const std::string& key) const {
+		auto it = Headers.find(key);
+		if(it != Headers.end())
+			return it->second;
+		return "";
+	}
 };
 
 enum class ResponseResult {
@@ -37,20 +60,39 @@ enum class ResponseResult {
 };
 
 struct Response {
-	Bytes Data;
+	ResponseResult Result;
+	u16 StatusCode;
+	std::string Body;
 };
 
-using ResponseCB = Func<void, ResponseResult, Response>;
+using ResponseCB = Func<void, const Response&>;
 
 class HttpClient {
 public:
 	HttpClient(const std::string& baseURL);
-	HttpClient(const std::string& ip, uint16_t port);
+	HttpClient(const std::string& ip, u16 port);
 
-	void Get(const std::string& path, const ResponseCB& cb);
-	void Post(const std::string& path, Bytes bytes, PayloadType type, const ResponseCB& cb);
-	void Put(const std::string& path, Bytes bytes, PayloadType type, const ResponseCB& cb);
-	void Delete(const std::string& path, const ResponseCB& cb);
+	Response Get(const Request& req);
+	void Get(const Request& req, const ResponseCB& cb) {
+		cb(Get(req));
+	}
+
+	Response Post(const Request& req);
+	void Post(const Request& req, const ResponseCB& cb) {
+		cb(Post(req));
+	}
+
+	Response Put(const Request& req);
+	void Put(const Request& req, const ResponseCB& cb) {
+		cb(Put(req));
+	}
+
+	Response Delete(const Request& req);
+	void Delete(const Request& req, const ResponseCB& cb) {
+		cb(Delete(req));
+	}
+
+	std::string GetURL() const;
 
 private:
 	httplib::Client m_Client;
@@ -58,7 +100,7 @@ private:
 
 class HTTPServer {
 public:
-	HTTPServer(const std::string& ip, uint16_t port);
+	HTTPServer(const std::string& ip, u16 port);
 	~HTTPServer();
 
 private:

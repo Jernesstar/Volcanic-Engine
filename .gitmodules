@@ -43,3 +43,6 @@
 [submodule "Magma/.vendor/freetype"]
 	path = Magma/.vendor/freetype
 	url = https://github.com/LavaFlow-Technologies/freetype.git
+[submodule "Magma/.vendor/json"]
+	path = Magma/.vendor/json
+	url = https://github.com/nlohmann/json.git

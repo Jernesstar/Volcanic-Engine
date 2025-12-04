@@ -13,6 +13,21 @@ using namespace VolcaniCore;
 
 namespace Magma::Networking {
 
+inline std::string GetType(PayloadType type) {
+	switch(type) {
+	case PayloadType::JSON:
+		return "application/json";
+	case PayloadType::XML:
+		return "application/xml";
+	case PayloadType::Text:
+		return "text/plain";
+	case PayloadType::Binary:
+		return "application/octet-stream";
+	default:
+		return "";
+	}
+}
+
 void TokenStore::SaveToken(const std::string& service, const std::string& token) {
 	Application::PushDir();
 
@@ -61,16 +76,16 @@ void NetworkingManager::GitHubOAuth() {
 
 	while(polling) {
 		auto client = HttpClient("127.0.0.1", 8848);
-		client.Get("/auth/github/token",
-			[&polling](ResponseResult res, const Response& resp)
+		client.Get({ "/auth/github/token" },
+			[&polling](const Response& resp)
 			{
-				if(res != ResponseResult::Success) {
-					VOLCANICORE_LOG_INFO("Error: %i", res);
+				if(resp.Result != ResponseResult::Success) {
+					VOLCANICORE_LOG_INFO("Error: %i", resp.StatusCode);
 					return;
 				}
 
 				rapidjson::Document doc;
-				doc.Parse((char*)resp.Data.Get(), resp.Data.GetSize());
+				doc.Parse(resp.Body.c_str(), resp.Body.length());
 
 				if(doc["status"].GetString() == "success") {
 					std::string token = doc["token"].GetString();
@@ -94,24 +109,28 @@ HttpClient::HttpClient(const std::string& baseURL)
 HttpClient::HttpClient(const std::string& ip, uint16_t port)
 	: m_Client(ip, port) { }
 
-void HttpClient::Get(const std::string& path, const ResponseCB& cb) {
-	auto res = m_Client.Get(path);
-
+Response HttpClient::Get(const Request& req) {
+	auto res = m_Client.Get(req.Path, req.Headers);
+	if(res)
+		return { ResponseResult::Success, (u16)res->status, res->body };
+	return { ResponseResult::Error, 0, "" };
 }
 
-void HttpClient::Post(const std::string& path, Bytes bytes, PayloadType type,
-					  const ResponseCB& cb)
-{
-	
+Response HttpClient::Post(const Request& req) {
+	auto res = m_Client.Post(req.Path, req.Headers, req.Body, GetType(req.Type));
+	if(res)
+		return { ResponseResult::Success, (u16)res->status, res->body };
+	return { ResponseResult::Error, 0, "" };
 }
 
-void HttpClient::Put(const std::string& path, Bytes bytes, PayloadType type,
-					 const ResponseCB& cb)
-{
+Response HttpClient::Put(const Request& req) {
+
+	return { };
 }
 
-void HttpClient::Delete(const std::string& path, const ResponseCB& cb) {
+Response HttpClient::Delete(const Request& req) {
 
+	return { };
 }
 
 }

@@ -40,6 +40,7 @@ project "Magma"
         "%{Includes.pugixml}",
         "%{Includes.yaml_cpp}",
         "%{Includes.rapidjson}",
+        "%{Includes.json}",
 
         "%{Includes.efsw}",
         "%{Includes.libgit2}",

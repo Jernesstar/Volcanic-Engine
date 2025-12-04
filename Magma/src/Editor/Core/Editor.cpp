@@ -79,6 +79,8 @@ void Editor::Open() {
 			if(event.Key == Key::R)
 				WidgetManager::Reload();
 		});
+
+	AI::AIManager::Init();
 }
 
 void Editor::Close() {
