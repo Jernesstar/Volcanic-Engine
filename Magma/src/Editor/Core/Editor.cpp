@@ -81,6 +81,7 @@ void Editor::Open() {
 		});
 
 	AI::AIManager::Init();
+	AI::AIManager::RunAnalysis();
 }
 
 void Editor::Close() {
@@ -91,6 +92,8 @@ void Editor::Close() {
 	WidgetManager::Close();
 	Renderer::Close();
 	AssetManager::Close();
+
+	AI::AIManager::Close();
 }
 
 Ref<ScriptModule> Editor::GetModule(const std::string& name) {

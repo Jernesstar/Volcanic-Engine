@@ -46,3 +46,6 @@
 [submodule "Magma/.vendor/json"]
 	path = Magma/.vendor/json
 	url = https://github.com/nlohmann/json.git
+[submodule "VolcaniCore/.vendor/subprocess"]
+	path = VolcaniCore/.vendor/subprocess
+	url = https://github.com/benman64/subprocess

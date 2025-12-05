@@ -68,7 +68,7 @@ public:
 	ModelProvider() = default;
 	virtual ~ModelProvider() = default;
 
-	virtual std::string Generate(const ModelInput &input) = 0;
+	virtual std::string Generate(const ModelInput& input) = 0;
 	// virtual std::string GenerateStream(const ModelInput &input,
 	// 	Func<void, const std::string& tokenPart> onToken) = 0;
 };
@@ -77,11 +77,7 @@ class AIManager {
 public:
 	static void Init();
 	static void Close();
-
-private:
-	Ref<EmbeddingStore> m_EmbeddingStore;
-	Ref<VectorStore> m_VectorStore;
-	Ref<ModelProvider> m_ModelProvider;
+	static void RunAnalysis();
 };
 
 }
