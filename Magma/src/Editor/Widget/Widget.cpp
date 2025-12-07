@@ -31,80 +31,161 @@ using namespace Rml;
 
 namespace Magma::UI {
 
-Rml::SystemInterface* s_SystemInterface = nullptr;
-Rml::RenderInterface* s_RenderInterface = nullptr;
-Rml::Context* s_Context = nullptr;
+struct CompiledBuffer {
+	u32 VertexOffset = 0;
+	u32 IndexOffset = 0;
+	u32 VertexCount = 0;
+	u32 IndexCount = 0;
+};
 
 class WidgetRendererInterface : public Rml::RenderInterface {
 public:
-	DrawPass* DefaultDrawPass = nullptr;
+	DrawBuffer* GeometryBuffer;
+	VolcaniCore::List<CompiledBuffer> Buffers;
+
+	Ref<Graphics::Shader> DefaultShader;
 	bool Scissor = false;
 	Rml::Rectanglei ScissorRegion;
 	bool ClipMask = false;
+	Matrix4f Transform = Matrix4f::Identity();
 
 	VolcaniCore::List<Ref<Graphics::Texture>> TextureHandles;
 
 public:
 	WidgetRendererInterface() {
-		DefaultDrawPass =
-			RendererAPI::Get()->NewPass(nullptr);
-	}
+		std::string vertexShaderStr = R"(
+			#version 460 core
 
-	~WidgetRendererInterface() {
-		TextureHandles.Clear();
-	}
+			uniform vec2 u_Translate;
+			uniform mat4 u_Transform;
+			uniform mat4 u_Projection;
 
-	void BeginFrame() {
-		Scissor = false;
-		ClipMask = false;
-	}
+			layout(location = 0) in vec2 a_Position;
+			layout(location = 1) in vec4 a_Color;
+			layout(location = 2) in vec2 a_TexCoord;
 
-	void EndFrame() {
+			layout(location = 0) out vec2 v_FragTexCoord;
+			layout(location = 1) out vec4 v_FragColor;
 
-	}
+			void main() {
+				v_FragTexCoord = a_TexCoord;
+				v_FragColor = a_Color;
 
-	CompiledGeometryHandle CompileGeometry(Span<const Rml::Vertex> vertices,
-										   Span<const int> indices) override
-	{
-		auto buffer =
+				vec2 pos = a_Position + u_Translate;
+				vec4 outPos = u_Projection * u_Transform * vec4(pos, 0.0, 1.0);
+
+				gl_Position = outPos;
+			}
+		)";
+
+		std::string fragmentShaderStr = R"(
+			#version 460 core
+
+			uniform sampler2D u_Texture;
+			uniform int u_UseTexture;
+
+			layout(location = 0) in vec2 a_FragTexCoord;
+			layout(location = 1) in vec4 a_FragColor;
+
+			layout(location = 0) out vec4 FragColor;
+
+			void main() {
+				if(u_UseTexture == 0) {
+					FragColor = a_FragColor;
+					return;
+				}
+
+				vec4 texColor = texture(u_Texture, a_FragTexCoord);
+				FragColor = a_FragColor * texColor;
+			}
+		)";
+
+		DefaultShader = RendererAPI::Get()->CreateShader({ });
+		VolcaniCore::List<ShaderFile> files;
+		files.Emplace(ShaderFileType::Vertex, vertexShaderStr);
+		files.Emplace(ShaderFileType::Fragment, fragmentShaderStr);
+		DefaultShader->SetShaderData(std::move(files));
+
+		GeometryBuffer =
 			RendererAPI::Get()->NewBuffer(
 			{
-				.IndexCount = 65536,
-				.DynamicIndices = true,
-				.VertexCount = 65536,
-				.DynamicVertices = true,
+				.IndexCount = 1'000'000,
+				.DynamicIndices = false,
+				.VertexCount = 10'000'000,
+				.DynamicVertices = false,
 				.VertexLayout =
 				{
 					{
 						{ "a_Position", BufferDataType::Vec2 },
-						{ "a_Red",		BufferDataType::Int },
-						{ "a_Green",	BufferDataType::Int },
-						{ "a_Blue",		BufferDataType::Int },
-						{ "a_Alpha",	BufferDataType::Int },
+						{ "a_Color",	BufferDataType::Vec4 },
 						{ "a_TexCoord", BufferDataType::Vec2 },
 					},
 					true, // Dynamic
 					false // Instanced
 				},
 			});
+	}
 
-		buffer->Add(DrawBufferIndex::Vertex, vertices.data(), vertices.size());
-		buffer->Add(DrawBufferIndex::Index, indices.data(), indices.size());
+	~WidgetRendererInterface() {
+		TextureHandles.Clear();
 
-		return (CompiledGeometryHandle)buffer;
+		delete GeometryBuffer;
+	}
+
+	void BeginFrame() {
+		VOLCANICORE_LOG_INFO("WidgetRendererInterface::BeginFrame");
+
+		Scissor = false;
+		ClipMask = false;
+	}
+
+	void EndFrame() {
+		VOLCANICORE_LOG_INFO("WidgetRendererInterface::EndFrame");
+
+	}
+
+	CompiledGeometryHandle CompileGeometry(Span<const Rml::Vertex> vertices,
+										   Span<const int> indices) override
+	{
+		VOLCANICORE_LOG_INFO("CompileGeometry");
+
+		auto& buffer = Buffers.Emplace();
+		buffer.VertexOffset = GeometryBuffer->GetVertexCount();
+		buffer.IndexOffset = GeometryBuffer->GetIndexCount();
+		buffer.VertexCount = vertices.size();
+		buffer.IndexCount = indices.size();
+
+		GeometryBuffer->Add(DrawBufferIndex::Vertex,
+			vertices.data(), vertices.size());
+		GeometryBuffer->Add(DrawBufferIndex::Index,
+			indices.data(), indices.size());
+
+		return (CompiledGeometryHandle)Buffers.Count();
 	}
 	void RenderGeometry(CompiledGeometryHandle geomHandle, Vector2f translation,
 						TextureHandle textureHandle) override
 	{
-		auto buffer = (DrawBuffer*)geomHandle;
-		DefaultDrawPass->Buffer = buffer;
-		auto cmd = RendererAPI::Get()->NewCommand(DefaultDrawPass);
+		VOLCANICORE_LOG_INFO("RenderGeometry");
 
-		u64 id = (u64)textureHandle;
-		if(id != 0) {
-			auto tex = TextureHandles[id - 1];
+		auto bufferIdx = (u64)geomHandle;
+		auto& buffer = Buffers[bufferIdx - 1];
+
+		auto pass = RendererAPI::Get()->NewPass(GeometryBuffer);
+		pass->Pipeline = DefaultShader;
+		auto cmd = RendererAPI::Get()->NewCommand(pass);
+
+		cmd->VerticesIndex = buffer.VertexOffset;
+		cmd->IndicesIndex = buffer.IndexOffset;
+
+		if(textureHandle) {
+			auto texIdx = (u64)textureHandle;
+			auto tex = TextureHandles[texIdx - 1];
 			cmd->Uniforms.Set("u_Texture", TextureSlot{ tex, 0 });
+			cmd->Uniforms.Set("u_UseTexture", 1);
 		}
+		else
+			cmd->Uniforms.Set("u_UseTexture", 0);
+
 		if(Scissor) {
 			cmd->Scissor = Scissor;
 			cmd->ScissorX = (f32)ScissorRegion.Left();
@@ -113,17 +194,46 @@ public:
 			cmd->ScissorH = (f32)ScissorRegion.Height();
 		}
 
+		cmd->Uniforms.Set("u_Transform",
+			Mat4{
+				Transform[0][0], Transform[1][0], Transform[2][0], Transform[3][0],
+				Transform[0][1], Transform[1][1], Transform[2][1], Transform[3][1],
+				Transform[0][2], Transform[1][2], Transform[2][2], Transform[3][2],
+				Transform[0][3], Transform[1][3], Transform[2][3], Transform[3][3],
+			}
+		);
+		cmd->Uniforms.Set("u_Translate", Vec2{ translation.x, translation.y });
+
+		auto window = Application::As<WindowApplication>()->GetWindow();
+		auto width = (f32)window->GetWidth();
+		auto height = (f32)window->GetHeight();
+		auto projMat =
+			Rml::Matrix4f::ProjectOrtho(0, width, height, 0, -10000, 10000);
+		cmd->Uniforms.Set("u_Projection",
+			Mat4{
+				projMat[0][0], projMat[1][0], projMat[2][0], projMat[3][0],
+				projMat[0][1], projMat[1][1], projMat[2][1], projMat[3][1],
+				projMat[0][2], projMat[1][2], projMat[2][2], projMat[3][2],
+				projMat[0][3], projMat[1][3], projMat[2][3], projMat[3][3],
+			}
+		);
+
 		auto* call = cmd->NewCall();
 		call->Primitive = DrawPrimitive::Triangle;
 		call->Partition = DrawPartition::Single;
-		call->IndexCount = buffer->GetIndexCount();
+		call->IndexCount = buffer.IndexCount;
 	}
+
 	void ReleaseGeometry(CompiledGeometryHandle geomHandle) override {
-		auto buffer = (DrawBuffer*)geomHandle;
-		delete buffer;
+		VOLCANICORE_LOG_INFO("ReleaseGeometry");
+
+		auto bufferIdx = (u64)geomHandle;
+		Buffers.Pop(bufferIdx - 1);
 	}
 
 	TextureHandle LoadTexture(Vector2i& texDim, const String& src) override {
+		VOLCANICORE_LOG_INFO("LoadTexture: %s", src.c_str());
+
 		auto reg =
 			AssetManager::GetRegistry()->As<EditorAssetRegistry>();
 		auto id = reg->GetAssetID(src);
@@ -149,11 +259,13 @@ public:
 	TextureHandle GenerateTexture(Span<const byte> src,
 								  Vector2i srcDim) override
 	{
+		VOLCANICORE_LOG_INFO("GenerateTexture");
+
 		auto tex =
 			RendererAPI::Get()->CreateTexture(
 			{
-				.Width = srcDim.x,
-				.Height = srcDim.y,
+				.Width = (u32)srcDim.x,
+				.Height = (u32)srcDim.y,
 			});
 		tex->SetData(src.data());
 		TextureHandles.Add(tex);
@@ -161,6 +273,8 @@ public:
 		return (TextureHandle)TextureHandles.Count();
 	}
 	void ReleaseTexture(TextureHandle texture) override {
+		VOLCANICORE_LOG_INFO("ReleaseTexture");
+
 		u64 id = (u64)texture;
 		if(id == 0 || id > TextureHandles.Count())
 			return;
@@ -169,67 +283,102 @@ public:
 	}
 
 	void EnableScissorRegion(bool enable) override {
+		VOLCANICORE_LOG_INFO("EnableScissorRegion: %d", enable);
 		Scissor = enable;
 	}
 	void SetScissorRegion(Rectanglei region) override {
+		VOLCANICORE_LOG_INFO("SetScissorRegion: %d, %d, %d, %d",
+							 region.Left(), region.Top(),
+							 region.Width(), region.Height());
 		ScissorRegion = region;
 	}
 
 	void EnableClipMask(bool enable) override {
+		VOLCANICORE_LOG_INFO("EnableClipMask: %d", enable);
 		ClipMask = enable;
 	}
-	// void RenderToClipMask(ClipMaskOperation op, CompiledGeometryHandle geom,
-	// 					  Vector2f translation) override
-	// {
-
-	// }
+	void RenderToClipMask(ClipMaskOperation op, CompiledGeometryHandle geom,
+						  Vector2f translation) override
+	{
+		VOLCANICORE_LOG_INFO("RenderToClipMask: %i", (int)op);
+	}
 
 	void SetTransform(const Matrix4f* transform) override {
+		VOLCANICORE_LOG_INFO("SetTransform: %p", transform);
+		Transform = (transform ? *transform : Transform);
+	}
+
+	LayerHandle PushLayer() override {
+		VOLCANICORE_LOG_INFO("PushLayer");
+		return 0;
+	}
+	void CompositeLayers(LayerHandle src, LayerHandle dst, BlendMode blendMode,
+						 Span<const CompiledFilterHandle> filters) override
+	{
+		VOLCANICORE_LOG_INFO("CompositeLayers");
+
+	}
+	void PopLayer() override {
+		VOLCANICORE_LOG_INFO("PopLayer");
+	}
+
+	TextureHandle SaveLayerAsTexture() override {
+		VOLCANICORE_LOG_INFO("SaveLayerAsTexture");
+		return 0;
+	}
+
+	CompiledFilterHandle SaveLayerAsMaskImage() override {
+		VOLCANICORE_LOG_INFO("SaveLayerAsMaskImage");
+		return 0;
+	}
+
+	CompiledFilterHandle CompileFilter(const String& name,
+									   const Dictionary& parameters) override
+	{
+		VOLCANICORE_LOG_INFO("CompileFilter: %s", name.c_str());
+		for(auto& [key, value] : parameters) {
+			VOLCANICORE_LOG_INFO("\nParam: %s, Value: %i",
+				key.c_str(), (int)value.GetType());
+		}
+		return 0;
+	}
+	void ReleaseFilter(CompiledFilterHandle filter) override {
+		VOLCANICORE_LOG_INFO("ReleaseFilter");
 
 	}
 
-	// LayerHandle PushLayer() override {
+	CompiledShaderHandle CompileShader(const String& name,
+		const Dictionary& parameters) override
+	{
+		VOLCANICORE_LOG_INFO("CompileShader: %s", name.c_str());
+		for(auto& [key, value] : parameters) {
+			VOLCANICORE_LOG_INFO("\nParam: %s, Value: %i",
+				key.c_str(), (int)value.GetType());
+		}
+		return 0;
+	}
+	void RenderShader(CompiledShaderHandle shader, CompiledGeometryHandle geometry, Vector2f translation, TextureHandle texture) override {
+		VOLCANICORE_LOG_INFO("RenderShader");
 
-	// }
-	// void CompositeLayers(LayerHandle src, LayerHandle dst, BlendMode blendMode,
-	// 					 Span<const CompiledFilterHandle> filters) override
-	// {
+	}
+	void ReleaseShader(CompiledShaderHandle shader) override {
+		VOLCANICORE_LOG_INFO("ReleaseShader");
 
-	// }
-	// void PopLayer() override {
-
-	// }
-
-	// TextureHandle SaveLayerAsTexture() override {
-
-	// }
-
-	// CompiledFilterHandle SaveLayerAsMaskImage() override {
-
-	// }
-
-	// CompiledFilterHandle CompileFilter(const String& name, const Dictionary& parameters) override {
-
-	// }
-	// void ReleaseFilter(CompiledFilterHandle filter) override {
-
-	// }
-
-	// CompiledShaderHandle CompileShader(const String& name, const Dictionary& parameters) override {
-
-	// }
-	// void RenderShader(CompiledShaderHandle shader, CompiledGeometryHandle geometry, Vector2f translation, TextureHandle texture) override {
-
-	// }
-	// void ReleaseShader(CompiledShaderHandle shader) override {
-
-	// }
+	}
 };
+
+Rml::SystemInterface* s_SystemInterface = nullptr;
+WidgetRendererInterface* s_RenderInterface = nullptr;
+Rml::Context* s_Context = nullptr;
 
 struct TestDataModel {
 	bool ShowText = true;
 	Rml::String Animal = "Dog";
-} TestData;
+};
+
+static TestDataModel TestData;
+
+static ElementDocument* s_Doc = nullptr;
 
 void WidgetManager::Init() {
 	s_SystemInterface = new SystemInterface_GLFW();
@@ -249,7 +398,7 @@ void WidgetManager::Init() {
 
 	Rml::LoadFontFace("Magma/assets/fonts/JetBrainsMono-Bold.ttf");
 
-	// Set up data bindings to synchronize application data.
+	TestData = { };
 	if(Rml::DataModelConstructor model =
 		s_Context->CreateDataModel("animals"))
 	{
@@ -257,14 +406,25 @@ void WidgetManager::Init() {
 		model.Bind("animal", &TestData.Animal);
 	}
 
-	Rml::ElementDocument* doc =
+	s_Doc =
 		s_Context->LoadDocument("Magma/assets/UI/test.rml");
-	doc->Show();
+	s_Doc->Show();
 
-	Rml::Element* element = doc->GetElementById("world");
-	element->SetInnerRML(reinterpret_cast<const char*>(u8"🌍"));
+	Rml::Element* element = s_Doc->GetElementById("world");
+	// element->SetInnerRML(reinterpret_cast<const char*>(u8"🌍"));
+	element->SetInnerRML(reinterpret_cast<const char*>("Hello, World!"));
 	element->SetProperty("font-size", "1.5em");
 
+	Events::RegisterListener<WindowResizedEvent>(
+		[](WindowResizedEvent& e)
+		{
+			s_Context->SetDimensions({ e.Width, e.Height });
+		});
+	Events::RegisterListener<MouseMovedEvent>(
+		[](MouseMovedEvent& e)
+		{
+			s_Context->ProcessMouseMove(e.x, e.y, 0);
+		});
 }
 
 void WidgetManager::Close() {
@@ -278,154 +438,10 @@ void WidgetManager::Close() {
 	s_RenderInterface = nullptr;
 }
 
-static u32 ImageIndex = 0;
-static u32 TextIndex = 0;
-static u32 ButtonIndex = 0;
-static u32 WindowIndex = 0;
-
-static void ParseElement(Ref<Widget> parent, pugi::xml_node node) {
-	if(!node)
-		return;
-
-	std::string id;
-	std::string type = node.name();
-	if(type == "Script")
-		return;
-
-	if(node.attribute("id"))
-		id = node.attribute("id").as_string();
-	else {
-		u32* index = nullptr;
-		if(type == "Image")
-			index = &ImageIndex;
-		else if(type == "Text")
-			index = &TextIndex;
-		else if(type == "Button")
-			index = &ButtonIndex;
-		else if(type == "Window")
-			index = &WindowIndex;
-
-		id = std::string(node.name()) + "-" + std::to_string((*index)++);
-	}
-
-	Ref<Widget> widget;
-	if(type == "Image") {
-		widget = CreateRef<Image>(id);
-		auto w = widget->As<Image>();
-
-		if(node.attribute("asset")) {
-			auto path = node.attribute("asset").as_string();
-			auto reg = AssetManager::GetRegistry()->As<EditorAssetRegistry>();
-			w->Texture = reg->GetAssetID(path);
-		}
-	}
-	else if(type == "Text") {
-		widget = CreateRef<Text>(id);
-		auto w = widget->As<Text>();
-
-		if(node.attribute("label")) {
-			w->Label = node.attribute("label").as_string();
-		}
-		if(node.attribute("scale")) {
-			w->Scale = node.attribute("scale").as_float();
-		}
-		if(node.attribute("font")) {
-			auto path = node.attribute("font").as_string();
-			auto reg = AssetManager::GetRegistry()->As<EditorAssetRegistry>();
-			w->Font = reg->GetAssetID(path);
-		}
-	}
-	else if(type == "Button") {
-		widget = CreateRef<Button>(id);
-		auto w = widget->As<Button>();
-
-		if(node.attribute("color")) {
-			// w->Color = node.attribute("color").as_string();
-		}
-	}
-	else if(type == "Window") {
-		widget = CreateRef<Window>(id);
-		auto w = widget->As<Window>();
-
-	}
-	else if(type == "Container") {
-		widget = CreateRef<Container>(id);
-		auto w = widget->As<Container>();
-
-		if(node.attribute("width_type")) {
-			std::string type = node.attribute("width_type").as_string();
-			if(type == "fixed")
-				w->SizeX = Container::SizeType::Fixed;
-			else
-				w->SizeX = Container::SizeType::Stretch;
-		}
-		if(node.attribute("height_type")) {
-			std::string type = node.attribute("height_type").as_string();
-			if(type == "fixed")
-				w->SizeY = Container::SizeType::Fixed;
-			else
-				w->SizeY = Container::SizeType::Stretch;
-		}
-		if(node.attribute("padding")) {
-			w->Padding = node.attribute("padding").as_uint();
-		}
-		if(node.attribute("childGap")) {
-			w->ChildGap = node.attribute("childGap").as_uint();
-		}
-	}
-	else
-		return;
-
-	if(node.child("Script")) {
-		auto scriptNode = node.child("Script");
-		std::string script = scriptNode.child_value();
-
-		// Create ScriptModule from name
-		// Load script data
-		// Compile script
-		// Create ScriptObject
-	}
-
-	if(node.attribute("width"))
-		widget->Width = node.attribute("width").as_float();
-	if(node.attribute("height"))
-		widget->Height = node.attribute("height").as_float();
-	if(node.attribute("visible"))
-		widget->Visible = node.attribute("visible").as_bool();
-	if(node.attribute("enabled"))
-		widget->Enabled = node.attribute("enabled").as_bool();
-
-	parent->Add(widget);
-
-	for(pugi::xml_node child = node.first_child(); child; child = child.next_sibling())
-		ParseElement(widget, child);
-}
-
 void WidgetManager::Load(const std::string& path) {
 	if(m_Root)
 		m_Root.reset();
 
-	TextIndex = 0;
-	ImageIndex = 0;
-	ButtonIndex = 0;
-	WindowIndex = 0;
-
-	pugi::xml_document doc;
-	pugi::xml_parse_result res = doc.load_file(path.c_str());
-	if(!res) {
-		std::cout << "XML [" << path << "] parsed with errors, attr value: ["
-				  << doc.child("node").attribute("attr").value() << "]\n";
-		std::cout << "Error description: " << res.description() << "\n";
-		std::cout << "Error offset: " << res.offset << "\n";
-	}
-
-	pugi::xml_node node = doc.child("Root");
-	auto root = CreateRef<Root>(node.attribute("id").as_string());
-
-	for(pugi::xml_node child = node.first_child(); child; child = child.next_sibling())
-		ParseElement(root, child);
-
-	m_Root = root;
 	m_RootPath = path;
 	VOLCANICORE_LOG_INFO("Successfully loaded UI");
 }
@@ -438,36 +454,10 @@ void WidgetManager::Update(TimeStep ts) {
 	s_Context->Update();
 }
 
-typedef enum
-{
-	CUSTOM_ELEMENT_TYPE_GIF,
-	CUSTOM_ELEMENT_TYPE_VIDEO
-} CustomElementType;
-
-typedef struct
-{
-
-} CustomElement_GIF;
-
-typedef struct
-{
-
-} CustomElement_VIDEO;
-
-typedef struct
-{
-	CustomElementType type;
-	union {
-		CustomElement_GIF gif;
-		CustomElement_VIDEO video;
-	} customData;
-} CustomElement;
-
 void WidgetManager::Render() {
-	if(!m_Root)
-		return;
-
+	s_RenderInterface->BeginFrame();
 	s_Context->Render();
+	s_RenderInterface->EndFrame();
 }
 
 void Widget::Update(TimeStep ts) {

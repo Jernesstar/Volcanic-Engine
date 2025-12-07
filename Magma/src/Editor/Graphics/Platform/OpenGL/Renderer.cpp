@@ -15,12 +15,16 @@ using namespace Magma::Graphics;
 
 namespace OpenGL {
 
+// TODO(Add): Use stream buffer
 class DrawBuffer : public Graphics::DrawBuffer {
 public:
 	Ref<VertexArray> Array;
 	Buffer<uint32_t> Indices;
 	Buffer<void> Vertices;
 	Buffer<void> Instances;
+	u64 IndicesCount = 0;
+	u64 VerticesCount = 0;
+	u64 InstancesCount = 0;
 
 public:
 	DrawBuffer(const DrawBufferSpec& spec)
@@ -54,12 +58,14 @@ public:
 				Indices.Add(data, count);
 				if(!Spec.DynamicIndices)
 					Array->GetIndexBuffer()->SetData(Indices);
+				IndicesCount += count;
 				break;
 			}
 			case DrawBufferIndex::Vertex: {
 				Vertices.Add(data, count);
 				if(!Spec.DynamicVertices)
 					Array->GetVertexBuffer(0)->SetData(Vertices);
+				VerticesCount += count;
 				break;
 			}
 			case DrawBufferIndex::Instance: {
@@ -68,26 +74,33 @@ public:
 					u32 idx = Spec.VertexCount != 0;
 					Array->GetVertexBuffer(idx)->SetData(Instances);
 				}
+				InstancesCount += count;
 				break;
 			}
 		}
 	}
 
 	void Clear() override {
-		Indices.Clear();
-		Vertices.Clear();
-		Instances.Clear();
+		if(Spec.DynamicIndices)
+			Indices.Clear();
+		if(Spec.DynamicVertices)
+			Vertices.Clear();
+		if(Spec.DynamicInstances)
+			Instances.Clear();
+
+		IndicesCount = 0;
+		VerticesCount = 0;
+		InstancesCount = 0;
 	}
 
-	u64 GetIndexCount() const override { return Indices.GetCount(); }
-	u64 GetVertexCount() const override { return Vertices.GetCount(); }
-	u64 GetInstanceCount() const override { return Instances.GetCount(); }
+	u64 GetIndexCount() const override { return IndicesCount; }
+	u64 GetVertexCount() const override { return VerticesCount; }
+	u64 GetInstanceCount() const override { return InstancesCount; }
 };
 
 static List<DrawBuffer*> s_Buffers;
 static List<DrawPass> s_Passes;
 static List<DrawCommand> s_Commands;
-static List<DrawCall> s_Calls;
 
 Renderer::Renderer() {
 	int success = gladLoadGL();
@@ -104,9 +117,6 @@ void Renderer::Init() {
 }
 
 void Renderer::Close() {
-	for(auto buffer : s_Buffers)
-		delete buffer;
-
 	s_Buffers.Clear();
 }
 
@@ -280,25 +290,20 @@ void Renderer::EndFrame() {
 	for(auto& cmd : s_Commands) {
 		SetOptions(cmd);
 
-		auto shader = cmd.Pass->Pipeline;
-		if(shader) {
-			shader->As<OpenGL::Shader>()->Bind();
+		if(cmd.Pass && cmd.Pass->Pipeline) {
+			cmd.Pass->Pipeline->As<OpenGL::Shader>()->Bind();
 			SetUniforms(cmd);
 		}
 		else
 			glUseProgram(0);
 
-		auto out = cmd.Pass->Output;
-		if(out) {
-			out->As<OpenGL::Framebuffer>()->Bind();
-		}
+		if(cmd.Pass && cmd.Pass->Output)
+			cmd.Pass->Output->As<OpenGL::Framebuffer>()->Bind();
 		else
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-		auto buffer = cmd.Pass->Buffer;
-		if(buffer) {
-			buffer->As<OpenGL::DrawBuffer>()->Array->Bind();
-		}
+		if(cmd.Pass && cmd.Pass->Buffer)
+			cmd.Pass->Buffer->As<OpenGL::DrawBuffer>()->Array->Bind();
 		else
 			glBindVertexArray(0);
 
@@ -307,6 +312,7 @@ void Renderer::EndFrame() {
 	}
 
 	s_Commands.Clear();
+	s_Passes.Clear();
 }
 
 Graphics::DrawBuffer* Renderer::NewBuffer(const Graphics::DrawBufferSpec& s) {
@@ -316,12 +322,10 @@ Graphics::DrawBuffer* Renderer::NewBuffer(const Graphics::DrawBufferSpec& s) {
 }
 
 Graphics::DrawPass* Renderer::NewPass(Graphics::DrawBuffer* buffer) {
-	// VOLCANICORE_ASSERT(buffer);
 	return &s_Passes.Emplace(buffer);
 }
 
 Graphics::DrawCommand* Renderer::NewCommand(Graphics::DrawPass* pass) {
-	// VOLCANICORE_ASSERT(pass);
 	return &s_Commands.Emplace(pass);
 }
 

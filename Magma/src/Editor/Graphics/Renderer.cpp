@@ -11,10 +11,9 @@ using namespace VolcanicWindow;
 namespace Magma::Graphics {
 
 static DrawBuffer* ScreenBuffer;
-static DrawPass* ScreenPass;
-
+static Ref<Shader> ScreenShader;
 static DrawBuffer* RectBuffer;
-static DrawPass* RectPass;
+static Ref<Shader> RectShader;
 
 void Renderer::Init() {
 #if defined(VOLCANIC_APPLE)
@@ -77,17 +76,11 @@ void Renderer::Init() {
 		}
 	)";
 
-	Ref<Shader> shader;
-
-	shader = RendererAPI::Get()->CreateShader({ });
+	ScreenShader = RendererAPI::Get()->CreateShader({ });
 	List<ShaderFile> files;
 	files.Emplace(ShaderFileType::Vertex, vertexShaderStr);
 	files.Emplace(ShaderFileType::Fragment, fragmentShaderStr);
-	shader->SetShaderData(std::move(files));
-
-	ScreenPass = RendererAPI::Get()->NewPass(ScreenBuffer);
-	ScreenPass->Pipeline = shader;
-	ScreenPass->Output = nullptr;
+	ScreenShader->SetShaderData(std::move(files));
 
 	RectBuffer =
 		RendererAPI::Get()->NewBuffer({
@@ -151,15 +144,11 @@ void Renderer::Init() {
 		}
 	)";
 
-	shader = RendererAPI::Get()->CreateShader({ });
+	RectShader = RendererAPI::Get()->CreateShader({ });
 	List<ShaderFile> files2;
 	files2.Emplace(ShaderFileType::Vertex, vertexShaderStr);
 	files2.Emplace(ShaderFileType::Fragment, fragmentShaderStr);
-	shader->SetShaderData(std::move(files2));
-
-	RectPass = RendererAPI::Get()->NewPass(RectBuffer);
-	RectPass->Pipeline = shader;
-	RectPass->Output = nullptr;
+	RectShader->SetShaderData(std::move(files2));
 }
 
 void Renderer::Close() {
@@ -171,7 +160,10 @@ static DrawCommand* RectCommand = nullptr;
 void Renderer::BeginFrame() {
 	RendererAPI::Get()->BeginFrame();
 
-	RectCommand = RendererAPI::Get()->NewCommand(RectPass);
+	auto pass = RendererAPI::Get()->NewPass(ScreenBuffer);
+	pass->Pipeline = ScreenShader;
+
+	RectCommand = RendererAPI::Get()->NewCommand(pass);
 	auto window = Application::As<WindowApplication>()->GetWindow();
 	RectCommand->Clear = true;
 	RectCommand->ClearColor = { 0.0f, 0.0f, 0.0f, 0.0f };
