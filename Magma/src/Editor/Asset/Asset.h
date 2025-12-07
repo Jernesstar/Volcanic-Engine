@@ -40,8 +40,8 @@ public:
 
 class ImageAsset : public Asset {
 public:
-	uint32_t Width, Height;
-	Buffer<uint8_t> Data;
+	u32 Width, Height;
+	Buffer<u8> Data;
 
 public:
 	ImageAsset()
@@ -50,8 +50,8 @@ public:
 
 class GIFAsset : public Asset {
 public:
-	uint32_t Width, Height;
-	List<Buffer<uint8_t>> Data;
+	u32 Width, Height;
+	List<Buffer<u8>> Data;
 
 public:
 	GIFAsset()
@@ -60,7 +60,7 @@ public:
 
 class AudioAsset : public Asset {
 public:
-	Buffer<float> Data;
+	Buffer<f32> Data;
 	u32 Channels, SampleRate;
 
 public:

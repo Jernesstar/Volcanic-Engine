@@ -32,11 +32,18 @@ public:
 		m_Data = (T*)malloc(GetMaxSize());
 		Set(list.begin(), list.size());
 	}
-	Buffer(T* data, uint64_t count, uint64_t maxCount = 0)
-		: m_Data(data), m_MaxCount(maxCount), m_Count(count)
+	Buffer(T* data, uint64_t count, uint64_t maxCount = 0, bool own = true)
+		: m_MaxCount(maxCount), m_Count(count)
 	{
 		if(!m_MaxCount)
 			m_MaxCount = count;
+
+		if(own) {
+			m_Data = data;
+		} else {
+			m_Data = (T*)malloc(GetMaxSize());
+			memcpy(m_Data, data, GetSize());
+		}
 	}
 
 	~Buffer() {
@@ -179,11 +186,17 @@ public:
 	{
 		std::swap(m_Data, other.m_Data);
 	}
-	Buffer(void* data, uint64_t size, uint64_t count)
-		: m_SizeT(size), m_MaxCount(count), m_Count(count), m_Data(data)
+	Buffer(void* data, uint64_t size, uint64_t count, bool own = true)
+		: m_SizeT(size), m_MaxCount(count), m_Count(count)
 	{
 		if(!m_MaxCount)
 			m_MaxCount = count;
+		if(own) {
+			m_Data = data;
+		} else {
+			m_Data = malloc(GetMaxSize());
+			memcpy(m_Data, data, GetSize());
+		}
 	}
 
 	~Buffer() {

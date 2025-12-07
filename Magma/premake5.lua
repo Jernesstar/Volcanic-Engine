@@ -1,4 +1,3 @@
-
 project "Magma"
     kind "ConsoleApp"
     language "C++"

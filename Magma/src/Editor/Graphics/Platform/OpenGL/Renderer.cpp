@@ -78,6 +78,10 @@ public:
 		Vertices.Clear();
 		Instances.Clear();
 	}
+
+	u64 GetIndexCount() const override { return Indices.GetCount(); }
+	u64 GetVertexCount() const override { return Vertices.GetCount(); }
+	u64 GetInstanceCount() const override { return Instances.GetCount(); }
 };
 
 static List<DrawBuffer*> s_Buffers;
@@ -312,12 +316,12 @@ Graphics::DrawBuffer* Renderer::NewBuffer(const Graphics::DrawBufferSpec& s) {
 }
 
 Graphics::DrawPass* Renderer::NewPass(Graphics::DrawBuffer* buffer) {
-	VOLCANICORE_ASSERT(buffer);
+	// VOLCANICORE_ASSERT(buffer);
 	return &s_Passes.Emplace(buffer);
 }
 
 Graphics::DrawCommand* Renderer::NewCommand(Graphics::DrawPass* pass) {
-	VOLCANICORE_ASSERT(pass);
+	// VOLCANICORE_ASSERT(pass);
 	return &s_Commands.Emplace(pass);
 }
 

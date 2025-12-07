@@ -36,6 +36,9 @@ public:
 
 	virtual void Add(DrawBufferIndex, const void* data, u64 count) = 0;
 	virtual void Clear() = 0;
+	virtual u64 GetIndexCount() const = 0;
+	virtual u64 GetVertexCount() const = 0;
+	virtual u64 GetInstanceCount() const = 0;
 };
 
 struct DrawPass {
@@ -210,6 +213,7 @@ protected:
 	virtual void BeginFrame() = 0;
 	virtual void EndFrame() = 0;
 
+public:
 	virtual DrawBuffer* NewBuffer(const DrawBufferSpec&) = 0;
 	virtual DrawPass* NewPass(DrawBuffer*) = 0;
 	virtual DrawCommand* NewCommand(DrawPass*) = 0;

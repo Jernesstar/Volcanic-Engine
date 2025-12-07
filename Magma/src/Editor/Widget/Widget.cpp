@@ -16,6 +16,7 @@
 #include <Lava/Script/ScriptClass.h>
 #include <Lava/Script/ScriptObject.h>
 
+#include "Graphics/Platform/RendererAPI.h"
 #include "Graphics/Renderer.h"
 #include "Utils/JSONSerializer.h"
 
@@ -32,85 +33,203 @@ namespace Magma::UI {
 
 Rml::SystemInterface* s_SystemInterface = nullptr;
 Rml::RenderInterface* s_RenderInterface = nullptr;
+Rml::Context* s_Context = nullptr;
 
 class WidgetRendererInterface : public Rml::RenderInterface {
 public:
-	WidgetRendererInterface() = default;
-	~WidgetRendererInterface() = default;
+	DrawPass* DefaultDrawPass = nullptr;
+	bool Scissor = false;
+	Rml::Rectanglei ScissorRegion;
+	bool ClipMask = false;
 
-	CompiledGeometryHandle CompileGeometry(Span<const Vertex> vertices, Span<const int> indices) override {
+	VolcaniCore::List<Ref<Graphics::Texture>> TextureHandles;
+
+public:
+	WidgetRendererInterface() {
+		DefaultDrawPass =
+			RendererAPI::Get()->NewPass(nullptr);
+	}
+
+	~WidgetRendererInterface() {
+		TextureHandles.Clear();
+	}
+
+	void BeginFrame() {
+		Scissor = false;
+		ClipMask = false;
+	}
+
+	void EndFrame() {
 
 	}
-	void RenderGeometry(CompiledGeometryHandle geometry, Vector2f translation, TextureHandle texture) override {
 
+	CompiledGeometryHandle CompileGeometry(Span<const Rml::Vertex> vertices,
+										   Span<const int> indices) override
+	{
+		auto buffer =
+			RendererAPI::Get()->NewBuffer(
+			{
+				.IndexCount = 65536,
+				.DynamicIndices = true,
+				.VertexCount = 65536,
+				.DynamicVertices = true,
+				.VertexLayout =
+				{
+					{
+						{ "a_Position", BufferDataType::Vec2 },
+						{ "a_Red",		BufferDataType::Int },
+						{ "a_Green",	BufferDataType::Int },
+						{ "a_Blue",		BufferDataType::Int },
+						{ "a_Alpha",	BufferDataType::Int },
+						{ "a_TexCoord", BufferDataType::Vec2 },
+					},
+					true, // Dynamic
+					false // Instanced
+				},
+			});
+
+		buffer->Add(DrawBufferIndex::Vertex, vertices.data(), vertices.size());
+		buffer->Add(DrawBufferIndex::Index, indices.data(), indices.size());
+
+		return (CompiledGeometryHandle)buffer;
 	}
-	void ReleaseGeometry(CompiledGeometryHandle geometry) override {
+	void RenderGeometry(CompiledGeometryHandle geomHandle, Vector2f translation,
+						TextureHandle textureHandle) override
+	{
+		auto buffer = (DrawBuffer*)geomHandle;
+		DefaultDrawPass->Buffer = buffer;
+		auto cmd = RendererAPI::Get()->NewCommand(DefaultDrawPass);
 
+		u64 id = (u64)textureHandle;
+		if(id != 0) {
+			auto tex = TextureHandles[id - 1];
+			cmd->Uniforms.Set("u_Texture", TextureSlot{ tex, 0 });
+		}
+		if(Scissor) {
+			cmd->Scissor = Scissor;
+			cmd->ScissorX = (f32)ScissorRegion.Left();
+			cmd->ScissorY = (f32)ScissorRegion.Top();
+			cmd->ScissorW = (f32)ScissorRegion.Width();
+			cmd->ScissorH = (f32)ScissorRegion.Height();
+		}
+
+		auto* call = cmd->NewCall();
+		call->Primitive = DrawPrimitive::Triangle;
+		call->Partition = DrawPartition::Single;
+		call->IndexCount = buffer->GetIndexCount();
+	}
+	void ReleaseGeometry(CompiledGeometryHandle geomHandle) override {
+		auto buffer = (DrawBuffer*)geomHandle;
+		delete buffer;
 	}
 
-	TextureHandle LoadTexture(Vector2i& texture_dimensions, const String& source) override {
+	TextureHandle LoadTexture(Vector2i& texDim, const String& src) override {
+		auto reg =
+			AssetManager::GetRegistry()->As<EditorAssetRegistry>();
+		auto id = reg->GetAssetID(src);
+		if(!id) {
+			VOLCANICORE_LOG_ERROR("Could not load texture '%s'!", src.c_str());
+			return (TextureHandle)0;
+		}
 
+		reg->LoadAsset(id);
+		auto asset = reg->GetAsset(id)->As<ImageAsset>();
+
+		auto tex =
+			RendererAPI::Get()->CreateTexture(
+			{
+				.Width = asset->Width,
+				.Height = asset->Height,
+			});
+		tex->SetData(asset->Data.Get());
+		TextureHandles.Add(tex);
+
+		return (TextureHandle)TextureHandles.Count();
 	}
-	TextureHandle GenerateTexture(Span<const byte> source, Vector2i source_dimensions) override {
+	TextureHandle GenerateTexture(Span<const byte> src,
+								  Vector2i srcDim) override
+	{
+		auto tex =
+			RendererAPI::Get()->CreateTexture(
+			{
+				.Width = srcDim.x,
+				.Height = srcDim.y,
+			});
+		tex->SetData(src.data());
+		TextureHandles.Add(tex);
 
+		return (TextureHandle)TextureHandles.Count();
 	}
 	void ReleaseTexture(TextureHandle texture) override {
+		u64 id = (u64)texture;
+		if(id == 0 || id > TextureHandles.Count())
+			return;
 
+		TextureHandles.Pop(id - 1);
 	}
 
 	void EnableScissorRegion(bool enable) override {
-
+		Scissor = enable;
 	}
 	void SetScissorRegion(Rectanglei region) override {
-
+		ScissorRegion = region;
 	}
 
 	void EnableClipMask(bool enable) override {
-
+		ClipMask = enable;
 	}
-	void RenderToClipMask(ClipMaskOperation operation, CompiledGeometryHandle geometry, Vector2f translation) override {
+	// void RenderToClipMask(ClipMaskOperation op, CompiledGeometryHandle geom,
+	// 					  Vector2f translation) override
+	// {
 
-	}
+	// }
 
 	void SetTransform(const Matrix4f* transform) override {
 
 	}
 
-	LayerHandle PushLayer() override {
+	// LayerHandle PushLayer() override {
 
-	}
-	void CompositeLayers(LayerHandle source, LayerHandle destination, BlendMode blend_mode, Span<const CompiledFilterHandle> filters) override {
+	// }
+	// void CompositeLayers(LayerHandle src, LayerHandle dst, BlendMode blendMode,
+	// 					 Span<const CompiledFilterHandle> filters) override
+	// {
 
-	}
-	void PopLayer() override {
+	// }
+	// void PopLayer() override {
 
-	}
+	// }
 
-	TextureHandle SaveLayerAsTexture() override {
+	// TextureHandle SaveLayerAsTexture() override {
 
-	}
+	// }
 
-	CompiledFilterHandle SaveLayerAsMaskImage() override {
+	// CompiledFilterHandle SaveLayerAsMaskImage() override {
 
-	}
+	// }
 
-	CompiledFilterHandle CompileFilter(const String& name, const Dictionary& parameters) override {
+	// CompiledFilterHandle CompileFilter(const String& name, const Dictionary& parameters) override {
 
-	}
-	void ReleaseFilter(CompiledFilterHandle filter) override {
+	// }
+	// void ReleaseFilter(CompiledFilterHandle filter) override {
 
-	}
+	// }
 
-	CompiledShaderHandle CompileShader(const String& name, const Dictionary& parameters) override {
+	// CompiledShaderHandle CompileShader(const String& name, const Dictionary& parameters) override {
 
-	}
-	void RenderShader(CompiledShaderHandle shader, CompiledGeometryHandle geometry, Vector2f translation, TextureHandle texture) override {
+	// }
+	// void RenderShader(CompiledShaderHandle shader, CompiledGeometryHandle geometry, Vector2f translation, TextureHandle texture) override {
 
-	}
-	void ReleaseShader(CompiledShaderHandle shader) override {
+	// }
+	// void ReleaseShader(CompiledShaderHandle shader) override {
 
-	}
+	// }
 };
+
+struct TestDataModel {
+	bool ShowText = true;
+	Rml::String Animal = "Dog";
+} TestData;
 
 void WidgetManager::Init() {
 	s_SystemInterface = new SystemInterface_GLFW();
@@ -123,13 +242,29 @@ void WidgetManager::Init() {
 	f32 width = window->GetWidth();
 	f32 height = window->GetHeight();
 
-	Rml::Context* context =
+	s_Context =
 		Rml::CreateContext("main", Rml::Vector2i(width, height));
 
-	if(!context) {
-		VOLCANICORE_LOG_ERROR("Could not create RmlUI context!");
-		return;
+	VOLCANICORE_ASSERT(s_Context, "Could not create RmlUI context!");
+
+	Rml::LoadFontFace("Magma/assets/fonts/JetBrainsMono-Bold.ttf");
+
+	// Set up data bindings to synchronize application data.
+	if(Rml::DataModelConstructor model =
+		s_Context->CreateDataModel("animals"))
+	{
+		model.Bind("show_text", &TestData.ShowText);
+		model.Bind("animal", &TestData.Animal);
 	}
+
+	Rml::ElementDocument* doc =
+		s_Context->LoadDocument("Magma/assets/UI/test.rml");
+	doc->Show();
+
+	Rml::Element* element = doc->GetElementById("world");
+	element->SetInnerRML(reinterpret_cast<const char*>(u8"🌍"));
+	element->SetProperty("font-size", "1.5em");
+
 }
 
 void WidgetManager::Close() {
@@ -300,8 +435,7 @@ void WidgetManager::Reload() {
 }
 
 void WidgetManager::Update(TimeStep ts) {
-
-	// GetRoot()->Update(ts);
+	s_Context->Update();
 }
 
 typedef enum
@@ -333,6 +467,7 @@ void WidgetManager::Render() {
 	if(!m_Root)
 		return;
 
+	s_Context->Render();
 }
 
 void Widget::Update(TimeStep ts) {
