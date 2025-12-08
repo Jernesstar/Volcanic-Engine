@@ -12,18 +12,18 @@ enum class BufferDataType { Int, Float, Vec2, Vec3, Vec4, Mat2, Mat3, Mat4 };
 struct BufferElement {
 	const std::string Name;
 	const BufferDataType Type;
-	const bool Normalized;
+	const bool Normalize;
 	const u32 Size;
 	const u32 Count;
 
 	BufferElement(const std::string& name, BufferDataType type,
-				  bool normalized = true)
-		: Name(name), Type(type), Normalized(normalized),
+				  bool normalize = false)
+		: Name(name), Type(type), Normalize(normalize),
 			Size(CalcSize(type)), Count(CalcCount(type)) { }
 
 	bool operator ==(const BufferElement& other) const {
 		return Type == other.Type
-			&& Normalized == other.Normalized
+			&& Normalize == other.Normalize
 			&& Size == other.Size
 			&& Count == other.Count;
 	}

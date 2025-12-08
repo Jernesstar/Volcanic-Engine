@@ -19,7 +19,7 @@ namespace OpenGL {
 class DrawBuffer : public Graphics::DrawBuffer {
 public:
 	Ref<VertexArray> Array;
-	Buffer<uint32_t> Indices;
+	Buffer<u32> Indices;
 	Buffer<void> Vertices;
 	Buffer<void> Instances;
 	u64 IndicesCount = 0;
@@ -33,8 +33,8 @@ public:
 		Array = CreateRef<VertexArray>();
 		if(spec.IndexCount) {
 			Array->SetIndexBuffer(
-				CreateRef<IndexBuffer>(spec.IndexCount, true));
-			Indices = Buffer<uint32_t>(spec.IndexCount);
+				CreateRef<IndexBuffer>(spec.IndexCount, spec.DynamicIndices));
+			Indices = Buffer<u32>(spec.IndexCount);
 		}
 		if(spec.VertexCount) {
 			Array->AddVertexBuffer(
@@ -227,7 +227,7 @@ struct DrawElementsIndirectCommand{
 };
 
 static void SubmitDrawCall(DrawCommand& cmd, DrawCall& call) {
-	uint32_t primitive;
+	u32 primitive;
 	switch(call.Primitive) {
 		case DrawPrimitive::Point:
 			primitive = GL_POINTS;

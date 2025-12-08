@@ -160,12 +160,12 @@ static DrawCommand* RectCommand = nullptr;
 void Renderer::BeginFrame() {
 	RendererAPI::Get()->BeginFrame();
 
-	auto pass = RendererAPI::Get()->NewPass(ScreenBuffer);
-	pass->Pipeline = ScreenShader;
+	auto pass = RendererAPI::Get()->NewPass(RectBuffer);
+	pass->Pipeline = RectShader;
 
 	RectCommand = RendererAPI::Get()->NewCommand(pass);
 	auto window = Application::As<WindowApplication>()->GetWindow();
-	RectCommand->Clear = true;
+	RectCommand->Clear = false;
 	RectCommand->ClearColor = { 0.0f, 0.0f, 0.0f, 0.0f };
 	RectCommand->Viewport = true;
 	RectCommand->ViewportW = window->GetWidth();

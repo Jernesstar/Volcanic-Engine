@@ -64,7 +64,7 @@ public:
 
 		for(auto& element : layout) {
 			u64 count = element.Count;
-			bool normalized = element.Normalized ? GL_TRUE : GL_FALSE;
+			bool normalize = element.Normalize ? GL_TRUE : GL_FALSE;
 
 			switch(element.Type) {
 				case Graphics::BufferDataType::Int:
@@ -80,8 +80,9 @@ public:
 				case Graphics::BufferDataType::Vec4:
 				{
 					glEnableVertexAttribArray(m_BufferIndex);
-					glVertexAttribPointer(m_BufferIndex, count, GL_FLOAT,
-										normalized, stride, (void*)offset);
+					auto type = normalize ? GL_UNSIGNED_BYTE : GL_FLOAT;
+					glVertexAttribPointer(m_BufferIndex, count, type,
+										  normalize, stride, (void*)offset);
 					if(layout.Instanced)
 						glVertexAttribDivisor(m_BufferIndex, 1);
 
@@ -98,7 +99,7 @@ public:
 					for(u64 i = 0; i < count; i++) {
 						glEnableVertexAttribArray(m_BufferIndex);
 						glVertexAttribPointer(
-							m_BufferIndex, count, GL_FLOAT, normalized, stride,
+							m_BufferIndex, count, GL_FLOAT, normalize, stride,
 							(void*)(offset + (vecSize * i)));
 
 						glVertexAttribDivisor(m_BufferIndex++,
