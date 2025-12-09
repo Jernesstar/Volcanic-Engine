@@ -102,6 +102,8 @@ static List<DrawBuffer*> s_Buffers;
 static List<DrawPass> s_Passes;
 static List<DrawCommand> s_Commands;
 
+static Ref<VertexArray> s_EmptyVAO;
+
 Renderer::Renderer() {
 	int success = gladLoadGL();
 	VOLCANICORE_ASSERT(success, "Glad could not load OpenGL");
@@ -114,6 +116,8 @@ Renderer::Renderer() {
 void Renderer::Init() {
 	glEnable(GL_MULTISAMPLE);		// Smooth edges
 	glEnable(GL_FRAMEBUFFER_SRGB);	// Gamma correction
+
+	s_EmptyVAO = CreateRef<VertexArray>();
 }
 
 void Renderer::Close() {
@@ -133,12 +137,6 @@ static void SetUniforms(DrawCommand& cmd) {
 		shader->SetInt(name, data);
 	for(auto& [name, data] : uniforms.FloatUniforms)
 		shader->SetFloat(name, data);
-	for(auto& [name, slot] : uniforms.TextureUniforms) {
-		if(!slot.Sampler)
-			continue;
-		slot.Sampler->As<OpenGL::Texture>()->Bind(slot.Index);
-		shader->SetInt(name, slot.Index);
-	}
 	for(auto& [name, data] : uniforms.Vec2Uniforms)
 		shader->SetVec2(name, data);
 	for(auto& [name, data] : uniforms.Vec3Uniforms)
@@ -152,6 +150,20 @@ static void SetUniforms(DrawCommand& cmd) {
 	for(auto& [name, data] : uniforms.Mat4Uniforms)
 		shader->SetMat4(name, data);
 
+	for(auto& [name, slot] : uniforms.TextureUniforms) {
+		if(!slot.Sampler)
+			continue;
+
+		slot.Sampler->As<OpenGL::Texture>()->Bind(slot.Binding);
+		shader->SetInt(name, slot.Binding);
+	}
+	for(auto& [name, slot] : uniforms.AttachmentUniforms) {
+		if(!slot.Sampler)
+			continue;
+
+		slot.Sampler->As<OpenGL::Attachment>()->Bind(slot.Binding);
+		shader->SetInt(name, slot.Binding);
+	}
 	for(auto& [buffer, name, binding] : uniforms.UniformBuffers) {
 		if(!buffer)
 			continue;
@@ -159,7 +171,13 @@ static void SetUniforms(DrawCommand& cmd) {
 			shader->SetUniformBuffer(name, binding);
 		buffer->As<OpenGL::UniformBuffer>()->Bind(binding);
 	}
-
+	for(auto& [buffer, name, binding] : uniforms.StorageBuffers) {
+		if(!buffer)
+			continue;
+		if(name != "")
+			shader->SetStorageBuffer(name, binding);
+		buffer->As<OpenGL::StorageBuffer>()->Bind(binding);
+	}
 	for(auto& [buffer, name, binding] : uniforms.StorageBuffers) {
 		if(!buffer)
 			continue;
@@ -305,7 +323,7 @@ void Renderer::EndFrame() {
 		if(cmd.Pass && cmd.Pass->Buffer)
 			cmd.Pass->Buffer->As<OpenGL::DrawBuffer>()->Array->Bind();
 		else
-			glBindVertexArray(0);
+			s_EmptyVAO->Bind();
 
 		for(auto& call : cmd.DrawCalls)
 			SubmitDrawCall(cmd, call);

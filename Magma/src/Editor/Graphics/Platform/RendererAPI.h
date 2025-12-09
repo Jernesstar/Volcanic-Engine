@@ -49,25 +49,29 @@ struct DrawPass {
 
 struct TextureSlot {
 	Ref<Texture> Sampler = nullptr;
-	uint32_t Index = 0;
+	u32 Binding = 0;
+};
+
+struct AttachmentSlot {
+	Ref<Attachment> Sampler = nullptr;
+	u32 Binding = 0;
 };
 
 struct UniformSlot {
 	Ref<UniformBuffer> Buffer = nullptr;
 	std::string Name = "";
-	uint32_t Binding = 0;
+	u32 Binding = 0;
 };
 
 struct StorageSlot {
 	Ref<StorageBuffer> Buffer = nullptr;
 	std::string Name = "";
-	uint32_t Binding = 0;
+	u32 Binding = 0;
 };
 
 struct DrawUniforms {
 	Map<std::string, i32> IntUniforms;
 	Map<std::string, f32> FloatUniforms;
-	Map<std::string, TextureSlot> TextureUniforms;
 
 	Map<std::string, Vec2> Vec2Uniforms;
 	Map<std::string, Vec3> Vec3Uniforms;
@@ -79,6 +83,8 @@ struct DrawUniforms {
 
 	List<UniformSlot> UniformBuffers;
 	List<StorageSlot> StorageBuffers;
+	Map<std::string, TextureSlot> TextureUniforms;
+	Map<std::string, AttachmentSlot> AttachmentUniforms;
 
 	operator bool () const {
 		return UniformBuffers || StorageBuffers
@@ -93,10 +99,6 @@ struct DrawUniforms {
 	}
 	DrawUniforms& Set(const std::string& name, f32 data) {
 		FloatUniforms[name] = data;
-		return *this;
-	}
-	DrawUniforms& Set(const std::string& name, const TextureSlot& data) {
-		TextureUniforms[name] = data;
 		return *this;
 	}
 	DrawUniforms& Set(const std::string& name, const Vec2& data) {
@@ -121,6 +123,14 @@ struct DrawUniforms {
 	}
 	DrawUniforms& Set(const std::string& name, const Mat4& data) {
 		Mat4Uniforms[name] = data;
+		return *this;
+	}
+	DrawUniforms& Set(const std::string& name, const TextureSlot& data) {
+		TextureUniforms[name] = data;
+		return *this;
+	}
+	DrawUniforms& Set(const std::string& name, const AttachmentSlot& data) {
+		AttachmentUniforms[name] = data;
 		return *this;
 	}
 	DrawUniforms& Set(const UniformSlot& data) {

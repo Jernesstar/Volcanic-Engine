@@ -36,20 +36,24 @@ struct CompiledBuffer {
 	u64 IndexOffset = 0;
 	u64 VertexCount = 0;
 	u64 IndexCount = 0;
+	Span<const Rml::Vertex> Vertices;
+	Span<const int> Indices;
 };
 
 class WidgetRendererInterface : public Rml::RenderInterface {
 public:
-	DrawBuffer* GeometryBuffer;
-	VolcaniCore::List<CompiledBuffer> Buffers;
+	DrawBuffer* GeometryBuffer = nullptr;
+	Map<UUID, CompiledBuffer> Buffers;
 
 	Ref<Graphics::Shader> DefaultShader;
+	Map<UUID, Ref<Graphics::Texture>> TextureHandles;
+
+	Ref<Graphics::Framebuffer> FinalFramebuffer;
+
 	bool Scissor = false;
 	Rml::Rectanglei ScissorRegion;
 	bool ClipMask = false;
 	Matrix4f Transform = Matrix4f::Identity();
-
-	VolcaniCore::List<Ref<Graphics::Texture>> TextureHandles;
 
 public:
 	WidgetRendererInterface() {
@@ -72,7 +76,7 @@ public:
 				v_FragColor = a_Color;
 
 				vec2 pos = a_Position + u_Translate;
-				vec4 outPos = u_Projection * vec4(pos, 0.0, 1.0);
+				vec4 outPos = u_Projection * u_Transform * vec4(pos, 0.0, 1.0);
 
 				gl_Position = outPos;
 			}
@@ -95,7 +99,8 @@ public:
 					return;
 				}
 
-				FragColor = texture(u_Texture, a_FragTexCoord);
+				vec4 tex = texture(u_Texture, a_FragTexCoord);
+				FragColor = a_FragColor * tex;
 			}
 		)";
 
@@ -108,9 +113,9 @@ public:
 		GeometryBuffer =
 			RendererAPI::Get()->NewBuffer(
 			{
-				.IndexCount = 1'000,
+				.IndexCount = 100'000,
 				.DynamicIndices = false,
-				.VertexCount = 10'000,
+				.VertexCount = 100'000,
 				.DynamicVertices = false,
 				.VertexLayout =
 				{
@@ -123,12 +128,23 @@ public:
 					false // Instanced
 				},
 			});
+
+		// FinalFramebuffer =
+		// 	RendererAPI::Get()->CreateFramebuffer(
+		// 	{
+		// 		{
+		// 			{ AttachmentTarget::Color, 1920, 1080 },
+		// 			{ AttachmentTarget::Depth, 1920, 1080 }
+		// 		}
+		// 	});
 	}
 
 	~WidgetRendererInterface() {
-		TextureHandles.Clear();
+		TextureHandles.clear();
+		Buffers.clear();
 
 		delete GeometryBuffer;
+		DefaultShader.reset();
 	}
 
 	void BeginFrame() {
@@ -140,35 +156,52 @@ public:
 
 	}
 
+	void SetData(CompiledBuffer& buffer)
+	{
+		buffer.VertexOffset = GeometryBuffer->GetVertexCount();
+		buffer.IndexOffset = GeometryBuffer->GetIndexCount();
+		buffer.VertexCount = buffer.Vertices.size();
+		buffer.IndexCount = buffer.Indices.size();
+
+		GeometryBuffer->Add(DrawBufferIndex::Vertex,
+			buffer.Vertices.data(), buffer.Vertices.size());
+
+		u32* indexData = new u32[buffer.IndexCount];
+		for(u64 i = 0; i < buffer.IndexCount; i++)
+			indexData[i] = (u32)buffer.Indices[i];
+
+		GeometryBuffer->Add(DrawBufferIndex::Index, indexData, buffer.IndexCount);
+		delete[] indexData;
+	}
+
 	CompiledGeometryHandle CompileGeometry(Span<const Rml::Vertex> vertices,
 										   Span<const int> indices) override
 	{
 		VOLCANICORE_LOG_INFO("CompileGeometry: %zu vertices, %zu indices",
 							 vertices.size(), indices.size());
 
-		auto& buffer = Buffers.Emplace();
-		buffer.VertexOffset = GeometryBuffer->GetVertexCount();
-		buffer.IndexOffset = GeometryBuffer->GetIndexCount();
-		buffer.VertexCount = vertices.size();
-		buffer.IndexCount = indices.size();
+		if(GeometryBuffer->GetVertexCount() >= 100'000
+		|| GeometryBuffer->GetIndexCount() >= 100'000)
+		{
+			VOLCANICORE_LOG_INFO("Resetting geometry buffer");
+			GeometryBuffer->Clear();
+			for(auto& [id, buffer] : Buffers)
+				SetData(buffer);
+		}
 
-		GeometryBuffer->Add(DrawBufferIndex::Vertex,
-			vertices.data(), vertices.size());
+		UUID id = UUID();
+		auto& buffer = Buffers[id];
+		buffer.Vertices = vertices;
+		buffer.Indices = indices;
+		SetData(buffer);
 
-		u32* indexData = new u32[indices.size()];
-		for(u64 i = 0; i < indices.size(); i++)
-			indexData[i] = (u32)indices[i];
-
-		GeometryBuffer->Add(DrawBufferIndex::Index, indexData, indices.size());
-		delete[] indexData;
-
-		return (CompiledGeometryHandle)Buffers.Count();
+		return (CompiledGeometryHandle)id;
 	}
 	void RenderGeometry(CompiledGeometryHandle geomHandle, Vector2f translation,
 						TextureHandle textureHandle) override
 	{
-		auto bufferIdx = (u64)geomHandle;
-		auto& buffer = Buffers[bufferIdx - 1];
+		UUID id = (UUID)geomHandle;
+		auto& buffer = Buffers.at(id);
 
 		auto pass = RendererAPI::Get()->NewPass(GeometryBuffer);
 		pass->Pipeline = DefaultShader;
@@ -178,8 +211,8 @@ public:
 		cmd->IndicesIndex = buffer.IndexOffset;
 
 		if(textureHandle) {
-			auto texIdx = (u64)textureHandle;
-			auto tex = TextureHandles[texIdx - 1];
+			UUID texID = (UUID)textureHandle;
+			auto tex = TextureHandles.at(texID);
 			cmd->Uniforms.Set("u_Texture", TextureSlot{ tex, 0 });
 			cmd->Uniforms.Set("u_UseTexture", 1);
 		}
@@ -208,8 +241,12 @@ public:
 		auto window = Application::As<WindowApplication>()->GetWindow();
 		auto width = (f32)window->GetWidth();
 		auto height = (f32)window->GetHeight();
-		auto projMat = glm::ortho(0.0f, width, 0.0f, height, -1.0f, 100.0f);
+		auto projMat = glm::ortho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
 		cmd->Uniforms.Set("u_Projection", projMat);
+
+		cmd->DepthTesting = DepthTestingMode::Off;
+		cmd->Blending = BlendingMode::Greatest;
+		cmd->Culling = CullingMode::Off;
 
 		auto* call = cmd->NewCall();
 		call->Primitive = DrawPrimitive::Triangle;
@@ -219,12 +256,8 @@ public:
 
 	void ReleaseGeometry(CompiledGeometryHandle geomHandle) override {
 		VOLCANICORE_LOG_INFO("ReleaseGeometry");
-
-		auto idx = (u64)geomHandle;
-		if(idx == 0 || idx > Buffers.Count())
-			return;
-
-		Buffers.Pop(idx - 1);
+		auto id = (UUID)geomHandle;
+		Buffers.erase(id);
 	}
 
 	TextureHandle LoadTexture(Vector2i& texDim, const String& src) override {
@@ -232,14 +265,14 @@ public:
 
 		auto reg =
 			AssetManager::GetRegistry()->As<EditorAssetRegistry>();
-		auto id = reg->GetAssetID(src);
-		if(!id) {
+		auto assetID = reg->GetAssetID(src);
+		if(!assetID) {
 			VOLCANICORE_LOG_ERROR("Could not load texture '%s'!", src.c_str());
 			return (TextureHandle)0;
 		}
 
-		reg->LoadAsset(id);
-		auto asset = reg->GetAsset(id)->As<ImageAsset>();
+		reg->LoadAsset(assetID);
+		auto asset = reg->GetAsset(assetID)->As<ImageAsset>();
 
 		auto tex =
 			RendererAPI::Get()->CreateTexture(
@@ -248,9 +281,11 @@ public:
 				.Height = asset->Height,
 			});
 		tex->SetData(asset->Data.Get());
-		TextureHandles.Add(tex);
 
-		return (TextureHandle)TextureHandles.Count();
+		UUID id = UUID();
+		TextureHandles[id] = tex;
+
+		return (TextureHandle)id;
 	}
 	TextureHandle GenerateTexture(Span<const byte> src,
 								  Vector2i srcDim) override
@@ -264,18 +299,16 @@ public:
 				.Height = (u32)srcDim.y,
 			});
 		tex->SetData(src.data());
-		TextureHandles.Add(tex);
 
-		return (TextureHandle)TextureHandles.Count();
+		UUID id = UUID();
+		TextureHandles[id] = tex;
+
+		return (TextureHandle)id;
 	}
 	void ReleaseTexture(TextureHandle texture) override {
 		VOLCANICORE_LOG_INFO("ReleaseTexture");
-
-		u64 idx = (u64)texture;
-		if(idx == 0 || idx > TextureHandles.Count())
-			return;
-
-		TextureHandles.Pop(idx - 1);
+		auto id = (UUID)texture;
+		TextureHandles.erase(id);
 	}
 
 	void EnableScissorRegion(bool enable) override {
@@ -369,7 +402,7 @@ Rml::Context* s_Context = nullptr;
 
 struct TestDataModel {
 	bool ShowText = true;
-	Rml::String Animal = "Dog";
+	Rml::String Animal = "dog";
 };
 
 static TestDataModel TestData;
@@ -419,6 +452,31 @@ void WidgetManager::Init() {
 		[](MouseMovedEvent& e)
 		{
 			s_Context->ProcessMouseMove(e.x, e.y, 0);
+		});
+	Events::RegisterListener<MouseButtonPressedEvent>(
+		[](MouseButtonPressedEvent& e)
+		{
+			s_Context->ProcessMouseButtonDown(e.Button, 0);
+		});
+	Events::RegisterListener<MouseButtonReleasedEvent>(
+		[](MouseButtonReleasedEvent& e)
+		{
+			s_Context->ProcessMouseButtonUp(e.Button, 0);
+		});
+	Events::RegisterListener<KeyPressedEvent>(
+		[](KeyPressedEvent& e)
+		{
+			s_Context->ProcessKeyDown(RmlGLFW::ConvertKey((int)e.Key), 0);
+		});
+	Events::RegisterListener<KeyReleasedEvent>(
+		[](KeyReleasedEvent& e)
+		{
+			s_Context->ProcessKeyUp(RmlGLFW::ConvertKey((int)e.Key), 0);
+		});
+	Events::RegisterListener<KeyCharEvent>(
+		[](KeyCharEvent& e)
+		{
+			s_Context->ProcessTextInput(e.Char);
 		});
 }
 

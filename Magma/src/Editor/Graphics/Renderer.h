@@ -3,6 +3,8 @@
 #include <VolcaniCore/Core/Defines.h>
 #include <VolcaniCore/Core/Math.h>
 
+#include <Platform/RendererAPI.h>
+
 using namespace VolcaniCore;
 
 namespace Magma::Graphics {
@@ -20,6 +22,7 @@ public:
 	static void EndFrame();
 
 	static void DrawQuad(const Quad&);
+	static void DrawFullscreenQuad(Ref<Framebuffer> fb, u32 attachmentIdx = 0);
 };
 
 }

@@ -21,12 +21,11 @@ public:
 	enum class Type { Texture, RenderBuffer };
 
 public:
-	Attachment(Graphics::AttachmentTarget target, Attachment::Type type,
-			   u32 width = 0, u32 height = 0, u32 id = 0)
-		: Graphics::Attachment(target),
-			m_Type(type), m_Width(width), m_Height(height), m_RendererID(id)
+	Attachment(const Graphics::AttachmentSpec& spec, Attachment::Type type,
+			   u32 index = 0)
+		: Graphics::Attachment(spec), m_Type(type)
 	{
-		
+		Create(spec, index);
 	}
 	~Attachment() {
 		if(m_Type == Attachment::Type::Texture)
@@ -43,16 +42,57 @@ public:
 	}
 
 	Attachment::Type GetType() const { return m_Type; }
-	u32 GetWidth() const { return m_Width; }
-	u32 GetHeight() const { return m_Height; }
+	u32 GetWidth() const { return Spec.Width; }
+	u32 GetHeight() const { return Spec.Height; }
 	u32 GetRendererID() const { return m_RendererID; };
 
 private:
 	Attachment::Type m_Type;
-	u32 m_Width, m_Height;
 	u32 m_RendererID;
 
-	friend class Framebuffer;
+private:
+	void Create(const Graphics::AttachmentSpec& spec, u32 index) {
+		uint32_t width  = spec.Width;
+		uint32_t height = spec.Height;
+
+		u32 internalFormat;
+		u32 filter;
+		if(spec.Target == Graphics::AttachmentTarget::Color) {
+			internalFormat = GL_RGBA8;
+			filter = GL_LINEAR;
+		}
+		else if(spec.Target == Graphics::AttachmentTarget::Depth) {
+			internalFormat = GL_DEPTH_COMPONENT32F;
+			filter = GL_LINEAR;
+		}
+		else if(spec.Target == Graphics::AttachmentTarget::Stencil) {
+			internalFormat = GL_STENCIL_INDEX8;
+			filter = GL_LINEAR;
+		}
+
+		glCreateTextures(GL_TEXTURE_2D, 1, &m_RendererID);
+		glTextureStorage2D(m_RendererID, 1, internalFormat,
+						   spec.Width, spec.Height);
+		glTextureParameteri(m_RendererID, GL_TEXTURE_MIN_FILTER, filter);
+		glTextureParameteri(m_RendererID, GL_TEXTURE_MAG_FILTER, filter);
+		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+		u32 type;
+		if(spec.Target == Graphics::AttachmentTarget::Color) {
+			if(index > 0)
+				return;
+
+			type = GL_COLOR_ATTACHMENT0;
+		}
+		else if(spec.Target == Graphics::AttachmentTarget::Depth)
+			type = GL_DEPTH_ATTACHMENT;
+		else if(spec.Target == Graphics::AttachmentTarget::Stencil)
+			type = GL_STENCIL_ATTACHMENT;
+
+		glFramebufferTexture2D(GL_FRAMEBUFFER, type + index,
+								GL_TEXTURE_2D, m_RendererID, 0);
+	}
 };
 
 class Framebuffer : public Graphics::Framebuffer {
@@ -63,28 +103,32 @@ public:
 		glGenFramebuffers(1, &m_BufferID);
 		glBindFramebuffer(GL_FRAMEBUFFER, m_BufferID);
 
-		m_Attachments.Add(
-			CreateRef<Attachment>(Graphics::AttachmentTarget::Color,
-								  Attachment::Type::Texture)
-		);
-		m_Attachments.Add(
-			CreateRef<Attachment>(Graphics::AttachmentTarget::Depth,
-								  Attachment::Type::Texture)
-		);
+		u32 colorCount = 0;
+		for(const auto& attSpec : spec.Attachments) {
+			auto att =
+				CreateRef<Attachment>(attSpec, Attachment::Type::Texture,
+									  m_Attachments.Count());
+			m_Attachments.Add(att);
+			if(attSpec.Target == Graphics::AttachmentTarget::Color)
+				colorCount++;
+		}
 
-		CreateColorAttachment();
-		CreateDepthAttachment();
-
-		uint32_t atts[] = { GL_COLOR_ATTACHMENT0 };
-		glDrawBuffers(1, atts);
+		if(colorCount == 0) {
+			glDrawBuffer(GL_NONE);
+			glReadBuffer(GL_NONE);
+		}
+		else {
+			u32* atts = new u32[colorCount];
+			for(u32 i = 0; i < colorCount; i++)
+				atts[i] = GL_COLOR_ATTACHMENT0 + i;
+			glDrawBuffers(1, atts);
+			delete[] atts;
+		}
 
 		VOLCANICORE_ASSERT(
-			glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+			glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE,
+			"[OpenGL]: Framebuffer is not complete!");
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-		// // glBindFramebuffer(GL_FRAMEBUFFER, m_BufferID);
-		// glFramebufferTexture2D(GL_FRAMEBUFFER, type + dst, GL_TEXTURE_2D, id, 0);
-		// // glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	~Framebuffer() {
@@ -97,30 +141,45 @@ public:
 
 	bool Has(Graphics::AttachmentTarget t) const override {
 		for(auto& att : m_Attachments) {
-			if(att->Target == t)
+			if(att->Spec.Target == t)
 				return true;
 		}
 
 		return false;
 	}
 
-	void Add(Graphics::AttachmentTarget t, Ref<Graphics::Attachment> att) override {
-
-	}
-
 	void Attach(Graphics::AttachmentTarget t, u32 idx, u32 dst) override {
+		u32 type;
+		switch(t) {
+			case Graphics::AttachmentTarget::Color:
+				type = GL_COLOR_ATTACHMENT0;
+				break;
+			case Graphics::AttachmentTarget::Depth:
+				type = GL_DEPTH_ATTACHMENT;
+				idx = 0;
+				break;
+			case Graphics::AttachmentTarget::Stencil:
+				type = GL_STENCIL_ATTACHMENT;
+				idx = 0;
+				break;
+		}
 
+		auto att = GetAttachment(t, idx);
+		u32 id = att->GetRendererID();
+
+		glBindFramebuffer(GL_FRAMEBUFFER, m_BufferID);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, type + dst, GL_TEXTURE_2D, id, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	Ref<Graphics::Attachment> Get(Graphics::AttachmentTarget t, u32 idx = 0) const override {
-
-		return nullptr;
+		return GetAttachment(t, idx);
 	}
 
-	Ref<Attachment> GetAttachment(Graphics::AttachmentTarget t, u32 idx = 0) {
+	Ref<Attachment> GetAttachment(Graphics::AttachmentTarget t, u32 idx = 0) const {
 		u32 i = 0;
 		for(auto att : m_Attachments) {
-			if(att->Target == t && i++ == idx)
+			if(att->Spec.Target == t && i++ == idx)
 				return att;
 		}
 
@@ -128,22 +187,6 @@ public:
 	}
 
 private:
-	void CreateColorAttachment(u32 index = 0) {
-
-	}
-
-	void CreateDepthAttachment() {
-
-	}
-
-	void CreateStencilAttachment() {
-
-	}
-
-	void CreateDepthStencilAttachment() {
-
-	}
-
 	List<Ref<Attachment>> m_Attachments;
 	u32 m_BufferID;
 };

@@ -10,7 +10,6 @@ using namespace VolcanicWindow;
 
 namespace Magma::Graphics {
 
-static DrawBuffer* ScreenBuffer;
 static Ref<Shader> ScreenShader;
 static DrawBuffer* RectBuffer;
 static Ref<Shader> RectShader;
@@ -22,48 +21,32 @@ void Renderer::Init() {
 	RendererAPI::Create(RendererBackend::OpenGL);
 #endif
 
-	ScreenBuffer =
-		RendererAPI::Get()->NewBuffer({
-			.VertexCount = 6,
-			.DynamicVertices = false,
-			.VertexLayout = {
-				{
-					{ "TexCoords", BufferDataType::Vec2 }
-				},
-				false, // Dynamic
-				false // Instanced
-			}
-		});
-
-	float screenCoords[] =
-	{
-		0.0f, 1.0f,
-		0.0f, 0.0f,
-		1.0f, 0.0f,
-
-		1.0f, 0.0f,
-		1.0f, 1.0f,
-		0.0f, 1.0f
-	};
-
-	ScreenBuffer->Add(DrawBufferIndex::Vertex, screenCoords, 6);
-
 	std::string vertexShaderStr = R"(
 		#version 460 core
 
-		layout(location = 0) in vec2 a_TexCoords;
 		layout(location = 0) out vec2 v_TexCoords;
+
+		const vec2 Vertices[4] =
+			vec2[4](
+				vec2(-1.0f, -1.0f),
+				vec2( 1.0f, -1.0f),
+				vec2( 1.0f,  1.0f),
+				vec2(-1.0f,  1.0f)
+			);
+
+		const int Indices[6] = int[6](0, 2, 1, 2, 0, 3);
 
 		void main()
 		{
-			v_TexCoords = a_TexCoords;
-
-			gl_Position = vec4(2.0 * a_TexCoords - 1.0, 0.0, 1.0);
+			v_TexCoords = Vertices[Indices[gl_VertexID]];
+			gl_Position = vec4(v_TexCoords, 0.0, 1.0);
 		}
 	)";
 
 	std::string fragmentShaderStr = R"(
 		#version 460 core
+
+		uniform sampler2D u_ScreenTexture;
 
 		layout(location = 0) in vec2 v_TexCoords;
 
@@ -71,7 +54,7 @@ void Renderer::Init() {
 
 		void main()
 		{
-			// FragColor = vec4(texture(u_ScreenTexture, v_TexCoords).rgb, 1.0);
+			// FragColor = texture(u_ScreenTexture, v_TexCoords);
 			FragColor = vec4(v_TexCoords, 1.0, 1.0);
 		}
 	)";
@@ -152,6 +135,10 @@ void Renderer::Init() {
 }
 
 void Renderer::Close() {
+	ScreenShader.reset();
+	RectShader.reset();
+	delete RectBuffer;
+
 	RendererAPI::Shutdown();
 }
 
@@ -191,6 +178,37 @@ void Renderer::DrawQuad(const Quad& quad) {
 	RectBuffer->Add(DrawBufferIndex::Instance, &quad, 1);
 	DrawCall& call = RectCommand->DrawCalls[0];
 	call.InstanceCount++;
+}
+
+void Renderer::DrawFullscreenQuad(Ref<Framebuffer> fb, u32 attachmentIdx)
+{
+	if(!fb->Has(Graphics::AttachmentTarget::Color)) {
+		VOLCANICORE_LOG_WARNING("Framebuffer has no color attachment");
+		return;
+	}
+
+	auto att = fb->Get(Graphics::AttachmentTarget::Color, attachmentIdx);
+
+	auto pass = RendererAPI::Get()->NewPass(nullptr);
+	pass->Pipeline = ScreenShader;
+
+	auto cmd = RendererAPI::Get()->NewCommand(pass);
+	auto window = Application::As<WindowApplication>()->GetWindow();
+	cmd->Clear = false;
+	cmd->ClearColor = { 0.0f, 0.0f, 0.0f, 0.0f };
+	cmd->Viewport = true;
+	cmd->ViewportW = window->GetWidth();
+	cmd->ViewportH = window->GetHeight();
+	cmd->DepthTesting = DepthTestingMode::Off;
+	cmd->Blending = BlendingMode::Greatest;
+	cmd->Culling = CullingMode::Off;
+
+	cmd->Uniforms.Set("u_ScreenTexture", AttachmentSlot{ att, 0 });
+
+	DrawCall* call = cmd->NewCall();
+	call->Primitive = DrawPrimitive::Triangle;
+	call->Partition = DrawPartition::Single;
+	call->VertexCount = 6;
 }
 
 }
