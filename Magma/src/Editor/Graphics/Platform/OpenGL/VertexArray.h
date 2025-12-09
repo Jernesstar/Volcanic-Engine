@@ -64,7 +64,7 @@ public:
 
 		for(auto& element : layout) {
 			u64 count = element.Count;
-			bool normalize = element.Normalize ? GL_TRUE : GL_FALSE;
+			bool normalize = element.Normalize;
 
 			switch(element.Type) {
 				case Graphics::BufferDataType::Int:
@@ -78,6 +78,7 @@ public:
 				case Graphics::BufferDataType::Vec2:
 				case Graphics::BufferDataType::Vec3:
 				case Graphics::BufferDataType::Vec4:
+				case Graphics::BufferDataType::UVec4:
 				{
 					glEnableVertexAttribArray(m_BufferIndex);
 					auto type = normalize ? GL_UNSIGNED_BYTE : GL_FLOAT;

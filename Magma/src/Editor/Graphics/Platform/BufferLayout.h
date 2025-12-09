@@ -7,7 +7,10 @@ using namespace VolcaniCore;
 
 namespace Magma::Graphics {
 
-enum class BufferDataType { Int, Float, Vec2, Vec3, Vec4, Mat2, Mat3, Mat4 };
+enum class BufferDataType {
+	Int, Float, Vec2, Vec3, Vec4, Mat2, Mat3, Mat4,
+	UVec4
+};
 
 struct BufferElement {
 	const std::string Name;
@@ -36,6 +39,7 @@ private:
 			case BufferDataType::Vec2:	return 4 * 2;
 			case BufferDataType::Vec3:	return 4 * 3;
 			case BufferDataType::Vec4:	return 4 * 4;
+			case BufferDataType::UVec4:	return 4;
 			case BufferDataType::Mat2:	return 4 * 2 * 2;
 			case BufferDataType::Mat3:	return 4 * 3 * 3;
 			case BufferDataType::Mat4:	return 4 * 4 * 4;
@@ -50,6 +54,7 @@ private:
 			case BufferDataType::Vec2:	return 2;
 			case BufferDataType::Vec3:	return 3;
 			case BufferDataType::Vec4:	return 4;
+			case BufferDataType::UVec4:	return 4;
 			case BufferDataType::Mat2:	return 2; // 2 * Vec2
 			case BufferDataType::Mat3:	return 3; // 3 * Vec3
 			case BufferDataType::Mat4:	return 4; // 4 * Vec4

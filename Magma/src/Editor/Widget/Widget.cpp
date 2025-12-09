@@ -72,7 +72,7 @@ public:
 				v_FragColor = a_Color;
 
 				vec2 pos = a_Position + u_Translate;
-				vec4 outPos = u_Projection * u_Transform * vec4(pos, 0.0, 1.0);
+				vec4 outPos = u_Projection * vec4(pos, 0.0, 1.0);
 
 				gl_Position = outPos;
 			}
@@ -95,9 +95,7 @@ public:
 					return;
 				}
 
-				vec4 texColor = texture(u_Texture, a_FragTexCoord);
-				FragColor = a_FragColor * texColor;
-				FragColor = vec4(a_FragTexCoord, 0.0, 1.0);
+				FragColor = texture(u_Texture, a_FragTexCoord);
 			}
 		)";
 
@@ -118,7 +116,7 @@ public:
 				{
 					{
 						{ "a_Position", BufferDataType::Vec2 },
-						{ "a_Color",	BufferDataType::Vec4, true },
+						{ "a_Color",	BufferDataType::UVec4, true },
 						{ "a_TexCoord", BufferDataType::Vec2 },
 					},
 					false, // Dynamic
@@ -210,16 +208,8 @@ public:
 		auto window = Application::As<WindowApplication>()->GetWindow();
 		auto width = (f32)window->GetWidth();
 		auto height = (f32)window->GetHeight();
-		auto projMat =
-			Rml::Matrix4f::ProjectOrtho(0, width, height, 0, -10000, 10000);
-		cmd->Uniforms.Set("u_Projection",
-			Mat4{
-				projMat[0][0], projMat[1][0], projMat[2][0], projMat[3][0],
-				projMat[0][1], projMat[1][1], projMat[2][1], projMat[3][1],
-				projMat[0][2], projMat[1][2], projMat[2][2], projMat[3][2],
-				projMat[0][3], projMat[1][3], projMat[2][3], projMat[3][3],
-			}
-		);
+		auto projMat = glm::ortho(0.0f, width, 0.0f, height, -1.0f, 100.0f);
+		cmd->Uniforms.Set("u_Projection", projMat);
 
 		auto* call = cmd->NewCall();
 		call->Primitive = DrawPrimitive::Triangle;
@@ -230,8 +220,11 @@ public:
 	void ReleaseGeometry(CompiledGeometryHandle geomHandle) override {
 		VOLCANICORE_LOG_INFO("ReleaseGeometry");
 
-		auto bufferIdx = (u64)geomHandle;
-		Buffers.Pop(bufferIdx - 1);
+		auto idx = (u64)geomHandle;
+		if(idx == 0 || idx > Buffers.Count())
+			return;
+
+		Buffers.Pop(idx - 1);
 	}
 
 	TextureHandle LoadTexture(Vector2i& texDim, const String& src) override {
@@ -278,11 +271,11 @@ public:
 	void ReleaseTexture(TextureHandle texture) override {
 		VOLCANICORE_LOG_INFO("ReleaseTexture");
 
-		u64 id = (u64)texture;
-		if(id == 0 || id > TextureHandles.Count())
+		u64 idx = (u64)texture;
+		if(idx == 0 || idx > TextureHandles.Count())
 			return;
 
-		TextureHandles.Pop(id - 1);
+		TextureHandles.Pop(idx - 1);
 	}
 
 	void EnableScissorRegion(bool enable) override {
@@ -414,8 +407,7 @@ void WidgetManager::Init() {
 	s_Doc->Show();
 
 	Rml::Element* element = s_Doc->GetElementById("world");
-	// element->SetInnerRML(reinterpret_cast<const char*>(u8"🌍"));
-	element->SetInnerRML(reinterpret_cast<const char*>("Hello, World!"));
+	element->SetInnerRML(reinterpret_cast<const char*>(u8"🌍"));
 	element->SetProperty("font-size", "1.5em");
 
 	Events::RegisterListener<WindowResizedEvent>(
