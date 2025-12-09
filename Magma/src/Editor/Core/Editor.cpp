@@ -57,8 +57,7 @@ void Editor::Open() {
 	Renderer::Init();
 	WidgetManager::Init();
 
-	// WidgetManager::Load("Magma/assets/UI/component.asx");
-	// WidgetManager::Load("Magma/assets/UI/lavaflow.asx");
+	WidgetManager::Load("Magma/assets/UI/test.rml");
 
 	Application::PopDir();
 

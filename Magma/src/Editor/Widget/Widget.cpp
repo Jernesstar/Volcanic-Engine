@@ -400,13 +400,6 @@ Rml::SystemInterface* s_SystemInterface = nullptr;
 WidgetRendererInterface* s_RenderInterface = nullptr;
 Rml::Context* s_Context = nullptr;
 
-struct TestDataModel {
-	bool ShowText = true;
-	Rml::String Animal = "dog";
-};
-
-static TestDataModel TestData;
-
 static ElementDocument* s_Doc = nullptr;
 
 void WidgetManager::Init() {
@@ -426,22 +419,6 @@ void WidgetManager::Init() {
 	VOLCANICORE_ASSERT(s_Context, "Could not create RmlUI context!");
 
 	Rml::LoadFontFace("Magma/assets/fonts/JetBrainsMono-Bold.ttf");
-
-	TestData = { };
-	if(Rml::DataModelConstructor model =
-		s_Context->CreateDataModel("animals"))
-	{
-		model.Bind("show_text", &TestData.ShowText);
-		model.Bind("animal", &TestData.Animal);
-	}
-
-	s_Doc =
-		s_Context->LoadDocument("Magma/assets/UI/test.rml");
-	s_Doc->Show();
-
-	Rml::Element* element = s_Doc->GetElementById("world");
-	element->SetInnerRML(reinterpret_cast<const char*>(u8"🌍"));
-	element->SetProperty("font-size", "1.5em");
 
 	Events::RegisterListener<WindowResizedEvent>(
 		[](WindowResizedEvent& e)
@@ -492,14 +469,15 @@ void WidgetManager::Close() {
 }
 
 void WidgetManager::Load(const std::string& path) {
-	if(m_Root)
-		m_Root.reset();
-
+	s_Doc = s_Context->LoadDocument(path);
+	s_Doc->Show();
 	m_RootPath = path;
 	VOLCANICORE_LOG_INFO("Successfully loaded UI");
 }
 
 void WidgetManager::Reload() {
+	if(s_Doc)
+		s_Context->UnloadDocument(s_Doc);
 	Load(m_RootPath);
 }
 
