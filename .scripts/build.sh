@@ -14,3 +14,7 @@ fi
 
 cd build
 make -f "$target"
+
+cd -
+
+sudo ./.scripts/update.sh

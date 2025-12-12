@@ -6,6 +6,10 @@
     </head>
     <body>
         <h1>RmlUi</h1>
-        <progress>10</progress>
+        <p>Paragraph</p>
     </body>
 </rml>
+
+<Root default_style="style.css" style="window.css">
+    
+</Root>

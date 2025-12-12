@@ -470,6 +470,8 @@ void WidgetManager::Close() {
 
 void WidgetManager::Load(const std::string& path) {
 	s_Doc = s_Context->LoadDocument(path);
+	s_Doc->AddElement();
+
 	s_Doc->Show();
 	m_RootPath = path;
 	VOLCANICORE_LOG_INFO("Successfully loaded UI");

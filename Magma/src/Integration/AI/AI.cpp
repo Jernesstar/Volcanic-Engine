@@ -14,7 +14,7 @@ namespace Magma::AI {
 class LlamaHttpEmbeddingStore : public EmbeddingStore {
 public:
 	LlamaHttpEmbeddingStore(u16 port = 8081)
-		: m_Client("localhost", port)
+		: m_Client("127.0.0.1", port)
 	{
 		std::string path;
 #if defined(VOLCANIC_WINDOWS)
