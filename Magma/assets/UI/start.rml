@@ -1,15 +1,3 @@
-<rml>
-    <head>
-        <title>Hello world</title>
-        <link type="text/rcss" href="style.rcss"/>
-        <link type="text/rcss" href="window.rcss"/>
-    </head>
-    <body>
-        <h1>RmlUi</h1>
-        <p>Paragraph</p>
-    </body>
-</rml>
-
 <Root default_style="style.css" style="window.css">
     
 </Root>

@@ -2,21 +2,12 @@
 
 namespace Magma::Collaboration {
 
-enum class Role {
-	Owner,
-	Admin,
-	Member
-};
-
-class Team {
-public:
-	
+class Session {
 
 };
 
-class Organization {
-public:
-	
+class Client {
+
 };
 
 }

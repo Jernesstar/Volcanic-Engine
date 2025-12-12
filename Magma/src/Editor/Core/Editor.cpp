@@ -15,7 +15,7 @@
 
 // #include <Lava/Core/Lava.h>
 
-// #include "Integration/AI/AI.h"
+#include "Integration/AI/AI.h"
 // #include "Integration/VersionControl/VersionControl.h"
 // #include "Integration/Lang/ScriptManager.h"
 
@@ -68,8 +68,8 @@ void Editor::Open() {
 				WidgetManager::Reload();
 		});
 
-	// AI::AIManager::Init();
-	// AI::AIManager::RunAnalysis();
+	AI::AIManager::Init();
+	AI::AIManager::RunAnalysis();
 }
 
 void Editor::Close() {

@@ -17,6 +17,30 @@ using namespace Lava::Script;
 
 namespace Magma::UI {
 
+class WidgetManager {
+public:
+	static void Init();
+	static void Close();
+
+	static void Update(TimeStep ts);
+	static void Render();
+
+	static void Load(const std::string& path);
+	static void Reload();
+
+	// static Ref<Widget> GetRoot() { return m_Root; }
+
+	// static Window* Window(const std::string& name);
+	// static Container* Container(const std::string& name);
+	// static Dropdown* Dropdown(const std::string& name);
+	// static Text* Text(const std::string& name);
+	// static Image* Image(const std::string& name);
+
+private:
+	// inline static Ref<Widget> m_Root;
+	inline static std::string m_RootPath = "";
+};
+
 enum class WidgetType {
 	None,
 	Root,
@@ -303,30 +327,6 @@ public:
 
 	void Begin() override;
 	void End() override;
-};
-
-class WidgetManager {
-public:
-	static void Init();
-	static void Close();
-
-	static void Update(TimeStep ts);
-	static void Render();
-
-	static void Load(const std::string& path);
-	static void Reload();
-
-	static Ref<Widget> GetRoot() { return m_Root; }
-
-	// static Window* Window(const std::string& name);
-	// static Container* Container(const std::string& name);
-	// static Dropdown* Dropdown(const std::string& name);
-	// static Text* Text(const std::string& name);
-	// static Image* Image(const std::string& name);
-
-private:
-	inline static Ref<Widget> m_Root;
-	inline static std::string m_RootPath = "";
 };
 
 }
