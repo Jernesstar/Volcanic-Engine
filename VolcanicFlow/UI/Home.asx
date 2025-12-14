@@ -1,0 +1,13 @@
+import Header from "Volcanic/UI/Header.asx"
+
+UIComponent HomePage() {
+    return (
+        <Title text="This is the homepage" class="Title"/>
+        <Header>{username + "_user"}</Header>
+        <Container>
+            <Button style="HomeButton" icon="HomeButton.svg"/>
+        </Container>
+    )
+
+    "Dummy Code"
+}

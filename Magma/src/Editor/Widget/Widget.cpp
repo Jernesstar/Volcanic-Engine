@@ -458,8 +458,6 @@ void WidgetManager::Init() {
 }
 
 void WidgetManager::Close() {
-	m_Root.reset();
-
 	Rml::Shutdown();
 
 	delete s_SystemInterface;

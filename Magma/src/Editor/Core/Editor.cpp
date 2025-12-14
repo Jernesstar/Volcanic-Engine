@@ -21,6 +21,7 @@
 
 #include "Utils/YAMLSerializer.h"
 #include "Widget/Widget.h"
+#include "Widget/ASX.h"
 #include "Graphics/Renderer.h"
 #include "Graphics/Platform/RendererAPI.h"
 #include "Networking/Networking.h"
@@ -57,7 +58,7 @@ void Editor::Open() {
 	Renderer::Init();
 	WidgetManager::Init();
 
-	WidgetManager::Load("Magma/assets/UI/test.rml");
+	WidgetManager::Load("Magma/assets/UI/start.rml");
 
 	Application::PopDir();
 
@@ -68,16 +69,30 @@ void Editor::Open() {
 				WidgetManager::Reload();
 		});
 
-	AI::AIManager::Init();
-	AI::AIManager::RunAnalysis();
+	// AI::AIManager::Init();
+	// AI::AIManager::RunAnalysis();
+
+	auto str = FileUtils::ReadFile("VolcanicFlow/UI/Home.asx");
+	ASXLexer lexer(str);
+
+	while(true) {
+		auto token = lexer.NextToken();
+
+		VOLCANICORE_LOG_INFO(
+			"{ %i } { %02i:%02i } %s",
+			(u32)token.Type, token.Line, token.Column, token.Lexeme.c_str());
+
+		if(token.Type == TokenType::EndOfFile)
+			break;
+	}
 }
 
 void Editor::Close() {
+	// AI::AIManager::Close();
+
 	WidgetManager::Close();
 	Renderer::Close();
 	AssetManager::Close();
-
-	// AI::AIManager::Close();
 }
 
 void Editor::Load(const CommandLineArgs& args) {
