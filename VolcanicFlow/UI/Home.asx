@@ -1,11 +1,19 @@
-import Header from "Volcanic/UI/Header.asx"
+import { Header } from "Volcanic/UI/Header.asx"
 
 UIComponent HomePage() {
     return (
         <Title text="This is the homepage" class="Title"/>
-        <Header>{username + "_user"}</Header>
+        <Header>{ username + "_user" }</Header>
         <Container>
             <Button style="HomeButton" icon="HomeButton.svg"/>
+            {
+                if(loggedIn) (
+                    <Button style="AccountButton" icon="AccountButton.svg"/>
+                )
+                else (
+                    <Button style="LogInButton" icon="LogInButton.svg"/>
+                )
+            }
         </Container>
     )
 

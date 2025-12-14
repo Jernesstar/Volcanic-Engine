@@ -72,19 +72,7 @@ void Editor::Open() {
 	// AI::AIManager::Init();
 	// AI::AIManager::RunAnalysis();
 
-	auto str = FileUtils::ReadFile("VolcanicFlow/UI/Home.asx");
-	ASXLexer lexer(str);
-
-	while(true) {
-		auto token = lexer.NextToken();
-
-		VOLCANICORE_LOG_INFO(
-			"{ %i } { %02i:%02i } %s",
-			(u32)token.Type, token.Line, token.Column, token.Lexeme.c_str());
-
-		if(token.Type == TokenType::EndOfFile)
-			break;
-	}
+	ASXCompiler::Compile("VolcanicFlow/UI/Home.asx");
 }
 
 void Editor::Close() {
