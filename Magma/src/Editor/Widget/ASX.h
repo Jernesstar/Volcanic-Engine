@@ -142,7 +142,7 @@ public:
 
 class ASXCompiler {
 public:
-	static ASXNode* Compile(const std::string& path);
+	static void Compile(const std::string& path);
 
 public:
 	static void Parse(ASXLexer& lexer, Token token, ASXNode* parent);

@@ -1,5 +1,7 @@
 import { Header } from "Volcanic/UI/Header.asx"
 
+auto element = ( <Text label="Piece of text"/> );
+
 UIComponent HomePage() {
     return (
         <Title text="This is the homepage" class="Title"/>
@@ -15,7 +17,7 @@ UIComponent HomePage() {
                 )
             }
         </Container>
-    )
+    );
 
-    "Dummy Code"
+    "Dummy Code";
 }
