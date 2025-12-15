@@ -156,9 +156,6 @@ void ASXCompiler::Compile(const std::string& path) {
 	ASXLexer lexer(str);
 
 	ASXNode* root = new ASXRootNode();
-	printf("Root\n");
-	printf("  |\n");
-	printf("  -->");
 	while(true) {
 		auto token = lexer.NextToken();
 		if(token.Type == TokenType::EndOfFile)
@@ -171,10 +168,8 @@ void ASXCompiler::Parse(ASXLexer& lexer, Token token, ASXNode* parent) {
 	// VOLCANICORE_LOG_INFO("{ %i, %s }", token.Type, token.Lexeme.c_str());
 	// return;
 
-	if(token.Type == TokenType::EndOfFile) {
-		printf("EOF\n");
+	if(token.Type == TokenType::EndOfFile)
 		return;
-	}
 
 	ASXNode* node = nullptr;
 	if((u32)token.Type <= (u32)TokenType::Symbol) { // AngelScript
@@ -194,9 +189,6 @@ void ASXCompiler::Parse(ASXLexer& lexer, Token token, ASXNode* parent) {
 		// }
 	}
 	else if(token.Type == TokenType::XMLBlockOpen) {
-		printf(" BlockOpen\n");
-		printf("\t|\n");
-		printf("\t-->");
 		node = new ASXBlockNode();
 		while(true) {
 			auto t = lexer.NextToken();
@@ -204,7 +196,6 @@ void ASXCompiler::Parse(ASXLexer& lexer, Token token, ASXNode* parent) {
 				break;
 			Parse(lexer, t, node);
 		}
-		printf(" BlockClose\n");
 	}
 	else if(token.Type == TokenType::XMLTagOpen) {
 		node = new ASXElementNode();
@@ -212,17 +203,13 @@ void ASXCompiler::Parse(ASXLexer& lexer, Token token, ASXNode* parent) {
 		auto nameToken = lexer.NextToken();
 		VOLCANICORE_ASSERT(nameToken.Type == TokenType::XMLIdentifier);
 		n->TypeName = nameToken.Lexeme;
-		printf(" Tag:%s<", nameToken.Lexeme.c_str());
 
 		// Parse attributes
 		while(true) {
 			auto attrToken = lexer.NextToken();
-			if(attrToken.Type == TokenType::XMLTagClose) {
-				printf(">\n");
+			if(attrToken.Type == TokenType::XMLTagClose)
 				break;
-			}
 			if(attrToken.Type == TokenType::XMLSelfClose) {
-				printf("/>\n");
 				parent->Children.Add(node);
 				return;
 			}
@@ -231,8 +218,6 @@ void ASXCompiler::Parse(ASXLexer& lexer, Token token, ASXNode* parent) {
 			auto valueToken = lexer.NextToken();
 			VOLCANICORE_ASSERT(valueToken.Type == TokenType::XMLString);
 			n->Attributes[attrToken.Lexeme] = valueToken.Lexeme;
-
-			printf("%s:%s,", attrToken.Lexeme.c_str(), valueToken.Lexeme.c_str());
 		}
 
 		// If not self close tag, parse children
@@ -261,6 +246,31 @@ void ASXCompiler::Parse(ASXLexer& lexer, Token token, ASXNode* parent) {
 	}
 
 	parent->Children.Add(node);
+}
+
+struct DataBinding {
+	bool Show;
+};
+
+void ASXCompiler::Emit(ASXNode* node, File& script, File& xml) {
+	if(node->Type == ASXNodeType::Element) {
+		auto n = node->As<ASXElementNode>();
+		xml.Write("<" + n->TypeName);
+		for(auto& [k, v] : n->Attributes) {
+			if(v.substr(0, 2) == "{{") {
+				// Data binding
+			}
+			xml.Write(" " + k + "=\"" + v + "\"");
+		}
+		if(n->Children.Count() == 0)
+			xml.Write("/>\n");
+		else {
+			xml.Write(">\n");
+			for(auto& child : node->Children)
+				Emit(child, script, xml);
+			xml.Write("</" + n->TypeName + ">\n");
+		}
+	}
 }
 
 }

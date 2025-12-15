@@ -3,6 +3,7 @@
 #include <VolcaniCore/Core/Defines.h>
 #include <VolcaniCore/Core/Template.h>
 #include <VolcaniCore/Core/List.h>
+#include <VolcaniCore/Core/FileUtils.h>
 
 using namespace VolcaniCore;
 
@@ -146,6 +147,7 @@ public:
 
 public:
 	static void Parse(ASXLexer& lexer, Token token, ASXNode* parent);
+	static void Emit(ASXNode* node, File& script, File& xml);
 };
 
 }
