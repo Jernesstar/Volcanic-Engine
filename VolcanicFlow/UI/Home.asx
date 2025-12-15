@@ -1,40 +1,32 @@
-import Header from "Volcanic-UI"
+#include "User.asx"
 
-auto class = "Title2";
+auto className = "Title2";
 auto element = ( <Text label="Piece of text"/> );
-auto element = Magma.CreateElement("Text", { { "label", "Piece of text" } });
 
-UIComponent HomePage() {
+UIElement HomePage() {
     return (
-        <Title text="This is the homepage" class={class}/>
+        <Title text="This is the homepage" class={className}/>
         <Header>{ username + "_user" }</Header>
         <Container type="Horizontal">
             <Button style="HomeButton" icon="HomeButton.svg"/>
         {
-            if(loggedIn)
-            ( <Button style="AccountButton" icon="AccountButton.svg"/> )
+            if(UserLoggedIn)
+                ( <Button style="AccountButton" icon="AccountButton.svg"/> )
             else
-            ( <Button style="LogInButton" icon="LogInButton.svg"/> )
+                ( <Button style="LogInButton" icon="LogInButton.svg"/> )
+        }
+        </Container>
+        <Container type="Vertical">
+        {
+            auto projects = Projects.Top(5);
+            for(auto p : projects)
+            {
+            (
+                <Label text={p.Name}/>
+                <Icon path="ProjectIcon.svg"/>
+            )
+            }
         }
         </Container>
     );
-
-    return
-        Magma.CreateRootElement(
-        {
-            Magma.CreateElement("Title", {
-                { "text", "This is the homepage" },
-                { "class", class }
-            }),
-            Magma.CreateElement("Header", { }, username + "_user"),
-            Magma.CreateRootElement("Container", { },
-            {
-                Magma.CreateElement("Button", {
-                    { "style", "HomeButton" },
-                    { "icon", "HomeButton.svg" }
-                }),
-            })
-        });
-
-    "Dummy Code";
 }

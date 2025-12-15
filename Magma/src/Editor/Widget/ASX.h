@@ -87,12 +87,11 @@ enum class ASXNodeType {
 	Script,    // AngelScript
 	Block,     // XML
 	Element,   // XML tag
-	Expression // { ... }
 };
 
 class ASXNode : public Derivable<ASXNode> {
 public:
-	ASXNodeType Type = ASXNodeType::Script;
+	const ASXNodeType Type;
 	List<ASXNode*> Children;
 
 public:
@@ -125,20 +124,12 @@ public:
 class ASXElementNode : public ASXNode {
 public:
 	std::string TypeName;
-	Map<std::string, std::string> Attributes;
+	Map<std::string, Token> Attributes; // { name, string | expression }
+	std::string Content;
 
 public:
 	ASXElementNode()
 		: ASXNode(ASXNodeType::Element) { }
-};
-
-class ASXExpressionNode : public ASXNode {
-public:
-	std::string Expression;
-
-public:
-	ASXExpressionNode()
-		: ASXNode(ASXNodeType::Expression) { }
 };
 
 class ASXCompiler {
@@ -147,7 +138,7 @@ public:
 
 public:
 	static void Parse(ASXLexer& lexer, Token token, ASXNode* parent);
-	static void Emit(ASXNode* node, File& script, File& xml);
+	static void Emit(ASXNode* node, File& script);
 };
 
 }
