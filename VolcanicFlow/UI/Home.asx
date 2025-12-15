@@ -21,10 +21,10 @@ UIElement HomePage() {
             auto projects = Projects.Top(5);
             for(auto p : projects)
             {
-            (
-                <Label text={p.Name}/>
-                <Icon path="ProjectIcon.svg"/>
-            )
+                (
+                    <Label text={p.Name}/>
+                    <Icon path="ProjectIcon.svg"/>
+                )
             }
         }
         </Container>

@@ -168,38 +168,46 @@ void ASXCompiler::Compile(const std::string& path) {
 }
 
 void ASXCompiler::Parse(ASXLexer& lexer, Token token, ASXNode* parent) {
-	VOLCANICORE_LOG_INFO("{ %i, %s }", token.Type, token.Lexeme.c_str());
-	// return;
-
-	if(token.Type == TokenType::EndOfFile)
+	if(token.Type == TokenType::EndOfFile) {
+		VOLCANICORE_LOG_INFO("End of file");
 		return;
+	}
 
 	ASXNode* node = nullptr;
 	if((u32)token.Type <= (u32)TokenType::Symbol) { // AngelScript
-		// node = new ASXScriptNode();
-		// auto n = node->As<ASXScriptNode>();
+		node = new ASXScriptNode();
+		auto n = node->As<ASXScriptNode>();
+		n->Script = token.Lexeme;
 
-		// if(token.Lexeme == "#") { // include
-		// 	while(true) {
-		// 		auto t = lexer.NextToken();
-		// 		n->Script += t.Lexeme;
-		// 		if(t.Type == TokenType::String)
-		// 			break;
-		// 	}
-		// }
-		// else {
-		// 	while(true) {
-		// 		auto t = lexer.NextToken();
-		// 		if(t.Type == TokenType::XMLBlockOpen) {
-		// 			n->Script += "{0}"; 
-		// 			Parse(lexer, t, node);
-		// 		}
+		if(token.Lexeme == "#") { // include
+			while(true) {
+				auto t = lexer.NextToken();
+				n->Script += t.Lexeme + " ";
+				if(t.Type == TokenType::String)
+					break;
+			}
+		}
+		else {
+			while(true) {
+				auto t = lexer.NextToken();
+				if(t.Type == TokenType::XMLBlockOpen) {
+					n->Script += " {0};";
+					Parse(lexer, t, node);
+					break;
+				}
+				// if(t.Type == TokenType::ExpressionClose) {
+				// 	lexer.Revert();
+				// 	lexer.Revert();
+				// 	break;
+				// }
 
-		// 		n->Script += t.Lexeme;
-		// 		if(t.Lexeme == ";")
-		// 			break;
-		// 	}
-		// }
+				n->Script += " " + t.Lexeme;
+				if(t.Lexeme == ";")
+					break;
+			}
+		}
+
+		printf("Script { %s }\n", n->Script.c_str());
 	}
 	else if(token.Type == TokenType::XMLBlockOpen) {
 		node = new ASXBlockNode();
@@ -227,7 +235,8 @@ void ASXCompiler::Parse(ASXLexer& lexer, Token token, ASXNode* parent) {
 				return;
 			}
 
-			VOLCANICORE_ASSERT(attrToken.Type == TokenType::XMLIdentifier);
+			VOLCANICORE_ASSERT(attrToken.Type == TokenType::XMLIdentifier,
+				std::format("Invalid attribute name: {0}", attrToken.Lexeme).c_str());
 			auto valueToken = lexer.NextToken();
 			if(valueToken.Type == TokenType::XMLString)
 				n->Attributes[attrToken.Lexeme] = valueToken;
@@ -254,10 +263,9 @@ void ASXCompiler::Parse(ASXLexer& lexer, Token token, ASXNode* parent) {
 		// Parse end tag
 		auto endToken = lexer.NextToken();
 		VOLCANICORE_ASSERT(endToken.Lexeme == nameToken.Lexeme,
-			std::format("{0}", endToken.Lexeme).c_str());
+			std::format("Missmatched end tag name: {0} != {1}", nameToken.Lexeme, endToken.Lexeme).c_str());
 		VOLCANICORE_ASSERT(lexer.NextToken().Type == TokenType::XMLTagClose);
 	}
-
 	else if(token.Type == TokenType::ExpressionOpen) {
 		node = new ASXScriptNode();
 		while(true) {
@@ -266,6 +274,10 @@ void ASXCompiler::Parse(ASXLexer& lexer, Token token, ASXNode* parent) {
 				break;
 			Parse(lexer, t, node);
 		}
+	}
+	else {
+		VOLCANICORE_LOG_INFO("Unknown token: %s", token.Lexeme.c_str());
+		return;
 	}
 
 	parent->Children.Add(node);
