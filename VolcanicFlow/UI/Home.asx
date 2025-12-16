@@ -1,12 +1,13 @@
 #include "User.asx"
 
 auto className = "Title2";
-auto element = ( <Text label="Piece of text"/> );
+auto element = ( <Text label="Piece of text"/> )
 
 UIElement HomePage() {
     return (
         <Title text="This is the homepage" class={className}/>
         <Header>{ username + "_user" }</Header>
+        <TextBox>This is the grey text {{data}}</TextBox>
         <Container type="Horizontal">
             <Button style="HomeButton" icon="HomeButton.svg"/>
         {
@@ -28,5 +29,5 @@ UIElement HomePage() {
             }
         }
         </Container>
-    );
+    )
 }

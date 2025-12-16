@@ -71,8 +71,6 @@ void Editor::Open() {
 
 	// AI::AIManager::Init();
 	// AI::AIManager::RunAnalysis();
-
-	ASXCompiler::Compile("VolcanicFlow/UI/Home.asx");
 }
 
 void Editor::Close() {

@@ -31,6 +31,10 @@ enum class TokenType {
 	String,            // "string"
 	Symbol,            // ;, :, *, /, }, ), etc
 
+	// Expressions
+	ExpressionOpen,    // {
+	ExpressionClose,   // }
+
 	// XML
 	XMLTagOpen,        // <
 	XMLTagClose,       // >
@@ -42,10 +46,6 @@ enum class TokenType {
 	// ASX
 	XMLBlockOpen,      // (<
 	XMLBlockClose,     // >)
-
-	// Expressions
-	ExpressionOpen,    // {
-	ExpressionClose,   // }
 
 	EndOfFile
 };

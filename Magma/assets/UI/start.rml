@@ -2,7 +2,7 @@
     <head>
         <title>Hello world</title>
         <link type="text/rcss" href="style.rcss"/>
-        <link type="text/rcss" href="window.rcss"/>
+        <link type="text/rcss" href="start.rcss"/>
     </head>
     <body>
         <h1>RmlUi</h1>
