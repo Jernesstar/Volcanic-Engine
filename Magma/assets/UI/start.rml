@@ -1,11 +1,54 @@
 <rml>
-    <head>
-        <title>Hello world</title>
-        <link type="text/rcss" href="style.rcss"/>
-        <link type="text/rcss" href="start.rcss"/>
-    </head>
-    <body>
-        <h1>RmlUi</h1>
-        <p>Paragraph</p>
-    </body>
+<head>
+    <link type="text/rcss" href="start.rcss"/>
+    <link type="text/rcss" href="style.rcss"/>
+</head>
+
+<body>
+    <!-- ========================= -->
+    <!-- 1. TITLE BAR -->
+    <!-- ========================= -->
+    <div id="title-bar">
+        <div id="title-left">
+            <!-- <img src="../images/VolcanicDisplay.png" class="logo"/> -->
+            <!-- <span class="title-text">Volcanic Editor</span> -->
+        </div>
+
+        <div id="title-center">
+            <div class="menu-item">File</div>
+            <div class="menu-item">Edit</div>
+            <div class="menu-item">View</div>
+            <div class="menu-item">Help</div>
+        </div>
+
+        <div id="title-right">
+            <!-- <img src="assets/close.png" class="window-button"/> -->
+        </div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- MAIN LAYOUT -->
+    <!-- ========================= -->
+    <div id="main-layout">
+        <!-- ========================= -->
+        <!-- 2. LEFT SIDEBAR -->
+        <!-- ========================= -->
+        <div id="sidebar">
+            <div class="sidebar-button">Project</div>
+            <div class="sidebar-button">LavaFlow</div>
+            <div class="sidebar-button">Components</div>
+            <div class="sidebar-button">Settings</div>
+        </div>
+
+        <!-- ========================= -->
+        <!-- 3. MAIN CONTENT -->
+        <!-- ========================= -->
+        <!-- <div id="content-area"> -->
+            <!-- <div class="content-title">Main Content Area</div> -->
+            <!-- <div class="content-box"> -->
+                <!-- This is where editors, diagrams, and views will live. -->
+            <!-- </div> -->
+        <!-- </div> -->
+    </div>
+</body>
 </rml>

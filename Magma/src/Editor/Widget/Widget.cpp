@@ -113,7 +113,7 @@ public:
 		GeometryBuffer =
 			RendererAPI::Get()->NewBuffer(
 			{
-				.IndexCount = 100'000,
+				.IndexCount = 1'000'000,
 				.DynamicIndices = false,
 				.VertexCount = 100'000,
 				.DynamicVertices = false,
@@ -156,8 +156,7 @@ public:
 
 	}
 
-	void SetData(CompiledBuffer& buffer)
-	{
+	void SetData(CompiledBuffer& buffer) {
 		buffer.VertexOffset = GeometryBuffer->GetVertexCount();
 		buffer.IndexOffset = GeometryBuffer->GetIndexCount();
 		buffer.VertexCount = buffer.Vertices.size();
@@ -180,8 +179,8 @@ public:
 		VOLCANICORE_LOG_INFO("CompileGeometry: %zu vertices, %zu indices",
 							 vertices.size(), indices.size());
 
-		if(GeometryBuffer->GetVertexCount() >= 100'000
-		|| GeometryBuffer->GetIndexCount() >= 100'000)
+		if(GeometryBuffer->GetVertexCount() >= 1'000'000
+		|| GeometryBuffer->GetIndexCount() >= 1'000'000)
 		{
 			VOLCANICORE_LOG_INFO("Resetting geometry buffer");
 			GeometryBuffer->Clear();
@@ -200,6 +199,9 @@ public:
 	void RenderGeometry(CompiledGeometryHandle geomHandle, Vector2f translation,
 						TextureHandle textureHandle) override
 	{
+		if(!geomHandle)
+			return;
+
 		UUID id = (UUID)geomHandle;
 		auto& buffer = Buffers.at(id);
 
