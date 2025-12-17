@@ -122,7 +122,8 @@ void Renderer::Init() {
 
 		void main()
 		{
-			FragColor = vec4(v_Color);
+			// FragColor = vec4(v_Color);
+			FragColor = vec4(v_TexCoords, 1.0, 1.0);
 		}
 	)";
 
@@ -167,6 +168,8 @@ void Renderer::BeginFrame() {
 	call->Primitive = DrawPrimitive::Triangle;
 	call->Partition = DrawPartition::Instanced;
 	call->VertexCount = 6;
+
+	DrawQuad({ 500.0f, 50.0f, 500.0f, 60.0f, { 1.0f, 1.0f, 1.0f, 1.0f } });
 }
 
 void Renderer::EndFrame() {

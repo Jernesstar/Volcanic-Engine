@@ -148,7 +148,6 @@ void Renderer::Init() {
 	glEnable(GL_FRAMEBUFFER_SRGB);	// Gamma correction
 
 	s_EmptyVAO = CreateRef<VertexArray>();
-	s_Buffers.Allocate(15);
 	s_Passes.Allocate(32);
 	s_Commands.Allocate(32);
 }
@@ -158,7 +157,7 @@ void Renderer::Close() {
 }
 
 void Renderer::BeginFrame() {
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 

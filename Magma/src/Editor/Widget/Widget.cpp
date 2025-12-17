@@ -37,7 +37,7 @@ struct CompiledBuffer {
 	u32 VertexCount = 0;
 	u32 IndexCount = 0;
 	const Rml::Vertex* VertexData = nullptr;
-	u32* IndexData = nullptr;
+	const i32* IndexData = nullptr;
 };
 
 class WidgetRendererInterface : public Rml::RenderInterface {
@@ -160,29 +160,30 @@ public:
 		VOLCANICORE_LOG_INFO("CompileGeometry: %zu vertices, %zu indices",
 							 vertices.size(), indices.size());
 
-		// if(GeometryBuffer->GetIndexCount() + (u32)indices.size() >= 1'000'000
-		// || GeometryBuffer->GetVertexCount() + (u32)vertices.size() >= 1'000'000)
-		// {
-		// 	GeometryBuffer->Clear();
-		// 	for(auto& [id, buffer] : Buffers) {
-		// 		buffer.VertexOffset = GeometryBuffer->GetVertexCount();
-		// 		buffer.IndexOffset = GeometryBuffer->GetIndexCount();
-		// 		GeometryBuffer->Add(DrawBufferIndex::Index,
-		// 			buffer.IndexData, buffer.IndexCount);
-		// 		GeometryBuffer->Add(DrawBufferIndex::Vertex,
-		// 							buffer.VertexData, buffer.VertexCount);
+		if(GeometryBuffer->GetIndexCount() + (u32)indices.size()
+		>= GeometryBuffer->Spec.IndexCount
+		|| GeometryBuffer->GetVertexCount() + (u32)vertices.size()
+		>= GeometryBuffer->Spec.VertexCount)
+		{
+			VOLCANICORE_LOG_INFO("Reallocating geometry buffer");
+			GeometryBuffer->Clear();
+			for(auto& [id, buffer] : Buffers) {
+				buffer.VertexOffset = GeometryBuffer->GetVertexCount();
+				buffer.IndexOffset = GeometryBuffer->GetIndexCount();
+				GeometryBuffer->Add(DrawBufferIndex::Index,
+					buffer.IndexData, buffer.IndexCount);
+				GeometryBuffer->Add(DrawBufferIndex::Vertex,
+									buffer.VertexData, buffer.VertexCount);
 
-		// 	}
-		// }
+			}
+		}
 
 		UUID id = UUID();
 		auto& buffer = Buffers[id];
 		buffer.IndexCount = (u32)indices.size();
 		buffer.VertexCount = (u32)vertices.size();
 		buffer.VertexData = vertices.data();
-		buffer.IndexData = new u32[buffer.IndexCount];
-		for(u32 i = 0; i < buffer.IndexCount; i++)
-			buffer.IndexData[i] = (u32)indices[i];
+		buffer.IndexData = indices.data();
 
 		buffer.VertexOffset = GeometryBuffer->GetVertexCount();
 		buffer.IndexOffset = GeometryBuffer->GetIndexCount();
@@ -257,7 +258,6 @@ public:
 		VOLCANICORE_LOG_INFO("ReleaseGeometry");
 		auto id = (UUID)geomHandle;
 		auto& buffer = Buffers.at(id);
-		delete[] buffer.IndexData;
 		Buffers.erase(id);
 	}
 

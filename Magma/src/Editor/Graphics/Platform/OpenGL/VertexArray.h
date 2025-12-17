@@ -80,7 +80,7 @@ public:
 				{
 					glEnableVertexAttribArray(m_BufferIndex);
 					glVertexAttribPointer(m_BufferIndex, count,
-						GL_FLOAT, false, stride, (void*)offset);
+						GL_FLOAT, GL_FALSE, stride, (void*)offset);
 					if(layout.Instanced)
 						glVertexAttribDivisor(m_BufferIndex, 1);
 
@@ -91,7 +91,7 @@ public:
 				{
 					glEnableVertexAttribArray(m_BufferIndex);
 					glVertexAttribPointer(m_BufferIndex, count,
-						GL_UNSIGNED_INT, true, stride, (void*)offset);
+						GL_UNSIGNED_BYTE, GL_TRUE, stride, (void*)offset);
 					if(layout.Instanced)
 						glVertexAttribDivisor(m_BufferIndex, 1);
 
@@ -103,7 +103,7 @@ public:
 				case Graphics::BufferDataType::Mat4:
 				{
 					bool instanced = layout.Instanced;
-					u64 vecSize = sizeof(float) * count;
+					u64 vecSize = sizeof(f32) * count;
 
 					for(u64 i = 0; i < count; i++) {
 						glEnableVertexAttribArray(m_BufferIndex);
@@ -111,14 +111,13 @@ public:
 							m_BufferIndex, count, GL_FLOAT, GL_FALSE, stride,
 							(void*)(offset + (vecSize * i)));
 
-						glVertexAttribDivisor(m_BufferIndex++,
-											  (uint32_t)instanced);
+						glVertexAttribDivisor(m_BufferIndex++, (u32)instanced);
 					}
 					break;
 				}
 			}
 
-			offset += element.Size;
+			offset += (u64)element.Size;
 		}
 
 		Unbind();
