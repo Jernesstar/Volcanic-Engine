@@ -67,9 +67,19 @@ void Renderer::Init() {
 
 	RectBuffer =
 		RendererAPI::Get()->NewBuffer({
+			.VertexCount = 6,
+			.DynamicVertices = false,
 			.InstanceCount = 100,
 			.DynamicInstances = true,
-			.InstanceLayout = {
+			.VertexLayout =
+			{
+				{
+					{ "Color", BufferDataType::Vec4 }
+				},
+				false
+			},
+			.InstanceLayout =
+			{
 				{
 					{ "PositionDimension", BufferDataType::Vec4 },
 					{ "Color", BufferDataType::Vec4 }
@@ -78,13 +88,25 @@ void Renderer::Init() {
 			}
 		});
 
+
+	float data[] = {
+		0.0f, 1.0f, 1.0f, 1.0f,
+		1.0f, 0.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, 0.0f, 1.0f,
+		0.0f, 0.0f, 1.0f, 1.0f,
+		0.0f, 1.0f, 0.0f, 1.0f,
+		1.0f, 0.0f, 0.0f, 1.0f
+	};
+	RectBuffer->Add(DrawBufferIndex::Vertex, data, 6);
+
 	vertexShaderStr = R"(
 		#version 460 core
 
 		layout(location = 1) uniform vec2 u_ScreenSize;
 
-		layout(location = 0) in vec4 a_PositionDimension;
-		layout(location = 1) in vec4 a_Color;
+		layout(location = 0) in vec4 a_Color0;
+		layout(location = 1) in vec4 a_PositionDimension;
+		layout(location = 2) in vec4 a_Color;
 
 		layout(location = 0) out vec2 v_TexCoords;
 		layout(location = 1) out vec4 v_Color;
@@ -108,7 +130,7 @@ void Renderer::Init() {
 			gl_Position = vec4(finalPos, 0.0, 1.0);
 
 			v_TexCoords = (vertex + 1.0) / 2.0;
-			v_Color = a_Color;
+			v_Color = a_Color0;
 		}
 	)";
 
@@ -122,8 +144,7 @@ void Renderer::Init() {
 
 		void main()
 		{
-			// FragColor = vec4(v_Color);
-			FragColor = vec4(v_TexCoords, 1.0, 1.0);
+			FragColor = vec4(v_Color);
 		}
 	)";
 
@@ -169,7 +190,7 @@ void Renderer::BeginFrame() {
 	call->Partition = DrawPartition::Instanced;
 	call->VertexCount = 6;
 
-	DrawQuad({ 500.0f, 50.0f, 500.0f, 60.0f, { 1.0f, 1.0f, 1.0f, 1.0f } });
+	DrawQuad({ 500.0f, 50.0f, 500.0f, 60.0f, { 1.0f, 0.3f, 1.0f, 1.0f } });
 }
 
 void Renderer::EndFrame() {

@@ -68,17 +68,15 @@ public:
 			layout(location = 1) in vec4 a_Color;
 			layout(location = 2) in vec2 a_TexCoord;
 
-			layout(location = 0) out vec2 v_FragTexCoord;
-			layout(location = 1) out vec4 v_FragColor;
+			layout(location = 0) out vec2 v_TexCoord;
+			layout(location = 1) out vec4 v_Color;
 
 			void main() {
-				v_FragTexCoord = a_TexCoord;
-				v_FragColor = a_Color;
+				v_TexCoord = a_TexCoord;
+				v_Color = a_Color;
 
 				vec2 pos = a_Position + u_Translate;
-				vec4 outPos = u_Projection * u_Transform * vec4(pos, 0.0, 1.0);
-
-				gl_Position = outPos;
+				gl_Position = u_Projection * vec4(pos, 0.0, 1.0);
 			}
 		)";
 
@@ -88,19 +86,16 @@ public:
 			uniform sampler2D u_Texture;
 			uniform int u_UseTexture;
 
-			layout(location = 0) in vec2 a_FragTexCoord;
-			layout(location = 1) in vec4 a_FragColor;
+			layout(location = 0) in vec2 v_TexCoord;
+			layout(location = 1) in vec4 v_Color;
 
 			layout(location = 0) out vec4 FragColor;
 
 			void main() {
-				if(u_UseTexture == 0) {
-					FragColor = a_FragColor;
-					return;
-				}
-
-				vec4 tex = texture(u_Texture, a_FragTexCoord);
-				FragColor = a_FragColor * tex;
+				if(u_UseTexture == 0)
+					FragColor = v_Color;
+				else
+					FragColor = v_Color * texture(u_Texture, v_TexCoord);
 			}
 		)";
 
@@ -113,7 +108,7 @@ public:
 		GeometryBuffer =
 			RendererAPI::Get()->NewBuffer(
 			{
-				.IndexCount = 1'000'000,
+				.IndexCount = 3'000'000,
 				.DynamicIndices = false,
 				.VertexCount = 1'000'000,
 				.DynamicVertices = false,
@@ -125,7 +120,7 @@ public:
 						{ "a_TexCoord", BufferDataType::Vec2 },
 					},
 					false // Instanced
-				},
+				}
 			});
 
 		// FinalFramebuffer =
@@ -160,23 +155,23 @@ public:
 		VOLCANICORE_LOG_INFO("CompileGeometry: %zu vertices, %zu indices",
 							 vertices.size(), indices.size());
 
-		if(GeometryBuffer->GetIndexCount() + (u32)indices.size()
-		>= GeometryBuffer->Spec.IndexCount
-		|| GeometryBuffer->GetVertexCount() + (u32)vertices.size()
-		>= GeometryBuffer->Spec.VertexCount)
-		{
-			VOLCANICORE_LOG_INFO("Reallocating geometry buffer");
-			GeometryBuffer->Clear();
-			for(auto& [id, buffer] : Buffers) {
-				buffer.VertexOffset = GeometryBuffer->GetVertexCount();
-				buffer.IndexOffset = GeometryBuffer->GetIndexCount();
-				GeometryBuffer->Add(DrawBufferIndex::Index,
-					buffer.IndexData, buffer.IndexCount);
-				GeometryBuffer->Add(DrawBufferIndex::Vertex,
-									buffer.VertexData, buffer.VertexCount);
+		// if(GeometryBuffer->GetIndexCount() + (u32)indices.size()
+		// >= GeometryBuffer->Spec.IndexCount
+		// || GeometryBuffer->GetVertexCount() + (u32)vertices.size()
+		// >= GeometryBuffer->Spec.VertexCount)
+		// {
+		// 	VOLCANICORE_LOG_INFO("Reallocating geometry buffer");
+		// 	GeometryBuffer->Clear();
+		// 	for(auto& [id, buffer] : Buffers) {
+		// 		buffer.VertexOffset = GeometryBuffer->GetVertexCount();
+		// 		buffer.IndexOffset = GeometryBuffer->GetIndexCount();
+		// 		GeometryBuffer->Add(DrawBufferIndex::Index,
+		// 			buffer.IndexData, buffer.IndexCount);
+		// 		GeometryBuffer->Add(DrawBufferIndex::Vertex,
+		// 							buffer.VertexData, buffer.VertexCount);
 
-			}
-		}
+		// 	}
+		// }
 
 		UUID id = UUID();
 		auto& buffer = Buffers[id];
@@ -206,7 +201,7 @@ public:
 		auto pass = RendererAPI::Get()->NewPass(GeometryBuffer);
 		pass->Pipeline = DefaultShader;
 
-		auto cmd = RendererAPI::Get()->NewCommand(pass);
+		auto* cmd = RendererAPI::Get()->NewCommand(pass);
 		cmd->IndicesIndex = buffer.IndexOffset;
 		cmd->VerticesIndex = buffer.VertexOffset;
 
@@ -244,6 +239,9 @@ public:
 		auto projMat = glm::ortho(0.0f, width, height, 0.0f, -1.0f, 1.0f);
 		cmd->Uniforms.Set("u_Projection", projMat);
 
+		cmd->Viewport = true;
+		cmd->ViewportW = width;
+		cmd->ViewportH = height;
 		cmd->DepthTesting = DepthTestingMode::Off;
 		cmd->Blending = BlendingMode::Greatest;
 		cmd->Culling = CullingMode::Off;
@@ -257,7 +255,6 @@ public:
 	void ReleaseGeometry(CompiledGeometryHandle geomHandle) override {
 		VOLCANICORE_LOG_INFO("ReleaseGeometry");
 		auto id = (UUID)geomHandle;
-		auto& buffer = Buffers.at(id);
 		Buffers.erase(id);
 	}
 

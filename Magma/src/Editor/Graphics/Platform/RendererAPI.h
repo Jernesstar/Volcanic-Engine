@@ -150,7 +150,7 @@ enum class CullingMode { Off, Front, Back };
 struct DrawCall;
 
 // A draw command is a series of draw calls
-// With a shared set of uniforms, usually utilized for
+// with a shared set of uniforms, usually utilized for
 // a specific piece of geometry
 struct DrawCommand {
 	DrawPass* Pass = nullptr;

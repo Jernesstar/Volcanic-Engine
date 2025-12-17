@@ -40,26 +40,26 @@ public:
 		if(spec.IndexCount) {
 			Array->SetIndexBuffer(
 				CreateRef<IndexBuffer>(spec.IndexCount, spec.DynamicIndices));
-			// if(spec.DynamicIndices)
-			// 	Indices = Buffer<u32>(spec.IndexCount);
+			if(spec.DynamicIndices)
+				Indices = Buffer<u32>(spec.IndexCount);
 		}
 		if(spec.VertexCount) {
 			Array->AddVertexBuffer(
 				CreateRef<VertexBuffer>(
 					spec.VertexLayout, spec.VertexCount, spec.DynamicVertices));
-			// if(spec.DynamicVertices)
-			// 	Vertices
-			// 		= Buffer<void>(spec.VertexLayout.Stride, spec.VertexCount);
+			if(spec.DynamicVertices)
+				Vertices
+					= Buffer<void>(spec.VertexLayout.Stride, spec.VertexCount);
 		}
 		if(spec.InstanceCount) {
 			Array->AddVertexBuffer(
 				CreateRef<VertexBuffer>(
 					spec.InstanceLayout, spec.InstanceCount,
 					spec.DynamicInstances));
-			// if(spec.DynamicInstances)
-			// 	Instances =
-			// 		Buffer<void>(
-			// 			spec.InstanceLayout.Stride, spec.InstanceCount);
+			if(spec.DynamicInstances)
+				Instances =
+					Buffer<void>(
+						spec.InstanceLayout.Stride, spec.InstanceCount);
 		}
 	}
 	~DrawBuffer() {
@@ -74,30 +74,30 @@ public:
 	void Add(DrawBufferIndex index, const void* data, u32 count) override {
 		switch(index) {
 			case DrawBufferIndex::Index: {
-				// if(!Spec.DynamicIndices)
-					Array->GetIndexBuffer()->SetData(data, count);
-				// else
-				// 	Indices.Add(data, count);
+				if(!Spec.DynamicIndices)
+					Array->GetIndexBuffer()->SetData(data, count, IndicesCount);
+				else
+					Indices.Add(data, count);
 
 				IndicesCount += count;
 				break;
 			}
 			case DrawBufferIndex::Vertex: {
-				// if(!Spec.DynamicVertices)
-					Array->GetVertexBuffer(0)->SetData(data, count);
-				// else
-				// 	Vertices.Add(data, count);
+				if(!Spec.DynamicVertices)
+					Array->GetVertexBuffer(0)->SetData(data, count, VerticesCount);
+				else
+					Vertices.Add(data, count);
 
 				VerticesCount += count;
 				break;
 			}
 			case DrawBufferIndex::Instance: {
-				// if(!Spec.DynamicInstances) {
+				if(!Spec.DynamicInstances) {
 					u32 idx = Spec.VertexCount != 0;
-					Array->GetVertexBuffer(idx)->SetData(data, count);
-				// }
-				// else
-				// 	Instances.Add(data, count);
+					Array->GetVertexBuffer(idx)->SetData(data, count, InstancesCount);
+				}
+				else
+					Instances.Add(data, count);
 
 				InstancesCount += count;
 				break;
@@ -106,12 +106,12 @@ public:
 	}
 
 	void Clear() override {
-		// if(Spec.DynamicIndices)
-		// 	Indices.Clear();
-		// if(Spec.DynamicVertices)
-		// 	Vertices.Clear();
-		// if(Spec.DynamicInstances)
-		// 	Instances.Clear();
+		if(Spec.DynamicIndices)
+			Indices.Clear();
+		if(Spec.DynamicVertices)
+			Vertices.Clear();
+		if(Spec.DynamicInstances)
+			Instances.Clear();
 
 		IndicesCount = 0;
 		VerticesCount = 0;
@@ -119,14 +119,14 @@ public:
 	}
 
 	void SendData() {
-		// if(Spec.DynamicIndices && Spec.IndexCount)
-		// 	Array->GetIndexBuffer()->SetData(Indices);
-		// if(Spec.DynamicVertices && Spec.VertexCount)
-		// 	Array->GetVertexBuffer(0)->SetData(Vertices);
-		// if(Spec.DynamicInstances && Spec.InstanceCount) {
-		// 	u32 idx = Spec.VertexCount != 0;
-		// 	Array->GetVertexBuffer(idx)->SetData(Instances);
-		// }
+		if(Spec.DynamicIndices && Spec.IndexCount)
+			Array->GetIndexBuffer()->SetData(Indices);
+		if(Spec.DynamicVertices && Spec.VertexCount)
+			Array->GetVertexBuffer(0)->SetData(Vertices);
+		if(Spec.DynamicInstances && Spec.InstanceCount) {
+			u32 idx = Spec.VertexCount != 0;
+			Array->GetVertexBuffer(idx)->SetData(Instances);
+		}
 	}
 
 	u32 GetIndexCount() const override { return IndicesCount; }
@@ -148,8 +148,8 @@ void Renderer::Init() {
 	glEnable(GL_FRAMEBUFFER_SRGB);	// Gamma correction
 
 	s_EmptyVAO = CreateRef<VertexArray>();
-	s_Passes.Allocate(32);
-	s_Commands.Allocate(32);
+	s_Passes.Allocate(64);
+	s_Commands.Allocate(64);
 }
 
 void Renderer::Close() {

@@ -46,24 +46,23 @@ project "libgit2"
     }
 
     buildoptions {
-        -- "-include stdint.h",
         "-Wall",
         "-Wextra",
-        -- "-Wno-documentation",
-        -- "-Wno-documentation-deprecated-sync",
-        "-Wno-missing-field-initializers",
-        "-Wmissing-declarations",
+        "-Wc99-c11-compat",
         "-Wstrict-aliasing",
         "-Wstrict-prototypes",
-        "-Wdeclaration-after-statement",
-        "-Wshift-count-overflow",
-        "-Wunused-const-variable",
-        "-Wunused-function",
-        "-Wint-conversion",
-        -- "-Wc11-extensions",
-        "-Wc99-c11-compat",
+
         "-Wno-format",
+        "-Wno-declaration-after-statement",
+        "-Wno-deprecated-declarations",
+        "-Wno-shift-count-overflow",
+        "-Wno-unused-const-variable",
+        "-Wno-unused-function",
         "-Wno-format-security",
+        "-Wno-unused-parameter",
+        "-Wno-maybe-uninitialized",
+        "-Wno-missing-declarations",
+        "-Wno-missing-field-initializers",
     }
 
     filter "system:windows"
