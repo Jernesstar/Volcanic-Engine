@@ -149,6 +149,10 @@ public:
 
 	}
 
+	void OnReload() {
+		GeometryBuffer->Clear();
+	}
+
 	CompiledGeometryHandle CompileGeometry(Span<const Rml::Vertex> vertices,
 										   Span<const int> indices) override
 	{
@@ -466,6 +470,7 @@ void WidgetManager::Close() {
 
 void WidgetManager::Load(const std::string& path) {
 	s_Doc = s_Context->LoadDocument(path);
+	s_Doc->ReloadStyleSheet();
 	s_Doc->Show();
 	m_RootPath = path;
 	VOLCANICORE_LOG_INFO("Successfully loaded UI");
@@ -473,8 +478,10 @@ void WidgetManager::Load(const std::string& path) {
 
 void WidgetManager::Reload() {
 	if(s_Doc)
-		s_Context->UnloadDocument(s_Doc);
+		s_Doc->Close();
+
 	Load(m_RootPath);
+	s_RenderInterface->OnReload();
 }
 
 void WidgetManager::Update(TimeStep ts) {

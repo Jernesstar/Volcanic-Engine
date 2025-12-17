@@ -23,12 +23,17 @@
         </div>
     </div>
 
+    <div id="topbar">
+        <div class="topbar-button">Project</div>
+        <div class="topbar-button">LavaFlow</div>
+        <div class="topbar-button">Nodule</div>
+    </div>
+
     <div id="main-layout">
+
         <div id="sidebar">
-            <div class="sidebar-button">Project</div>
-            <div class="sidebar-button">LavaFlow</div>
-            <div class="sidebar-button">Components</div>
-            <div class="sidebar-button">Settings</div>
+            <div class="sidebar-button">New Project</div>
+            <div class="sidebar-button">Open Project</div>
         </div>
 
         <div id="content-area">
