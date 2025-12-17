@@ -34,11 +34,11 @@ public:
 		: Spec(spec) { };
 	virtual ~DrawBuffer() = default;
 
-	virtual void Add(DrawBufferIndex, const void* data, u64 count) = 0;
+	virtual void Add(DrawBufferIndex, const void* data, u32 count) = 0;
 	virtual void Clear() = 0;
-	virtual u64 GetIndexCount() const = 0;
-	virtual u64 GetVertexCount() const = 0;
-	virtual u64 GetInstanceCount() const = 0;
+	virtual u32 GetIndexCount() const = 0;
+	virtual u32 GetVertexCount() const = 0;
+	virtual u32 GetInstanceCount() const = 0;
 };
 
 struct DrawPass {

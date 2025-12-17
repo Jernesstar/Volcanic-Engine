@@ -32,12 +32,12 @@ using namespace Rml;
 namespace Magma::UI {
 
 struct CompiledBuffer {
-	u64 VertexOffset = 0;
-	u64 IndexOffset = 0;
-	u64 VertexCount = 0;
-	u64 IndexCount = 0;
-	Span<const Rml::Vertex> Vertices;
-	Span<const int> Indices;
+	u32 VertexOffset = 0;
+	u32 IndexOffset = 0;
+	u32 VertexCount = 0;
+	u32 IndexCount = 0;
+	const Rml::Vertex* VertexData = nullptr;
+	u32* IndexData = nullptr;
 };
 
 class WidgetRendererInterface : public Rml::RenderInterface {
@@ -115,16 +115,15 @@ public:
 			{
 				.IndexCount = 1'000'000,
 				.DynamicIndices = false,
-				.VertexCount = 100'000,
+				.VertexCount = 1'000'000,
 				.DynamicVertices = false,
 				.VertexLayout =
 				{
 					{
 						{ "a_Position", BufferDataType::Vec2 },
-						{ "a_Color",	BufferDataType::UVec4, true },
+						{ "a_Color",	BufferDataType::UVec4 },
 						{ "a_TexCoord", BufferDataType::Vec2 },
 					},
-					false, // Dynamic
 					false // Instanced
 				},
 			});
@@ -142,7 +141,6 @@ public:
 	~WidgetRendererInterface() {
 		TextureHandles.clear();
 		Buffers.clear();
-
 		delete GeometryBuffer;
 		DefaultShader.reset();
 	}
@@ -156,47 +154,46 @@ public:
 
 	}
 
-	void SetData(CompiledBuffer& buffer) {
-		buffer.VertexOffset = GeometryBuffer->GetVertexCount();
-		buffer.IndexOffset = GeometryBuffer->GetIndexCount();
-		buffer.VertexCount = buffer.Vertices.size();
-		buffer.IndexCount = buffer.Indices.size();
-
-		GeometryBuffer->Add(DrawBufferIndex::Vertex,
-			buffer.Vertices.data(), buffer.Vertices.size());
-
-		u32* indexData = new u32[buffer.IndexCount];
-		for(u64 i = 0; i < buffer.IndexCount; i++)
-			indexData[i] = (u32)buffer.Indices[i];
-
-		GeometryBuffer->Add(DrawBufferIndex::Index, indexData, buffer.IndexCount);
-		delete[] indexData;
-	}
-
 	CompiledGeometryHandle CompileGeometry(Span<const Rml::Vertex> vertices,
 										   Span<const int> indices) override
 	{
 		VOLCANICORE_LOG_INFO("CompileGeometry: %zu vertices, %zu indices",
 							 vertices.size(), indices.size());
 
-		if(GeometryBuffer->GetVertexCount() >= 1'000'000
-		|| GeometryBuffer->GetIndexCount() >= 1'000'000)
-		{
-			VOLCANICORE_LOG_INFO("Resetting geometry buffer");
-			GeometryBuffer->Clear();
-			for(auto& [id, buffer] : Buffers)
-				SetData(buffer);
-		}
+		// if(GeometryBuffer->GetIndexCount() + (u32)indices.size() >= 1'000'000
+		// || GeometryBuffer->GetVertexCount() + (u32)vertices.size() >= 1'000'000)
+		// {
+		// 	GeometryBuffer->Clear();
+		// 	for(auto& [id, buffer] : Buffers) {
+		// 		buffer.VertexOffset = GeometryBuffer->GetVertexCount();
+		// 		buffer.IndexOffset = GeometryBuffer->GetIndexCount();
+		// 		GeometryBuffer->Add(DrawBufferIndex::Index,
+		// 			buffer.IndexData, buffer.IndexCount);
+		// 		GeometryBuffer->Add(DrawBufferIndex::Vertex,
+		// 							buffer.VertexData, buffer.VertexCount);
+
+		// 	}
+		// }
 
 		UUID id = UUID();
 		auto& buffer = Buffers[id];
-		buffer.Vertices = vertices;
-		buffer.Indices = indices;
-		SetData(buffer);
+		buffer.IndexCount = (u32)indices.size();
+		buffer.VertexCount = (u32)vertices.size();
+		buffer.VertexData = vertices.data();
+		buffer.IndexData = new u32[buffer.IndexCount];
+		for(u32 i = 0; i < buffer.IndexCount; i++)
+			buffer.IndexData[i] = (u32)indices[i];
+
+		buffer.VertexOffset = GeometryBuffer->GetVertexCount();
+		buffer.IndexOffset = GeometryBuffer->GetIndexCount();
+		GeometryBuffer->Add(DrawBufferIndex::Index,
+							buffer.IndexData, buffer.IndexCount);
+		GeometryBuffer->Add(DrawBufferIndex::Vertex,
+							buffer.VertexData, buffer.VertexCount);
 
 		return (CompiledGeometryHandle)id;
 	}
-	void RenderGeometry(CompiledGeometryHandle geomHandle, Vector2f translation,
+	void RenderGeometry(CompiledGeometryHandle geomHandle, Vector2f tr,
 						TextureHandle textureHandle) override
 	{
 		if(!geomHandle)
@@ -207,10 +204,10 @@ public:
 
 		auto pass = RendererAPI::Get()->NewPass(GeometryBuffer);
 		pass->Pipeline = DefaultShader;
-		auto cmd = RendererAPI::Get()->NewCommand(pass);
 
-		cmd->VerticesIndex = buffer.VertexOffset;
+		auto cmd = RendererAPI::Get()->NewCommand(pass);
 		cmd->IndicesIndex = buffer.IndexOffset;
+		cmd->VerticesIndex = buffer.VertexOffset;
 
 		if(textureHandle) {
 			UUID texID = (UUID)textureHandle;
@@ -228,7 +225,7 @@ public:
 			cmd->ScissorW = (f32)ScissorRegion.Width();
 			cmd->ScissorH = (f32)ScissorRegion.Height();
 		}
-
+ 
 		cmd->Uniforms.Set("u_Transform",
 			Mat4
 			{
@@ -238,7 +235,7 @@ public:
 				Transform[0][3], Transform[1][3], Transform[2][3], Transform[3][3],
 			}
 		);
-		cmd->Uniforms.Set("u_Translate", Vec2{ translation.x, translation.y });
+		cmd->Uniforms.Set("u_Translate", Vec2{ tr.x, tr.y });
 
 		auto window = Application::As<WindowApplication>()->GetWindow();
 		auto width = (f32)window->GetWidth();
@@ -259,6 +256,8 @@ public:
 	void ReleaseGeometry(CompiledGeometryHandle geomHandle) override {
 		VOLCANICORE_LOG_INFO("ReleaseGeometry");
 		auto id = (UUID)geomHandle;
+		auto& buffer = Buffers.at(id);
+		delete[] buffer.IndexData;
 		Buffers.erase(id);
 	}
 

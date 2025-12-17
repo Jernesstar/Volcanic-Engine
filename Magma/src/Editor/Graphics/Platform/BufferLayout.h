@@ -15,21 +15,12 @@ enum class BufferDataType {
 struct BufferElement {
 	const std::string Name;
 	const BufferDataType Type;
-	const bool Normalize;
 	const u32 Size;
 	const u32 Count;
 
-	BufferElement(const std::string& name, BufferDataType type,
-				  bool normalize = false)
-		: Name(name), Type(type), Normalize(normalize),
-			Size(CalcSize(type)), Count(CalcCount(type)) { }
-
-	bool operator ==(const BufferElement& other) const {
-		return Type == other.Type
-			&& Normalize == other.Normalize
-			&& Size == other.Size
-			&& Count == other.Count;
-	}
+	BufferElement(const std::string& name, BufferDataType type)
+		: Name(name), Type(type),
+		Size(CalcSize(type)), Count(CalcCount(type)) { }
 
 private:
 	static u32 CalcSize(BufferDataType type) {
@@ -68,21 +59,13 @@ class BufferLayout {
 public:
 	const List<BufferElement> Elements;
 	const u32 Stride;
-	const bool Dynamic;
 	const bool Instanced;
 
 public:
 	BufferLayout(const std::initializer_list<BufferElement>& elements,
-				 bool dynamic = true, bool instanced = false)
+				 bool instanced = false)
 		: Elements(elements), Stride(CalcStride(elements)),
-			Dynamic(dynamic), Instanced(instanced) { }
-
-	bool operator ==(const BufferLayout& other) const {
-		return Elements == other.Elements
-			&& Stride == other.Stride
-			&& Dynamic == other.Dynamic
-			&& Instanced == other.Instanced;
-	}
+		Instanced(instanced) { }
 
 	List<BufferElement>::const_iterator begin() const {
 		return Elements.begin();

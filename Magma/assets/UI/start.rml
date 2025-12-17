@@ -43,12 +43,12 @@
         <!-- ========================= -->
         <!-- 3. MAIN CONTENT -->
         <!-- ========================= -->
-        <!-- <div id="content-area"> -->
-            <!-- <div class="content-title">Main Content Area</div> -->
-            <!-- <div class="content-box"> -->
-                <!-- This is where editors, diagrams, and views will live. -->
-            <!-- </div> -->
-        <!-- </div> -->
+        <div id="content-area">
+            <div class="content-title">Main Content Area</div>
+            <div class="content-box">
+                This is where editors, diagrams, and views will live.
+            </div>
+        </div>
     </div>
 </body>
 </rml>

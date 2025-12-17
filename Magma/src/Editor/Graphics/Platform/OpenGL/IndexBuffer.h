@@ -8,13 +8,12 @@ namespace OpenGL {
 
 class IndexBuffer {
 public:
-	const uint32_t Count;
-	const uint32_t Size;
+	const u32 Count;
+	const u32 Size;
 
 public:
-	IndexBuffer(uint32_t count, bool dynamic = false,
-				const uint32_t* indices = nullptr)
-		: Count(count), Size(count * sizeof(uint32_t))
+	IndexBuffer(u32 count, bool dynamic = false, const u32* indices = nullptr)
+		: Count(count), Size(count * sizeof(u32))
 	{
 		glCreateBuffers(1, &m_BufferID);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_BufferID);
@@ -23,7 +22,7 @@ public:
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 
-	IndexBuffer(const Buffer<uint32_t>& buffer, bool dynamic = false)
+	IndexBuffer(const Buffer<u32>& buffer, bool dynamic = false)
 		: Count(buffer.GetCount()), Size(buffer.GetSize())
 	{
 		glCreateBuffers(1, &m_BufferID);
@@ -34,8 +33,8 @@ public:
 	}
 
 	template<std::size_t TCount>
-	IndexBuffer(const uint32_t (&indices)[TCount])
-		: Count(TCount), Size(TCount * sizeof(uint32_t))
+	IndexBuffer(const u32 (&indices)[TCount])
+		: Count(TCount), Size(TCount * sizeof(u32))
 	{
 		glCreateBuffers(1, &m_BufferID);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_BufferID);
@@ -54,24 +53,24 @@ public:
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 
-	void SetData(const void* data, uint32_t count = 0, uint32_t offset = 0) {
+	void SetData(const void* data, u32 count = 0, u32 offset = 0) {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_BufferID);
-		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset * sizeof(uint32_t),
-						(count == 0) ? Size : count * sizeof(uint32_t), data);
+		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, offset * sizeof(u32),
+						(count == 0) ? Size : count * sizeof(u32), data);
 		
 	}
 
-	void SetData(const Buffer<uint32_t>& buffer, uint32_t offset = 0) {
+	void SetData(const Buffer<u32>& buffer, u32 offset = 0) {
 		SetData(buffer.Get(), buffer.GetCount(), offset);
 	}
 
 	template<std::size_t TCount>
-	void SetData(const uint32_t (&indices)[TCount]) {
+	void SetData(const u32 (&indices)[TCount]) {
 		SetData(indices, TCount);
 	}
 
 private:
-	uint32_t m_BufferID;
+	u32 m_BufferID;
 };
 
 }

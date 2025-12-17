@@ -15,6 +15,12 @@ using namespace Magma::Graphics;
 
 namespace OpenGL {
 
+static List<DrawBuffer*> s_Buffers;
+static List<DrawPass> s_Passes;
+static List<DrawCommand> s_Commands;
+
+static Ref<VertexArray> s_EmptyVAO;
+
 // TODO(Add): Use stream buffer
 class DrawBuffer : public Graphics::DrawBuffer {
 public:
@@ -22,9 +28,9 @@ public:
 	Buffer<u32> Indices;
 	Buffer<void> Vertices;
 	Buffer<void> Instances;
-	u64 IndicesCount = 0;
-	u64 VerticesCount = 0;
-	u64 InstancesCount = 0;
+	u32 IndicesCount = 0;
+	u32 VerticesCount = 0;
+	u32 InstancesCount = 0;
 
 public:
 	DrawBuffer(const DrawBufferSpec& spec)
@@ -34,46 +40,65 @@ public:
 		if(spec.IndexCount) {
 			Array->SetIndexBuffer(
 				CreateRef<IndexBuffer>(spec.IndexCount, spec.DynamicIndices));
-			Indices = Buffer<u32>(spec.IndexCount);
+			// if(spec.DynamicIndices)
+			// 	Indices = Buffer<u32>(spec.IndexCount);
 		}
 		if(spec.VertexCount) {
 			Array->AddVertexBuffer(
-				CreateRef<VertexBuffer>(spec.VertexLayout, spec.VertexCount));
-			Vertices
-				= Buffer<void>(spec.VertexLayout.Stride, spec.VertexCount);
+				CreateRef<VertexBuffer>(
+					spec.VertexLayout, spec.VertexCount, spec.DynamicVertices));
+			// if(spec.DynamicVertices)
+			// 	Vertices
+			// 		= Buffer<void>(spec.VertexLayout.Stride, spec.VertexCount);
 		}
 		if(spec.InstanceCount) {
 			Array->AddVertexBuffer(
 				CreateRef<VertexBuffer>(
-					spec.InstanceLayout, spec.InstanceCount));
-			Instances
-				= Buffer<void>(spec.InstanceLayout.Stride, spec.InstanceCount);
+					spec.InstanceLayout, spec.InstanceCount,
+					spec.DynamicInstances));
+			// if(spec.DynamicInstances)
+			// 	Instances =
+			// 		Buffer<void>(
+			// 			spec.InstanceLayout.Stride, spec.InstanceCount);
 		}
 	}
-	~DrawBuffer() = default;
+	~DrawBuffer() {
+		Clear();
+		auto [found, i] = s_Buffers.Find([&](auto& b) { return b == this; });
+		if(found)
+			s_Buffers.Pop(i);
+		else
+			VOLCANICORE_ASSERT(false, "Draw buffer not found for deletion");
+	}
 
-	void Add(DrawBufferIndex index, const void* data, u64 count) override {
+	void Add(DrawBufferIndex index, const void* data, u32 count) override {
 		switch(index) {
 			case DrawBufferIndex::Index: {
-				Indices.Add(data, count);
-				if(!Spec.DynamicIndices)
-					Array->GetIndexBuffer()->SetData(Indices);
+				// if(!Spec.DynamicIndices)
+					Array->GetIndexBuffer()->SetData(data, count);
+				// else
+				// 	Indices.Add(data, count);
+
 				IndicesCount += count;
 				break;
 			}
 			case DrawBufferIndex::Vertex: {
-				Vertices.Add(data, count);
-				if(!Spec.DynamicVertices)
-					Array->GetVertexBuffer(0)->SetData(Vertices);
+				// if(!Spec.DynamicVertices)
+					Array->GetVertexBuffer(0)->SetData(data, count);
+				// else
+				// 	Vertices.Add(data, count);
+
 				VerticesCount += count;
 				break;
 			}
 			case DrawBufferIndex::Instance: {
-				Instances.Add(data, count);
-				if(!Spec.DynamicInstances) {
+				// if(!Spec.DynamicInstances) {
 					u32 idx = Spec.VertexCount != 0;
-					Array->GetVertexBuffer(idx)->SetData(Instances);
-				}
+					Array->GetVertexBuffer(idx)->SetData(data, count);
+				// }
+				// else
+				// 	Instances.Add(data, count);
+
 				InstancesCount += count;
 				break;
 			}
@@ -81,28 +106,33 @@ public:
 	}
 
 	void Clear() override {
-		if(Spec.DynamicIndices)
-			Indices.Clear();
-		if(Spec.DynamicVertices)
-			Vertices.Clear();
-		if(Spec.DynamicInstances)
-			Instances.Clear();
+		// if(Spec.DynamicIndices)
+		// 	Indices.Clear();
+		// if(Spec.DynamicVertices)
+		// 	Vertices.Clear();
+		// if(Spec.DynamicInstances)
+		// 	Instances.Clear();
 
 		IndicesCount = 0;
 		VerticesCount = 0;
 		InstancesCount = 0;
 	}
 
-	u64 GetIndexCount() const override { return IndicesCount; }
-	u64 GetVertexCount() const override { return VerticesCount; }
-	u64 GetInstanceCount() const override { return InstancesCount; }
+	void SendData() {
+		// if(Spec.DynamicIndices && Spec.IndexCount)
+		// 	Array->GetIndexBuffer()->SetData(Indices);
+		// if(Spec.DynamicVertices && Spec.VertexCount)
+		// 	Array->GetVertexBuffer(0)->SetData(Vertices);
+		// if(Spec.DynamicInstances && Spec.InstanceCount) {
+		// 	u32 idx = Spec.VertexCount != 0;
+		// 	Array->GetVertexBuffer(idx)->SetData(Instances);
+		// }
+	}
+
+	u32 GetIndexCount() const override { return IndicesCount; }
+	u32 GetVertexCount() const override { return VerticesCount; }
+	u32 GetInstanceCount() const override { return InstancesCount; }
 };
-
-static List<DrawBuffer*> s_Buffers;
-static List<DrawPass> s_Passes;
-static List<DrawCommand> s_Commands;
-
-static Ref<VertexArray> s_EmptyVAO;
 
 Renderer::Renderer() {
 	int success = gladLoadGL();
@@ -118,6 +148,9 @@ void Renderer::Init() {
 	glEnable(GL_FRAMEBUFFER_SRGB);	// Gamma correction
 
 	s_EmptyVAO = CreateRef<VertexArray>();
+	s_Buffers.Allocate(15);
+	s_Passes.Allocate(32);
+	s_Commands.Allocate(32);
 }
 
 void Renderer::Close() {
@@ -229,6 +262,7 @@ static void SetOptions(DrawCommand& cmd) {
 	else if(cmd.Culling == CullingMode::Back)
 		glCullFace(GL_BACK);
 }
+
 struct DrawArraysIndirectCommand {
 	u32 Count;
 	u32 InstanceCount;
@@ -294,16 +328,8 @@ void Renderer::EndFrame() {
 	if(!s_Commands)
 		return;
 
-	for(auto& buffer : s_Buffers) {
-		if(buffer->Spec.DynamicIndices && buffer->Spec.IndexCount)
-			buffer->Array->GetIndexBuffer()->SetData(buffer->Indices);
-		if(buffer->Spec.DynamicVertices && buffer->Spec.VertexCount)
-			buffer->Array->GetVertexBuffer(0)->SetData(buffer->Vertices);
-		if(buffer->Spec.DynamicInstances && buffer->Spec.InstanceCount) {
-			u32 idx = buffer->Spec.VertexCount != 0;
-			buffer->Array->GetVertexBuffer(idx)->SetData(buffer->Instances);
-		}
-	}
+	for(auto& buffer : s_Buffers)
+		buffer->As<OpenGL::DrawBuffer>()->SendData();
 
 	for(auto& cmd : s_Commands) {
 		SetOptions(cmd);
@@ -324,6 +350,7 @@ void Renderer::EndFrame() {
 			cmd.Pass->Buffer->As<OpenGL::DrawBuffer>()->Array->Bind();
 		else
 			s_EmptyVAO->Bind();
+			// glBindVertexArray(0);
 
 		for(auto& call : cmd.DrawCalls)
 			SubmitDrawCall(cmd, call);
@@ -334,7 +361,7 @@ void Renderer::EndFrame() {
 }
 
 Graphics::DrawBuffer* Renderer::NewBuffer(const Graphics::DrawBufferSpec& s) {
-	auto buffer = new DrawBuffer(s);
+	auto* buffer = new DrawBuffer(s);
 	s_Buffers.Add(buffer);
 	return buffer;
 }

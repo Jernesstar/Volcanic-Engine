@@ -14,18 +14,18 @@ namespace OpenGL {
 class VertexBuffer {
 public:
 	const Graphics::BufferLayout Layout;
-	const uint32_t Count;
-	const uint32_t Size;
+	const u32 Count;
+	const u32 Size;
 
 public:
 	VertexBuffer(const Graphics::BufferLayout& layout,
-				 uint32_t count, const void* data = nullptr)
+				 u32 count, bool dynamic = false, const void* data = nullptr)
 		: Layout(layout), Count(count), Size(count * layout.Stride)
 	{
 		glCreateBuffers(1, &m_BufferID);
 		glBindBuffer(GL_ARRAY_BUFFER, m_BufferID);
 		glBufferData(GL_ARRAY_BUFFER, Size, data,
-					 layout.Dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+					 dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
@@ -37,19 +37,18 @@ public:
 
 		glCreateBuffers(1, &m_BufferID);
 		glBindBuffer(GL_ARRAY_BUFFER, m_BufferID);
-		glBufferData(GL_ARRAY_BUFFER, Size, buffer.Get(),
-					 layout.Dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, Size, buffer.Get(), GL_STATIC_DRAW);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
 	template<typename T, std::size_t TCount>
-	VertexBuffer(const Graphics::BufferLayout& layout, const T (&vertices)[TCount])
+	VertexBuffer(const Graphics::BufferLayout& layout,
+				 const T (&vertices)[TCount])
 		: Layout(layout), Count(TCount), Size(TCount * layout.Stride)
 	{
 		glCreateBuffers(1, &m_BufferID);
 		glBindBuffer(GL_ARRAY_BUFFER, m_BufferID);
-		glBufferData(GL_ARRAY_BUFFER, Size, vertices,
-					 layout.Dynamic ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, Size, vertices, GL_STATIC_DRAW);
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
@@ -64,14 +63,14 @@ public:
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
-	void SetData(const void* data, uint32_t count = 0, uint32_t offset = 0) {
+	void SetData(const void* data, u32 count = 0, u32 offset = 0) {
 		glBindBuffer(GL_ARRAY_BUFFER, m_BufferID);
 		glBufferSubData(GL_ARRAY_BUFFER, offset * Layout.Stride,
 						(count == 0) ? Size : count * Layout.Stride, data);
 	}
 
 	template<typename T>
-	void SetData(const Buffer<T>& buffer, uint32_t offset = 0) {
+	void SetData(const Buffer<T>& buffer, u32 offset = 0) {
 		SetData(buffer.Get(), buffer.GetCount(), offset);
 	}
 
@@ -81,7 +80,7 @@ public:
 	}
 
 private:
-	uint32_t m_BufferID;
+	u32 m_BufferID;
 };
 
 }

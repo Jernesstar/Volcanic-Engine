@@ -74,7 +74,6 @@ void Renderer::Init() {
 					{ "PositionDimension", BufferDataType::Vec4 },
 					{ "Color", BufferDataType::Vec4 }
 				},
-				true, // Dynamic
 				true // Instanced
 			}
 		});
