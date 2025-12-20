@@ -24,7 +24,7 @@ body {
     height: 40px;
 
     background-color: #141821;
-    border-bottom: 1px solid #1f2533;
+    /* border-bottom: 1px solid #1f2533; */
     padding: 0px 12px;
 }
 
@@ -99,7 +99,7 @@ body {
     display: flex;
     flex-direction: row;
     align-items: center;
-    width: 100%;
+    justify-content: center;
     height: 40px;
     margin: 10px;
 
@@ -172,4 +172,40 @@ body {
     background-color: #141821;
     border-radius: 12px;
     padding: 16px;
+}
+
+#popup-container {
+    display: flex; /* Hidden by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Dim the background */
+    justify-content: center;
+    align-items: center;
+}
+
+#popup-container.visible {
+    display: flex; /* Show when 'visible' class is added */
+}
+
+#popup-content {
+    background-color: #fff;
+    color: #0e1116;
+    padding: 20px;
+    border-radius: 5px;
+}
+
+#ok-button {
+    background-color: #4CAF50;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 15px;
+    height: 15px;
+    padding: 12px;
+    margin: 12px;
 }

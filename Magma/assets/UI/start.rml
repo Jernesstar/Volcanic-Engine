@@ -43,5 +43,14 @@
             </div>
         </div>
     </div>
+
+    <div id="popup-container">
+        <div id="popup-content">
+            <h1>Popup Title</h1>
+            <p>This is your popup message.</p>
+            <button class="ok-button" id="okButton">OK</button>
+        </div>
+    </div>
+
 </body>
 </rml>
