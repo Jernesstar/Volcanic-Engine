@@ -1,18 +1,13 @@
 #pragma once
 
-#include "Integration.h"
-
 #include <git2.h>
 
 namespace Magma::VC {
 
-class VCManager : public Integration {
+class VCManager {
 public:
-	VCManager() = default;
-	~VCManager() = default;
-
-	void Init() override;
-	void Shutdown() override;
+	static void Init();
+	static void Shutdown();
 };
 
 class Repo {

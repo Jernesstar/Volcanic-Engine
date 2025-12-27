@@ -122,15 +122,6 @@ public:
 					false // Instanced
 				}
 			});
-
-		// FinalFramebuffer =
-		// 	RendererAPI::Get()->CreateFramebuffer(
-		// 	{
-		// 		{
-		// 			{ AttachmentTarget::Color, 1920, 1080 },
-		// 			{ AttachmentTarget::Depth, 1920, 1080 }
-		// 		}
-		// 	});
 	}
 
 	~WidgetRendererInterface() {
@@ -156,26 +147,23 @@ public:
 	CompiledGeometryHandle CompileGeometry(Span<const Rml::Vertex> vertices,
 										   Span<const int> indices) override
 	{
-		VOLCANICORE_LOG_INFO("CompileGeometry: %zu vertices, %zu indices",
-							 vertices.size(), indices.size());
+		if(GeometryBuffer->GetIndexCount() + (u32)indices.size()
+		>= GeometryBuffer->Spec.IndexCount
+		|| GeometryBuffer->GetVertexCount() + (u32)vertices.size()
+		>= GeometryBuffer->Spec.VertexCount)
+		{
+			VOLCANICORE_LOG_INFO("Reallocating geometry buffer");
+			GeometryBuffer->Clear();
+			for(auto& [id, buffer] : Buffers) {
+				buffer.VertexOffset = GeometryBuffer->GetVertexCount();
+				buffer.IndexOffset = GeometryBuffer->GetIndexCount();
+				GeometryBuffer->Add(DrawBufferIndex::Index,
+					buffer.IndexData, buffer.IndexCount);
+				GeometryBuffer->Add(DrawBufferIndex::Vertex,
+									buffer.VertexData, buffer.VertexCount);
 
-		// if(GeometryBuffer->GetIndexCount() + (u32)indices.size()
-		// >= GeometryBuffer->Spec.IndexCount
-		// || GeometryBuffer->GetVertexCount() + (u32)vertices.size()
-		// >= GeometryBuffer->Spec.VertexCount)
-		// {
-		// 	VOLCANICORE_LOG_INFO("Reallocating geometry buffer");
-		// 	GeometryBuffer->Clear();
-		// 	for(auto& [id, buffer] : Buffers) {
-		// 		buffer.VertexOffset = GeometryBuffer->GetVertexCount();
-		// 		buffer.IndexOffset = GeometryBuffer->GetIndexCount();
-		// 		GeometryBuffer->Add(DrawBufferIndex::Index,
-		// 			buffer.IndexData, buffer.IndexCount);
-		// 		GeometryBuffer->Add(DrawBufferIndex::Vertex,
-		// 							buffer.VertexData, buffer.VertexCount);
-
-		// 	}
-		// }
+			}
+		}
 
 		UUID id = UUID();
 		auto& buffer = Buffers[id];
@@ -257,7 +245,6 @@ public:
 	}
 
 	void ReleaseGeometry(CompiledGeometryHandle geomHandle) override {
-		VOLCANICORE_LOG_INFO("ReleaseGeometry");
 		auto id = (UUID)geomHandle;
 		Buffers.erase(id);
 	}
@@ -292,8 +279,6 @@ public:
 	TextureHandle GenerateTexture(Span<const byte> src,
 								  Vector2i srcDim) override
 	{
-		VOLCANICORE_LOG_INFO("GenerateTexture");
-
 		auto tex =
 			RendererAPI::Get()->CreateTexture(
 			{
@@ -308,7 +293,6 @@ public:
 		return (TextureHandle)id;
 	}
 	void ReleaseTexture(TextureHandle texture) override {
-		VOLCANICORE_LOG_INFO("ReleaseTexture");
 		auto id = (UUID)texture;
 		TextureHandles.erase(id);
 	}
@@ -467,6 +451,32 @@ void WidgetManager::Close() {
 	delete s_RenderInterface;
 	s_RenderInterface = nullptr;
 }
+
+class ClassToggleListener : public Rml::EventListener {
+public:
+	ClassToggleListener(Rml::Element* element)
+		: m_Element(element) { }
+
+	void ProcessEvent(Rml::Event& event) override {
+		if (event.GetType() == "click") {
+			auto parent = m_Element->GetParentNode();
+			bool visible = parent->IsPseudoClassSet("visible");
+			parent->SetPseudoClass("visible", !visible);
+			printf("Click\n");
+		}
+	}
+
+	void OnAttach(Rml::Element* element) override {
+
+	}
+
+	void OnDetach(Rml::Element* element) override {
+		delete this;
+	}
+
+private:
+	Rml::Element* m_Element;
+};
 
 void WidgetManager::Load(const std::string& path) {
 	s_Doc = s_Context->LoadDocument(path);

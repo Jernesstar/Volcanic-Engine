@@ -170,10 +170,13 @@ void Repo::Push() {
 
 	git_remote_callbacks callbacks = GIT_REMOTE_CALLBACKS_INIT;
 	callbacks.credentials = CredentialCallback;
-	callbacks.certificate_check = [](git_cert *cert, int valid, const char *host, void *payload) {
-		// Always accept
-		return 0;
-	};
+	callbacks.certificate_check =
+		[](git_cert *cert, int valid, const char *host, void *payload)
+		{
+			// Always accept
+			return 0;
+		};
+
 	git_push_options opts;
 	git_push_init_options(&opts, GIT_PUSH_OPTIONS_VERSION);
 	// opts.callbacks.credentials = CredentialCallback;
@@ -196,11 +199,10 @@ int Repo::CredentialCallback(git_credential** out, const char* url,
 		VOLCANICORE_LOG_WARNING("Failed to load github token");
 		return GIT_PASSTHROUGH;
 	}
-	// git_credential_userpass_plaintext_new(out, "oauth2", token.c_str());
-	if(allowedTypes & GIT_CREDENTIAL_USERPASS_PLAINTEXT) {
-		// Use OAuth token as the password; GitHub expects "x-access-token" as the username
-		return git_cred_userpass_plaintext_new(out, "x-access-token", token.c_str());
-	}
+	if(allowedTypes & GIT_CREDENTIAL_USERPASS_PLAINTEXT)
+		return
+			git_cred_userpass_plaintext_new(
+				out, "x-access-token", token.c_str());
 
 	VOLCANICORE_LOG_WARNING("Failed to authenticate");
 	return GIT_PASSTHROUGH;
