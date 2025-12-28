@@ -8,7 +8,7 @@
 
 using namespace VolcaniCore;
 
-namespace Magma::Lang {
+namespace Magma::Language {
 
 enum class ASTType { Function, Class, Variable, Expression };
 
@@ -27,11 +27,6 @@ public:
 
 private:
 	ASTNode* m_Root = nullptr;
-};
-
-class Analyzer {
-public:
-	static Graph AnalyzeProject(const std::string& rootPath);
 };
 
 }

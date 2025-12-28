@@ -47,9 +47,6 @@ void Editor::Open() {
 	// Editor::RegisterInterface();
 
 	Application::PushDir();
-	auto logo =
-		AssetImporter::LoadImage(
-			"Magma/assets/images/VolcanicDisplay.png", false);
 
 	AssetManager::Init();
 	Renderer::Init();

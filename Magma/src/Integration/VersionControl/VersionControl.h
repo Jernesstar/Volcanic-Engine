@@ -2,7 +2,9 @@
 
 #include <git2.h>
 
-namespace Magma::VC {
+#include <VolcaniCore/Core/Defines.h>
+
+namespace Magma::VersionControl {
 
 class VCManager {
 public:

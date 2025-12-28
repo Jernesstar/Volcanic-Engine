@@ -6,7 +6,7 @@
 
 #include "Networking/Networking.h"
 
-namespace Magma::VC {
+namespace Magma::VersionControl {
 
 void VCManager::Init() {
 	git_libgit2_init();
