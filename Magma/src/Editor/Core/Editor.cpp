@@ -52,7 +52,7 @@ void Editor::Open() {
 	Renderer::Init();
 	WidgetManager::Init();
 
-	WidgetManager::Load("Magma/assets/UI/start.rml");
+	WidgetManager::Load("Magma/assets/UI/graph.rml");
 
 	Application::PopDir();
 

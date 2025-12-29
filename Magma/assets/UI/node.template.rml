@@ -1,0 +1,8 @@
+<div class="node kind-{kind}" data-node-id="{id}">
+	<div class="node-title">{name}</div>
+
+	<div class="metrics">
+		<div class="bar complexity" style="width: {complexity}%"></div>
+		<div class="bar volatility" style="width: {volatility}%"></div>
+	</div>
+</div>

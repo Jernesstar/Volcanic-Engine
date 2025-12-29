@@ -1,0 +1,61 @@
+body {
+    font-family: JetBrains Mono;
+    width: 100%;
+    height: 100%;
+    margin: 0px;
+    background-color: #0e1116;
+    color: #e6e6e6;
+}
+
+#graph-root {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+#graph-canvas {
+    display: flex;
+	width: 90%;
+	height: 90%;
+    background-color: #1c52cf;
+    border-bottom: 1px #1f2533;
+    border-radius: 14px;
+    padding: 12px;
+}
+
+.node {
+	position: absolute;
+	padding: 8dp;
+	border-radius: 6dp;
+	background: #1e1e1e;
+	border: 1dp #333;
+}
+
+.node.kind-System {
+    border-color: #ff5555;
+}
+.node.kind-Module {
+    border-color: #ffaa00;
+}
+.node.kind-Class     {
+    border-color: #55aaff;
+}
+.node.kind-Function {
+    border-color: #55ffaa;
+}
+
+.node-title {
+	font-size: 14dp;
+	margin-bottom: 4dp;
+}
+
+.metrics .bar {
+	height: 3dp;
+	margin-top: 2dp;
+}
+
+.bar.complexity { background: #ff5555; }
+.bar.volatility { background: #ffaa00; }

@@ -24,7 +24,7 @@ body {
     height: 40px;
 
     background-color: #141821;
-    /* border-bottom: 1px solid #1f2533; */
+    border-bottom: 1px #1f2533;
     padding: 0px 12px;
 }
 
