@@ -6,8 +6,8 @@ auto element = ( <Text label="Piece of text"/> )
 UIElement HomePage() {
     return (
         <Title text="This is the homepage" class={className}/>
+        <TextBox>"This is the grey text {{data}}"</TextBox>
         <Header>{ username + "_user" }</Header>
-        <TextBox>This is the grey text {{data}}</TextBox>
         <Container type="Horizontal">
             <Button style="HomeButton" icon="HomeButton.svg"/>
         {
@@ -29,5 +29,9 @@ UIElement HomePage() {
             }
         }
         </Container>
+        <Graph>
+            <GraphNode />
+            <GraphNode />
+        </Graph>
     )
 }

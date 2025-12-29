@@ -62,6 +62,7 @@ public:
 	ASXLexer(const std::string& src)
 		: m_Source(src) {}
 
+	void FullPass();
 	Token NextToken();
 	void Revert();
 
@@ -80,6 +81,9 @@ private:
 	u64 m_Pos = 0;
 	u64 m_Line = 1;
 	u64 m_Column = 1;
+	bool m_PostPass = false;
+	u64 m_TokenIdx = 0;
+	List<Token> m_Tokens;
 };
 
 enum class ASXNodeType {

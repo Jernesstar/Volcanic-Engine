@@ -27,7 +27,22 @@ bool ASXLexer::Match(char c) {
 	return false;
 }
 
+void ASXLexer::FullPass() {
+	while(true) {
+		auto token = NextToken();
+		m_Tokens.Add(token);
+		if(token.Type == TokenType::EndOfFile)
+			break;
+	}
+
+	m_PostPass = true;
+}
+
 Token ASXLexer::NextToken() {
+	if(m_PostPass)
+		return m_TokenIdx < m_Tokens.Count()
+			? m_Tokens[m_TokenIdx++] : Token{ TokenType::EndOfFile };
+
 	if(m_Pos >= m_Source.size())
 		return { TokenType::EndOfFile };
 
@@ -41,6 +56,11 @@ Token ASXLexer::NextToken() {
 }
 
 void ASXLexer::Revert() {
+	if(m_PostPass) {
+		m_TokenIdx--;
+		return;
+	}
+
 	VOLCANICORE_ASSERT(m_Pos > 0);
 	m_Pos--;
 }
@@ -81,7 +101,7 @@ Token ASXLexer::LexAngelScript() {
 		while(Peek() && Peek() != c)
 			str += Advance();
 		Advance();
-		return { TokenType::String, str, m_Line, m_Column };
+		return { TokenType::String, '\"' + str + '\"', m_Line, m_Column };
 	}
 
 	return { TokenType::Symbol, std::string(1, c), m_Line, m_Column };
@@ -169,6 +189,7 @@ Token ASXLexer::LexXML() {
 void ASXCompiler::Compile(const std::string& path) {
 	auto str = FileUtils::ReadFile(path);
 	ASXLexer lexer(str);
+	lexer.FullPass();
 
 	ASXNode* root = new ASXRootNode();
 	while(true) {
@@ -195,32 +216,30 @@ void ASXCompiler::Parse(ASXLexer& lexer, Token token, ASXNode* parent) {
 	if((u32)token.Type <= (u32)TokenType::ExpressionOpen) { // AngelScript
 		node = new ASXScriptNode();
 		auto n = node->As<ASXScriptNode>();
+		// printf("ScriptType: %i, L: %s\n", token.Type, token.Lexeme.c_str());
 
 		if(token.Lexeme == "#") { // include
 			n->Script = token.Lexeme;
 			while(true) {
 				auto t = lexer.NextToken();
-				if(t.Type == TokenType::String)
-					n->Script += "\"";
 				n->Script += t.Lexeme + " ";
-				if(t.Type == TokenType::String) {
-					n->Script += "\"";
+				if(t.Type == TokenType::String)
 					break;
-				}
 			}
 		}
 		else if(token.Type == TokenType::ExpressionOpen) {
-			printf("Here");
-			// while(true) {
-			// 	auto t = lexer.NextToken();
-			// 	printf("Type: %i, L: %s", t.Type, t.Lexeme.c_str());
-			// 	if(t.Type == TokenType::ExpressionClose)
-			// 		break;
+			while(true) {
+				auto t = lexer.NextToken();
+				printf("Type: %i, L: %s\n", t.Type, t.Lexeme.c_str());
+				if(t.Type == TokenType::ExpressionClose)
+					break;
+				// if(t.Type == TokenType::XMLBlockOpen)
+				// 	Parse(lexer, t, node);
 
-			// 	n->Script += " " + t.Lexeme;
-			// 	if(t.Lexeme == ";")
-			// 		break;
-			// }
+				n->Script += " " + t.Lexeme;
+				if(t.Lexeme == ";")
+					break;
+			}
 		} 
 		else {
 			n->Script = token.Lexeme;
@@ -234,16 +253,13 @@ void ASXCompiler::Parse(ASXLexer& lexer, Token token, ASXNode* parent) {
 					break;
 				}
 
-				if(t.Type == TokenType::String)
-					n->Script += "\"" + t.Lexeme + "\"";
-				else
-					n->Script += " " + t.Lexeme;
+				n->Script += " " + t.Lexeme;
 				if(t.Lexeme == ";")
 					break;
 			}
 		}
 
-		printf("Script { %s }\n", n->Script.c_str());
+		printf("Script: %s\n", n->Script.c_str());
 	}
 	else if(token.Type == TokenType::XMLBlockOpen) {
 		node = new ASXBlockNode();
@@ -260,7 +276,7 @@ void ASXCompiler::Parse(ASXLexer& lexer, Token token, ASXNode* parent) {
 		auto nameToken = lexer.NextToken();
 		VOLCANICORE_ASSERT(nameToken.Type == TokenType::XMLIdentifier);
 		n->TypeName = nameToken.Lexeme;
-		printf("Tag: %s\n", nameToken.Lexeme.c_str());
+		printf("Tag: %s\n", n->TypeName.c_str());
 
 		// Parse attributes
 		while(true) {
@@ -277,37 +293,36 @@ void ASXCompiler::Parse(ASXLexer& lexer, Token token, ASXNode* parent) {
 			auto valueToken = lexer.NextToken();
 			if(valueToken.Type == TokenType::XMLString)
 				n->Attributes[attrToken.Lexeme] = valueToken;
-			else if(valueToken.Lexeme == "{")
+			else if(valueToken.Lexeme == "{") {
+				n->Attributes[attrToken.Lexeme].Lexeme = "{";
 				while(true) {
 					auto t = lexer.NextToken();
+					n->Attributes[attrToken.Lexeme].Lexeme += t.Lexeme;
 					if(t.Type == TokenType::ExpressionClose)
 						break;
-					n->Attributes[attrToken.Lexeme].Lexeme += t.Lexeme;
 				}
+			}
 			else
-				VOLCANICORE_ASSERT(false, "Invalid attribute value");
+				VOLCANICORE_ASSERT(false, "Invalid attribute type");
 		}
 
 		auto testIdentifier = lexer.NextToken();
-		if(testIdentifier.Type == TokenType::XMLIdentifier) {
+		if(testIdentifier.Type == TokenType::XMLString) {
 			n->Content = testIdentifier.Lexeme;
-			while(true) {
-				auto t = lexer.NextToken();
-				if(t.Type == TokenType::XMLEndTagOpen)
-					break;
-				n->Content += t.Lexeme + " ";
-			}
+			printf("Content: %s\n", n->Content.c_str());
 		}
 		else {
 			// If not self close tag and no inner html, parse children
 			lexer.Revert();
 			while(true) {
 				auto t = lexer.NextToken();
-				if(t.Type == TokenType::XMLEndTagOpen)
+				if(t.Type == TokenType::ExpressionClose)
 					break;
 				Parse(lexer, t, node);
 			}
 		}
+
+		VOLCANICORE_ASSERT(lexer.NextToken().Type == TokenType::XMLEndTagOpen);
 		// Parse end tag
 		auto endToken = lexer.NextToken();
 		VOLCANICORE_ASSERT(endToken.Lexeme == nameToken.Lexeme,
