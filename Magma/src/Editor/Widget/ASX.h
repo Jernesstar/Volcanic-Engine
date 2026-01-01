@@ -60,7 +60,7 @@ struct Token {
 class ASXLexer {
 public:
 	ASXLexer(const std::string& src)
-		: m_Source(src) {}
+		: m_Source(src) { }
 
 	void FullPass();
 	Token NextToken();

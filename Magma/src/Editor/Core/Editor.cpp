@@ -52,8 +52,7 @@ void Editor::Open() {
 	Renderer::Init();
 	WidgetManager::Init();
 
-	// WidgetManager::Load("Magma/assets/UI/graph.rml");
-	ASXCompiler::Compile("VolcanicFlow/UI/Home.asx");
+	WidgetManager::Load("Magma/assets/UI/graph.rml");
 
 	Application::PopDir();
 
