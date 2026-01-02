@@ -45,10 +45,9 @@ private:
 	inline static Editor* s_Instance;
 
 private:
-	void RenderStartScreen();
-	void RenderComponentEditor();
-	void RenderFlowEditor();
-	void RenderProjectEditor();
+	void LoadHomeScreen();
+	void LoadFlowEditor();
+	void LoadProjectEditor();
 };
 
 }

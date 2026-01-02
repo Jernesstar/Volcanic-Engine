@@ -1,5 +1,7 @@
 #pragma once
 
+#include <RmlUi/Core.h>
+
 #include <VolcaniCore/Core/Defines.h>
 #include <VolcaniCore/Core/Template.h>
 #include <VolcaniCore/Core/Math.h>
@@ -27,6 +29,7 @@ public:
 
 	static void Load(const std::string& path);
 	static void Reload();
+	static Rml::ElementDocument* GetDocument();
 
 	// static Ref<Widget> GetRoot() { return m_Root; }
 
@@ -39,6 +42,24 @@ public:
 private:
 	// inline static Ref<Widget> m_Root;
 	inline static std::string m_RootPath = "";
+};
+
+class ElementEventListener : public Rml::EventListener {
+public:
+	ElementEventListener(Rml::Element* element,
+		Func<void, Rml::Element*, Rml::Event&> callback)
+		: m_Element(element), m_Callback(callback) { }
+
+	void ProcessEvent(Rml::Event& event) override {
+		m_Callback(m_Element, event);
+	}
+
+	void OnAttach(Rml::Element* element) override { }
+	void OnDetach(Rml::Element* element) override { }
+
+private:
+	Rml::Element* m_Element;
+	Func<void, Rml::Element*, Rml::Event&> m_Callback;
 };
 
 enum class WidgetType {

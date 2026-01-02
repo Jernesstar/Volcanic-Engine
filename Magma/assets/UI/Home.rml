@@ -1,7 +1,7 @@
 <rml>
 <head>
     <link type="text/rcss" href="style.rcss"/>
-    <link type="text/rcss" href="start.rcss"/>
+    <link type="text/rcss" href="Home.rcss"/>
 </head>
 
 <body>
@@ -24,16 +24,14 @@
     </div>
 
     <div id="topbar">
-        <div class="topbar-button">Project</div>
-        <div class="topbar-button">LavaFlow</div>
-        <div class="topbar-button">Nodule</div>
+        <div id="project-button" class="topbar-button">Project</div>
+        <div id="flow-button" class="topbar-button">LavaFlow</div>
     </div>
 
     <div id="main-layout">
-
         <div id="sidebar">
-            <div class="sidebar-button">New Project</div>
-            <div class="sidebar-button">Open Project</div>
+            <div id="new-project" class="sidebar-button">New Project</div>
+            <div id="open-project" class="sidebar-button">Open Project</div>
         </div>
 
         <div id="content-area">

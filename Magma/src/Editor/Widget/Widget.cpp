@@ -452,32 +452,6 @@ void WidgetManager::Close() {
 	s_RenderInterface = nullptr;
 }
 
-class ClassToggleListener : public Rml::EventListener {
-public:
-	ClassToggleListener(Rml::Element* element)
-		: m_Element(element) { }
-
-	void ProcessEvent(Rml::Event& event) override {
-		if (event.GetType() == "click") {
-			auto parent = m_Element->GetParentNode();
-			bool visible = parent->IsPseudoClassSet("visible");
-			parent->SetPseudoClass("visible", !visible);
-			printf("Click\n");
-		}
-	}
-
-	void OnAttach(Rml::Element* element) override {
-
-	}
-
-	void OnDetach(Rml::Element* element) override {
-		delete this;
-	}
-
-private:
-	Rml::Element* m_Element;
-};
-
 void WidgetManager::Load(const std::string& path) {
 	s_Doc = s_Context->LoadDocument(path);
 	s_Doc->Show();
@@ -493,6 +467,8 @@ void WidgetManager::Reload() {
 	s_Doc->ReloadStyleSheet();
 	s_RenderInterface->OnReload();
 }
+
+Rml::ElementDocument* WidgetManager::GetDocument() { return s_Doc; }
 
 void WidgetManager::Update(TimeStep ts) {
 	s_Context->Update();

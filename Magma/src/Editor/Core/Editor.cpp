@@ -45,16 +45,9 @@ namespace Magma {
 
 void Editor::Open() {
 	// Editor::RegisterInterface();
-
-	Application::PushDir();
-
 	AssetManager::Init();
 	Renderer::Init();
 	WidgetManager::Init();
-
-	WidgetManager::Load("Magma/assets/UI/graph.rml");
-
-	Application::PopDir();
 
 	Events::RegisterListener<KeyPressedEvent>(
 		[](const KeyPressedEvent& event)
@@ -63,13 +56,10 @@ void Editor::Open() {
 				WidgetManager::Reload();
 		});
 
-	// AI::AIManager::Init();
-	// AI::AIManager::RunAnalysis();
+	LoadHomeScreen();
 }
 
 void Editor::Close() {
-	// AI::AIManager::Close();
-
 	WidgetManager::Close();
 	Renderer::Close();
 	AssetManager::Close();
@@ -95,33 +85,36 @@ void Editor::Update(TimeStep ts) {
 void Editor::Render() {
 	Renderer::BeginFrame();
 
-	if(Mode == EditorMode::None)
-		RenderStartScreen();
-	else if(Mode == EditorMode::Component)
-		RenderComponentEditor();
-	else if(Mode == EditorMode::Flow)
-		RenderFlowEditor();
-	else if(Mode == EditorMode::Project)
-		RenderProjectEditor();
-
 	WidgetManager::Render();
 
 	Renderer::EndFrame();
 }
 
-void Editor::RenderStartScreen() {
+void Editor::LoadHomeScreen() {
+	WidgetManager::Load("Magma/assets/UI/Home.rml");
+
+	auto doc = WidgetManager::GetDocument();
+	Rml::Element* element;
+	element = doc->GetElementById("new-project");
+	element->AddEventListener("click",
+		new ElementEventListener(element,
+			[doc](Rml::Element* element, Rml::Event& event)
+			{
+				auto popup = doc->GetElementById("popup-container");
+				bool visible = popup->IsPseudoClassSet("visible");
+				popup->SetPseudoClass("visible", !visible);
+				printf("Clicked");
+			}
+		),
+		true
+	);
+}
+
+void Editor::LoadFlowEditor() {
 
 }
 
-void Editor::RenderComponentEditor() {
-
-}
-
-void Editor::RenderFlowEditor() {
-
-}
-
-void Editor::RenderProjectEditor() {
+void Editor::LoadProjectEditor() {
 
 }
 
