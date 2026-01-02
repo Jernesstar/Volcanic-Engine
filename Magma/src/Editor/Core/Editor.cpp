@@ -79,6 +79,7 @@ void Editor::Update(TimeStep ts) {
 	// 	for(auto& tab : m_Tabs)
 	// 		tab.OnUpdate(ts);
 
+	// printf("Editor Update: %f\n", (float)ts);
 	WidgetManager::Update(ts);
 }
 
@@ -94,23 +95,39 @@ void Editor::LoadHomeScreen() {
 	WidgetManager::Load("Magma/assets/UI/Home.rml");
 
 	auto doc = WidgetManager::GetDocument();
+
+	auto popup = doc->GetElementById("popup-container");
+	bool visible = popup->IsPseudoClassSet("visible");
+	printf("Popup visible: %d\n", visible);
+	popup->SetPseudoClass("visible", true);
+
 	Rml::Element* element;
 	element = doc->GetElementById("new-project");
-	element->AddEventListener("click",
+	element->AddEventListener(Rml::EventId::Click,
 		new ElementEventListener(element,
-			[doc](Rml::Element* element, Rml::Event& event)
+			[doc, this](Rml::Element* e, Rml::Event& event)
 			{
 				auto popup = doc->GetElementById("popup-container");
 				bool visible = popup->IsPseudoClassSet("visible");
 				popup->SetPseudoClass("visible", !visible);
-				printf("Clicked");
+				printf("Clicked\n");
 			}
-		),
-		true
+		)
+	);
+
+	element = doc->GetElementById("close-button");
+	element->AddEventListener(Rml::EventId::Click,
+		new ElementEventListener(element,
+			[doc, this](Rml::Element* e, Rml::Event& event)
+			{
+				Application::Close();
+			}
+		)
 	);
 }
 
 void Editor::LoadFlowEditor() {
+	WidgetManager::Load("Magma/assets/UI/Graph.rml");
 
 }
 

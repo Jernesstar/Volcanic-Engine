@@ -4,8 +4,6 @@
 #include <VolcanicWindow/Application.h>
 #include <VolcanicWindow/Events.h>
 
-#include <Lava/Core/Lava.h>
-
 using namespace VolcaniCore;
 using namespace VolcanicWindow;
 
@@ -28,26 +26,17 @@ EditorApp::EditorApp(const CommandLineArgs& args)
 				Application::Close();
 		});
 
-	Lava::InitComponents();
-
 	m_Editor.Open();
 	m_Editor.Load(args);
 }
 
 EditorApp::~EditorApp() {
 	m_Editor.Close();
-
-	Lava::CloseComponents();
 }
 
 void EditorApp::OnUpdate(TimeStep ts) {
-	Lava::BeginFrame();
-	Lava::Update(ts);
-
 	m_Editor.Update(ts);
 	m_Editor.Render();
-
-	Lava::EndFrame();
 }
 
 }

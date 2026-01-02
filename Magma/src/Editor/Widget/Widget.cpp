@@ -252,24 +252,15 @@ public:
 	TextureHandle LoadTexture(Vector2i& texDim, const String& src) override {
 		VOLCANICORE_LOG_INFO("LoadTexture: %s", src.c_str());
 
-		auto reg =
-			AssetManager::GetRegistry()->As<EditorAssetRegistry>();
-		auto assetID = reg->GetAssetID(src);
-		if(!assetID) {
-			VOLCANICORE_LOG_ERROR("Could not load texture '%s'!", src.c_str());
-			return (TextureHandle)0;
-		}
-
-		reg->LoadAsset(assetID);
-		auto asset = reg->GetAsset(assetID)->As<ImageAsset>();
+		auto image = AssetImporter::LoadImage(src);
 
 		auto tex =
 			RendererAPI::Get()->CreateTexture(
 			{
-				.Width = asset->Width,
-				.Height = asset->Height,
+				.Width = image.Width,
+				.Height = image.Height,
 			});
-		tex->SetData(asset->Data.Get());
+		tex->SetData(image.Data.Get());
 
 		UUID id = UUID();
 		TextureHandles[id] = tex;
@@ -372,7 +363,9 @@ public:
 		}
 		return 0;
 	}
-	void RenderShader(CompiledShaderHandle shader, CompiledGeometryHandle geometry, Vector2f translation, TextureHandle texture) override {
+	void RenderShader(CompiledShaderHandle shader, CompiledGeometryHandle geom,
+					  Vector2f tr, TextureHandle tex) override
+	{
 		VOLCANICORE_LOG_INFO("RenderShader");
 
 	}
@@ -416,6 +409,11 @@ void WidgetManager::Init() {
 		{
 			s_Context->ProcessMouseMove(e.x, e.y, 0);
 		});
+	Events::RegisterListener<MouseScrolledEvent>(
+		[](MouseScrolledEvent& e)
+		{
+			s_Context->ProcessMouseWheel((int)e.ScrollY, 0);
+		});
 	Events::RegisterListener<MouseButtonPressedEvent>(
 		[](MouseButtonPressedEvent& e)
 		{
@@ -453,8 +451,10 @@ void WidgetManager::Close() {
 }
 
 void WidgetManager::Load(const std::string& path) {
+	s_Context->UnloadAllDocuments();
 	s_Doc = s_Context->LoadDocument(path);
 	s_Doc->Show();
+	s_RenderInterface->OnReload();
 	m_RootPath = path;
 	VOLCANICORE_LOG_INFO("Successfully loaded UI");
 }
@@ -465,7 +465,6 @@ void WidgetManager::Reload() {
 
 	Load(m_RootPath);
 	s_Doc->ReloadStyleSheet();
-	s_RenderInterface->OnReload();
 }
 
 Rml::ElementDocument* WidgetManager::GetDocument() { return s_Doc; }
@@ -478,138 +477,6 @@ void WidgetManager::Render() {
 	s_RenderInterface->BeginFrame();
 	s_Context->Render();
 	s_RenderInterface->EndFrame();
-}
-
-void Widget::Update(TimeStep ts) {
-	if(!Enabled)
-		return;
-
-	if(State) {
-		if(OnEvent.Func)
-			OnEvent.CallVoid(State);
-		State = { };
-	}
-
-	for(auto& animations : Animations)
-		animations->Update(this, ts);
-	for(auto& widget : Children)
-		widget->Update(ts);
-}
-
-void Widget::Render() {
-	if(!Visible)
-		return;
-
-	Begin();
-	for(auto& widget : Children)
-		widget->Render();
-	End();
-}
-
-Widget* Widget::Add(Ref<Widget> widget) {
-	Children.Add(widget);
-	widget->Parent = this;
-	return this;
-}
-
-void Widget::Remove(const std::string& id) {
-	auto [found, i] =
-		Children.Find([&](auto& w) { return w->ID == id; });
-	if(found)
-		Children.Pop(i);
-
-	VOLCANICORE_LOG_WARNING("Could not remove widget '%s'", id.c_str());
-}
-
-Ref<Widget> Widget::Find(const std::string& id) {
-	for(auto child : Children) {
-		if(child->ID == id)
-			return child;
-
-		auto w = child->Find(id);
-		if(w)
-			return w;
-	}
-
-	return nullptr;
-}
-
-void Root::Begin() {
-
-}
-
-void Root::End() {
-
-}
-
-void Window::Begin() {
-
-}
-
-void Window::End() {
-
-}
-
-void Container::Begin() {
-
-}
-
-void Container::End() {
-
-}
-
-void Dropdown::Begin() {
-
-}
-
-void Dropdown::End() {
-
-}
-
-void Button::Begin() {
-
-}
-
-void Button::End() {
-}
-
-void Image::Begin() {
-
-}
-
-void Image::End() {
-}
-
-void Text::Begin() {
-
-}
-
-void Text::End() {
-
-}
-
-void TextInput::Begin() {
-
-}
-
-void TextInput::End() {
-
-}
-
-void FileDialog::Begin() {
-
-}
-
-void FileDialog::End() {
-
-}
-
-void FileEditor::Begin() {
-
-}
-
-void FileEditor::End() {
-
 }
 
 }

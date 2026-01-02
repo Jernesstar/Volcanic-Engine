@@ -126,7 +126,7 @@ private:
 
 class AssetImporter {
 public:
-	static Ref<ImageAsset> LoadImage(const std::string& path, bool flip = false);
+	static ImageAsset LoadImage(const std::string& path, bool flip = false);
 };
 
 }

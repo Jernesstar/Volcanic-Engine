@@ -73,19 +73,19 @@ Ref<AssetRegistry> AssetManager::GetRegistry() {
 // 	inline static SoLoud::Soloud* s_Engine;
 // };
 
-Ref<ImageAsset> AssetImporter::LoadImage(const std::string& path, bool flip) {
+ImageAsset AssetImporter::LoadImage(const std::string& path, bool flip) {
 	stbi_set_flip_vertically_on_load((int)flip);
-	Ref<ImageAsset> image = CreateRef<ImageAsset>();
-	int width, height, bpp;
-	uint8_t* pixels = stbi_load(path.c_str(), &width, &height, &bpp, 4);
+	i32 width, height, bpp;
+	u8* pixels = stbi_load(path.c_str(), &width, &height, &bpp, 4);
 	if(!pixels) {
 		VOLCANICORE_LOG_WARNING("Could not load image '%s'", path.c_str());
 		return { };
 	}
 
-	image->Width = (uint32_t)width;
-	image->Height = (uint32_t)height;
-	image->Data = Buffer(pixels, image->Width * image->Height * bpp);
+	ImageAsset image;
+	image.Width = (u32)width;
+	image.Height = (u32)height;
+	image.Data = Buffer(pixels, (u64)width * (u64)height * (u64)bpp);
 	return image;
 }
 

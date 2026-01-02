@@ -19,7 +19,7 @@
         </div>
 
         <div id="title-right">
-            <img src="assets/close.png" class="window-button"/>
+            <img id="close-button" src="assets/close.png" class="window-button"/>
         </div>
     </div>
 
