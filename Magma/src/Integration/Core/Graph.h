@@ -2,16 +2,17 @@
 
 #include <VolcaniCore/Core/Defines.h>
 #include <VolcaniCore/Core/List.h>
+#include <VolcaniCore/Core/UUID.h>
 
 using namespace VolcaniCore;
 
 namespace Magma {
 
-using NodeID = u64;
-using EdgeID = u64;
-using GraphID = u64;
-
 enum class NodeKind {
+	None,
+	Project,
+	Folder,
+	File,
 	System,   // Functionality spanning many files
 	Module,   // Functionality within one or a few files
 	Class,
@@ -21,40 +22,40 @@ enum class NodeKind {
 };
 
 enum class EdgeKind {
-	Implementation, // Subclass
-	Ownership,      // Resource ownership
-	Data            // Data flow
+	None,
+	Implementation,
+	Ownership,
+	Data,
 };
 
 // Range: 0.0 -> 1.0
 struct NodeMetrics {
-	f32 Complexity = 0.0f;      // The mental load required to understand the code
-	f32 Volatility = 0.0f;      // Likelihood of change
-	f32 Performance = 0.0f;     // Time complexity, memory complexity, allocations, cache hits
-	f32 Readability = 0.0f;     // Nesting, line length, conditional branches (cyclomatic complexity)
-	f32 TotalScore = 0.0f;      // Average of all metrics: (C + V + P + R) / 4
+	f32 Complexity = 0.0f;  // The mental load required to understand the code
+	f32 Volatility = 0.0f;  // Likelihood of change
+	f32 Performance = 0.0f; // Time complexity, memory complexity, allocations, cache hits
+	f32 Readability = 0.0f; // Nesting, line length, conditional branches (cyclomatic complexity)
+	f32 TotalScore = 0.0f;  // Average of all metrics: (C + V + P + R) / 4
 };
 
 struct Node {
-	NodeID ID;
-	NodeKind Kind;
+	UUID ID = 0;
+	NodeKind Kind = NodeKind::None;
 	NodeMetrics Metrics;
-	std::string Name;
-	std::string Path;
-	u64 Line;
-	GraphID SubgraphID;
+	std::string Name, Path;
+	u64 Line = 0, Column = 0, EndLine = 0, EndColumn = 0;
+	UUID SubgraphID = 0;
 };
 
 struct Edge {
-	EdgeID ID;
-	NodeID To;
-	NodeID From;
-	EdgeKind Kind;
+	UUID ID = 0;
+	UUID To = 0;
+	UUID From = 0;
+	EdgeKind Kind = EdgeKind::None;
 };
 
 struct Graph {
-	u64 ID;
-	u64 ParentID;
+	UUID ID = 0;
+	UUID ParentID = 0;
 	List<Node> Nodes;
 	List<Edge> Edges;
 };
@@ -64,9 +65,13 @@ public:
 	static void Init();
 	static void Shutdown();
 
-	static const Graph* CreateGraph();
-	static const Graph* GetGraph(GraphID graphID);
-	static void DeleteGraph(GraphID graphID);
+	static Graph* CreateGraph(const std::string& path);
+	static Graph* GetGraph(UUID graphID);
+	static void DeleteGraph(UUID graphID);
+
+	static void TraverseBFS(Graph* graph, const Func<void, Node&>& cb);
+	// depth = 0 => infinite
+	static void TraverseDFS(Graph* graph, const Func<void, Node&>& cb, u32 depth = 0);
 };
 
 }

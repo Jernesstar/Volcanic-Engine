@@ -44,10 +44,12 @@
 
     <div id="popup-container">
         <div id="popup-content">
-            <h1>Popup Title</h1>
-            <p>This is your popup message.</p>
-            <div id="okButton">
-                <span>OK</span>
+            <h1>Select project</h1>
+            <div class="sidebar-button">
+                <span>VolcanicEngine</span>
+            </div>
+            <div class="window-button">
+                <span id="okButton">OK</span>
             </div>
         </div>
     </div>

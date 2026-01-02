@@ -11,7 +11,7 @@ namespace Magma {
 
 EditorApp::EditorApp(const CommandLineArgs& args)
 	: WindowApplication({
-		.Title = "Magma Editor v0.1.0",
+		.Title = "Magma Editor v0.0.1",
 		.Width = 1400,
 		.Height = 800,
 		.TickRate = 60,

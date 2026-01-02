@@ -27,6 +27,8 @@
 #include "Networking/Networking.h"
 #include "Asset/Asset.h"
 
+#include "Integration/Core/Graph.h"
+
 #undef LoadImage
 #undef LoadImageW
 #undef LoadImageA
@@ -95,25 +97,7 @@ void Editor::LoadHomeScreen() {
 	WidgetManager::Load("Magma/assets/UI/Home.rml");
 
 	auto doc = WidgetManager::GetDocument();
-
-	auto popup = doc->GetElementById("popup-container");
-	bool visible = popup->IsPseudoClassSet("visible");
-	printf("Popup visible: %d\n", visible);
-	popup->SetPseudoClass("visible", true);
-
 	Rml::Element* element;
-	element = doc->GetElementById("new-project");
-	element->AddEventListener(Rml::EventId::Click,
-		new ElementEventListener(element,
-			[doc, this](Rml::Element* e, Rml::Event& event)
-			{
-				auto popup = doc->GetElementById("popup-container");
-				bool visible = popup->IsPseudoClassSet("visible");
-				popup->SetPseudoClass("visible", !visible);
-				printf("Clicked\n");
-			}
-		)
-	);
 
 	element = doc->GetElementById("close-button");
 	element->AddEventListener(Rml::EventId::Click,
@@ -124,15 +108,52 @@ void Editor::LoadHomeScreen() {
 			}
 		)
 	);
-}
 
-void Editor::LoadFlowEditor() {
-	WidgetManager::Load("Magma/assets/UI/Graph.rml");
+	element = doc->GetElementById("new-project");
+	element->AddEventListener(Rml::EventId::Click,
+		new ElementEventListener(element,
+			[doc, this](Rml::Element* e, Rml::Event& event)
+			{
+				auto popup = doc->GetElementById("popup-container");
+				popup->SetPseudoClass("visible", true);
+			}
+		)
+	);
 
+	element = doc->GetElementById("okButton");
+	element->AddEventListener(Rml::EventId::Click,
+		new ElementEventListener(element,
+			[doc, this](Rml::Element* e, Rml::Event& event)
+			{
+				LoadProjectEditor();
+			}
+		)
+	);
 }
 
 void Editor::LoadProjectEditor() {
+	WidgetManager::Load("Magma/assets/UI/Project.rml");
 
+	auto doc = WidgetManager::GetDocument();
+	Rml::Element* element;
+
+	element = doc->GetElementById("scan-button");
+	element->AddEventListener(Rml::EventId::Click,
+		new ElementEventListener(element,
+			[doc, this](Rml::Element* e, Rml::Event& event)
+			{
+				auto graph =
+					GraphManager::CreateGraph(Application::GetLibraryDir());
+
+				GraphManager::TraverseBFS(graph,
+					[](Node& node)
+					{
+						printf("%s\n", node.Name.c_str());
+					}
+				);
+			}
+		)
+	);
 }
 
 void Editor::RegisterInterface() {

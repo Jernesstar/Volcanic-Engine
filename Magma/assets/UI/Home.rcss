@@ -186,7 +186,7 @@ body {
     align-items: center;
 }
 
-#popup-container.visible {
+#popup-container:visible {
     display: flex;
 }
 
