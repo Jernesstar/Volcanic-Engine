@@ -17,8 +17,7 @@ void GraphManager::Shutdown() {
 
 }
 
-static Graph* NewGraph() {
-	auto id = UUID();
+static Graph* NewGraph(UUID id) {;
 	auto& graph = s_Graphs[id];
 	graph.ID = id;
 	return &graph;
@@ -30,45 +29,65 @@ static Node* NewNode(Graph* graph) {
 	return &node;
 }
 
-static void TraverseGraph(Graph* graph, Graph* parent) {
-	auto& node = graph->Nodes[0];
-	if(node.Kind == NodeKind::Project) {
-		for(auto p : FileUtils::GetFiles(node.Path)) {
-			auto path = fs::path(p);
-			Node* node = NewNode(graph);
-			if(fs::is_directory(path)) {
-				node->Kind = NodeKind::Folder;
-				node->Name = path.filename().string();
-				node->Path = path.string();
-			} else if(fs::is_regular_file(path)) {
-				node->Kind = NodeKind::File;
-				node->Name = path.filename().string();
-				node->Path = path.string();
+static void BuildGraph(Graph* graph, Graph* parent) {
+	for(auto& node : graph->Nodes) {
+		if(node.Type == NodeType::None)
+			continue;
+
+		auto subgraph = NewGraph(node.ID);
+
+		// Project or folder
+		if((u32)node.Type <= (u32)NodeType::Folder) {
+			for(auto p : FileUtils::GetFiles(node.Path)) {
+				auto path = fs::path(p);
+				Node* n = NewNode(graph);
+				if(fs::is_directory(path)) {
+					n->Type = NodeType::Folder;
+					n->Name = path.filename().string();
+					n->Path = path.string();
+				}
+				else if(fs::is_regular_file(path)) {
+					n->Type = NodeType::File;
+					n->Name = path.filename().string();
+					n->Path = path.string();
+				}
 			}
 		}
+
+		if(node.Type == NodeType::File) {
+			// AST
+		}
+
+		BuildGraph(subgraph, graph);
 	}
 }
 
 Graph* GraphManager::CreateGraph(const std::string& path) {
-	auto rootGraph = NewGraph();
-	Node rootNode;
-	rootNode.ID = UUID();
-	rootNode.Kind = NodeKind::Project;
-	rootNode.Name = "Project";
-	rootNode.Path = path;
+	auto rootGraph = NewGraph(1);
+	Node* rootNode = NewNode(rootGraph);
+	rootNode->Type = NodeType::Project;
+	rootNode->Name = "Project";
+	rootNode->Path = path;
 
-	rootGraph->Nodes.Add(rootNode);
-
-	TraverseGraph(rootGraph, nullptr);
+	BuildGraph(rootGraph, nullptr);
 
 	return rootGraph;
 }
 
 Graph* GraphManager::GetGraph(UUID graphID) {
+	if(!s_Graphs.contains(graphID))
+		return nullptr;
 	return &s_Graphs[graphID];
 }
 
 void GraphManager::DeleteGraph(UUID graphID) {
+	auto* graph = GetGraph(graphID);
+	if(!graph)
+		return;
+
+	for(auto& node : graph->Nodes)
+		DeleteGraph(node.ID);
+
 	s_Graphs.erase(graphID);
 }
 
@@ -79,7 +98,12 @@ void GraphManager::TraverseBFS(Graph* graph, const Func<void, Node&>& cb) {
 void GraphManager::TraverseDFS(Graph* graph, const Func<void, Node&>& cb,
 	u32 depth)
 {
-
+	for(auto& node : graph->Nodes) {
+		cb(node);
+		auto* graph = GetGraph(node.ID);
+		if(graph)
+			TraverseBFS(graph, cb);
+	}
 }
 
 }

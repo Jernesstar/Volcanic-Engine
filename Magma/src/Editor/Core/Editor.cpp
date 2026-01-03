@@ -142,10 +142,11 @@ void Editor::LoadProjectEditor() {
 		new ElementEventListener(element,
 			[doc, this](Rml::Element* e, Rml::Event& event)
 			{
+				printf("Scanning project...\n");
 				auto graph =
 					GraphManager::CreateGraph(Application::GetLibraryDir());
 
-				GraphManager::TraverseBFS(graph,
+				GraphManager::TraverseDFS(graph,
 					[](Node& node)
 					{
 						printf("%s\n", node.Name.c_str());

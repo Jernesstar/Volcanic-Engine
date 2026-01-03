@@ -8,7 +8,7 @@ using namespace VolcaniCore;
 
 namespace Magma {
 
-enum class NodeKind {
+enum class NodeType {
 	None,
 	Project,
 	Folder,
@@ -21,7 +21,7 @@ enum class NodeKind {
 	Variable
 };
 
-enum class EdgeKind {
+enum class EdgeType {
 	None,
 	Implementation,
 	Ownership,
@@ -38,24 +38,23 @@ struct NodeMetrics {
 };
 
 struct Node {
-	UUID ID = 0;
-	NodeKind Kind = NodeKind::None;
+	UUID ID = 0;   // Both the Node's ID and the Subgraph ID
+	NodeType Type = NodeType::None;
 	NodeMetrics Metrics;
 	std::string Name, Path;
 	u64 Line = 0, Column = 0, EndLine = 0, EndColumn = 0;
-	UUID SubgraphID = 0;
 };
 
 struct Edge {
 	UUID ID = 0;
 	UUID To = 0;
 	UUID From = 0;
-	EdgeKind Kind = EdgeKind::None;
+	EdgeType Type = EdgeType::None;
 };
 
 struct Graph {
 	UUID ID = 0;
-	UUID ParentID = 0;
+	UUID ParentNodeID = 0;
 	List<Node> Nodes;
 	List<Edge> Edges;
 };
