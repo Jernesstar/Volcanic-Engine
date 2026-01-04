@@ -14,7 +14,7 @@ enum class NodeType {
 	Folder,
 	File,
 	System,   // Functionality spanning several files
-	Module,   // Functionality within one file
+	Module,   // Functionality within one file or unit (eg. .h + .cpp)
 	Class,
 	Function,
 	Expression,
@@ -38,7 +38,7 @@ struct NodeMetrics {
 };
 
 struct Node {
-	UUID ID = 0;   // Both the Node's ID and the Subgraph ID
+	UUID ID = 0;
 	NodeType Type = NodeType::None;
 	NodeMetrics Metrics;
 	std::string Name, Path;
@@ -69,8 +69,8 @@ public:
 	static void DeleteGraph(UUID graphID);
 
 	static void TraverseBFS(Graph* graph, const Func<void, Node&>& cb);
-	// depth = 0 => infinite
-	static void TraverseDFS(Graph* graph, const Func<void, Node&>& cb, u32 depth = 0);
+	static void TraverseDFS(Graph* graph, const Func<void, Node&>& cb,
+							u32 depth = std::numeric_limits<u32>::max());
 };
 
 }

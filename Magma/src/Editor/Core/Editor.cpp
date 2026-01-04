@@ -1,23 +1,12 @@
 #include "Editor.h"
 
-#include <fstream>
-#include <iostream>
-#include <regex>
-
 #include <VolcaniCore/Core/Application.h>
-// #include <VolcaniCore/Core/Algo.h>
-// #include <VolcaniCore/Core/FileUtils.h>
 #include <VolcaniCore/Core/Log.h>
 
 #include <VolcanicWindow/Application.h>
 #include <VolcanicWindow/Events.h>
-// #include <VolcanicWindow/Input.h>
-
-// #include <Lava/Core/Lava.h>
 
 #include "Integration/AI/AI.h"
-// #include "Integration/VersionControl/VersionControl.h"
-// #include "Integration/Lang/ScriptManager.h"
 
 #include "Utils/YAMLSerializer.h"
 #include "Widget/Widget.h"
@@ -40,8 +29,6 @@ using namespace VolcanicWindow;
 using namespace Magma::UI;
 using namespace Magma::Graphics;
 using namespace Magma::Networking;
-
-namespace fs = std::filesystem;
 
 namespace Magma {
 
@@ -143,18 +130,13 @@ void Editor::LoadProjectEditor() {
 			[doc, this](Rml::Element* e, Rml::Event& event)
 			{
 				printf("Scanning project...\n");
-				auto graph =
+				auto* graph =
 					GraphManager::CreateGraph(Application::GetLibraryDir());
-
-				GraphManager::TraverseDFS(graph,
-					[](Node& node)
-					{
-						printf("%s\n", node.Name.c_str());
-					}
-				);
 			}
 		)
 	);
+
+
 }
 
 void Editor::RegisterInterface() {

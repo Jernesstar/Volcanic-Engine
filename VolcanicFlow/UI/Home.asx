@@ -1,37 +1,5 @@
-#include "User.asx"
+class Hello : Component {
+    VElement@ render() {
 
-auto className = "Title2";
-auto element = ( <Text label="Piece of text"/> )
-
-UIElement Render() {
-    return (
-        <Title text="This is the homepage" class={className}/>
-        <Header>{ username + "_user" }</Header>
-        <TextBox>"This is the grey text {{data}}"</TextBox>
-        <Container type="Horizontal">
-            <Button style="HomeButton" icon="HomeButton.svg"/>
-        {
-            if(UserLoggedIn)
-                ( <Button style="AccountButton" icon="AccountButton.svg"/> )
-            else
-                ( <Button style="LogInButton" icon="LogInButton.svg"/> )
-        }
-        </Container>
-        <Container type="Vertical">
-        {
-            auto projects = Projects.Top(5);
-            for(auto p : projects)
-            {
-                (
-                    <Label text={p.Name}/>
-                    <Icon path="ProjectIcon.svg"/>
-                )
-            }
-        }
-        </Container>
-        <Graph>
-            <GraphNode />
-            <GraphNode />
-        </Graph>
-    )
+    }
 }

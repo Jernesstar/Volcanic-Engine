@@ -24,9 +24,13 @@ public:
 	virtual ~Parser() = default;
 
 	virtual ASTNode* Parse(const std::string& code) = 0;
+};
 
-private:
-	ASTNode* m_Root = nullptr;
+class LanguageManager {
+public:
+	static void Init();
+	static void Shutdown();
+	static Ref<Parser> GetParser(const std::string& ext);
 };
 
 }
