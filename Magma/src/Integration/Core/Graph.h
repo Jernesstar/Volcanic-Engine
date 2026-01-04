@@ -13,8 +13,8 @@ enum class NodeType {
 	Project,
 	Folder,
 	File,
-	System,   // Functionality spanning many files
-	Module,   // Functionality within one or a few files
+	System,   // Functionality spanning several files
+	Module,   // Functionality within one file
 	Class,
 	Function,
 	Expression,

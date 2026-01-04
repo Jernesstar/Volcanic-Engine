@@ -55,7 +55,7 @@ static void BuildGraph(Graph* graph, Graph* parent) {
 		}
 
 		if(node.Type == NodeType::File) {
-			// AST
+			
 		}
 
 		BuildGraph(subgraph, graph);

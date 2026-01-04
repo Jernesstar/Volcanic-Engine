@@ -49,3 +49,6 @@
 [submodule "VolcaniCore/.vendor/subprocess"]
 	path = VolcaniCore/.vendor/subprocess
 	url = https://github.com/benman64/subprocess
+[submodule "Magma/.vendor/tree-sitter"]
+	path = Magma/.vendor/tree-sitter
+	url = https://github.com/tree-sitter/tree-sitter.git
