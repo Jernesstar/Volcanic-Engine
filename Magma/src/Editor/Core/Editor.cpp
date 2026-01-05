@@ -14,6 +14,7 @@
 #include "Graphics/Platform/RendererAPI.h"
 #include "Networking/Networking.h"
 #include "Asset/Asset.h"
+#include "Script/ScriptManager.h"
 
 #include "Integration/Core/Graph.h"
 
@@ -32,10 +33,12 @@ using namespace Magma::Networking;
 namespace Magma {
 
 void Editor::Open() {
-	// Editor::RegisterInterface();
 	AssetManager::Init();
 	Renderer::Init();
 	WidgetManager::Init();
+	ScriptEngine::Init();
+
+	Editor::RegisterInterface();
 
 	Events::RegisterListener<KeyPressedEvent>(
 		[](const KeyPressedEvent& event)
@@ -48,6 +51,7 @@ void Editor::Open() {
 }
 
 void Editor::Close() {
+	ScriptEngine::Shutdown();
 	WidgetManager::Close();
 	Renderer::Close();
 	AssetManager::Close();
@@ -80,20 +84,10 @@ void Editor::Render() {
 }
 
 void Editor::LoadHomeScreen() {
-	WidgetManager::Load("Magma/assets/UI/Home.rml");
+	WidgetManager::Load("Magma/assets/UI/Home.as");
 
 	auto doc = WidgetManager::GetDocument();
 	Rml::Element* element;
-
-	element = doc->GetElementById("close-button");
-	element->AddEventListener(Rml::EventId::Click,
-		new ElementEventListener(element,
-			[doc, this](Rml::Element* e, Rml::Event& event)
-			{
-				Application::Close();
-			}
-		)
-	);
 
 	element = doc->GetElementById("new-project");
 	element->AddEventListener(Rml::EventId::Click,
@@ -118,28 +112,11 @@ void Editor::LoadHomeScreen() {
 }
 
 void Editor::LoadProjectEditor() {
-	WidgetManager::Load("Magma/assets/UI/Project.rml");
-
-	auto doc = WidgetManager::GetDocument();
-	Rml::Element* element;
-
-	element = doc->GetElementById("scan-button");
-	element->AddEventListener(Rml::EventId::Click,
-		new ElementEventListener(element,
-			[doc, this](Rml::Element* e, Rml::Event& event)
-			{
-				printf("Scanning project...\n");
-				auto* graph =
-					GraphManager::CreateGraph(Application::GetLibraryDir());
-			}
-		)
-	);
-
-
+	WidgetManager::Load("Magma/assets/UI/Project.as");
 }
 
 void Editor::RegisterInterface() {
-
+	
 }
 
 }

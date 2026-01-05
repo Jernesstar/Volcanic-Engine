@@ -375,11 +375,19 @@ public:
 	}
 };
 
+class UIElementWrapper {
+public:
+	Rml::Element* Element = nullptr;
+
+};
+
 Rml::SystemInterface* s_SystemInterface = nullptr;
 WidgetRendererInterface* s_RenderInterface = nullptr;
 Rml::Context* s_Context = nullptr;
 
 static ElementDocument* s_Doc = nullptr;
+
+static void RegisterScriptInterface();
 
 void WidgetManager::Init() {
 	s_SystemInterface = new SystemInterface_GLFW();
@@ -439,6 +447,8 @@ void WidgetManager::Init() {
 		{
 			s_Context->ProcessTextInput(e.Char);
 		});
+
+	RegisterScriptInterface();
 }
 
 void WidgetManager::Close() {
@@ -477,6 +487,21 @@ void WidgetManager::Render() {
 	s_RenderInterface->BeginFrame();
 	s_Context->Render();
 	s_RenderInterface->EndFrame();
+}
+
+Widget* CreateWidget(
+	const std::string& elementType, CScriptDictionary* attributes, CScriptArray* children)
+{
+	
+}
+
+
+void RegisterScriptInterface() {
+	auto engine = ScriptEngine::Get();
+	int r;
+	r = engine->RegisterObjectType("WidgetManagerClass", 0, asOBJ_REF | asOBJ_NOCOUNT); assert(r >= 0);
+	r = engine->RegisterObjectMethod("WidgetManagerClass", "Widget@ CreateWidget(const string &in, dictionary@ )", asFUNCTION(CreateWidget), asCALL_CDECL); assert(r >= 0);
+	r = engine->RegisterGlobalProperty("WidgetManagerClass WidgetManager", nullptr); assert(r >= 0);
 }
 
 }

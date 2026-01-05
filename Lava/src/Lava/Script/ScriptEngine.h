@@ -6,6 +6,7 @@
 #include <angelscript/add_on/scripthelper/scripthelper.h>
 #include <angelscript/add_on/scriptmath/scriptmath.h>
 #include <angelscript/add_on/scriptarray/scriptarray.h>
+#include <angelscript/add_on/scriptdictionary/scriptdictionary.h>
 
 #include <VolcaniCore/Core/Defines.h>
 

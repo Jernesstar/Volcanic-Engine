@@ -1,10 +1,5 @@
 #include "ScriptEngine.h"
 
-#include <angelscript.h>
-#include <angelscript/add_on/scripthandle/scripthandle.h>
-#include <angelscript/add_on/scriptbuilder/scriptbuilder.h>
-#include <angelscript/add_on/scriptstdstring/scriptstdstring.h>
-
 #include <VolcaniCore/Core/List.h>
 
 using namespace VolcaniCore;
@@ -30,6 +25,10 @@ void ScriptEngine::Init() {
 	s_Engine = asCreateScriptEngine();
 
 	s_Engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
+	RegisterScriptArray(s_Engine, true);
+	RegisterScriptDictionary(s_Engine);
+	RegisterStdString(s_Engine);
+	RegisterStdStringUtils(s_Engine);
 }
 
 void ScriptEngine::Shutdown() {
