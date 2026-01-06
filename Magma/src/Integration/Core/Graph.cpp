@@ -13,7 +13,7 @@ namespace Magma {
 Map<UUID, Graph> s_Graphs;
 
 void GraphManager::Init() {
-
+	LanguageManager::Init();
 }
 
 void GraphManager::Shutdown() {
@@ -51,6 +51,10 @@ static void GraphFileSystem(Graph* graph, Node* parentNode) {
 
 	for(auto p : FileUtils::GetFiles(parentNode->Path)) {
 		auto path = fs::path(p);
+		auto name = path.filename().string();
+		if(name == ".vendor" || name == ".git" || name == "build")
+			continue;
+
 		Node* n = NewNode(graph);
 		n->Type =
 			fs::is_directory(path) ? NodeType::Folder : NodeType::File;

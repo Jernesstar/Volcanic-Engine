@@ -19,10 +19,6 @@ using namespace Lava::Script;
 
 namespace Magma::UI {
 
-class Widget {
-
-};
-
 class WidgetManager {
 public:
 	static void Init();

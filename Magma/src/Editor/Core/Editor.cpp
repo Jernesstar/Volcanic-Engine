@@ -38,7 +38,7 @@ void Editor::Open() {
 	WidgetManager::Init();
 	ScriptEngine::Init();
 
-	Editor::RegisterInterface();
+	GraphManager::Init();
 
 	Events::RegisterListener<KeyPressedEvent>(
 		[](const KeyPressedEvent& event)
@@ -84,10 +84,20 @@ void Editor::Render() {
 }
 
 void Editor::LoadHomeScreen() {
-	WidgetManager::Load("Magma/assets/UI/Home.as");
+	WidgetManager::Load("Magma/assets/UI/Home.rml");
 
 	auto doc = WidgetManager::GetDocument();
 	Rml::Element* element;
+
+	element = doc->GetElementById("close-button");
+	element->AddEventListener(Rml::EventId::Click,
+		new ElementEventListener(element,
+			[doc, this](Rml::Element* e, Rml::Event& event)
+			{
+				Application::Close();
+			}
+		)
+	);
 
 	element = doc->GetElementById("new-project");
 	element->AddEventListener(Rml::EventId::Click,
@@ -112,7 +122,29 @@ void Editor::LoadHomeScreen() {
 }
 
 void Editor::LoadProjectEditor() {
-	WidgetManager::Load("Magma/assets/UI/Project.as");
+	WidgetManager::Load("Magma/assets/UI/Project.rml");
+
+	auto doc = WidgetManager::GetDocument();
+	Rml::Element* element;
+
+	element = doc->GetElementById("scan-button");
+	element->AddEventListener(Rml::EventId::Click,
+		new ElementEventListener(element,
+			[doc, this](Rml::Element* e, Rml::Event& event)
+			{
+				printf("Scanning project...\n");
+				auto graph =
+					GraphManager::CreateGraph(Application::GetLibraryDir());
+
+				GraphManager::TraverseDFS(graph,
+					[](Node& node)
+					{
+						printf("%s\n", node.Name.c_str());
+					}
+				);
+			}
+		)
+	);
 }
 
 void Editor::RegisterInterface() {

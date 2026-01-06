@@ -38,7 +38,7 @@ struct NodeMetrics {
 };
 
 struct Node {
-	UUID ID = 0;
+	UUID ID = 0; // Also SubGraph ID
 	NodeType Type = NodeType::None;
 	NodeMetrics Metrics;
 	std::string Name, Path;

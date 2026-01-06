@@ -25,10 +25,10 @@ void ScriptEngine::Init() {
 	s_Engine = asCreateScriptEngine();
 
 	s_Engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
+	RegisterStdString(s_Engine);
+	// RegisterStdStringUtils(s_Engine);
 	RegisterScriptArray(s_Engine, true);
 	RegisterScriptDictionary(s_Engine);
-	RegisterStdString(s_Engine);
-	RegisterStdStringUtils(s_Engine);
 }
 
 void ScriptEngine::Shutdown() {

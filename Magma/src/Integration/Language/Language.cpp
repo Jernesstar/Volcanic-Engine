@@ -17,9 +17,9 @@ public:
 
 void LanguageManager::Init() {
 	s_Extensions = {
-		{ "cpp", { "h", "hpp", "cpp", "cc", "C" } },
-		{ "c", { "h", "c" } },
-		{ "lua", { "lua" } }
+		{ "cpp", { ".h", ".hpp", ".cpp", ".cc", ".C" } },
+		{ "c", { ".h", ".c" } },
+		{ "lua", { ".lua" } }
 	};
 
 	s_Parsers["cpp"] = CreateRef<CppParser>();
@@ -36,7 +36,7 @@ Ref<Parser> LanguageManager::GetParser(const std::string& path) {
 			return s_Parsers[lang];
 	}
 
-	VOLCANICORE_LOG_INFO("No parser for file %s", path.c_str());
+	// VOLCANICORE_LOG_INFO("No parser for file %s", path.c_str());
 	return nullptr;
 }
 
