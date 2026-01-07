@@ -78,7 +78,7 @@ ImageAsset AssetImporter::LoadImage(const std::string& path, bool flip) {
 	i32 width, height, bpp;
 	u8* pixels = stbi_load(path.c_str(), &width, &height, &bpp, 4);
 	if(!pixels) {
-		VOLCANICORE_LOG_WARNING("Could not load image '%s'", path.c_str());
+		Log::Error("Could not load image '{}'", path.c_str());
 		return { };
 	}
 

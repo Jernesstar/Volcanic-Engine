@@ -85,7 +85,7 @@ void Application::SetCurrentDir() {
 
 	char* env = getenv("VOLC_PATH");
 	if(!env) {
-		VOLCANICORE_LOG_WARNING("Cound not find VOLC_PATH env variable");
+		Log::Warning("Cound not find VOLC_PATH env variable");
 		return;
 	}
 

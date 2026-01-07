@@ -1,5 +1,7 @@
 #include "ScriptModule.h"
 
+using namespace VolcaniCore;
+
 namespace Lava::Script {
 
 ScriptModule::ScriptModule(asIScriptModule* mod)
@@ -26,7 +28,7 @@ void ScriptModule::ReloadClasses() {
 
 Ref<ScriptClass> ScriptModule::GetClass(const std::string& name) const {
 	if(!m_Classes.count(name)) {
-		VOLCANICORE_LOG_WARNING("Could not find class '%s'", name.c_str());
+		Log::Warning("Could not find class '{0}'", name);
 		return nullptr;
 	}
 	return m_Classes.at(name);

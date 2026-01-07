@@ -58,7 +58,7 @@ public:
 				if(length) {
 					char* message = new char[length];
 					glGetShaderInfoLog(shaderID, length, &length, message);
-					VOLCANICORE_LOG_ERROR("A compile error was detected \n%s", message);
+					Log::Error("A compile error was detected \n{}", message);
 				}
 			}
 
@@ -77,7 +77,7 @@ public:
 			if(length) {
 				char* message = new char[length];
 				glGetProgramInfoLog(m_ProgramID, length, &length, message);
-				VOLCANICORE_LOG_ERROR("A linking error was detected \n%s", message);
+				Log::Error("A linking error was detected \n{}", message);
 			}
 
 			glDeleteProgram(m_ProgramID);

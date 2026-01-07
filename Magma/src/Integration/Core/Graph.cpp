@@ -22,7 +22,7 @@ void GraphManager::Shutdown() {
 
 static Graph* NewGraph(UUID id) {
 	if(s_Graphs.contains(id)) {
-		VOLCANICORE_LOG_WARNING("Graph already exists");
+		Log::Warning("Graph already exists");
 		return &s_Graphs[id];
 	}
 

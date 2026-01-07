@@ -25,7 +25,7 @@ Repo::~Repo() {
 }
 
 void Repo::Init(const std::string& path) {
-	VOLCANICORE_LOG_INFO("Initializing repo at '%s'", path.c_str());
+	Log::Info("Initializing repo at '%s'", path.c_str());
 	int error = git_repository_init(&m_Repo, path.c_str(), 0);
 	if(error < 0) {
 		const git_error* e = git_error_last();
@@ -196,7 +196,7 @@ int Repo::CredentialCallback(git_credential** out, const char* url,
 {
 	std::string token = Networking::TokenStore::LoadToken("github");
 	if(token.empty()) {
-		VOLCANICORE_LOG_WARNING("Failed to load github token");
+		Log::Warning("Failed to load github token");
 		return GIT_PASSTHROUGH;
 	}
 	if(allowedTypes & GIT_CREDENTIAL_USERPASS_PLAINTEXT)
@@ -204,7 +204,7 @@ int Repo::CredentialCallback(git_credential** out, const char* url,
 			git_cred_userpass_plaintext_new(
 				out, "x-access-token", token.c_str());
 
-	VOLCANICORE_LOG_WARNING("Failed to authenticate");
+	Log::Warning("Failed to authenticate");
 	return GIT_PASSTHROUGH;
 }
 

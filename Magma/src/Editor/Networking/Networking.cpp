@@ -80,7 +80,7 @@ void NetworkingManager::GitHubOAuth() {
 			[&polling](const Response& resp)
 			{
 				if(resp.Result != ResponseResult::Success) {
-					VOLCANICORE_LOG_INFO("Error: %i", resp.StatusCode);
+					Log::Error("GitHub OAuth failed, code {}", resp.StatusCode);
 					return;
 				}
 

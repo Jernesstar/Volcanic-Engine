@@ -36,7 +36,6 @@ Ref<Parser> LanguageManager::GetParser(const std::string& path) {
 			return s_Parsers[lang];
 	}
 
-	// VOLCANICORE_LOG_INFO("No parser for file %s", path.c_str());
 	return nullptr;
 }
 

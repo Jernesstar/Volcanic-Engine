@@ -9,7 +9,7 @@
 #define VOLCANICORE_INTERNAL_ASSERT_CHECK(condition, message, ...) \
 { \
 	if(!(condition)) { \
-		VOLCANICORE_LOG_ERROR(message, ## __VA_ARGS__); \
+		VolcaniCore::Log::Error(message, ## __VA_ARGS__); \
 		VolcaniCore::Application::Close(); \
 	} \
 }

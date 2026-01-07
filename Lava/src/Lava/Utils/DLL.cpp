@@ -17,8 +17,8 @@ DLL::DLL(const std::string& path)
 	m_Handle = LoadLibraryA(path.c_str());
 #elif VOLCANIC_LINUX
 	m_Handle = dlopen(path.c_str(), RTLD_NOW);
-	if(!m_Handle)
-		VOLCANICORE_LOG_ERROR(dlerror());
+	// if(!m_Handle)
+	// 	Log::Error(dlerror());
 #endif
 	VOLCANICORE_ASSERT(m_Handle);
 }

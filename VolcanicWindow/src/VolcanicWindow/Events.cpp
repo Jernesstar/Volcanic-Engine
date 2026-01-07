@@ -42,7 +42,7 @@ void Events::Init() {
 }
 
 void Events::ErrorCallback(int error, const char* description) {
-	VOLCANICORE_ASSERT(false, description);
+	// VOLCANICORE_ASSERT(false, description);
 }
 
 void Events::KeyCallback(GLFWwindow* window, int key, int scancode,

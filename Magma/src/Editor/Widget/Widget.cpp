@@ -152,7 +152,7 @@ public:
 		|| GeometryBuffer->GetVertexCount() + (u32)vertices.size()
 		>= GeometryBuffer->Spec.VertexCount)
 		{
-			VOLCANICORE_LOG_INFO("Reallocating geometry buffer");
+			VolcaniCore::Log::Info("Reallocating geometry buffer");
 			GeometryBuffer->Clear();
 			for(auto& [id, buffer] : Buffers) {
 				buffer.VertexOffset = GeometryBuffer->GetVertexCount();
@@ -250,8 +250,6 @@ public:
 	}
 
 	TextureHandle LoadTexture(Vector2i& texDim, const String& src) override {
-		VOLCANICORE_LOG_INFO("LoadTexture: %s", src.c_str());
-
 		auto image = AssetImporter::LoadImage(src);
 
 		auto tex =
@@ -289,88 +287,63 @@ public:
 	}
 
 	void EnableScissorRegion(bool enable) override {
-		VOLCANICORE_LOG_INFO("EnableScissorRegion: %d", enable);
 		Scissor = enable;
 	}
 	void SetScissorRegion(Rectanglei region) override {
-		VOLCANICORE_LOG_INFO("SetScissorRegion: %d, %d, %d, %d",
-							 region.Left(), region.Top(),
-							 region.Width(), region.Height());
 		ScissorRegion = region;
 	}
 
 	void EnableClipMask(bool enable) override {
-		VOLCANICORE_LOG_INFO("EnableClipMask: %d", enable);
 		ClipMask = enable;
 	}
 	void RenderToClipMask(ClipMaskOperation op, CompiledGeometryHandle geom,
 						  Vector2f translation) override
 	{
-		VOLCANICORE_LOG_INFO("RenderToClipMask: %i", (int)op);
 	}
 
 	void SetTransform(const Matrix4f* transform) override {
-		VOLCANICORE_LOG_INFO("SetTransform: %p", transform);
 		Transform = (transform ? *transform : Transform);
 	}
 
 	LayerHandle PushLayer() override {
-		VOLCANICORE_LOG_INFO("PushLayer");
 		return 0;
 	}
 	void CompositeLayers(LayerHandle src, LayerHandle dst, BlendMode blendMode,
 						 Span<const CompiledFilterHandle> filters) override
 	{
-		VOLCANICORE_LOG_INFO("CompositeLayers");
 
 	}
 	void PopLayer() override {
-		VOLCANICORE_LOG_INFO("PopLayer");
 	}
 
 	TextureHandle SaveLayerAsTexture() override {
-		VOLCANICORE_LOG_INFO("SaveLayerAsTexture");
 		return 0;
 	}
 
 	CompiledFilterHandle SaveLayerAsMaskImage() override {
-		VOLCANICORE_LOG_INFO("SaveLayerAsMaskImage");
 		return 0;
 	}
 
 	CompiledFilterHandle CompileFilter(const String& name,
 									   const Dictionary& parameters) override
 	{
-		VOLCANICORE_LOG_INFO("CompileFilter: %s", name.c_str());
-		for(auto& [key, value] : parameters) {
-			VOLCANICORE_LOG_INFO("\nParam: %s, Value: %i",
-				key.c_str(), (int)value.GetType());
-		}
 		return 0;
 	}
 	void ReleaseFilter(CompiledFilterHandle filter) override {
-		VOLCANICORE_LOG_INFO("ReleaseFilter");
 
 	}
 
 	CompiledShaderHandle CompileShader(const String& name,
 		const Dictionary& parameters) override
 	{
-		VOLCANICORE_LOG_INFO("CompileShader: %s", name.c_str());
-		for(auto& [key, value] : parameters) {
-			VOLCANICORE_LOG_INFO("\nParam: %s, Value: %i",
-				key.c_str(), (int)value.GetType());
-		}
 		return 0;
 	}
 	void RenderShader(CompiledShaderHandle shader, CompiledGeometryHandle geom,
 					  Vector2f tr, TextureHandle tex) override
 	{
-		VOLCANICORE_LOG_INFO("RenderShader");
 
 	}
 	void ReleaseShader(CompiledShaderHandle shader) override {
-		VOLCANICORE_LOG_INFO("ReleaseShader");
 
 	}
 };
@@ -462,7 +435,6 @@ void WidgetManager::Load(const std::string& path) {
 	s_Doc->Show();
 	s_RenderInterface->OnReload();
 	m_RootPath = path;
-	VOLCANICORE_LOG_INFO("Successfully loaded UI");
 }
 
 void WidgetManager::Reload() {

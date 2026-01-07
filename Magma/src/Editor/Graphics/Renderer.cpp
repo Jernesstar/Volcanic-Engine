@@ -206,7 +206,7 @@ void Renderer::DrawQuad(const Quad& quad) {
 void Renderer::DrawFullscreenQuad(Ref<Framebuffer> fb, u32 attachmentIdx)
 {
 	if(!fb->Has(Graphics::AttachmentTarget::Color)) {
-		VOLCANICORE_LOG_WARNING("Framebuffer has no color attachment");
+		Log::Warning("Framebuffer has no color attachment");
 		return;
 	}
 

@@ -33,7 +33,7 @@ static int IncludeCallback(const char* includeStr, const char* from,
 	Application::PopDir();
 
 	if(!found) {
-		VOLCANICORE_LOG_ERROR("Could not find include '%s'", includeStr);
+		Log::Error("Could not find include '{}'", includeStr);
 	}
 
 	return found ? 1 : -1;
@@ -52,7 +52,7 @@ asIScriptModule* ScriptManager::LoadScript(const List<std::string>& paths,
 	int r;
 	r = builder.StartNewModule(engine, name.c_str());
 	if(r < 0) {
-		VOLCANICORE_LOG_ERROR("StartNewModule failed for module name '%s'", name.c_str());
+		Log::Error("StartNewModule failed for module name '{}'", name.c_str());
 		if(error)
 			*error = true;
 		return nullptr;
@@ -66,7 +66,7 @@ asIScriptModule* ScriptManager::LoadScript(const List<std::string>& paths,
 	for(auto& path : paths) {
 		r = builder.AddSectionFromFile(path.c_str());
 		if(r < 0) {
-			VOLCANICORE_LOG_ERROR("AddSectionFromFile failed for file '%s'", path.c_str());
+			Log::Error("AddSectionFromFile failed for file '{}'", path.c_str());
 			if(error)
 				*error = true;
 			return nullptr;
@@ -75,7 +75,7 @@ asIScriptModule* ScriptManager::LoadScript(const List<std::string>& paths,
 
 	r = builder.BuildModule();
 	if(r < 0) {
-		VOLCANICORE_LOG_ERROR("BuildModule failed for module name '%s'", name.c_str());
+		Log::Error("BuildModule failed for module name '{}'", name.c_str());
 		if(error) *error = true;
 		return nullptr;
 	}
@@ -169,65 +169,7 @@ static bool s_Suspended = false;
 static uint8_t s_Action = 0;
 
 static void DebugLineCallback(asIScriptContext* ctx) {
-	// if(ctx->GetState() != asEXECUTION_ACTIVE)
-	// 	return;
 
-	// const char* path = nullptr;
-	// int lineNbr = ctx->GetLineNumber(s_StackLevel, 0, &path);
-	// if(!path)
-	// 	return;
-
-	// auto panel =
-	// 	Editor::GetProjectTab()->
-	// 		GetPanel("ScriptEditor")->As<ScriptEditorPanel>();
-	// panel->OpenFile(path, s_Suspended);
-
-	// auto* file = panel->GetFile(path);
-	// VOLCANICORE_ASSERT(file);
-
-	// bool isBreakpoint = file->Breakpoints.contains(lineNbr);
-	// if(!isBreakpoint && !s_Suspended)
-	// 	return;
-
-	// asIScriptFunction* func = ctx->GetFunction();
-	// VOLCANICORE_LOG_INFO("File: %s, Function: %s, Line: %d",
-	// 	path, func->GetName(), lineNbr);
-	// panel->SetDebugLine(lineNbr);
-
-	// if(!s_Suspended)
-	// 	ctx->Suspend();
-
-	// s_Suspended = true;
-	// Editor::GetProjectTab()->OnPause();
-
-	// // Having this run on a separate thread won't block
-	// // the editor application from responding to events
-	// // i.e pressing on the debug buttons
-
-	// // return == free to continue execution
-	// while(s_Suspended) {
-	// 	// Continue
-	// 	if(s_Action == 4) {
-	// 		Editor::GetProjectTab()->OnResume();
-	// 		s_Suspended = false;
-	// 		// ctx->Execute();
-	// 		return;
-	// 	}
-	// 	// Step out
-	// 	else if(s_Action == 3 && s_StackLevel <= ctx->GetCallstackSize()) {
-	// 		s_Action = 0;
-	// 		return;
-	// 	}
-	// 	else if(s_Action == 2) { // Step into
-	// 		s_Action = 0;
-	// 		break;
-	// 	}
-	// 	// Step over
-	// 	else if(s_Action == 1 && s_StackLevel < ctx->GetCallstackSize()) {
-	// 		s_Action = 0;
-	// 		return;
-	// 	}
-	// }
 }
 
 void ScriptManager::StartDebug() {

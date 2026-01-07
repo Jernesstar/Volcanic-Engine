@@ -49,9 +49,9 @@ void ScriptClass::SetInstanceMethod(const List<std::string>& args) {
 
 asIScriptFunction* ScriptClass::GetFunction(const std::string& name) const {
 	if(!m_Functions.count(name)) {
-		VOLCANICORE_LOG_WARNING(
-			"ScriptClass::GetFunction: Could not find function '%s' in class : %s",
-			name.c_str(), Name.c_str());
+		Log::Warning(
+			"ScriptClass::GetFunction: \
+			Could not find function '{0}' in class : {1}", name, Name);
 		return nullptr;
 	}
 	return m_Functions.at(name);

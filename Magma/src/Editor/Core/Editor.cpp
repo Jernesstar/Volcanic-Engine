@@ -10,6 +10,7 @@
 
 #include "Utils/YAMLSerializer.h"
 #include "Widget/Widget.h"
+#include "Widget/Graph.h"
 #include "Graphics/Renderer.h"
 #include "Graphics/Platform/RendererAPI.h"
 #include "Networking/Networking.h"
@@ -136,12 +137,8 @@ void Editor::LoadProjectEditor() {
 				auto graph =
 					GraphManager::CreateGraph(Application::GetLibraryDir());
 
-				GraphManager::TraverseDFS(graph,
-					[](Node& node)
-					{
-						printf("%s\n", node.Name.c_str());
-					}
-				);
+				GraphView view{ graph };
+				view.Build();
 			}
 		)
 	);
