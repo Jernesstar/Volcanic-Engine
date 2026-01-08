@@ -36,7 +36,7 @@ void FileUtils::CreateFile(const fs::path& path) {
 
 std::string FileUtils::ReadFile(const fs::path& filePath) {
 	std::ifstream in(filePath, std::ios::in);
-	VOLCANICORE_ASSERT_ARGS(in, "Could not open file: %s", filePath.c_str());
+	VOLCANICORE_ASSERT_ARGS(in, "Could not open file: {}", filePath.string());
 
 	std::stringstream buffer;
 	buffer << in.rdbuf();

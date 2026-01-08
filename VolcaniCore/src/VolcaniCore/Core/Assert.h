@@ -18,10 +18,10 @@
 	VOLCANICORE_INTERNAL_ASSERT_CHECK(condition, message, ## __VA_ARGS__)
 #define VOLCANICORE_ASSERT_NO_ARGS(condition) \
 	VOLCANICORE_INTERNAL_ASSERT_CHECK(condition, \
-		"Assertion failed: %s, file %s, line %s", \
+		"Assertion failed: {}, file {}, line {}", \
 		#condition, \
-		std::filesystem::path(__FILE__).string().c_str(), \
-		std::to_string(__LINE__).c_str() \
+		std::filesystem::path(__FILE__).string(), \
+		std::to_string(__LINE__) \
 	)
 
 #define VOLCANICORE_INTERNAL_ASSERT_GET_MACRO_NAME(arg1, arg2, macro, ...) macro

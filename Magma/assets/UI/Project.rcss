@@ -26,36 +26,45 @@ body {
     padding: 12px;
 }
 
-.node {
-	position: absolute;
+.graph-node {
+    display: flex;
+	position: relative;
 	padding: 8dp;
 	border-radius: 6dp;
 	background: #1e1e1e;
 	border: 1dp #333;
 }
 
-.node.kind-System {
-    border-color: #ff5555;
+.graph-node:default {
+    border-color: #000000;
 }
-.node.kind-Module {
+
+.graph-node:project {
+    border-color: #1100ff;
+}
+
+.graph-node:folder {
+    border-color: #ff0000;
+}
+
+.graph-node:file {
+    border-color: #5eff00;
+}
+
+.graph-node:system {
+    border-color: #ffffff;
+}
+.graph-node:module {
     border-color: #ffaa00;
 }
-.node.kind-Class     {
+.graph-node:class     {
     border-color: #55aaff;
 }
-.node.kind-Function {
+.graph-node:function {
     border-color: #55ffaa;
 }
 
-.node-title {
+.node-name {
 	font-size: 14dp;
 	margin-bottom: 4dp;
 }
-
-.metrics .bar {
-	height: 3dp;
-	margin-top: 2dp;
-}
-
-.bar.complexity { background: #ff5555; }
-.bar.volatility { background: #ffaa00; }

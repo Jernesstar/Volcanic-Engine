@@ -67,12 +67,16 @@ void Editor::Load(const CommandLineArgs& args) {
 	// 	OpenComponent(args["--component"]);
 }
 
+static GraphView* s_GraphView = nullptr;
+
 void Editor::Update(TimeStep ts) {
 	// if(Mode == EditorMode::Project)
 	// 	for(auto& tab : m_Tabs)
 	// 		tab.OnUpdate(ts);
 
-	// printf("Editor Update: %f\n", (float)ts);
+	if(Mode == EditorMode::Project && s_GraphView)
+		s_GraphView->Update(ts);
+
 	WidgetManager::Update(ts);
 }
 
@@ -85,6 +89,7 @@ void Editor::Render() {
 }
 
 void Editor::LoadHomeScreen() {
+	Mode = EditorMode::None;
 	WidgetManager::Load("Magma/assets/UI/Home.rml");
 
 	auto doc = WidgetManager::GetDocument();
@@ -123,6 +128,7 @@ void Editor::LoadHomeScreen() {
 }
 
 void Editor::LoadProjectEditor() {
+	Mode = EditorMode::Project;
 	WidgetManager::Load("Magma/assets/UI/Project.rml");
 
 	auto doc = WidgetManager::GetDocument();
@@ -134,11 +140,13 @@ void Editor::LoadProjectEditor() {
 			[doc, this](Rml::Element* e, Rml::Event& event)
 			{
 				printf("Scanning project...\n");
-				auto graph =
-					GraphManager::CreateGraph(Application::GetLibraryDir());
-
-				GraphView view{ graph };
-				view.Build();
+				if(s_GraphView)
+					s_GraphView->Build();
+				else {
+					auto graph =
+						GraphManager::CreateGraph(Application::GetLibraryDir());
+					s_GraphView = GraphView::Create(graph);
+				}
 			}
 		)
 	);

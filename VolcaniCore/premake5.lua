@@ -35,3 +35,7 @@ project "VolcaniCore"
         defines {
             "GLM_FORCE_PLATFORM_WIN32",
         }
+
+        links {
+            "stdc++exp"
+        }

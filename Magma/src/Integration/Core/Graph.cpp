@@ -116,21 +116,43 @@ void GraphManager::DeleteGraph(UUID graphID) {
 	s_Graphs.erase(graphID);
 }
 
-void GraphManager::TraverseBFS(Graph* graph, const Func<void, Node&>& cb) {
+void GraphManager::TraverseBFS(Graph* graph, const Func<void, Node&>& cb,
+							   u32 maxDepth)
+{
+	List<std::pair<Node*, u32>> queue(graph->Nodes.Count());
 
+	for(auto& node : graph->Nodes)
+		queue.Push({ &node, 0 });
+
+	u32 lastDepth = 0;
+	while(queue) {
+		auto [node, depth] = queue.PopFront();
+		cb(*node);
+
+		if(depth == maxDepth)
+			continue;
+
+		if(depth != lastDepth)
+			lastDepth = depth;
+
+		auto* graph = GetGraph(node->ID);
+		if(graph)
+			for(auto& node : graph->Nodes)
+				queue.Push({ &node, depth + 1 });
+	}
 }
 
 void GraphManager::TraverseDFS(Graph* graph, const Func<void, Node&>& cb,
-	u32 depth)
+							   u32 maxDepth)
 {
-	if(depth == 0)
+	if(maxDepth == 0)
 		return;
 
 	for(auto& node : graph->Nodes) {
 		cb(node);
 		auto* graph = GetGraph(node.ID);
 		if(graph)
-			TraverseDFS(graph, cb, depth - 1);
+			TraverseDFS(graph, cb, maxDepth - 1);
 	}
 }
 

@@ -104,6 +104,7 @@ project "Magma"
             "advapi32",
             "rpcrt4",
             "crypt32",
+            "stdc++exp"
         }
 
     filter "toolset:gcc or toolset:clang"

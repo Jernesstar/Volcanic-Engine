@@ -38,7 +38,7 @@ public:
 				"Llama model server health check failed: " +
 				std::to_string(resp.StatusCode));
 
-		Log::Info("Health: {}", resp.Body.c_str());
+		// Log::Info("Health: {}", resp.Body);
 	}
 	~LlamaHttpEmbeddingStore() = default;
 
@@ -108,15 +108,16 @@ public:
 			if(resp.StatusCode >= 200 && resp.StatusCode < 300)
 				return true;
 			else {
-				Log::Error(
-					"Qdrant upsert failed for doc {}\n. \
-					Error: {}", doc.Title.c_str(), resp.Body.c_str());
+				throw std::runtime_error(
+					"Qdrant upsert failed for doc " + doc.Title +
+					", Error: " + resp.Body);
 				return false;
 			}
 			return false;
 
 		} catch(const std::exception& e) {
-			Log::Error("Qdrant upsert failed: {}", e.what());
+			throw std::runtime_error(
+				"Qdrant upsert failed: " + std::string(e.what()));
 			return false;
 		}
 	}
@@ -201,7 +202,7 @@ public:
 				"Llama model server health check failed: " +
 				std::to_string(resp.StatusCode));
 
-		Log::Info("Health: {}", resp.Body.c_str());
+		// Log::Info("Health: {}", resp.Body);
 	}
 	~LlamaModelProvider() = default;
 
@@ -260,7 +261,7 @@ void AIManager::RunAnalysis() {
 	input.Temperature = 0.3f;
 
 	std::string response = s_ModelProvider->Generate(input);
-	Log::Info("AI Analysis Response: {}", response.c_str());
+	// Log::Info("AI Analysis Response: {}", response);
 
 	// Example vector and embedding store usage
 	Document doc;
@@ -277,7 +278,7 @@ void AIManager::RunAnalysis() {
 									s_EmbeddingStore, 5);
 	for(auto& res : results) {
 		Log::Info("Found Document: {} with score {}",
-				  res.Doc.Title.c_str(), res.Score);
+				  res.Doc.Title, res.Score);
 	}
 }
 

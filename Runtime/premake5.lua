@@ -56,6 +56,7 @@ project "Runtime"
             "kernel32",
             "psapi",
             "Ws2_32",
+            "stdc++exp"
         }
 
     filter "toolset:gcc or toolset:clang"
