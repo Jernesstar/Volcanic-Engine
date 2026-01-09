@@ -314,6 +314,7 @@ public:
 
 	}
 	void PopLayer() override {
+
 	}
 
 	TextureHandle SaveLayerAsTexture() override {

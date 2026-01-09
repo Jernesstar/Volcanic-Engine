@@ -14,13 +14,22 @@ public:
 		}
 
 		else if(event.GetType() == "drag") {
-			float dx = event.GetParameter<float>("mouse_delta_x", 0);
-			float dy = event.GetParameter<float>("mouse_delta_y", 0);
+			Log::Info("Drag");
+			f32 dx = event.GetParameter<f32>("mouse_delta_x", 0);
+			f32 dy = event.GetParameter<f32>("mouse_delta_y", 0);
 		}
 
 		else if(event.GetType() == "dragend") {
 			
 		}
+	}
+
+	void OnAttach(Rml::Element* element) override {
+		
+	}
+
+	void OnDetach(Rml::Element* element) override {
+		// delete this;
 	}
 };
 
@@ -28,14 +37,19 @@ class NodeEventListener : public Rml::EventListener {
 public:
 	void ProcessEvent(Rml::Event& event) override {
 		auto element = event.GetTargetElement();
-		if(element != event.GetCurrentElement())
-			return;
+		// if(element != event.GetCurrentElement())
+		// 	return;
+
+		if(event.GetType() == "click") {
+			Log::Info("Click Node");
+		}
 
 		if(event.GetType() == "dragstart") {
-
+			Log::Info("Drag Node Start");
 		}
 
 		else if(event.GetType() == "drag") {
+			Log::Info("Drag Node");
 			f32 dx = event.GetParameter<f32>("mouse_delta_x", 0);
 			f32 dy = event.GetParameter<f32>("mouse_delta_y", 0);
 			f32 x = element->GetProperty<f32>("left");
@@ -47,6 +61,14 @@ public:
 		else if(event.GetType() == "dragend") {
 			
 		}
+	}
+
+	void OnAttach(Rml::Element* element) override {
+		
+	}
+
+	void OnDetach(Rml::Element* element) override {
+		// delete this;
 	}
 };
 
@@ -73,6 +95,12 @@ static NodeView CreateNode(Node* node, Rml::Element* parent, f32 x, f32 y) {
 	element->SetClass("graph-node", true);
 	element->SetPseudoClass(GetNodeClass(node->Type), true);
 
+	auto listener = new NodeEventListener();
+	element->AddEventListener(Rml::EventId::Click, listener);
+	element->AddEventListener(Rml::EventId::Dragstart, listener);
+	element->AddEventListener(Rml::EventId::Drag, listener);
+	element->AddEventListener(Rml::EventId::Dragend, listener);
+
 	element->SetProperty("left", std::format("{}px", x));
 	element->SetProperty("top", std::format("{}px", y));
 
@@ -93,7 +121,7 @@ static NodeView CreateNode(Node* node, Rml::Element* parent, f32 x, f32 y) {
 
 static EdgeView CreateEdge(Edge* edge) {
 	auto doc = WidgetManager::GetDocument();
-
+	return { };
 }
 
 static List<GraphView> s_Views;
@@ -120,6 +148,11 @@ void GraphView::Build() {
 
 	if(!Canvas) {
 		Canvas = doc->GetElementById("graph-canvas");
+		auto listener = new CanvasEventListener();
+		Canvas->AddEventListener(Rml::EventId::Dragstart, listener);
+		Canvas->AddEventListener(Rml::EventId::Drag, listener);
+		Canvas->AddEventListener(Rml::EventId::Dragend, listener);
+
 		if(!Canvas) {
 			Log::Error("Could not find graph canvas");
 			return;
@@ -137,8 +170,8 @@ void GraphView::Build() {
 		level = 1;
 
 	const f32 gridSpacing = 250.0f;
-	const f32 startX = 1000.0f;
-	const f32 startY = 1000.0f;
+	const f32 startX = 5.0f;
+	const f32 startY = 5.0f;
 	const u32 columns = 5; // Nodes per row
 
 	u32 index = 0;
