@@ -4,6 +4,52 @@
 
 namespace Magma::UI {
 
+class CanvasEventListener : public Rml::EventListener {
+public:
+	void ProcessEvent(Rml::Event& event) override {
+		auto element = event.GetTargetElement();
+
+		if(event.GetType() == "dragstart") {
+
+		}
+
+		else if(event.GetType() == "drag") {
+			float dx = event.GetParameter<float>("mouse_delta_x", 0);
+			float dy = event.GetParameter<float>("mouse_delta_y", 0);
+		}
+
+		else if(event.GetType() == "dragend") {
+			
+		}
+	}
+};
+
+class NodeEventListener : public Rml::EventListener {
+public:
+	void ProcessEvent(Rml::Event& event) override {
+		auto element = event.GetTargetElement();
+		if(element != event.GetCurrentElement())
+			return;
+
+		if(event.GetType() == "dragstart") {
+
+		}
+
+		else if(event.GetType() == "drag") {
+			f32 dx = event.GetParameter<f32>("mouse_delta_x", 0);
+			f32 dy = event.GetParameter<f32>("mouse_delta_y", 0);
+			f32 x = element->GetProperty<f32>("left");
+			f32 y = element->GetProperty<f32>("top");
+			element->SetProperty("left", std::format("{}px", x + dx));
+			element->SetProperty("top", std::format("{}px", y + dy));
+		}
+
+		else if(event.GetType() == "dragend") {
+			
+		}
+	}
+};
+
 static std::string GetNodeClass(NodeType type) {
 	switch(type) {
 		case NodeType::Project:    return "project";
@@ -20,18 +66,15 @@ static std::string GetNodeClass(NodeType type) {
 	}
 }
 
-static NodeView CreateNode(Node* node, Rml::Element* parent) {
+static NodeView CreateNode(Node* node, Rml::Element* parent, f32 x, f32 y) {
 	auto doc = WidgetManager::GetDocument();
 
 	auto element = doc->CreateElement("div");
 	element->SetClass("graph-node", true);
 	element->SetPseudoClass(GetNodeClass(node->Type), true);
 
-	// f32 x = Random::RandUInt();
-	// f32 y = Random::RandUInt();
-	f32 x = 0.0f, y = 0.0f;
-	// element->SetProperty("left", std::format("{}px", x));
-	// element->SetProperty("top", std::format("{}px", y));
+	element->SetProperty("left", std::format("{}px", x));
+	element->SetProperty("top", std::format("{}px", y));
 
 	// Create node content
 	auto nameElement = doc->CreateElement("div");
@@ -84,20 +127,32 @@ void GraphView::Build() {
 	}
 
 	u32 level = 0;
-	if(Zoom > 0.5f)
-		level = 1;
-	else if(Zoom > 1.0)
-		level = 2;
-	else if(Zoom > 1.5)
-		level = 3;
-	else if(Zoom > 2.0)
+	if(Zoom > 2.0f)
 		level = 4;
+	else if(Zoom > 1.5f)
+		level = 3;
+	else if(Zoom > 1.0f)
+		level = 2;
+	else if(Zoom > 0.5f)
+		level = 1;
 
-	GraphManager::TraverseBFS(RootGraph,
+	const f32 gridSpacing = 250.0f;
+	const f32 startX = 1000.0f;
+	const f32 startY = 1000.0f;
+	const u32 columns = 5; // Nodes per row
+
+	u32 index = 0;
+	GraphManager::ExtractLevel(RootGraph,
 		[&](Node& node)
 		{
-			auto view = CreateNode(&node, Canvas);
+			u32 col = index % columns;
+			u32 row = index / columns;
+			f32 x = startX + col * gridSpacing;
+			f32 y = startY + row * gridSpacing;
+			auto view = CreateNode(&node, Canvas, x, y);
 			VisibleNodes.Push(view);
+
+			index++;
 		}, level);
 }
 

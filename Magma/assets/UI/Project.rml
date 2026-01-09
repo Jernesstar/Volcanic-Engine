@@ -25,16 +25,14 @@
 	</div>
 
 	<div id="main-layout">
+		<div id="graph-canvas">
+			<!-- Nodes injected dynamically -->
+		</div>
+
 		<div id="sidebar">
 			<div id="scan-button" class="sidebar-button">Scan</div>
 			<div id="plan-button" class="sidebar-button">Plan</div>
 			<div id="design-button" class="sidebar-button">Design</div>
-		</div>
-
-		<div id="graph-root">
-			<div id="graph-canvas">
-				<!-- Nodes injected dynamically -->
-			</div>
 		</div>
 	</div>
 </body>

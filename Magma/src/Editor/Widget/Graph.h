@@ -20,7 +20,7 @@ struct GraphView {
 	Graph* RootGraph = nullptr;
 	Rml::Element* Canvas = nullptr;
 
-	f32 Zoom = 1.0f, PanX = 0.0f, PanY = 0.0f;
+	f32 Zoom = 0.0f, PanX = 0.0f, PanY = 0.0f;
 	List<NodeView> VisibleNodes;
 	List<EdgeView> VisibleEdges;
 

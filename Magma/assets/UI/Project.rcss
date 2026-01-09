@@ -7,36 +7,60 @@ body {
     color: #e6e6e6;
 }
 
-#graph-root {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+#sidebar {
+    position: absolute;
+    top: 40%;
+    left: 10px;
+    width: 200px;
+    padding: 10px;
+    background-color: #333;
+    color: white;
+    border: 1px #ccc;
+    opacity: 0.6;
+    z-index: 100;
+}
+
+.sidebar-button {
+    margin-bottom: 5px;
+    background-color: #190d3f;
+    opacity: 1.0;
+}
+
+#main-layout {
+    position: relative;
+    top: 0px;
+    left: 0px;
     width: 100%;
     height: 100%;
+    overflow: hidden;
 }
 
 #graph-canvas {
-    display: flex;
-	width: 90%;
-	height: 90%;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    /* top: -50%;
+    left: -50%; */
+    transform: scale(2);
+    transform-origin: center;
     background-color: #1c52cf;
-    border-bottom: 1px #1f2533;
-    border-radius: 14px;
-    padding: 12px;
 }
 
 .graph-node {
     display: flex;
-	position: relative;
-	padding: 8dp;
-	border-radius: 6dp;
-	background: #1e1e1e;
-	border: 1dp #333;
-}
+    position: absolute;
+    padding: 8dp;
+    border: 2.5dp #333;
+    border-radius: 10dp;
+    background: #1e1e1e;
 
-.graph-node:default {
-    border-color: #000000;
+    height: 150px;
+    width: 190px;
+
+    background-color: #007bff;
+    justify-content: center;
+    align-items: center;
+    border-radius: 20px;
 }
 
 .graph-node:project {
@@ -54,17 +78,20 @@ body {
 .graph-node:system {
     border-color: #ffffff;
 }
+
 .graph-node:module {
     border-color: #ffaa00;
 }
+
 .graph-node:class     {
     border-color: #55aaff;
 }
+
 .graph-node:function {
     border-color: #55ffaa;
 }
 
 .node-name {
-	font-size: 14dp;
-	margin-bottom: 4dp;
+    font-size: 14dp;
+    margin-bottom: 4dp;
 }

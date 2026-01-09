@@ -48,7 +48,7 @@ void Editor::Open() {
 				WidgetManager::Reload();
 		});
 
-	LoadHomeScreen();
+	LoadProjectEditor();
 }
 
 void Editor::Close() {

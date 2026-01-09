@@ -68,8 +68,10 @@ public:
 	static Graph* GetGraph(UUID graphID);
 	static void DeleteGraph(UUID graphID);
 
-	static void TraverseBFS(Graph* graph, const Func<void, Node&>& cb, 
+	static void TraverseBFS(Graph* graph, const Func<void, Node&>& cb,
 							u32 maxDepth = std::numeric_limits<u32>::max());
+	static void ExtractLevel(Graph* graph, const Func<void, Node&>& cb,
+							 u32 level);
 	static void TraverseDFS(Graph* graph, const Func<void, Node&>& cb,
 							u32 maxDepth = std::numeric_limits<u32>::max());
 };

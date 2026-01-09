@@ -76,7 +76,7 @@ body {
 .window-button {
     width: 15px;
     height: 15px;
-    padding: 12px;
+    padding: 15px;
     margin: 12px;
 }
 

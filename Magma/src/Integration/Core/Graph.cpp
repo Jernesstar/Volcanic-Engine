@@ -116,6 +116,33 @@ void GraphManager::DeleteGraph(UUID graphID) {
 	s_Graphs.erase(graphID);
 }
 
+void GraphManager::ExtractLevel(Graph* graph, const Func<void, Node&>& cb,
+								u32 level)
+{
+	List<std::pair<Node*, u32>> queue(graph->Nodes.Count());
+
+	for(auto& node : graph->Nodes)
+		queue.Push({ &node, 0 });
+
+	u32 lastDepth = 0;
+	while(queue) {
+		auto [node, depth] = queue.PopFront();
+
+		if(depth == level) {
+			cb(*node);
+			continue;
+		}
+
+		if(depth != lastDepth)
+			lastDepth = depth;
+
+		auto* graph = GetGraph(node->ID);
+		if(graph)
+			for(auto& node : graph->Nodes)
+				queue.Push({ &node, depth + 1 });
+	}
+}
+
 void GraphManager::TraverseBFS(Graph* graph, const Func<void, Node&>& cb,
 							   u32 maxDepth)
 {
@@ -128,8 +155,7 @@ void GraphManager::TraverseBFS(Graph* graph, const Func<void, Node&>& cb,
 	while(queue) {
 		auto [node, depth] = queue.PopFront();
 		cb(*node);
-
-		if(depth == maxDepth)
+		if(depth == maxDepth) // Process the rest of the nodes on this level
 			continue;
 
 		if(depth != lastDepth)
