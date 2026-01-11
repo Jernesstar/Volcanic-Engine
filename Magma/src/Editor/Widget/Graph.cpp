@@ -186,7 +186,7 @@ void GraphView::Build() {
 			VisibleNodes.Push(view);
 
 			index++;
-		}, level);
+		}, 1);
 }
 
 void GraphView::Update(TimeStep ts) {

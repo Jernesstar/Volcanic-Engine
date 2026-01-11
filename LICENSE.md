@@ -1,4 +1,4 @@
-Copyright © 2025 LavaFlow Technologies
+Copyright © 2026 LavaFlow Technologies
 
 All rights reserved.
 

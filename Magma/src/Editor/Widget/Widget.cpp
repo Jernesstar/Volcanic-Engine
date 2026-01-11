@@ -377,7 +377,9 @@ void WidgetManager::Init() {
 
 	VOLCANICORE_ASSERT(s_Context, "Could not create RmlUI context!");
 
+	Application::PushDir();
 	Rml::LoadFontFace("Magma/assets/fonts/JetBrainsMono-Bold.ttf");
+	Application::PopDir();
 
 	Events::RegisterListener<WindowResizedEvent>(
 		[](WindowResizedEvent& e)
@@ -432,7 +434,9 @@ void WidgetManager::Close() {
 
 void WidgetManager::Load(const std::string& path) {
 	s_Context->UnloadAllDocuments();
+	Application::PushDir();
 	s_Doc = s_Context->LoadDocument(path);
+	Application::PopDir();
 	s_Doc->Show();
 	s_RenderInterface->OnReload();
 	m_RootPath = path;
