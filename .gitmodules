@@ -5,50 +5,26 @@
 	path = VolcaniCore/.vendor/glm
 	url = https://github.com/g-truc/glm.git
 [submodule "Magma/.vendor/yaml-cpp"]
-	path = Magma/.vendor/yaml-cpp
+	path = Lava/.vendor/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp.git
 [submodule "Magma/.vendor/rapidjson"]
-	path = Magma/.vendor/rapidjson
+	path = Lava/.vendor/rapidjson
 	url = https://github.com/Tencent/rapidjson.git
-[submodule "Magma/.vendor/miniz-cpp"]
-	path = Magma/.vendor/miniz-cpp
-	url = https://github.com/tfussell/miniz-cpp.git
-[submodule "Magma/.vendor/efsw"]
-	path = Magma/.vendor/efsw
-	url = https://github.com/SpartanJ/efsw.git
 [submodule "Magma/.vendor/soloud"]
-	path = Magma/.vendor/soloud
+	path = Lava/.vendor/soloud
 	url = https://github.com/jarikomppa/soloud.git
 [submodule "Magma/.vendor/stb_image"]
-	path = Magma/.vendor/stb_image
+	path = Lava/.vendor/stb_image
 	url = https://github.com/LavaFlow-Technologies/stb_image.git
 [submodule "Magma/.vendor/glad"]
-	path = Magma/.vendor/glad
+	path = Lava/.vendor/glad
 	url = https://github.com/LavaFlow-Technologies/glad.git
-[submodule "Magma/.vendor/libgit2"]
-	path = Magma/.vendor/libgit2
-	url = https://github.com/LavaFlow-Technologies/libgit2.git
 [submodule "Lava/.vendor/angelscript"]
 	path = Lava/.vendor/angelscript
 	url = https://github.com/LavaFlow-Technologies/angelscript.git
-[submodule "Magma/.vendor/cpp-httplib"]
-	path = Magma/.vendor/cpp-httplib
-	url = https://github.com/yhirose/cpp-httplib.git
-[submodule "Magma/.vendor/pugixml"]
-	path = Magma/.vendor/pugixml
-	url = https://github.com/zeux/pugixml.git
-[submodule "Magma/.vendor/RmlUi"]
-	path = Magma/.vendor/RmlUi
-	url = https://github.com/mikke89/RmlUi.git
 [submodule "Magma/.vendor/freetype"]
-	path = Magma/.vendor/freetype
+	path = Lava/.vendor/freetype
 	url = https://github.com/LavaFlow-Technologies/freetype.git
-[submodule "Magma/.vendor/json"]
-	path = Magma/.vendor/json
-	url = https://github.com/nlohmann/json.git
 [submodule "VolcaniCore/.vendor/subprocess"]
 	path = VolcaniCore/.vendor/subprocess
 	url = https://github.com/benman64/subprocess
-[submodule "Magma/.vendor/tree-sitter"]
-	path = Magma/.vendor/tree-sitter
-	url = https://github.com/tree-sitter/tree-sitter.git
