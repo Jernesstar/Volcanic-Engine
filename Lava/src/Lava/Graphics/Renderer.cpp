@@ -1,237 +1,131 @@
 #include "Renderer.h"
 
 #include <VolcaniCore/Core/Application.h>
-#include <VolcanicWindow/Application.h>
+#include <VolcaniCore/Core/Assert.h>
+#include <VolcaniCore/Core/Defines.h>
 
-#include "Platform/RendererAPI.h"
+#include "RendererAPI.h"
+#include "RenderPass.h"
+#include "Renderer2D.h"
+#include "Renderer3D.h"
 
 using namespace VolcaniCore;
-using namespace VolcanicWindow;
+
+using namespace VolcaniCore;
 
 namespace Magma::Graphics {
 
-static Ref<Shader> ScreenShader;
-static DrawBuffer* RectBuffer;
-static Ref<Shader> RectShader;
+const uint64_t Renderer::MaxTriangles = 1'000'000;
+const uint64_t Renderer::MaxIndices   = MaxTriangles * 6;
+const uint64_t Renderer::MaxVertices  = MaxTriangles * 3;
+const uint64_t Renderer::MaxInstances = MaxTriangles * 4;
+
+static FrameData s_Frame;
+static Ref<RenderPass> s_RenderPass;
+static List<DrawCommand*> s_Stack;
+
+static bool s_OptionsValid = false;
 
 void Renderer::Init() {
-#if defined(VOLCANIC_APPLE)
-	RendererAPI::Create(RendererBackend::Metal);
-#else
-	RendererAPI::Create(RendererBackend::OpenGL);
-#endif
+	s_Frame = { };
 
-	std::string vertexShaderStr = R"(
-		#version 460 core
-
-		layout(location = 0) out vec2 v_TexCoords;
-
-		const vec2 Vertices[4] =
-			vec2[4](
-				vec2(-1.0f, -1.0f),
-				vec2( 1.0f, -1.0f),
-				vec2( 1.0f,  1.0f),
-				vec2(-1.0f,  1.0f)
-			);
-
-		const int Indices[6] = int[6](0, 2, 1, 2, 0, 3);
-
-		void main()
-		{
-			v_TexCoords = Vertices[Indices[gl_VertexID]];
-			gl_Position = vec4(v_TexCoords, 0.0, 1.0);
-		}
-	)";
-
-	std::string fragmentShaderStr = R"(
-		#version 460 core
-
-		uniform sampler2D u_ScreenTexture;
-
-		layout(location = 0) in vec2 v_TexCoords;
-
-		layout(location = 0) out vec4 FragColor;
-
-		void main()
-		{
-			// FragColor = texture(u_ScreenTexture, v_TexCoords);
-			FragColor = vec4(v_TexCoords, 1.0, 1.0);
-		}
-	)";
-
-	ScreenShader = RendererAPI::Get()->CreateShader({ });
-	List<ShaderFile> files;
-	files.Emplace(ShaderFileType::Vertex, vertexShaderStr);
-	files.Emplace(ShaderFileType::Fragment, fragmentShaderStr);
-	ScreenShader->SetShaderData(std::move(files));
-
-	RectBuffer =
-		RendererAPI::Get()->NewBuffer({
-			.VertexCount = 6,
-			.DynamicVertices = false,
-			.InstanceCount = 100,
-			.DynamicInstances = true,
-			.VertexLayout =
-			{
-				{
-					{ "Color", BufferDataType::Vec4 }
-				},
-				false
-			},
-			.InstanceLayout =
-			{
-				{
-					{ "PositionDimension", BufferDataType::Vec4 },
-					{ "Color", BufferDataType::Vec4 }
-				},
-				true // Instanced
-			}
-		});
-
-
-	float data[] = {
-		0.0f, 1.0f, 1.0f, 1.0f,
-		1.0f, 0.0f, 1.0f, 1.0f,
-		1.0f, 1.0f, 0.0f, 1.0f,
-		0.0f, 0.0f, 1.0f, 1.0f,
-		0.0f, 1.0f, 0.0f, 1.0f,
-		1.0f, 0.0f, 0.0f, 1.0f
-	};
-	RectBuffer->Add(DrawBufferIndex::Vertex, data, 6);
-
-	vertexShaderStr = R"(
-		#version 460 core
-
-		layout(location = 1) uniform vec2 u_ScreenSize;
-
-		layout(location = 0) in vec4 a_Color0;
-		layout(location = 1) in vec4 a_PositionDimension;
-		layout(location = 2) in vec4 a_Color;
-
-		layout(location = 0) out vec2 v_TexCoords;
-		layout(location = 1) out vec4 v_Color;
-
-		const vec2 Vertices[4] =
-			vec2[4](
-				vec2(-1.0f, -1.0f),
-				vec2( 1.0f, -1.0f),
-				vec2( 1.0f,  1.0f),
-				vec2(-1.0f,  1.0f)
-			);
-		const int Indices[6] = int[6](0, 2, 1, 2, 0, 3);
-
-		void main()
-		{
-			vec2 pos = 2.0 * (a_PositionDimension.xy / u_ScreenSize.xy) - 1.0;
-			vec2 dim = a_PositionDimension.zw / u_ScreenSize.xy;
-			vec2 vertex = Vertices[Indices[gl_VertexID]];
-
-			vec2 finalPos = pos + vertex * dim;
-			gl_Position = vec4(finalPos, 0.0, 1.0);
-
-			v_TexCoords = (vertex + 1.0) / 2.0;
-			v_Color = a_Color0;
-		}
-	)";
-
-	fragmentShaderStr = R"(
-		#version 460 core
-
-		layout(location = 0) in vec2 v_TexCoords;
-		layout(location = 1) in vec4 v_Color;
-
-		layout(location = 0) out vec4 FragColor;
-
-		void main()
-		{
-			FragColor = vec4(v_Color);
-		}
-	)";
-
-	RectShader = RendererAPI::Get()->CreateShader({ });
-	List<ShaderFile> files2;
-	files2.Emplace(ShaderFileType::Vertex, vertexShaderStr);
-	files2.Emplace(ShaderFileType::Fragment, fragmentShaderStr);
-	RectShader->SetShaderData(std::move(files2));
+	Renderer2D::Init();
+	Renderer3D::Init();
 }
 
 void Renderer::Close() {
-	ScreenShader.reset();
-	RectShader.reset();
-	delete RectBuffer;
-
-	RendererAPI::Shutdown();
+	Renderer3D::Close();
+	Renderer2D::Close();
 }
 
-static DrawCommand* RectCommand = nullptr;
-
 void Renderer::BeginFrame() {
-	RendererAPI::Get()->BeginFrame();
-
-	auto pass = RendererAPI::Get()->NewPass(RectBuffer);
-	pass->Pipeline = RectShader;
-
-	RectCommand = RendererAPI::Get()->NewCommand(pass);
-	auto window = Application::As<WindowApplication>()->GetWindow();
-	RectCommand->Clear = false;
-	RectCommand->ClearColor = { 0.0f, 0.0f, 0.0f, 0.0f };
-	RectCommand->Viewport = true;
-	RectCommand->ViewportW = window->GetWidth();
-	RectCommand->ViewportH = window->GetHeight();
-	RectCommand->DepthTesting = DepthTestingMode::Off;
-	RectCommand->Blending = BlendingMode::Greatest;
-	RectCommand->Culling = CullingMode::Off;
-
-	RectCommand->Uniforms
-	.Set("u_ScreenSize", Vec2(window->GetWidth(), window->GetHeight()));
-
-	DrawCall* call = RectCommand->NewCall();
-	call->Primitive = DrawPrimitive::Triangle;
-	call->Partition = DrawPartition::Instanced;
-	call->VertexCount = 6;
-
-	DrawQuad({ 500.0f, 50.0f, 500.0f, 60.0f, { 1.0f, 0.3f, 1.0f, 1.0f } });
+	Renderer2D::StartFrame();
+	Renderer3D::StartFrame();
 }
 
 void Renderer::EndFrame() {
+	auto info = RendererAPI::Get()->GetDebugInfo();
+	s_Frame.Info.DrawCalls = info.DrawCallCount;
+	s_Frame.Info.Indices   = info.IndexCount;
+	s_Frame.Info.Vertices  = info.VertexCount;
+	s_Frame.Info.Instances = info.InstanceCount;
+
+	Renderer3D::EndFrame();
+	Renderer2D::EndFrame();
+}
+
+void Renderer::StartPass(Ref<RenderPass> pass, bool pushCommand) {
+	s_RenderPass = pass;
+	if(pushCommand)
+		PushCommand();
+}
+
+void Renderer::EndPass() {
+	s_Stack.Clear();
+	s_RenderPass = nullptr;
+}
+
+Ref<RenderPass> Renderer::GetPass() {
+	return s_RenderPass;
+}
+
+DrawCommand* Renderer::PushCommand() {
+	s_Stack.Add(NewCommand());
+	return GetCommand();
+}
+
+void Renderer::PopCommand() {
+	if(!s_Stack)
+		return;
+
+	s_RenderPass->SetUniforms(s_Stack[-1]);
+	s_Stack.Pop();
+}
+
+DrawCommand* Renderer::GetCommand() {
+	return s_Stack[-1];
+}
+
+DrawCommand* Renderer::NewCommand(bool usePrevious) {
+	if(usePrevious && s_Stack && !s_Stack[-1]->Calls)
+		return s_Stack[-1];
+
+	return RendererAPI::Get()->NewDrawCommand(s_RenderPass->Get());
+}
+
+void Renderer::Clear() {
+	if(!s_Stack) {
+		RendererAPI::Get()->NewDrawCommand(nullptr)->Clear = true;
+		Renderer::Flush();
+	}
+	else
+		GetCommand()->Clear = true;
+}
+
+void Renderer::Resize(uint32_t width, uint32_t height) {
+	GetCommand()->ViewportWidth = width;
+	GetCommand()->ViewportHeight = height;
+}
+
+void Renderer::PushOptions() {
+	s_OptionsValid = true;
+}
+
+void Renderer::PopOptions(uint32_t count) {
+	s_OptionsValid = false;
+}
+
+void Renderer::Flush() {
+	s_Stack.Clear();
 	RendererAPI::Get()->EndFrame();
 }
 
-void Renderer::DrawQuad(const Quad& quad) {
-	RectBuffer->Add(DrawBufferIndex::Instance, &quad, 1);
-	DrawCall& call = RectCommand->DrawCalls[0];
-	call.InstanceCount++;
+FrameDebugInfo Renderer::GetDebugInfo() {
+	return s_Frame.Info;
 }
 
-void Renderer::DrawFullscreenQuad(Ref<Framebuffer> fb, u32 attachmentIdx)
-{
-	if(!fb->Has(Graphics::AttachmentTarget::Color)) {
-		Log::Warning("Framebuffer has no color attachment");
-		return;
-	}
-
-	auto att = fb->Get(Graphics::AttachmentTarget::Color, attachmentIdx);
-
-	auto pass = RendererAPI::Get()->NewPass(nullptr);
-	pass->Pipeline = ScreenShader;
-
-	auto cmd = RendererAPI::Get()->NewCommand(pass);
-	auto window = Application::As<WindowApplication>()->GetWindow();
-	cmd->Clear = false;
-	cmd->ClearColor = { 0.0f, 0.0f, 0.0f, 0.0f };
-	cmd->Viewport = true;
-	cmd->ViewportW = window->GetWidth();
-	cmd->ViewportH = window->GetHeight();
-	cmd->DepthTesting = DepthTestingMode::Off;
-	cmd->Blending = BlendingMode::Greatest;
-	cmd->Culling = CullingMode::Off;
-
-	cmd->Uniforms.Set("u_ScreenTexture", AttachmentSlot{ att, 0 });
-
-	DrawCall* call = cmd->NewCall();
-	call->Primitive = DrawPrimitive::Triangle;
-	call->Partition = DrawPartition::Single;
-	call->VertexCount = 6;
+FrameData& Renderer::GetFrame() {
+	return s_Frame;
 }
 
 }
