@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Magma/Core/AssetManager.h>
+#include <Lava/Core/AssetManager.h>
 
-namespace Magma {
+namespace Lava {
 
 extern std::string AssetTypeToString(AssetType type);
 extern AssetType AssetTypeFromString(const std::string& str);

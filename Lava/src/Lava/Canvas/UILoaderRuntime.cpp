@@ -10,21 +10,21 @@
 #include <VolcaniCore/Core/Algo.h>
 #include <VolcaniCore/Core/FileUtils.h>
 
-#include <Magma/Core/BinaryWriter.h>
-#include <Magma/Core/BinaryReader.h>
+#include <Lava/Core/BinaryWriter.h>
+#include <Lava/Core/BinaryReader.h>
 
 #include <Lava/Core/App.h>
 
 #include "Runtime.h"
 #include "AssetManager.h"
 
-using namespace Magma;
-using namespace Magma::UI;
+using namespace Lava;
+using namespace Lava::UI;
 using namespace Lava;
 
 static UIPage* s_CurrentPage;
 
-namespace Magma {
+namespace Lava {
 
 template<>
 BinaryReader& BinaryReader::ReadObject(UI::UINode& node) {

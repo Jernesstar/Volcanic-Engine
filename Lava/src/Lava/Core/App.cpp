@@ -6,19 +6,19 @@
 // #include <VolcaniCore/Core/List.h>
 // #include <VolcaniCore/Core/FileUtils.h>
 
-// #include <Magma/Graphics/Renderer.h>
-// #include <Magma/Graphics/Renderer2D.h>
-// #include <Magma/Graphics/Renderer3D.h>
+// #include <Lava/Graphics/Renderer.h>
+// #include <Lava/Graphics/Renderer2D.h>
+// #include <Lava/Graphics/Renderer3D.h>
 
-// #include <Magma/Script/ScriptModule.h>
-// #include <Magma/Script/ScriptClass.h>
-// #include <Magma/Script/ScriptObject.h>
-// #include <Magma/UI/UIRenderer.h>
-// #include <Magma/Physics/Physics.h>
+// #include <Lava/Script/ScriptModule.h>
+// #include <Lava/Script/ScriptClass.h>
+// #include <Lava/Script/ScriptObject.h>
+// #include <Lava/UI/UIRenderer.h>
+// #include <Lava/Physics/Physics.h>
 
 // #include "ScriptGlue.h"
 
-// using namespace Magma::Script;
+// using namespace Lava::Script;
 // using namespace Lava::ECS;
 // using namespace Lava::Physics;
 

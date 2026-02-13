@@ -15,7 +15,7 @@
 
 using namespace VolcaniCore;
 
-namespace Magma::UI {
+namespace Lava::UI {
 
 enum class TraversalStage { Begin, End };
 

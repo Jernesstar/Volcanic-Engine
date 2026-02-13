@@ -4,7 +4,7 @@
 
 #include "Platform/Shader.h"
 
-using namespace Magma;
+using namespace Lava;
 
 namespace OpenGL {
 

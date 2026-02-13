@@ -1,6 +1,6 @@
 #pragma once
 
-#include <VolcaniCore/Core/TimeUtils.h>
+#include <VolcaniCore/Core/Time.h>
 
 using namespace VolcaniCore;
 

@@ -1,11 +1,11 @@
 #pragma once
 
-#include <Magma/Core/YAMLSerializer.h>
-#include <Magma/Core/AssetManager.h>
-#include <Magma/Script/ScriptObject.h>
-#include <Magma/Scene/Scene.h>
+#include <Lava/Core/YAMLSerializer.h>
+#include <Lava/Core/AssetManager.h>
+#include <Lava/Script/ScriptObject.h>
+#include <Lava/Scene/Scene.h>
 
-namespace Magma {
+namespace Lava {
 
 extern void SaveScript(YAMLSerializer& serializer,
 	Ref<Script::ScriptObject> obj);

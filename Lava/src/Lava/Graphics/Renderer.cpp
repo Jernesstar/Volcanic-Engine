@@ -13,7 +13,7 @@ using namespace VolcaniCore;
 
 using namespace VolcaniCore;
 
-namespace Magma::Graphics {
+namespace Lava::Graphics {
 
 const uint64_t Renderer::MaxTriangles = 1'000'000;
 const uint64_t Renderer::MaxIndices   = MaxTriangles * 6;

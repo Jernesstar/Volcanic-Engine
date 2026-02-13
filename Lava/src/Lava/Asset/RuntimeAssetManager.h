@@ -1,10 +1,10 @@
 #pragma once
 
-#include <Magma/Core/AssetManager.h>
-#include <Magma/Core/BinaryReader.h>
+#include <Lava/Core/AssetManager.h>
+#include <Lava/Core/BinaryReader.h>
 
 using namespace VolcaniCore;
-using namespace Magma;
+using namespace Lava;
 
 namespace Lava {
 

@@ -4,13 +4,13 @@
 
 #include <VolcaniCore/Core/Math.h>
 
-#include <Magma/Core/BinaryReader.h>
+#include <Lava/Core/BinaryReader.h>
 
 namespace Lava {
 
 RuntimeAssetManager::RuntimeAssetManager() {
 
-	// Magma assets
+	// Lava assets
 	m_AssetRegistry[Asset{ 10012345, AssetType::Mesh }] = true;
 	m_MeshAssets[10012345] = Mesh::Create(MeshType::Cube);
 	m_AssetRegistry[Asset{ 10112345, AssetType::Mesh }] = true;
@@ -23,7 +23,7 @@ RuntimeAssetManager::~RuntimeAssetManager() {
 
 }
 
-namespace Magma {
+namespace Lava {
 
 template<>
 BinaryReader& BinaryReader::ReadObject(Asset& asset) {
@@ -105,7 +105,7 @@ void RuntimeAssetManager::Load(Asset asset) {
 
 		for(auto& materialRef : GetRefs(asset)) {
 			Load(materialRef);
-			auto material = Get<Magma::Material>(materialRef);
+			auto material = Get<Lava::Material>(materialRef);
 			VolcaniCore::Material& mat = mesh->Materials.Emplace();
 
 			if(material->TextureUniforms.count("u_Diffuse")) {
@@ -185,7 +185,7 @@ void RuntimeAssetManager::Load(Asset asset) {
 		m_ScriptAssets[asset.ID] = CreateRef<ScriptModule>(handle);
 	}
 	else if(asset.Type == AssetType::Material) {
-		auto mat = CreateRef<Magma::Material>();
+		auto mat = CreateRef<Lava::Material>();
 		pack.Read(mat->IntUniforms);
 		pack.Read(mat->FloatUniforms);
 		pack.Read(mat->Vec2Uniforms);

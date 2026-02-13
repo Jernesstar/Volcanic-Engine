@@ -7,9 +7,9 @@
 #include <VolcaniCore/Core/List.h>
 #include <VolcaniCore/Core/UUID.h>
 
-#include <Magma/Script/ScriptObject.h>
+#include <Lava/Script/ScriptObject.h>
 
-namespace Magma::UI {
+namespace Lava::UI {
 
 class UIPage;
 

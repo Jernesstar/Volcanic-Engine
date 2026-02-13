@@ -2,16 +2,16 @@
 
 #include <VolcaniCore/Core/Defines.h>
 
-#include <Magma/Core/Project.h>
-#include <Magma/Script/ScriptModule.h>
+#include <Lava/Core/Project.h>
+#include <Lava/Script/ScriptModule.h>
 
 #include "ECS/World.h"
 // #include "UI/UI.h"
 // #include "SceneRenderer.h"
 
 using namespace VolcaniCore;
-using namespace Magma;
-using namespace Magma::Script;
+using namespace Lava;
+using namespace Lava::Script;
 // using namespace Lava::UI;
 
 namespace Lava {

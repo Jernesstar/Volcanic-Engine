@@ -4,7 +4,7 @@
 
 #include <VolcaniCore/Core/Log.h>
 
-namespace Magma::UI {
+namespace Lava::UI {
 
 static void TraverseElement(UIElement* element,
 							const Func<void, UIElement*>& func)

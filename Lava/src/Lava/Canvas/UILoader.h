@@ -1,16 +1,16 @@
 #pragma once
 
-#include <Magma/Core/Project.h>
+#include <Lava/Core/Project.h>
 
-#include <Magma/UI/UIPage.h>
+#include <Lava/UI/UIPage.h>
 
-#include <Magma/Script/ScriptModule.h>
+#include <Lava/Script/ScriptModule.h>
 
-using namespace Magma;
-using namespace Magma::Script;
-using namespace Magma::UI;
+using namespace Lava;
+using namespace Lava::Script;
+using namespace Lava::UI;
 
-namespace Magma {
+namespace Lava {
 
 struct ThemeElement {
 	uint32_t Width = 0;

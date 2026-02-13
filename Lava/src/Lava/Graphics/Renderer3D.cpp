@@ -9,7 +9,7 @@
 
 using namespace VolcaniCore;
 
-namespace Magma::Graphics {
+namespace Lava::Graphics {
 
 static DrawBuffer* s_MeshBuffer;
 static DrawBuffer* s_LineBuffer;

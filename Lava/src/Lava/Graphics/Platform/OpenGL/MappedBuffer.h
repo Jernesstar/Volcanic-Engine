@@ -7,7 +7,7 @@
 
 #include "Platform/BufferLayout.h"
 
-using namespace Magma;
+using namespace Lava;
 
 namespace OpenGL {
 

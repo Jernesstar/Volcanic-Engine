@@ -7,7 +7,7 @@
 
 using namespace VolcaniCore;
 
-namespace Magma::Graphics {
+namespace Lava::Graphics {
 
 enum class ShaderFileType { Vertex, Fragment, Geometry, Compute, Unknown };
 enum class ShaderDataType { Text, Binary };

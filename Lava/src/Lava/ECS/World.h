@@ -6,7 +6,7 @@
 #include <VolcaniCore/Core/UUID.h>
 #include <VolcaniCore/Core/Log.h>
 
-#include "Core/TypeID.h"
+#include "Utils/TypeID.h"
 
 #include "Entity.h"
 #include "EntityBuilder.h"

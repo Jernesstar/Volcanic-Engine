@@ -8,7 +8,7 @@
 
 using namespace VolcaniCore;
 
-namespace Magma::Graphics {
+namespace Lava::Graphics {
 
 class Camera : public Derivable<Camera> {
 public:

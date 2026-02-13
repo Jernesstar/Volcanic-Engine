@@ -10,7 +10,7 @@
 
 using namespace VolcaniCore;
 
-namespace Magma::Graphics {
+namespace Lava::Graphics {
 
 template<typename TOut>
 using ValueCallback = std::function<TOut(void)>;

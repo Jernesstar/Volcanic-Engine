@@ -6,9 +6,9 @@
 
 #include "Component.h"
 
-using namespace Magma::ECS;
+using namespace Lava::ECS;
 
-namespace Magma {
+namespace Lava {
 
 struct PhysicsEvent {
 	PhysicsEvent() = default;

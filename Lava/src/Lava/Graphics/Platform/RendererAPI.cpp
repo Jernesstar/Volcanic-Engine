@@ -8,7 +8,7 @@
 #include "Platform/OpenGL/StorageBuffer.h"
 #include "Platform/OpenGL/UniformBuffer.h"
 
-namespace Magma::Graphics {
+namespace Lava::Graphics {
 
 void RendererAPI::Create(RendererBackend backend) {
 	switch(backend) {

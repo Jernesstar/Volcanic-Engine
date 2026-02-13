@@ -11,9 +11,9 @@
 #include <VolcaniCore/Core/FileUtils.h>
 #include <VolcaniCore/Core/Math.h>
 
-#include <Magma/Core/YAMLSerializer.h>
-#include <Magma/Core/BinaryWriter.h>
-#include <Magma/Core/BinaryReader.h>
+#include <Lava/Core/YAMLSerializer.h>
+#include <Lava/Core/BinaryWriter.h>
+#include <Lava/Core/BinaryReader.h>
 
 #include <Lava/Core/App.h>
 
@@ -22,7 +22,7 @@
 
 namespace fs = std::filesystem;
 
-namespace Magma {
+namespace Lava {
 
 std::string AssetTypeToString(AssetType type) {
 	switch(type) {
@@ -511,7 +511,7 @@ void EditorAssetManager::Load(const std::string& path) {
 		i++;
 	}
 
-	// Magma assets
+	// Lava assets
 	m_AssetRegistry[Asset{ 10012345, AssetType::Mesh }] = true;
 	m_MeshAssets[10012345] = Mesh::Create(MeshType::Cube);
 	m_AssetRegistry[Asset{ 10112345, AssetType::Mesh }] = true;
@@ -686,7 +686,7 @@ void EditorAssetManager::Save() {
 
 }
 
-namespace Magma {
+namespace Lava {
 
 template<>
 BinaryWriter& BinaryWriter::WriteObject(const Asset& asset) {
@@ -751,7 +751,7 @@ BinaryWriter& BinaryWriter::WriteObject(const UUID& uuid) {
 
 }
 
-namespace Magma {
+namespace Lava {
 
 void EditorAssetManager::RuntimeSave(const std::string& exportPath) {
 	namespace fs = std::filesystem;
@@ -847,7 +847,7 @@ void EditorAssetManager::RuntimeSave(const std::string& exportPath) {
 		"Bloom", "Downsample", "Upsample",
 		"Particle", "ParticleEmitter", "ParticleUpdate" })
 	{
-		auto sourceRoot = fs::path("Magma") / "assets" / "shaders" / name;
+		auto sourceRoot = fs::path("Lava") / "assets" / "shaders" / name;
 		auto targetRoot = fs::path(exportPath) / "Asset" / "Shader" / name;
 
 		for(std::string type : { "vert", "frag", "comp" }) {

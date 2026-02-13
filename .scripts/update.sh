@@ -1,3 +1,3 @@
 #!/bin/bash
 
-cp build/Magma/bin/Magma /opt/Volcanic/Magma/Editor
+cp build/Lava/bin/Lava /opt/Volcanic/Lava/Editor

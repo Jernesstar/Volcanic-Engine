@@ -2,7 +2,7 @@
 
 #include "RendererAPI.h"
 
-using namespace Magma;
+using namespace Lava;
 
 namespace OpenGL {
 

@@ -4,7 +4,7 @@
 
 using namespace VolcaniCore;
 
-namespace Magma::Graphics {
+namespace Lava::Graphics {
 
 struct Line {
 	Point P0;

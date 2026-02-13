@@ -10,7 +10,7 @@
 #include "Texture.h"
 
 using namespace VolcaniCore;
-using namespace Magma;
+using namespace Lava;
 
 namespace OpenGL {
 

@@ -4,7 +4,7 @@
 
 #include "ECS/World.h"
 
-namespace Magma {
+namespace Lava {
 
 struct GameEventListener { };
 

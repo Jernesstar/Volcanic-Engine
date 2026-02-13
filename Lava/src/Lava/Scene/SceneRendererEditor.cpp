@@ -10,15 +10,15 @@
 
 #include <VolcaniCore/Core/Application.h>
 #include <VolcaniCore/Core/Input.h>
-#include <Magma/Graphics/Renderer.h>
-#include <Magma/Graphics/RendererAPI.h>
-#include <Magma/Graphics/Renderer2D.h>
-#include <Magma/Graphics/Renderer3D.h>
-#include <Magma/Graphics/StereographicCamera.h>
+#include <Lava/Graphics/Renderer.h>
+#include <Lava/Graphics/RendererAPI.h>
+#include <Lava/Graphics/Renderer2D.h>
+#include <Lava/Graphics/Renderer3D.h>
+#include <Lava/Graphics/StereographicCamera.h>
 
 #include "Scene/SceneVisualizerPanel.h"
 
-namespace Magma {
+namespace Lava {
 
 EditorSceneRenderer::EditorSceneRenderer() {
 	Application::PushDir();
@@ -36,8 +36,8 @@ EditorSceneRenderer::EditorSceneRenderer() {
 	GridPass =
 		RenderPass::Create("Grid",
 			AssetImporter::GetShader({
-				"Magma/assets/shaders/Grid.glsl.vert",
-				"Magma/assets/shaders/Grid.glsl.frag"
+				"Lava/assets/shaders/Grid.glsl.vert",
+				"Lava/assets/shaders/Grid.glsl.frag"
 			}), m_Output);
 	GridPass->SetData(Renderer2D::GetScreenBuffer());
 
@@ -63,51 +63,51 @@ EditorSceneRenderer::EditorSceneRenderer() {
 	BillboardPass =
 		RenderPass::Create("Billboard",
 			AssetImporter::GetShader({
-				"Magma/assets/shaders/Billboard.glsl.vert",
-				"Magma/assets/shaders/Billboard.glsl.frag"
+				"Lava/assets/shaders/Billboard.glsl.vert",
+				"Lava/assets/shaders/Billboard.glsl.frag"
 			}), m_Output);
 	BillboardPass->SetData(BillboardBuffer);
 
 	CameraIcon =
-		AssetImporter::GetTexture("Magma/assets/icons/CameraIcon.png");
+		AssetImporter::GetTexture("Lava/assets/icons/CameraIcon.png");
 	DirectionalLightIcon =
-		AssetImporter::GetTexture("Magma/assets/icons/DirectionalLightIcon.png");
+		AssetImporter::GetTexture("Lava/assets/icons/DirectionalLightIcon.png");
 	PointLightIcon =
-		AssetImporter::GetTexture("Magma/assets/icons/PointLightIcon.png");
+		AssetImporter::GetTexture("Lava/assets/icons/PointLightIcon.png");
 	SpotlightIcon =
-		AssetImporter::GetTexture("Magma/assets/icons/SpotlightIcon.png");
+		AssetImporter::GetTexture("Lava/assets/icons/SpotlightIcon.png");
 	ParticlesIcon =
-		AssetImporter::GetTexture("Magma/assets/icons/ParticlesIcon.png");
+		AssetImporter::GetTexture("Lava/assets/icons/ParticlesIcon.png");
 
 	MeshPass =
 		RenderPass::Create("Mesh",
 			AssetImporter::GetShader({
-				"Magma/assets/shaders/Mesh.glsl.vert",
-				"Magma/assets/shaders/Mesh.glsl.frag"
+				"Lava/assets/shaders/Mesh.glsl.vert",
+				"Lava/assets/shaders/Mesh.glsl.frag"
 			}), m_Output);
 	MeshPass->SetData(Renderer3D::GetMeshBuffer());
 
 	MaskPass =
 		RenderPass::Create("Mask",
 			AssetImporter::GetShader({
-				"Magma/assets/shaders/Mask.glsl.vert",
-				"Magma/assets/shaders/Mask.glsl.frag"
+				"Lava/assets/shaders/Mask.glsl.vert",
+				"Lava/assets/shaders/Mask.glsl.frag"
 			}), Framebuffer::Create(window->GetWidth(), window->GetHeight()));
 	MaskPass->SetData(Renderer3D::GetMeshBuffer());
 
 	OutlinePass =
 		RenderPass::Create("Outline",
 			AssetImporter::GetShader({
-				"Magma/assets/shaders/Outline.glsl.vert",
-				"Magma/assets/shaders/Outline.glsl.frag"
+				"Lava/assets/shaders/Outline.glsl.vert",
+				"Lava/assets/shaders/Outline.glsl.frag"
 			}), m_Output);
 	OutlinePass->SetData(Renderer2D::GetScreenBuffer());
 
 	LinePass =
 		RenderPass::Create("Line",
 			AssetImporter::GetShader({
-				"Magma/assets/shaders/Line.glsl.vert",
-				"Magma/assets/shaders/Line.glsl.frag"
+				"Lava/assets/shaders/Line.glsl.vert",
+				"Lava/assets/shaders/Line.glsl.frag"
 			}), m_Output);
 	LinePass->SetData(Renderer3D::GetLineBuffer());
 
@@ -312,7 +312,7 @@ void EditorSceneRenderer::SubmitMesh(const Entity& entity) {
 
 	VolcaniCore::Material mat;
 	assetManager->Load(mc.MaterialAsset);
-	auto material = assetManager->Get<Magma::Material>(mc.MaterialAsset);
+	auto material = assetManager->Get<Lava::Material>(mc.MaterialAsset);
 
 	if(material->TextureUniforms.count("u_Diffuse")) {
 		UUID id = material->TextureUniforms["u_Diffuse"];

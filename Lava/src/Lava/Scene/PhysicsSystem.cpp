@@ -6,9 +6,9 @@
 
 #include "Component.h"
 
-using namespace Magma::Physics;
+using namespace Lava::Physics;
 
-namespace Magma {
+namespace Lava {
 
 PhysicsSystem::PhysicsSystem(ECS::World* world)
 	: System(world)

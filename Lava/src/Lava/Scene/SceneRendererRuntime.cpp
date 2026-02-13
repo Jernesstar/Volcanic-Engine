@@ -2,14 +2,14 @@
 
 #include <VolcaniCore/Core/Application.h>
 
-#include <Magma/Graphics/Renderer.h>
-#include <Magma/Graphics/RendererAPI.h>
-#include <Magma/Graphics/Renderer2D.h>
-#include <Magma/Graphics/Renderer3D.h>
-#include <Magma/Graphics/StereographicCamera.h>
-#include <Magma/Graphics/ShaderLibrary.h>
+#include <Lava/Graphics/Renderer.h>
+#include <Lava/Graphics/RendererAPI.h>
+#include <Lava/Graphics/Renderer2D.h>
+#include <Lava/Graphics/Renderer3D.h>
+#include <Lava/Graphics/StereographicCamera.h>
+#include <Lava/Graphics/ShaderLibrary.h>
 
-#include <Magma/Scene/Component.h>
+#include <Lava/Scene/Component.h>
 
 #include "App.h"
 
@@ -417,7 +417,7 @@ void RuntimeSceneRenderer::SubmitMesh(const Entity& entity) {
 
 	VolcaniCore::Material mat;
 	assetManager->Load(mc.MaterialAsset);
-	auto material = assetManager->Get<Magma::Material>(mc.MaterialAsset);
+	auto material = assetManager->Get<Lava::Material>(mc.MaterialAsset);
 
 	if(material->TextureUniforms.count("u_Diffuse")) {
 		UUID id = material->TextureUniforms["u_Diffuse"];

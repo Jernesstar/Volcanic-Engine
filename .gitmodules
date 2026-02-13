@@ -4,27 +4,24 @@
 [submodule "VolcaniCore/.vendor/glm"]
 	path = VolcaniCore/.vendor/glm
 	url = https://github.com/g-truc/glm.git
-[submodule "Magma/.vendor/yaml-cpp"]
+[submodule "Lava/.vendor/yaml-cpp"]
 	path = Lava/.vendor/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp.git
-[submodule "Magma/.vendor/rapidjson"]
+[submodule "Lava/.vendor/rapidjson"]
 	path = Lava/.vendor/rapidjson
 	url = https://github.com/Tencent/rapidjson.git
-[submodule "Magma/.vendor/soloud"]
+[submodule "Lava/.vendor/soloud"]
 	path = Lava/.vendor/soloud
 	url = https://github.com/jarikomppa/soloud.git
-[submodule "Magma/.vendor/stb_image"]
+[submodule "Lava/.vendor/stb_image"]
 	path = Lava/.vendor/stb_image
 	url = https://github.com/LavaFlow-Technologies/stb_image.git
-[submodule "Magma/.vendor/glad"]
+[submodule "Lava/.vendor/glad"]
 	path = Lava/.vendor/glad
 	url = https://github.com/LavaFlow-Technologies/glad.git
 [submodule "Lava/.vendor/angelscript"]
 	path = Lava/.vendor/angelscript
 	url = https://github.com/LavaFlow-Technologies/angelscript.git
-[submodule "Magma/.vendor/freetype"]
+[submodule "Lava/.vendor/freetype"]
 	path = Lava/.vendor/freetype
 	url = https://github.com/LavaFlow-Technologies/freetype.git
-[submodule "VolcaniCore/.vendor/subprocess"]
-	path = VolcaniCore/.vendor/subprocess
-	url = https://github.com/benman64/subprocess

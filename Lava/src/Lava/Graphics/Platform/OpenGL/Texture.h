@@ -4,7 +4,7 @@
 
 #include "Platform/Texture.h"
 
-using namespace Magma;
+using namespace Lava;
 
 namespace OpenGL {
 

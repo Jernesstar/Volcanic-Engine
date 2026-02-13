@@ -5,10 +5,10 @@
 
 #include "SceneRenderer.h"
 
-using namespace Magma::ECS;
-using namespace Magma::Physics;
+using namespace Lava::ECS;
+using namespace Lava::Physics;
 
-namespace Magma {
+namespace Lava {
 
 Scene::Scene(const std::string& name)
 	: Name(name) { }

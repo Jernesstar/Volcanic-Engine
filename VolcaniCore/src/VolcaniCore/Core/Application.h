@@ -1,6 +1,6 @@
 #pragma once
 
-#include "TimeUtils.h"
+#include "Time.h"
 #include "Defines.h"
 
 int main(int argc, char** argv);

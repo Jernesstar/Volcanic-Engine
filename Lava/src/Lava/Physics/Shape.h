@@ -12,10 +12,10 @@ using namespace physx;
 
 #endif
 
-#include <Magma/Graphics/Mesh.h>
+#include <Lava/Graphics/Mesh.h>
 
 using namespace VolcaniCore;
-using namespace Magma;
+using namespace Lava;
 
 namespace Lava::Physics {
 

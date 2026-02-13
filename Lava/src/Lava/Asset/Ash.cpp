@@ -2,9 +2,9 @@
 
 #include "AssetManager.h"
 
-#include <Magma/Script/ScriptEngine.h>
+#include <Lava/Script/ScriptEngine.h>
 
-using namespace Magma::Script;
+using namespace Lava::Script;
 
 namespace Lava {
 

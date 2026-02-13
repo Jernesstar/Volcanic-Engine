@@ -8,7 +8,7 @@
 
 using namespace VolcaniCore;
 
-namespace Magma::Graphics {
+namespace Lava::Graphics {
 
 enum class Control { Up, Down, Left, Right, Forward, Backward };
 

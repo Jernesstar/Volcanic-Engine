@@ -5,7 +5,7 @@
 
 using namespace VolcaniCore;
 
-namespace Magma::Graphics {
+namespace Lava::Graphics {
 
 enum class BufferDataType {
 	Int, Float, Vec2, Vec3, Vec4, Mat2, Mat3, Mat4,

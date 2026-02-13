@@ -10,7 +10,7 @@
 
 using namespace VolcaniCore;
 
-namespace Magma::Graphics {
+namespace Lava::Graphics {
 
 CameraController::CameraController(const MovementControls& controls)
 	: m_Controls(controls) { }

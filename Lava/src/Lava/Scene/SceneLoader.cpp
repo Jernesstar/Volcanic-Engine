@@ -8,15 +8,15 @@
 #include <VolcaniCore/Core/FileUtils.h>
 #include <VolcaniCore/Core/List.h>
 #include <VolcaniCore/Core/UUID.h>
-#include <Magma/Graphics/StereographicCamera.h>
-#include <Magma/Graphics/OrthographicCamera.h>
+#include <Lava/Graphics/StereographicCamera.h>
+#include <Lava/Graphics/OrthographicCamera.h>
 
-#include <Magma/Core/YAMLSerializer.h>
-#include <Magma/Core/BinaryWriter.h>
-#include <Magma/Core/BinaryReader.h>
-#include <Magma/Script/ScriptClass.h>
-#include <Magma/Scene/Component.h>
-#include <Magma/Scene/Component.h>
+#include <Lava/Core/YAMLSerializer.h>
+#include <Lava/Core/BinaryWriter.h>
+#include <Lava/Core/BinaryReader.h>
+#include <Lava/Script/ScriptClass.h>
+#include <Lava/Scene/Component.h>
+#include <Lava/Scene/Component.h>
 
 #include <Lava/Core/App.h>
 #include <Lava/Types/GridSet.h>
@@ -29,11 +29,11 @@
 #undef near
 #undef far
 
-using namespace Magma::ECS;
-using namespace Magma::Physics;
+using namespace Lava::ECS;
+using namespace Lava::Physics;
 using namespace Lava;
 
-namespace Magma {
+namespace Lava {
 
 template<>
 Serializer& Serializer::Write(const VolcaniCore::Vertex& value) {
@@ -57,7 +57,7 @@ Serializer& Serializer::Write(const Asset& value) {
 
 }
 
-namespace Magma {
+namespace Lava {
 
 static void DeserializeEntity(YAML::Node entityNode, Scene& scene);
 static void SerializeEntity(YAMLSerializer& out, const Entity& entity);
@@ -724,7 +724,7 @@ void DeserializeEntity(YAML::Node entityNode, Scene& scene) {
 
 }
 
-namespace Magma {
+namespace Lava {
 
 template<>
 BinaryWriter& BinaryWriter::WriteObject(const glm::vec3& vec) {
@@ -982,7 +982,7 @@ BinaryWriter& BinaryWriter::WriteObject(const Entity& entity) {
 
 }
 
-namespace Magma {
+namespace Lava {
 
 void SceneLoader::RuntimeSave(const Scene& scene,
 							  const std::string& projectPath,

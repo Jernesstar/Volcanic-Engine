@@ -2,11 +2,11 @@
 
 #include <VolcaniCore/Core/Defines.h>
 
-#include <Magma/Scene/Scene.h>
-#include <Magma/Scene/SceneRenderer.h>
+#include <Lava/Scene/Scene.h>
+#include <Lava/Scene/SceneRenderer.h>
 
 using namespace VolcaniCore;
-using namespace Magma;
+using namespace Lava;
 
 namespace Lava {
 

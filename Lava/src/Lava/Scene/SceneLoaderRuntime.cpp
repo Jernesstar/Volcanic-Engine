@@ -8,15 +8,15 @@
 #include <VolcaniCore/Core/FileUtils.h>
 #include <VolcaniCore/Core/List.h>
 #include <VolcaniCore/Core/UUID.h>
-#include <Magma/Graphics/StereographicCamera.h>
-#include <Magma/Graphics/OrthographicCamera.h>
+#include <Lava/Graphics/StereographicCamera.h>
+#include <Lava/Graphics/OrthographicCamera.h>
 
-#include <Magma/Core/YAMLSerializer.h>
+#include <Lava/Core/YAMLSerializer.h>
 
-#include <Magma/Core/BinaryWriter.h>
-#include <Magma/Core/BinaryReader.h>
+#include <Lava/Core/BinaryWriter.h>
+#include <Lava/Core/BinaryReader.h>
 
-#include <Magma/Scene/Component.h>
+#include <Lava/Scene/Component.h>
 
 #include <Lava/Core/App.h>
 #include <Lava/Types/GridSet.h>
@@ -26,11 +26,11 @@
 #undef near
 #undef far
 
-using namespace Magma::ECS;
-using namespace Magma::Physics;
+using namespace Lava::ECS;
+using namespace Lava::Physics;
 using namespace Lava;
 
-namespace Magma {
+namespace Lava {
 
 template<>
 BinaryReader& BinaryReader::ReadObject(glm::vec3& vec) {

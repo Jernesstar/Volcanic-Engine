@@ -5,21 +5,21 @@
 #include <VolcaniCore/Core/Defines.h>
 #include <VolcaniCore/Core/UUID.h>
 
-#include <Magma/Graphics/RendererAPI.h>
-#include <Magma/Graphics/Texture.h>
-#include <Magma/Graphics/Cubemap.h>
-#include <Magma/Graphics/Mesh.h>
-#include <Magma/Graphics/Shader.h>
+#include <Lava/Graphics/RendererAPI.h>
+#include <Lava/Graphics/Texture.h>
+#include <Lava/Graphics/Cubemap.h>
+#include <Lava/Graphics/Mesh.h>
+#include <Lava/Graphics/Shader.h>
 
-#include <Magma/Audio/Sound.h>
+#include <Lava/Audio/Sound.h>
 
-#include <Magma/Script/ScriptModule.h>
-#include <Magma/Script/ScriptClass.h>
+#include <Lava/Script/ScriptModule.h>
+#include <Lava/Script/ScriptClass.h>
 
-using namespace Magma::Audio;
-using namespace Magma::Script;
+using namespace Lava::Audio;
+using namespace Lava::Script;
 
-namespace Magma {
+namespace Lava {
 
 enum class AssetType : uint8_t {
 	None,
@@ -62,8 +62,8 @@ struct Material {
 namespace std {
 
 template<>
-struct hash<Magma::Asset> {
-	std::size_t operator()(const Magma::Asset& asset) const {
+struct hash<Lava::Asset> {
+	std::size_t operator()(const Lava::Asset& asset) const {
 		return (uint64_t)asset;
 	}
 };
@@ -71,7 +71,7 @@ struct hash<Magma::Asset> {
 }
 
 
-namespace Magma {
+namespace Lava {
 
 class AssetManager : public VolcaniCore::Derivable<AssetManager> {
 public:

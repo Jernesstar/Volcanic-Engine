@@ -37,7 +37,6 @@ RootPath = _MAIN_SCRIPT_DIR;
 VolcaniCoreVendorDir = "%{RootPath}/VolcaniCore/.vendor"
 VolcanicWindowVendorDir = "%{RootPath}/VolcanicWindow/.vendor"
 LavaVendorDir = "%{RootPath}/Lava/.vendor"
-MagmaVendorDir = "%{RootPath}/Magma/.vendor"
 
 VendorPaths = {}
 Includes = {}
@@ -50,21 +49,13 @@ VendorPaths["glfw"] = "%{VolcanicWindowVendorDir}/glfw"
 
 -- Lava libraries
 VendorPaths["angelscript"]        = "%{LavaVendorDir}/angelscript"
-
--- Magma libraries
-VendorPaths["pugixml"]            = "%{MagmaVendorDir}/pugixml"
-VendorPaths["yaml_cpp"]           = "%{MagmaVendorDir}/yaml-cpp"
-VendorPaths["rapidjson"]          = "%{MagmaVendorDir}/rapidjson"
-VendorPaths["json"]               = "%{MagmaVendorDir}/json"
-VendorPaths["cpp_httplib"]        = "%{MagmaVendorDir}/cpp-httplib"
-VendorPaths["stb_image"]          = "%{MagmaVendorDir}/stb_image"
-VendorPaths["soloud"]             = "%{MagmaVendorDir}/soloud"
-VendorPaths["efsw"]               = "%{MagmaVendorDir}/efsw"
-VendorPaths["libgit2"]            = "%{MagmaVendorDir}/libgit2"
-VendorPaths["miniz_cpp"]          = "%{MagmaVendorDir}/miniz-cpp"
-VendorPaths["glad"]               = "%{MagmaVendorDir}/glad"
-VendorPaths["freetype"]           = "%{MagmaVendorDir}/freetype"
-VendorPaths["RmlUi"]              = "%{MagmaVendorDir}/RmlUi"
+VendorPaths["yaml_cpp"]           = "%{LavaVendorDir}/yaml-cpp"
+VendorPaths["rapidjson"]          = "%{LavaVendorDir}/rapidjson"
+VendorPaths["stb_image"]          = "%{LavaVendorDir}/stb_image"
+VendorPaths["soloud"]             = "%{LavaVendorDir}/soloud"
+VendorPaths["efsw"]               = "%{LavaVendorDir}/efsw"
+VendorPaths["glad"]               = "%{LavaVendorDir}/glad"
+VendorPaths["freetype"]           = "%{LavaVendorDir}/freetype"
 
 -- VolcaniCore libraries
 Includes["glm"]                   = "%{VendorPaths.glm}"
@@ -74,19 +65,11 @@ Includes["glfw"]                  = "%{VendorPaths.glfw}/include"
 
 -- Lava libraries
 Includes["angelscript"]           = "%{VendorPaths.angelscript}/angelscript/include"
-
--- Magma libraries
-Includes["pugixml"]               = "%{VendorPaths.pugixml}/src"
 Includes["yaml_cpp"]              = "%{VendorPaths.yaml_cpp}/include"
-Includes["rapidjson"]             = "%{VendorPaths.rapidjson}/include"
+Includes["rapidjson"]             = "%{VendorPaths.rapidjson}/include" 
 Includes["json"]                  = "%{VendorPaths.json}/include"
-Includes["cpp_httplib"]           = "%{MagmaVendorDir}"
-Includes["jwt_cpp"]               = "%{VendorPaths.jwt_cpp}/include"
 Includes["stb_image"]             = "%{VendorPaths.stb_image}/include"
 Includes["soloud"]                = "%{VendorPaths.soloud}/include"
 Includes["efsw"]                  = "%{VendorPaths.efsw}/include"
-Includes["libgit2"]               = "%{VendorPaths.libgit2}/include"
-Includes["miniz_cpp"]             = "%{VendorPaths.miniz_cpp}/include"
 Includes["glad"]                  = "%{VendorPaths.glad}/include"
 Includes["freetype"]              = "%{VendorPaths.freetype}/include"
-Includes["RmlUi"]                 = "%{VendorPaths.RmlUi}/Include"

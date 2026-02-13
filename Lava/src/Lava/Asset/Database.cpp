@@ -1,6 +1,6 @@
 #include "Database.h"
 
-namespace Magma {
+namespace Lava {
 
 Database::Database(const std::string& name, MDB_env* registry, MDB_dbi handle)
 	: Name(name), m_Handle(handle) { }

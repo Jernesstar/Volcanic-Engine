@@ -5,7 +5,7 @@
 #include "Platform/StorageBuffer.h"
 
 using namespace VolcaniCore;
-using namespace Magma;
+using namespace Lava;
 
 namespace OpenGL {
 
