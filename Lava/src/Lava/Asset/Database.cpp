@@ -44,6 +44,7 @@ DatabaseResult Database::Query(const DatabaseQuery& query) {
 		throw std::runtime_error("Failed to read bytes!");
 	}
 
+	// TODO(Watch out!)
 	DatabaseResult val = { true, { (uint8_t*)value.mv_data, value.mv_size } };
 
 	mdb_txn_commit(txn);

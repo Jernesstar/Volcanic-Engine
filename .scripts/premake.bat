@@ -1,3 +1,3 @@
 @echo off
 
-".vendor/premake/bin/Windows/premake5.exe" "gmake"
+premake5 "gmake"

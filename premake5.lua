@@ -30,7 +30,6 @@ workspace "VolcanicEngine"
 include "VolcaniCore"
 include "VolcanicWindow"
 include "Lava"
-include "Magma"
 include "Runtime"
 include "RuntimeWindow"
 
