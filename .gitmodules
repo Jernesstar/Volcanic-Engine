@@ -4,24 +4,35 @@
 [submodule "VolcaniCore/.vendor/glm"]
 	path = VolcaniCore/.vendor/glm
 	url = https://github.com/g-truc/glm.git
-[submodule "Lava/.vendor/yaml-cpp"]
-	path = Lava/.vendor/yaml-cpp
-	url = https://github.com/jbeder/yaml-cpp.git
-[submodule "Lava/.vendor/rapidjson"]
-	path = Lava/.vendor/rapidjson
-	url = https://github.com/Tencent/rapidjson.git
-[submodule "Lava/.vendor/soloud"]
-	path = Lava/.vendor/soloud
-	url = https://github.com/jarikomppa/soloud.git
-[submodule "Lava/.vendor/stb_image"]
-	path = Lava/.vendor/stb_image
-	url = https://github.com/LavaFlow-Technologies/stb_image.git
-[submodule "Lava/.vendor/glad"]
-	path = Lava/.vendor/glad
-	url = https://github.com/LavaFlow-Technologies/glad.git
-[submodule "Lava/.vendor/angelscript"]
-	path = Lava/.vendor/angelscript
+
+[submodule "Engine/.vendor/angelscript"]
+	path = Engine/.vendor/angelscript
 	url = https://github.com/LavaFlow-Technologies/angelscript.git
-[submodule "Lava/.vendor/freetype"]
-	path = Lava/.vendor/freetype
+[submodule "Engine/.vendor/soloud"]
+	path = Engine/.vendor/soloud
+	url = https://github.com/jarikomppa/soloud.git
+[submodule "Engine/.vendor/glad"]
+	path = Engine/.vendor/glad
+	url = https://github.com/LavaFlow-Technologies/glad.git
+
+[submodule "Editor/.vendor/stb_image"]
+	path = Editor/.vendor/stb_image
+	url = https://github.com/LavaFlow-Technologies/stb_image.git
+[submodule "Editor/.vendor/yaml-cpp"]
+	path = Editor/.vendor/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp.git
+[submodule "Editor/.vendor/rapidjson"]
+	path = Editor/.vendor/rapidjson
+	url = https://github.com/Tencent/rapidjson.git
+[submodule "Editor/.vendor/freetype"]
+	path = Editor/.vendor/freetype
 	url = https://github.com/LavaFlow-Technologies/freetype.git
+[submodule "Editor/.vendor/efsw"]
+	path = Editor/.vendor/efsw
+	url = https://github.com/SpartanJ/efsw.git
+[submodule "Editor/.vendor/SPIRV-Cross"]
+	path = Editor/.vendor/efsw
+	url = https://github.com/SpartanJ/efsw.git
+[submodule "Editor/.vendor/glslang"]
+	path = Editor/.vendor/glslang
+	url = https://github.com/LavaFlow-Technologies/glslang.git
