@@ -1,0 +1,39 @@
+#version 460 core
+
+struct Particle {
+    vec3 Position;
+    vec3 Velocity;
+    float Life;
+};
+
+layout(std430, binding = 0) restrict buffer SSBO_0 {
+    Particle Particles[];
+};
+
+layout(std430, binding = 1) restrict buffer SSBO_1 {
+    coherent int Count;
+    int Indices[];
+} FreeList;
+
+layout(location = 0) uniform float u_TimeStep;
+
+void UpdateParticle(inout Particle particle, int index) {
+    if(particle.Life > 0) {
+        // particle.Velocity += particle.Acceleration * u_TimeStep;
+        particle.Position += particle.Velocity * u_TimeStep;
+        particle.Life -= u_TimeStep;
+
+        if(particle.Life <= 0.0)
+            FreeList.Indices[atomicAdd(FreeList.Count, 1)] = index;
+    }
+}
+
+layout(local_size_x = 128, local_size_y = 1, local_size_z = 1) in;
+
+void main() {
+    uint index = gl_GlobalInvocationID.x;
+    if(index >= Particles.length())
+        return;
+
+    UpdateParticle(Particles[index], int(index));
+}

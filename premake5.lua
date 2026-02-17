@@ -27,49 +27,52 @@ workspace "VolcanicEngine"
     filter "action:vs*"
         startproject "Editor"
 
-include "VolcaniCore"
-include "VolcanicWindow"
-include "Lava"
+include "Engine"
+include "Editor"
 include "Runtime"
+include "RuntimeApp"
 include "RuntimeWindow"
 
 RootPath = _MAIN_SCRIPT_DIR;
 VolcaniCoreVendorDir = "%{RootPath}/VolcaniCore/.vendor"
 VolcanicWindowVendorDir = "%{RootPath}/VolcanicWindow/.vendor"
-LavaVendorDir = "%{RootPath}/Lava/.vendor"
+EngineVendorDir = "%{RootPath}/Engine/.vendor"
+EditorVendorDir = "%{RootPath}/Editor/.vendor"
 
 VendorPaths = {}
 Includes = {}
 
 -- VolcaniCore libraries
 VendorPaths["glm"]  = "%{VolcaniCoreVendorDir}/glm"
-
 -- VolcanicWindow libraries
 VendorPaths["glfw"] = "%{VolcanicWindowVendorDir}/glfw"
-
--- Lava libraries
-VendorPaths["angelscript"]        = "%{LavaVendorDir}/angelscript"
-VendorPaths["yaml_cpp"]           = "%{LavaVendorDir}/yaml-cpp"
-VendorPaths["rapidjson"]          = "%{LavaVendorDir}/rapidjson"
-VendorPaths["stb_image"]          = "%{LavaVendorDir}/stb_image"
-VendorPaths["soloud"]             = "%{LavaVendorDir}/soloud"
-VendorPaths["efsw"]               = "%{LavaVendorDir}/efsw"
-VendorPaths["glad"]               = "%{LavaVendorDir}/glad"
-VendorPaths["freetype"]           = "%{LavaVendorDir}/freetype"
+-- Engine libraries
+VendorPaths["angelscript"]        = "%{EngineVendorDir}/angelscript"
+VendorPaths["soloud"]             = "%{EngineVendorDir}/soloud"
+VendorPaths["glad"]               = "%{EngineVendorDir}/glad"
+VendorPaths["flecs"]              = "%{EngineVendorDir}/flecs"
+VendorPaths["lmdb"]               = "%{EngineVendorDir}/lmdb"
+-- Editor libraries
+VendorPaths["yaml_cpp"]           = "%{EngineVendorDir}/yaml-cpp"
+VendorPaths["rapidjson"]          = "%{EngineVendorDir}/rapidjson"
+VendorPaths["stb_image"]          = "%{EngineVendorDir}/stb_image"
+VendorPaths["efsw"]               = "%{EngineVendorDir}/efsw"
+VendorPaths["freetype"]           = "%{EngineVendorDir}/freetype"
 
 -- VolcaniCore libraries
 Includes["glm"]                   = "%{VendorPaths.glm}"
-
 -- VolcanicWindow libraries
 Includes["glfw"]                  = "%{VendorPaths.glfw}/include"
-
--- Lava libraries
+-- Engine libraries
 Includes["angelscript"]           = "%{VendorPaths.angelscript}/angelscript/include"
+Includes["soloud"]                = "%{VendorPaths.soloud}/include"
+Includes["glad"]                  = "%{VendorPaths.glad}/include"
+Includes["flecs"]                 = "%{VendorPaths.angelscript}/flecs/include"
+Includes["lmdb"]                  = "%{VendorPaths.angelscript}/lmdb/include"
+-- Editor libraries
 Includes["yaml_cpp"]              = "%{VendorPaths.yaml_cpp}/include"
-Includes["rapidjson"]             = "%{VendorPaths.rapidjson}/include" 
+Includes["rapidjson"]             = "%{VendorPaths.rapidjson}/include"
 Includes["json"]                  = "%{VendorPaths.json}/include"
 Includes["stb_image"]             = "%{VendorPaths.stb_image}/include"
-Includes["soloud"]                = "%{VendorPaths.soloud}/include"
 Includes["efsw"]                  = "%{VendorPaths.efsw}/include"
-Includes["glad"]                  = "%{VendorPaths.glad}/include"
 Includes["freetype"]              = "%{VendorPaths.freetype}/include"

@@ -1,5 +1,5 @@
 project "Engine"
-    kind "ConsoleApp"
+    kind "StaticLib"
     language "C++"
     cppdialect "C++latest"
     staticruntime "Off"
@@ -27,30 +27,18 @@ project "Engine"
 
         "%{Includes.glm}",
         "%{Includes.glad}",
-        "%{Includes.glfw}",
         "%{Includes.angelscript}",
-        "%{Includes.yaml_cpp}",
-        "%{Includes.rapidjson}",
-        "%{Includes.efsw}",
-        "%{Includes.stb_image}",
         "%{Includes.soloud}",
-        "%{Includes.freetype}",
     }
 
     links {
         "VolcaniCore",
-        "VolcanicWindow",
 
-        "glfw",
-
-        "glad",
-        "efsw",
-        "soloud",
-        "stb_image",
-
-        "freetype",
-        "yaml-cpp",
         "angelscript",
+        "glad",
+        "soloud",
+        "flecs",
+        "lmdb",
 
         "z"
     }
@@ -93,7 +81,5 @@ project "Engine"
 include "Engine/.deps/angelscript"
 include "Engine/.deps/glad"
 include "Engine/.deps/soloud"
-include "Engine/.deps/stb_image"
-include "Engine/.deps/efsw"
-include "Engine/.deps/yaml-cpp"
-include "Engine/.deps/freetype"
+include "Engine/.deps/lmdb"
+include "Engine/.deps/flecs"

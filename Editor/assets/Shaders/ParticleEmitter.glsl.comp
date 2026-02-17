@@ -1,0 +1,83 @@
+#version 460 core
+
+struct Particle {
+    vec3 Position;
+    vec3 Velocity;
+    float Life;
+};
+
+layout(std430, binding = 0) writeonly restrict buffer SSBO_0 {
+    Particle Particles[];
+};
+
+layout(std430, binding = 1) coherent restrict buffer SSBO_1 {
+    coherent int Count;
+    int Indices[];
+} FreeList;
+
+struct EmitterSettings {
+    vec3 Position;
+    float ParticleLifetime;
+    float Offset;
+};
+
+layout(location = 0) uniform float u_TimeStep;
+layout(location = 1) uniform int u_ParticlesToSpawn;
+layout(location = 2) uniform EmitterSettings u_Emitter;
+
+float umap(float val, float rs, float re) // [0, 1] -> [rs, re]
+{
+    return val * (re - rs) + rs;
+}
+
+float map(float val, float r1s, float r1e, float r2s, float r2e)
+{
+    return (val - r1s) / (r1e - r1s) * (r2e - r2s) + r2s;
+}
+
+// classic noise
+float rand(vec2 co)
+{
+    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+float rng(float low, float high, float seed)
+{
+    seed += 1.61803399;
+    vec3 seedVec = vec3(fract(u_TimeStep * u_TimeStep), sin(4 * sqrt(u_TimeStep)), cos(sqrt(u_TimeStep)));
+    return umap(rand(tan(gl_GlobalInvocationID.xy) * seedVec.xy + seedVec.z * seed * seed), low, high);
+}
+
+vec3 rng(vec3 low, vec3 high)
+{
+    return vec3(
+        rng(low.x, high.x, 23.98901),
+        rng(low.y, high.y, 80.23353),
+        rng(low.z, high.z, 54.71941)
+    );
+}
+
+void MakeParticle(out Particle particle) {
+    particle.Life = u_Emitter.ParticleLifetime;
+    particle.Velocity = vec3(0.0f, 0.0001, 0.0);
+    particle.Position =
+        u_Emitter.Position
+            + rng(vec3(-u_Emitter.Offset), vec3(u_Emitter.Offset));
+}
+
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+void main() {
+    uint index = gl_GlobalInvocationID.x;
+    if(index >= u_ParticlesToSpawn)
+        return;
+
+    // Undo decrement and return if nothing in freelist
+    int freeListIndex = atomicAdd(FreeList.Count, -1) - 1;
+    if(freeListIndex < 0) {
+        atomicAdd(FreeList.Count, 1);
+        return;
+    }
+
+    int particleIndex = FreeList.Indices[freeListIndex];
+    MakeParticle(Particles[particleIndex]);
+}

@@ -4,8 +4,8 @@ project "flecs"
     cdialect "C99"
     staticruntime "Off"
 
-    objdir ("%{RootPath}/build/Lava/obj")
-    targetdir ("%{RootPath}/build/Lava/lib")
+    objdir ("%{RootPath}/build/Engine/obj")
+    targetdir ("%{RootPath}/build/Engine/lib")
 
     files {
         "%{VendorPaths.flecs}/distr/flecs.h",

@@ -13,8 +13,8 @@ project "angelscript"
     cppdialect "C++latest"
     staticruntime "Off"
 
-    objdir ("%{RootPath}/build/Lava/obj")
-    targetdir ("%{RootPath}/build/Lava/lib")
+    objdir ("%{RootPath}/build/Engine/obj")
+    targetdir ("%{RootPath}/build/Engine/lib")
 
     rules { "ASM" }
 

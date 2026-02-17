@@ -1,9 +1,9 @@
-[submodule "VolcanicWindow/.vendor/glfw"]
-	path = VolcanicWindow/.vendor/glfw
-	url = https://github.com/LavaFlow-Technologies/glfw.git
 [submodule "VolcaniCore/.vendor/glm"]
 	path = VolcaniCore/.vendor/glm
 	url = https://github.com/g-truc/glm.git
+[submodule "VolcanicWindow/.vendor/glfw"]
+	path = VolcanicWindow/.vendor/glfw
+	url = https://github.com/LavaFlow-Technologies/glfw.git
 
 [submodule "Engine/.vendor/angelscript"]
 	path = Engine/.vendor/angelscript
@@ -14,6 +14,12 @@
 [submodule "Engine/.vendor/glad"]
 	path = Engine/.vendor/glad
 	url = https://github.com/LavaFlow-Technologies/glad.git
+[submodule "Engine/.vendor/lmdb"]
+	path = Engine/.vendor/lmdb
+	url = https://github.com/LMDB/lmdb.git
+[submodule "Engine/vendor/flecs"]
+	path = Engine/.vendor/flecs
+	url = https://github.com/SanderMertens/flecs.git
 
 [submodule "Editor/.vendor/stb_image"]
 	path = Editor/.vendor/stb_image

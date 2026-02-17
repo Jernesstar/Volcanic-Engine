@@ -3,8 +3,8 @@ project "soloud"
     language "C++"
     staticruntime "Off"
 
-    objdir ("%{RootPath}/build/Lava/obj")
-    targetdir ("%{RootPath}/build/Lava/lib")
+    objdir ("%{RootPath}/build/Engine/obj")
+    targetdir ("%{RootPath}/build/Engine/lib")
 
     files {
         "%{VendorPaths.soloud}/src/core/*.cpp",
