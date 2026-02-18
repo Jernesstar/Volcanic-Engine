@@ -9,12 +9,12 @@ using namespace VolcaniCore;
 namespace VolcanicEngine::Graphics {
 
 struct FrameDebugInfo {
-	float FPS;
+	f32 FPS;
 
-	uint64_t DrawCalls = 0;
-	uint64_t Indices   = 0;
-	uint64_t Vertices  = 0;
-	uint64_t Instances = 0;
+	u64 DrawCalls = 0;
+	u64 Indices   = 0;
+	u64 Vertices  = 0;
+	u64 Instances = 0;
 };
 
 struct FrameData {
@@ -23,10 +23,10 @@ struct FrameData {
 
 class Renderer {
 public:
-	static const uint64_t MaxTriangles;
-	static const uint64_t MaxIndices;
-	static const uint64_t MaxVertices;
-	static const uint64_t MaxInstances;
+	static const u64 MaxTriangles;
+	static const u64 MaxIndices;
+	static const u64 MaxVertices;
+	static const u64 MaxInstances;
 
 public:
 	static void Init();
@@ -47,10 +47,10 @@ public:
 	static DrawCommand* NewCommand(bool usePrevious = false);
 
 	static void Clear();
-	static void Resize(uint32_t width, uint32_t height);
+	static void Resize(u32 width, u32 height);
 
 	static void PushOptions();
-	static void PopOptions(uint32_t count = 1);
+	static void PopOptions(u32 count = 1);
 
 	static void Flush();
 

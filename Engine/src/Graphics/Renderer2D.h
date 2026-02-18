@@ -2,13 +2,13 @@
 
 #include <VolcaniCore/Core/Math.h>
 
-#include "Graphics/RendererAPI.h"
-#include "Graphics/OrthographicCamera.h"
+#include "Platform/RendererAPI.h"
+#include "Platform/Texture.h"
+#include "Platform/Framebuffer.h"
 
-#include "Graphics/Quad.h"
-#include "Graphics/Text.h"
-#include "Graphics/Texture.h"
-#include "Graphics/Framebuffer.h"
+#include "OrthographicCamera.h"
+#include "Quad.h"
+#include "Text.h"
 
 using namespace VolcaniCore;
 

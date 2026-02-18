@@ -10,8 +10,11 @@
 #include "Script/ScriptObject.h"
 
 using namespace VolcaniCore;
+using namespace VolcanicEngine::Graphics;
+// using namespace VolcanicEngine::Physics;
+using namespace VolcanicEngine::Script;
 
-namespace Magma {
+namespace VolcanicEngine::ECS {
 
 struct Component {
 	uint8_t _;
@@ -56,50 +59,50 @@ struct TransformComponent : public Component {
 };
 
 struct AudioComponent : public Component {
-	Asset AudioAsset;
+	// Asset AudioAsset;
 
 	AudioComponent() = default;
-	AudioComponent(const Asset& asset)
-		: AudioAsset(asset) { }
+	// AudioComponent(const Asset& asset)
+	// 	: AudioAsset(asset) { }
 	AudioComponent(const AudioComponent& other) = default;
 };
 
 struct MeshComponent : public Component {
-	Asset MeshSourceAsset;
-	Asset MaterialAsset;
+	// Asset MeshSourceAsset;
+	// Asset MaterialAsset;
 
 	MeshComponent() = default;
-	MeshComponent(const Asset& source, const Asset& mat)
-		: MeshSourceAsset(source), MaterialAsset(mat) { }
+	// MeshComponent(const Asset& source, const Asset& mat)
+	// 	: MeshSourceAsset(source), MaterialAsset(mat) { }
 	MeshComponent(const MeshComponent& other) = default;
 };
 
 struct SkyboxComponent : public Component {
-	Asset CubemapAsset;
+	// Asset CubemapAsset;
 
 	SkyboxComponent() = default;
-	SkyboxComponent(const Asset& asset)
-		: CubemapAsset(asset) { }
+	// SkyboxComponent(const Asset& asset)
+	// 	: CubemapAsset(asset) { }
 	SkyboxComponent(const SkyboxComponent& other) = default;
 };
 
 struct ScriptComponent : public Component {
-	Asset ModuleAsset;
-	Ref<Script::ScriptObject> Instance;
+	// Asset ModuleAsset;
+	// Ref<ScriptObject> Instance;
 
 	ScriptComponent() = default;
-	ScriptComponent(const Asset& asset, Ref<Script::ScriptObject> obj)
-		: ModuleAsset(asset), Instance(obj) { }
+	// ScriptComponent(const Asset& asset, Ref<ScriptObject> obj)
+	// 	: ModuleAsset(asset), Instance(obj) { }
 	ScriptComponent(const ScriptComponent& other) = default;
 	ScriptComponent(ScriptComponent&& other) = default;
 };
 
 struct RigidBodyComponent : public Component {
-	Ref<Physics::RigidBody> Body;
+	// Ref<RigidBody> Body;
 
 	RigidBodyComponent() = default;
-	RigidBodyComponent(Ref<Physics::RigidBody> body)
-		: Body(body) { }
+	// RigidBodyComponent(Ref<RigidBody> body)
+	// 	: Body(body) { }
 	RigidBodyComponent(const RigidBodyComponent& other) = default;
 };
 
@@ -122,14 +125,14 @@ struct PointLightComponent : public Component {
 	Vec3 Diffuse;
 	Vec3 Specular;
 	Vec3 Position;
-	float Constant;
-	float Linear;
-	float Quadratic;
+	f32 Constant;
+	f32 Linear;
+	f32 Quadratic;
 	bool Bloom;
 
 	PointLightComponent() = default;
 	PointLightComponent(const Vec3& a, const Vec3& d, const Vec3& s,
-						const Vec3& pos, float c, float l, float q, bool b)
+						const Vec3& pos, f32 c, f32 l, f32 q, bool b)
 		: Ambient(a), Diffuse(d), Specular(s), Position(pos),
 		Constant(c), Linear(l), Quadratic(q), Bloom(b) { }
 	PointLightComponent(const PointLightComponent& other) = default;
@@ -141,13 +144,13 @@ struct SpotlightComponent : public Component {
 	Vec3 Specular;
 	Vec3 Position;
 	Vec3 Direction;
-	float CutoffAngle;
-	float OuterCutoffAngle;
+	f32 CutoffAngle;
+	f32 OuterCutoffAngle;
 
 	SpotlightComponent() = default;
 	SpotlightComponent(const Vec3& a, const Vec3& d, const Vec3& s,
 						const Vec3& pos, const Vec3& dir,
-						float inner, float outer)
+						f32 inner, f32 outer)
 		: Ambient(a), Diffuse(d), Specular(s), Position(pos), Direction(dir),
 		CutoffAngle(inner), OuterCutoffAngle(outer) { }
 	SpotlightComponent(const SpotlightComponent& other) = default;
@@ -155,17 +158,17 @@ struct SpotlightComponent : public Component {
 
 struct ParticleEmitterComponent : public Component {
 	Vec3 Position;
-	uint64_t MaxParticleCount;
-	float ParticleLifetime; // In milliseconds
-	float SpawnInterval; // In milliseconds
-	float Offset;
-	Asset MaterialAsset;
+	u64 MaxParticleCount;
+	f32 ParticleLifetime; // In milliseconds
+	f32 SpawnInterval; // In milliseconds
+	f32 Offset;
+	// Asset MaterialAsset;
 
 	ParticleEmitterComponent() = default;
-	ParticleEmitterComponent(const Vec3& pos, uint64_t max, float lifetime,
-		float spawnInterval, float offset, const Asset& asset)
-		: Position(pos), MaxParticleCount(max), ParticleLifetime(lifetime),
-		SpawnInterval(spawnInterval), Offset(offset), MaterialAsset(asset) { }
+	// ParticleEmitterComponent(const Vec3& pos, u64 max, f32 lifetime,
+	// 	f32 spawnInterval, f32 offset, const Asset& asset)
+	// 	: Position(pos), MaxParticleCount(max), ParticleLifetime(lifetime),
+	// 	SpawnInterval(spawnInterval), Offset(offset), MaterialAsset(asset) { }
 	ParticleEmitterComponent(const ParticleEmitterComponent& other) = default;
 };
 

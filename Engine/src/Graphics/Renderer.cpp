@@ -9,16 +9,12 @@
 #include "Renderer2D.h"
 #include "Renderer3D.h"
 
-using namespace VolcaniCore;
-
-using namespace VolcaniCore;
-
 namespace VolcanicEngine::Graphics {
 
-const uint64_t Renderer::MaxTriangles = 1'000'000;
-const uint64_t Renderer::MaxIndices   = MaxTriangles * 6;
-const uint64_t Renderer::MaxVertices  = MaxTriangles * 3;
-const uint64_t Renderer::MaxInstances = MaxTriangles * 4;
+const u64 Renderer::MaxTriangles = 1'000'000;
+const u64 Renderer::MaxIndices   = MaxTriangles * 6;
+const u64 Renderer::MaxVertices  = MaxTriangles * 3;
+const u64 Renderer::MaxInstances = MaxTriangles * 4;
 
 static FrameData s_Frame;
 static Ref<RenderPass> s_RenderPass;
@@ -44,12 +40,6 @@ void Renderer::BeginFrame() {
 }
 
 void Renderer::EndFrame() {
-	auto info = RendererAPI::Get()->GetDebugInfo();
-	s_Frame.Info.DrawCalls = info.DrawCallCount;
-	s_Frame.Info.Indices   = info.IndexCount;
-	s_Frame.Info.Vertices  = info.VertexCount;
-	s_Frame.Info.Instances = info.InstanceCount;
-
 	Renderer3D::EndFrame();
 	Renderer2D::EndFrame();
 }
@@ -87,24 +77,24 @@ DrawCommand* Renderer::GetCommand() {
 }
 
 DrawCommand* Renderer::NewCommand(bool usePrevious) {
-	if(usePrevious && s_Stack && !s_Stack[-1]->Calls)
-		return s_Stack[-1];
+	// if(usePrevious && s_Stack && !s_Stack[-1]->Calls)
+	// 	return s_Stack[-1];
 
-	return RendererAPI::Get()->NewDrawCommand(s_RenderPass->Get());
+	// return RendererAPI::Get()->NewDrawCommand(s_RenderPass->Get());
 }
 
 void Renderer::Clear() {
 	if(!s_Stack) {
-		RendererAPI::Get()->NewDrawCommand(nullptr)->Clear = true;
-		Renderer::Flush();
+		// RendererAPI::Get()->NewDrawCommand(nullptr)->Clear = true;
+		// Renderer::Flush();
 	}
 	else
 		GetCommand()->Clear = true;
 }
 
 void Renderer::Resize(uint32_t width, uint32_t height) {
-	GetCommand()->ViewportWidth = width;
-	GetCommand()->ViewportHeight = height;
+	// GetCommand()->ViewportWidth = width;
+	// GetCommand()->ViewportHeight = height;
 }
 
 void Renderer::PushOptions() {

@@ -11,7 +11,7 @@
 namespace VolcanicEngine::Graphics {
 
 enum DrawBufferIndex : u8 {
-	Vertex, Index, Instance
+	E_Vertex, E_Index, E_Instance
 };
 
 struct DrawBufferSpec {
@@ -43,8 +43,8 @@ public:
 
 struct DrawPass {
 	DrawBuffer* Buffer = nullptr;
-	Ref<Framebuffer> Output = nullptr;
 	Ref<Shader> Pipeline = nullptr;
+	Ref<Framebuffer> Output = nullptr;
 };
 
 struct TextureSlot {

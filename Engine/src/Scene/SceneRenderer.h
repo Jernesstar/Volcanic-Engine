@@ -1,19 +1,16 @@
 #pragma once
 
 #include <VolcaniCore/Core/Buffer.h>
-#include <Engine/Graphics/RenderPass.h>
-#include <Engine/Graphics/Camera.h>
-#include <Engine/Graphics/CameraController.h>
 
+#include "Graphics/RenderPass.h"
+#include "Graphics/Camera.h"
 #include "ECS/Entity.h"
 
 using namespace VolcaniCore;
-
 using namespace VolcanicEngine::ECS;
+using namespace VolcanicEngine::Graphics;
 
 namespace VolcanicEngine {
-
-class Scene;
 
 class SceneRenderer {
 public:

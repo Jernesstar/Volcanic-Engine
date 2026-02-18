@@ -73,7 +73,7 @@ public:
 
 	void Add(DrawBufferIndex index, const void* data, u32 count) override {
 		switch(index) {
-			case DrawBufferIndex::Index: {
+			case DrawBufferIndex::E_Index: {
 				if(!Spec.DynamicIndices)
 					Array->GetIndexBuffer()->SetData(data, count, IndicesCount);
 				else
@@ -82,7 +82,7 @@ public:
 				IndicesCount += count;
 				break;
 			}
-			case DrawBufferIndex::Vertex: {
+			case DrawBufferIndex::E_Vertex: {
 				if(!Spec.DynamicVertices)
 					Array->GetVertexBuffer(0)->SetData(data, count, VerticesCount);
 				else
@@ -91,7 +91,7 @@ public:
 				VerticesCount += count;
 				break;
 			}
-			case DrawBufferIndex::Instance: {
+			case DrawBufferIndex::E_Instance: {
 				if(!Spec.DynamicInstances) {
 					u32 idx = Spec.VertexCount != 0;
 					Array->GetVertexBuffer(idx)->SetData(data, count, InstancesCount);

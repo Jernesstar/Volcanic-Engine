@@ -2,13 +2,13 @@
 
 #include <VolcaniCore/Core/Defines.h>
 
-#include "Graphics/Shader.h"
-#include "Graphics/Texture.h"
-#include "Graphics/Framebuffer.h"
-
-#include "RendererAPI.h"
+#include "Platform/Shader.h"
+#include "Platform/Texture.h"
+#include "Platform/Framebuffer.h"
+#include "Platform/RendererAPI.h"
 
 using namespace VolcaniCore;
+using namespace VolcanicEngine::Graphics;
 
 namespace VolcanicEngine::Graphics {
 
@@ -70,10 +70,10 @@ public:
 class RenderPass {
 public:
 	static Ref<RenderPass> Create(
-		const std::string& name, Ref<ShaderPipeline> pipeline,
+		const std::string& name, Ref<Shader> shader,
 		Ref<Framebuffer> output = nullptr)
 	{
-		return CreateRef<RenderPass>(name, pipeline, output);
+		return CreateRef<RenderPass>(name, shader, output);
 	}
 
 public:
@@ -81,7 +81,7 @@ public:
 
 public:
 	RenderPass(const std::string& name,
-				Ref<ShaderPipeline> pipeline, Ref<Framebuffer> output)
+				Ref<Shader> pipeline, Ref<Framebuffer> output)
 		: Name(name)
 	{
 		m_Pass = DrawPass{ nullptr, pipeline, output };
@@ -89,15 +89,11 @@ public:
 
 	~RenderPass() = default;
 
-	void SetOutput(Ref<Framebuffer> output) {
-		m_Pass.Output = output;
-	}
-	void SetData(DrawBuffer* buffer) {
-		m_Pass.BufferData = buffer;
-	}
+	void SetOutput(Ref<Framebuffer> output) { m_Pass.Output = output; }
+	void SetData(DrawBuffer* buffer) { m_Pass.Buffer = buffer; }
 
 	DrawPass* Get() { return &m_Pass; }
-	Ref<ShaderPipeline> GetPipeline() const { return m_Pass.Pipeline; }
+	Ref<Shader> GetPipeline() const { return m_Pass.Pipeline; }
 	Ref<Framebuffer> GetOutput() const { return m_Pass.Output; }
 
 	void SetUniforms(DrawCommand* command);

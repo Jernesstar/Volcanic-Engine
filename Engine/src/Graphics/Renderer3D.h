@@ -2,17 +2,16 @@
 
 #include <VolcaniCore/Core/Math.h>
 
-#include "Graphics/RendererAPI.h"
-#include "Graphics/RenderPass.h"
-#include "Graphics/Camera.h"
+#include "Platform/RendererAPI.h"
+#include "Platform/Texture.h"
 
-#include "Graphics/Cubemap.h"
-#include "Graphics/Point.h"
-#include "Graphics/Line.h"
-#include "Graphics/Quad.h"
-#include "Graphics/Mesh.h"
-#include "Graphics/Texture.h"
-#include "Graphics/Text.h"
+#include "Camera.h"
+#include "RenderPass.h"
+#include "Mesh.h"
+#include "Point.h"
+#include "Line.h"
+#include "Quad.h"
+#include "Text.h"
 
 using namespace VolcaniCore;
 
@@ -29,7 +28,7 @@ public:
 	static void Begin(Ref<Camera> camera);
 	static void End();
 
-	static void DrawSkybox(Ref<Cubemap> cubemap);
+	static void DrawSkybox(Ref<Texture> cubemap);
 
 	static void DrawMesh(Ref<Mesh> mesh, const glm::mat4& tr,
 						 DrawCommand* command = nullptr);

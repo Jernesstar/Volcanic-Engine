@@ -20,7 +20,7 @@ public:
 public:
 	Quad(Ref<Texture> texture)
 		: IsTextured(true), m_Texture(texture),
-			m_Width(texture->GetWidth()), m_Height(texture->GetHeight()) { }
+			m_Width(texture->Spec.Width), m_Height(texture->Spec.Height) { }
 
 	Quad(uint32_t width, uint32_t height,
 		 const glm::vec4& color = glm::vec4(1.0f))

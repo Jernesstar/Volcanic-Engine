@@ -3,9 +3,9 @@
 #include <VolcaniCore/Core/Application.h>
 #include <VolcaniCore/Core/Assert.h>
 
+#include "Platform/RendererAPI.h"
+
 #include "Graphics/Renderer.h"
-#include "Graphics/RendererAPI.h"
-#include "Graphics/ShaderLibrary.h"
 #include "Graphics/OrthographicCamera.h"
 
 using namespace VolcaniCore;
@@ -26,25 +26,33 @@ void Renderer2D::Init() {
 		0.0f, 1.0f
 	};
 
-	BufferLayout layout =
-	{
-		{
-			{ "Position", BufferDataType::Vec2 },
-		},
-		false, // Dynamic
-		false  // Structure of arrays
-	};
-	DrawBufferSpecification specs
-	{
-		.VertexLayout = layout,
-		.MaxVertexCount = 6
-	};
+	s_ScreenBuffer =
+		RendererAPI::Get()->NewBuffer({
+			.VertexCount = 6,
+			.DynamicVertices = false,
+			.InstanceCount = 100,
+			.DynamicInstances = true,
+			.VertexLayout =
+			{
+				{
+					{ "Color", BufferDataType::Vec4 }
+				},
+				false
+			},
+			.InstanceLayout =
+			{
+				{
+					{ "PositionDimension", BufferDataType::Vec4 },
+					{ "Color", BufferDataType::Vec4 }
+				},
+				true // Instanced
+			}
+		});
 
-	s_ScreenBuffer = RendererAPI::Get()->NewDrawBuffer(specs, screenCoords);
+	s_ScreenBuffer->Add(DrawBufferIndex::E_Vertex, screenCoords, 6);
 }
 
 void Renderer2D::Close() {
-	RendererAPI::Get()->ReleaseBuffer(s_ScreenBuffer);
 }
 
 void Renderer2D::StartFrame() {
@@ -87,11 +95,11 @@ void Renderer2D::DrawFullscreenQuad(Ref<Framebuffer> buffer,
 									AttachmentTarget target)
 {
 	if(!buffer) {
-		VOLCANICORE_LOG_INFO("Framebuffer is null");
+		Log::Warning("Framebuffer is null");
 		return;
 	}
 	if(!buffer->Has(target)) {
-		VOLCANICORE_LOG_WARNING("Framebuffer does not have needed attachment");
+		Log::Warning("Framebuffer does not have needed attachment");
 		return;
 	}
 
@@ -99,23 +107,24 @@ void Renderer2D::DrawFullscreenQuad(Ref<Framebuffer> buffer,
 	if(Renderer::GetPass())
 		command = Renderer::NewCommand(true);
 	else {
-		auto pipeline = ShaderLibrary::Get("Framebuffer");
-		auto* pass = RendererAPI::Get()->NewDrawPass(s_ScreenBuffer, pipeline);
-		command = RendererAPI::Get()->NewDrawCommand(pass);
+		// auto pipeline = ShaderLibrary::Get("Framebuffer");
+		// auto* pass = RendererAPI::Get()->NewDrawPass(s_ScreenBuffer, pipeline);
+		// command = RendererAPI::Get()->NewDrawCommand(pass);
 	}
 
-	command->ViewportWidth = Application::GetWindow()->GetWidth();
-	command->ViewportHeight = Application::GetWindow()->GetHeight();
-	command->DepthTest = DepthTestingMode::Off;
-	command->Culling = CullingMode::Off;
-	command->Blending = BlendingMode::Greatest;
-	command->UniformData
-	.SetInput("u_ScreenTexture", TextureSlot{ buffer->Get(target), 0 });
+	// auto window = Application::As<WindowApplication>()->GetWindow();
+	// command->ViewportW = window->GetWidth();
+	// command->ViewportH = window->GetHeight();
+	// command->DepthTest = DepthTestingMode::Off;
+	// command->Culling = CullingMode::Off;
+	// command->Blending = BlendingMode::Greatest;
+	// command->UniformData
+	// .SetInput("u_ScreenTexture", TextureSlot{ buffer->Get(target), 0 });
 
-	auto& call = command->NewDrawCall();
-	call.VertexCount = 6;
-	call.Primitive = PrimitiveType::Triangle;
-	call.Partition = PartitionType::Single;
+	// auto& call = command->NewDrawCall();
+	// call.VertexCount = 6;
+	// call.Primitive = PrimitiveType::Triangle;
+	// call.Partition = PartitionType::Single;
 }
 
 }

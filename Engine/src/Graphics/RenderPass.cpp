@@ -10,21 +10,21 @@ CallbackMap<TUniform>& Uniforms::GetCallbacks<TUniform>() { \
 
 #define SET_UNIFORM(TUniform) \
 for(auto& [uniformName, valueCallback] : m_Uniforms.TUniform##Callbacks) \
-	uniforms.SetInput(uniformName, valueCallback());
+	uniforms.Set(uniformName, valueCallback());
 
 using namespace VolcaniCore;
 
 namespace VolcanicEngine::Graphics {
 
 void RenderPass::SetUniforms(DrawCommand* command) {
-	auto& uniforms = command->UniformData;
+	auto& uniforms = command->Uniforms;
 
 	SET_UNIFORM(Int);
 	SET_UNIFORM(Float);
 	for(auto& [uniformName, callbackValue] : m_Uniforms.TextureCallbacks) {
 		auto slot = callbackValue();
 		if(slot.Sampler)
-			uniforms.SetInput(uniformName, slot);
+			uniforms.Set(uniformName, slot);
 	}
 
 	SET_UNIFORM(Vec2);
