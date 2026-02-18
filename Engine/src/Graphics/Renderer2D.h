@@ -12,7 +12,7 @@
 
 using namespace VolcaniCore;
 
-namespace Lava::Graphics {
+namespace VolcanicEngine::Graphics {
 
 class Renderer2D {
 public:

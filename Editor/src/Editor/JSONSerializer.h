@@ -10,7 +10,7 @@
 
 using namespace rapidjson;
 
-namespace Lava {
+namespace VolcanicEngine {
 
 class JSONSerializer : public Serializer {
 public:

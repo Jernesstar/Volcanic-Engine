@@ -1,6 +1,6 @@
 #include "List.h"
 
-namespace Lava {
+namespace VolcanicEngine {
 
 void List::RegisterInterface() {
 	

@@ -4,8 +4,8 @@ project "efsw"
     cppdialect "C++latest"
     staticruntime "Off"
 
-    objdir ("%{RootPath}/build/Lava/obj")
-    targetdir ("%{RootPath}/build/Lava/lib")
+    objdir ("%{RootPath}/build/Editor/obj")
+    targetdir ("%{RootPath}/build/Editor/lib")
 
     files {
         "%{VendorPaths.efsw}/src/efsw/*.cpp",

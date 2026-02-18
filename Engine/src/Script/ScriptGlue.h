@@ -2,9 +2,9 @@
 
 #include "Script/ScriptObject.h"
 
-using namespace Lava::Script;
+using namespace VolcanicEngine::Script;
 
-namespace Lava {
+namespace VolcanicEngine {
 
 class ScriptGlue {
 public:

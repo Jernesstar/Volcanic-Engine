@@ -10,7 +10,7 @@
 
 using namespace VolcaniCore;
 
-namespace Lava::Graphics {
+namespace VolcanicEngine::Graphics {
 
 static DrawBuffer* s_ScreenBuffer;
 

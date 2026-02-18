@@ -4,7 +4,7 @@
 
 #include "Platform/Shader.h"
 
-using namespace Lava;
+using namespace VolcanicEngine;
 
 namespace OpenGL {
 

@@ -5,12 +5,12 @@
 
 using namespace VolcaniCore;
 
-namespace Lava {
+namespace VolcanicEngine {
 
 class Project {
 public:
 	std::string Path;
-	std::string LavaFlow;
+	std::string VolcanicEngineFlow;
 	std::string Name;
 
 public:

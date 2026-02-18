@@ -6,25 +6,25 @@
 // #include <VolcaniCore/Core/List.h>
 // #include <VolcaniCore/Core/FileUtils.h>
 
-// #include <Lava/Graphics/Renderer.h>
-// #include <Lava/Graphics/Renderer2D.h>
-// #include <Lava/Graphics/Renderer3D.h>
+// #include <Engine/Graphics/Renderer.h>
+// #include <Engine/Graphics/Renderer2D.h>
+// #include <Engine/Graphics/Renderer3D.h>
 
-// #include <Lava/Script/ScriptModule.h>
-// #include <Lava/Script/ScriptClass.h>
-// #include <Lava/Script/ScriptObject.h>
-// #include <Lava/UI/UIRenderer.h>
-// #include <Lava/Physics/Physics.h>
+// #include <Engine/Script/ScriptModule.h>
+// #include <Engine/Script/ScriptClass.h>
+// #include <Engine/Script/ScriptObject.h>
+// #include <Engine/UI/UIRenderer.h>
+// #include <Engine/Physics/Physics.h>
 
 // #include "ScriptGlue.h"
 
-// using namespace Lava::Script;
-// using namespace Lava::ECS;
-// using namespace Lava::Physics;
+// using namespace VolcanicEngine::Script;
+// using namespace VolcanicEngine::ECS;
+// using namespace VolcanicEngine::Physics;
 
 namespace fs = std::filesystem;
 
-namespace Lava {
+namespace VolcanicEngine {
 
 // static Ref<ScriptModule> s_AppModule = nullptr;
 // static Ref<ScriptObject> s_AppObject = nullptr;

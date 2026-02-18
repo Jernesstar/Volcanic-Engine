@@ -5,7 +5,7 @@
 
 #include "ScriptEngine.h"
 
-namespace Lava::Script {
+namespace VolcanicEngine::Script {
 
 class ScriptClass;
 

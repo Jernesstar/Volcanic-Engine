@@ -1,17 +1,17 @@
 #pragma once
 
 #include <VolcaniCore/Core/Buffer.h>
-#include <Lava/Graphics/RenderPass.h>
-#include <Lava/Graphics/Camera.h>
-#include <Lava/Graphics/CameraController.h>
+#include <Engine/Graphics/RenderPass.h>
+#include <Engine/Graphics/Camera.h>
+#include <Engine/Graphics/CameraController.h>
 
 #include "ECS/Entity.h"
 
 using namespace VolcaniCore;
 
-using namespace Lava::ECS;
+using namespace VolcanicEngine::ECS;
 
-namespace Lava {
+namespace VolcanicEngine {
 
 class Scene;
 

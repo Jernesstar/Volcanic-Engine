@@ -1,16 +1,16 @@
 #pragma once
 
-#include <Lava/Core/Project.h>
+#include <Engine/Core/Project.h>
 
-#include <Lava/UI/UIPage.h>
+#include <Engine/UI/UIPage.h>
 
-#include <Lava/Script/ScriptModule.h>
+#include <Engine/Script/ScriptModule.h>
 
-using namespace Lava;
-using namespace Lava::Script;
-using namespace Lava::UI;
+using namespace VolcanicEngine;
+using namespace VolcanicEngine::Script;
+using namespace VolcanicEngine::UI;
 
-namespace Lava {
+namespace VolcanicEngine {
 
 struct ThemeElement {
 	uint32_t Width = 0;

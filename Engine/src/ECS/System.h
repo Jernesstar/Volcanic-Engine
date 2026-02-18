@@ -19,7 +19,7 @@ struct TypeListWrapper {
 template<typename ...Args>
 using TypeList = typename TypeListWrapper<Args...>::type;
 
-namespace Lava::ECS {
+namespace VolcanicEngine::ECS {
 
 enum Phase { PreUpdate = 1, OnUpdate, PostUpdate };
 

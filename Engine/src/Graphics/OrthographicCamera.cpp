@@ -6,7 +6,7 @@
 
 using namespace VolcaniCore;
 
-namespace Lava::Graphics {
+namespace VolcanicEngine::Graphics {
 
 OrthographicCamera::OrthographicCamera()
 	: Camera(Camera::Type::Ortho)

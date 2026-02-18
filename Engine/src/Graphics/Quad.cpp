@@ -2,7 +2,7 @@
 
 using namespace VolcaniCore;
 
-namespace Lava::Graphics {
+namespace VolcanicEngine::Graphics {
 
 Ref<Quad> Quad::Create(Ref<Texture> texture) {
 	return CreateRef<Quad>(texture);

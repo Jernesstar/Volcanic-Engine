@@ -6,8 +6,8 @@ project "Runtime"
     rtti "Off"
     staticruntime "Off"
 
-    objdir ("%{RootPath}/build/Lava/obj")
-    targetdir ("%{RootPath}/build/Lava/bin")
+    objdir ("%{RootPath}/build/Engine/obj")
+    targetdir ("%{RootPath}/build/Engine/bin")
 
     files {
         "src/**.cpp"
@@ -18,8 +18,8 @@ project "Runtime"
 
         "%{RootPath}/VolcaniCore/**",
 
-        "%{RootPath}/Lava/src",
-        "%{RootPath}/Lava/src/**",
+        "%{RootPath}/Engine/src",
+        "%{RootPath}/Engine/src/**",
 
         "%{Includes.angelscript}",
         "%{VendorPaths.angelscript}",

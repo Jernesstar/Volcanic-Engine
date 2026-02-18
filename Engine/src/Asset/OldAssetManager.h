@@ -5,21 +5,21 @@
 #include <VolcaniCore/Core/Defines.h>
 #include <VolcaniCore/Core/UUID.h>
 
-#include <Lava/Graphics/RendererAPI.h>
-#include <Lava/Graphics/Texture.h>
-#include <Lava/Graphics/Cubemap.h>
-#include <Lava/Graphics/Mesh.h>
-#include <Lava/Graphics/Shader.h>
+#include <Engine/Graphics/RendererAPI.h>
+#include <Engine/Graphics/Texture.h>
+#include <Engine/Graphics/Cubemap.h>
+#include <Engine/Graphics/Mesh.h>
+#include <Engine/Graphics/Shader.h>
 
-#include <Lava/Audio/Sound.h>
+#include <Engine/Audio/Sound.h>
 
-#include <Lava/Script/ScriptModule.h>
-#include <Lava/Script/ScriptClass.h>
+#include <Engine/Script/ScriptModule.h>
+#include <Engine/Script/ScriptClass.h>
 
-using namespace Lava::Audio;
-using namespace Lava::Script;
+using namespace VolcanicEngine::Audio;
+using namespace VolcanicEngine::Script;
 
-namespace Lava {
+namespace VolcanicEngine {
 
 enum class AssetType : uint8_t {
 	None,
@@ -62,8 +62,8 @@ struct Material {
 namespace std {
 
 template<>
-struct hash<Lava::Asset> {
-	std::size_t operator()(const Lava::Asset& asset) const {
+struct hash<VolcanicEngine::Asset> {
+	std::size_t operator()(const VolcanicEngine::Asset& asset) const {
 		return (uint64_t)asset;
 	}
 };
@@ -71,7 +71,7 @@ struct hash<Lava::Asset> {
 }
 
 
-namespace Lava {
+namespace VolcanicEngine {
 
 class AssetManager : public VolcaniCore::Derivable<AssetManager> {
 public:

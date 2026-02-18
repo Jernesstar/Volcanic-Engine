@@ -14,7 +14,7 @@ for(auto& [uniformName, valueCallback] : m_Uniforms.TUniform##Callbacks) \
 
 using namespace VolcaniCore;
 
-namespace Lava::Graphics {
+namespace VolcanicEngine::Graphics {
 
 void RenderPass::SetUniforms(DrawCommand* command) {
 	auto& uniforms = command->UniformData;

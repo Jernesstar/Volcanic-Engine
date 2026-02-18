@@ -1,6 +1,6 @@
 #pragma once
 
-namespace Lava {
+namespace VolcanicEngine {
 
 class List {
 public:

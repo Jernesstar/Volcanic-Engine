@@ -2,7 +2,7 @@
 
 #include <VolcaniCore/Core/List.h>
 
-namespace Lava {
+namespace VolcanicEngine {
 
 class GridSet {
 public:

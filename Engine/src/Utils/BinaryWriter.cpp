@@ -1,7 +1,7 @@
 
 #include "BinaryWriter.h"
 
-namespace Lava {
+namespace VolcanicEngine {
 
 template<>
 BinaryWriter& BinaryWriter::WriteObject(const std::string& str) {

@@ -11,7 +11,7 @@
 #include "UniformBuffer.h"
 #include "StorageBuffer.h"
 
-using namespace Lava::Graphics;
+using namespace VolcanicEngine::Graphics;
 
 namespace OpenGL {
 

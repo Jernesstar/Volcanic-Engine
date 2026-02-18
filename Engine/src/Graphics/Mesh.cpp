@@ -2,7 +2,7 @@
 
 using namespace VolcaniCore;
 
-namespace Lava::Graphics {
+namespace VolcanicEngine::Graphics {
 
 Ref<Mesh> Mesh::Create(MeshType type,
 						Buffer<Vertex>&& vertices,

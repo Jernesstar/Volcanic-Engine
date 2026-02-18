@@ -4,7 +4,7 @@
 
 using namespace rapidjson;
 
-namespace Lava {
+namespace VolcanicEngine {
 
 Serializer& JSONSerializer::SetOptions(Serializer::Options options) {
 	if(options == Serializer::Options::ArrayOneLine)

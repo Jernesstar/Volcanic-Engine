@@ -6,7 +6,7 @@
 
 using namespace VolcaniCore;
 
-namespace Lava::Graphics {
+namespace VolcanicEngine::Graphics {
 
 enum class TextureType { RGBA, Depth, Stencil };
 enum class TextureFormat { Normal, Float, Depth };

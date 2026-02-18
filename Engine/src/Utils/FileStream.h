@@ -2,7 +2,7 @@
 
 #include <fstream>
 
-namespace Lava {
+namespace VolcanicEngine {
 
 class FileStream {
 public:

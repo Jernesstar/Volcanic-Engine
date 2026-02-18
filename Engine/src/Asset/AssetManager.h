@@ -2,7 +2,7 @@
 
 #include <VolcaniCore/Core/Template.h>
 
-namespace Lava {
+namespace VolcanicEngine {
 
 class AssetManager : public VolcaniCore::Derivable<AssetManager> {
 public:

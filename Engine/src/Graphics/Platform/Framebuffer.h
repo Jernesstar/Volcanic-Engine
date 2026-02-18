@@ -6,7 +6,7 @@
 
 using namespace VolcaniCore;
 
-namespace Lava::Graphics {
+namespace VolcanicEngine::Graphics {
 
 enum class AttachmentTarget { Color, Depth, Stencil };
 

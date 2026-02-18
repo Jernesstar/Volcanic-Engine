@@ -8,7 +8,7 @@
 #include "StorageBuffer.h"
 #include "UniformBuffer.h"
 
-namespace Lava::Graphics {
+namespace VolcanicEngine::Graphics {
 
 enum DrawBufferIndex : u8 {
 	Vertex, Index, Instance

@@ -7,7 +7,7 @@
 
 using namespace VolcaniCore;
 
-namespace Lava::Graphics {
+namespace VolcanicEngine::Graphics {
 
 Ref<Camera> Camera::Create(Camera::Type type) {
 	if(type == Camera::Type::Ortho) {

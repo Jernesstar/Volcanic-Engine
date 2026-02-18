@@ -4,9 +4,9 @@
 
 #include "Script/ScriptEngine.h"
 
-using namespace Lava::Script;
+using namespace VolcanicEngine::Script;
 
-namespace Lava {
+namespace VolcanicEngine {
 
 GridSet::GridSet(uint32_t width, uint32_t height)
 	: m_Width(width), m_Height(height)

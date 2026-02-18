@@ -8,7 +8,7 @@
 	#include <unistd.h>
 #endif
 
-namespace Lava {
+namespace VolcanicEngine {
 
 std::string FindExecutablePath() {
 #ifdef VOLCANIC_WINDOWS

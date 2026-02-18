@@ -4,7 +4,7 @@
 
 #include <flecs.h>
 
-namespace Lava::ECS {
+namespace VolcanicEngine::ECS {
 
 class Entity {
 public:

@@ -4,7 +4,7 @@
 
 using namespace VolcaniCore;
 
-namespace Lava::Graphics {
+namespace VolcanicEngine::Graphics {
 
 class OrthographicCamera : public Camera {
 public:

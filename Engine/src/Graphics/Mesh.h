@@ -7,11 +7,11 @@
 #include <VolcaniCore/Core/Defines.h>
 #include <VolcaniCore/Core/List.h>
 
-#include "Graphics/Texture.h"
+#include "Texture.h"
 
 using namespace VolcaniCore;
 
-namespace Lava::Graphics {
+namespace VolcanicEngine::Graphics {
 
 struct Vertex {
 	glm::vec3 Position;

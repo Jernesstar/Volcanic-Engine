@@ -1,18 +1,18 @@
 #pragma once
 
-#include <Magma/Graphics/Mesh.h>
-#include <Magma/Graphics/Texture.h>
-#include <Magma/Graphics/Cubemap.h>
-#include <Magma/Graphics/Shader.h>
+#include <Engine/Graphics/Mesh.h>
+#include <Engine/Graphics/Texture.h>
+#include <Engine/Graphics/Cubemap.h>
+#include <Engine/Graphics/Shader.h>
 
-#include <Magma/Audio/Sound.h>
-#include <Magma/Script/ScriptModule.h>
+#include <Engine/Audio/Sound.h>
+#include <Engine/Script/ScriptModule.h>
 
 using namespace VolcaniCore;
 
-using namespace Magma::Audio;
+using namespace VolcanicEngine::Audio;
 
-namespace Magma {
+namespace VolcanicEditor {
 struct MaterialPaths {
 	std::string Diffuse;
 	std::string Specular;

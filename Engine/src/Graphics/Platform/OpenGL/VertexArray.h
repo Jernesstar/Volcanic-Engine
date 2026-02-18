@@ -9,7 +9,7 @@
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
 
-using namespace Lava;
+using namespace VolcanicEngine;
 
 namespace OpenGL {
 

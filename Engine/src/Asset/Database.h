@@ -9,7 +9,7 @@ using namespace VolcaniCore;
 
 using Bytes = Buffer<uint8_t>;
 
-namespace Lava {
+namespace VolcanicEngine {
 
 struct DatabaseQuery {
 	Bytes Key;

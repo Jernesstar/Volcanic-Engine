@@ -4,7 +4,7 @@
 
 #include "ScriptObject.h"
 
-namespace Lava::Script {
+namespace VolcanicEngine::Script {
 
 class ScriptModule;
 

@@ -4,7 +4,7 @@
 
 #include "ECS/World.h"
 
-namespace Lava {
+namespace VolcanicEngine {
 
 struct GameEventListener { };
 

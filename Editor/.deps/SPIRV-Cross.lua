@@ -4,8 +4,8 @@ project "SPIRV-Cross"
     cppdialect "C++17"
     staticruntime "Off"
 
-    objdir ("%{RootPath}/build/%{_ACTION}/Magma/obj")
-    targetdir ("%{RootPath}/build/%{_ACTION}/Magma/lib")
+    objdir ("%{RootPath}/build/Engine/obj")
+    targetdir ("%{RootPath}/build/Engine/lib")
 
     files {
         "%{VendorPaths.SPIRV_Cross}/*.cpp",
@@ -17,7 +17,7 @@ project "SPIRV-Cross"
 
     includedirs {
         "%{Includes.SPIRV_Cross}",
-        -- "%{Includes.glslang}"
+        "%{Includes.glslang}"
     }
 
     buildoptions {

@@ -8,32 +8,30 @@
 #include <VolcaniCore/Core/FileUtils.h>
 #include <VolcaniCore/Core/List.h>
 #include <VolcaniCore/Core/UUID.h>
-#include <Lava/Graphics/StereographicCamera.h>
-#include <Lava/Graphics/OrthographicCamera.h>
 
-#include <Lava/Core/YAMLSerializer.h>
-#include <Lava/Core/BinaryWriter.h>
-#include <Lava/Core/BinaryReader.h>
-#include <Lava/Script/ScriptClass.h>
-#include <Lava/Scene/Component.h>
-#include <Lava/Scene/Component.h>
+#include <Engine/Core/App.h>
+#include <Engine/Core/BinaryWriter.h>
+#include <Engine/Core/BinaryReader.h>
+#include <Engine/Graphics/StereographicCamera.h>
+#include <Engine/Graphics/OrthographicCamera.h>
+#include <Engine/Script/ScriptClass.h>
+#include <Engine/Scene/Component.h>
+#include <Engine/Types/GridSet.h>
+#include <Engine/Types/GridSet3D.h>
+#include <Engine/Types/Timer.h>
 
-#include <Lava/Core/App.h>
-#include <Lava/Types/GridSet.h>
-#include <Lava/Types/GridSet3D.h>
-#include <Lava/Types/Timer.h>
-
+#include "Core/YAMLSerializer.h"
 #include "EditorApp.h"
 #include "ScriptManager.h"
 
 #undef near
 #undef far
 
-using namespace Lava::ECS;
-using namespace Lava::Physics;
-using namespace Lava;
+using namespace VolcanicEngine::ECS;
+using namespace VolcanicEngine::Physics;
+using namespace VolcanicEngine;
 
-namespace Lava {
+namespace VolcanicEditor {
 
 template<>
 Serializer& Serializer::Write(const VolcaniCore::Vertex& value) {
@@ -57,7 +55,7 @@ Serializer& Serializer::Write(const Asset& value) {
 
 }
 
-namespace Lava {
+namespace VolcanicEditor {
 
 static void DeserializeEntity(YAML::Node entityNode, Scene& scene);
 static void SerializeEntity(YAMLSerializer& out, const Entity& entity);
@@ -724,7 +722,7 @@ void DeserializeEntity(YAML::Node entityNode, Scene& scene) {
 
 }
 
-namespace Lava {
+namespace VolcanicEngine {
 
 template<>
 BinaryWriter& BinaryWriter::WriteObject(const glm::vec3& vec) {
@@ -982,7 +980,7 @@ BinaryWriter& BinaryWriter::WriteObject(const Entity& entity) {
 
 }
 
-namespace Lava {
+namespace VolcanicEngine {
 
 void SceneLoader::RuntimeSave(const Scene& scene,
 							  const std::string& projectPath,

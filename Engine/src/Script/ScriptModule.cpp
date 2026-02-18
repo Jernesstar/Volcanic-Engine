@@ -2,7 +2,7 @@
 
 using namespace VolcaniCore;
 
-namespace Lava::Script {
+namespace VolcanicEngine::Script {
 
 ScriptModule::ScriptModule(asIScriptModule* mod)
 	: m_Handle(mod)

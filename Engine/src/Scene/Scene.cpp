@@ -5,10 +5,10 @@
 
 #include "SceneRenderer.h"
 
-using namespace Lava::ECS;
-using namespace Lava::Physics;
+using namespace VolcanicEngine::ECS;
+using namespace VolcanicEngine::Physics;
 
-namespace Lava {
+namespace VolcanicEngine {
 
 Scene::Scene(const std::string& name)
 	: Name(name) { }

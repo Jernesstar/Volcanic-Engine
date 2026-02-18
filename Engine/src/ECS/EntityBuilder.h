@@ -5,7 +5,7 @@
 
 #include "Entity.h"
 
-namespace Lava::ECS {
+namespace VolcanicEngine::ECS {
 
 class World;
 

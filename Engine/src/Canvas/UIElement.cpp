@@ -8,7 +8,7 @@
 
 using namespace VolcaniCore;
 
-namespace Lava::UI {
+namespace VolcanicEngine::UI {
 
 UINode UIElement::Add(UIElementType type, const std::string& id) {
 	if(!m_Root)

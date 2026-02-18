@@ -2,7 +2,7 @@
 
 #include <VolcaniCore/Core/UUID.h>
 
-namespace Lava::ECS {
+namespace VolcanicEngine::ECS {
 
 World::World() { }
 

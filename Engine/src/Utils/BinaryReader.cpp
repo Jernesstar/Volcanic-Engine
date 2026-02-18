@@ -1,6 +1,6 @@
 #include "BinaryReader.h"
 
-namespace Lava {
+namespace VolcanicEngine {
 
 template<>
 BinaryReader& BinaryReader::ReadObject(std::string& str) {

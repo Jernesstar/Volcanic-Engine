@@ -10,7 +10,7 @@
 
 #include <VolcaniCore/Core/Defines.h>
 
-namespace Lava::Script {
+namespace VolcanicEngine::Script {
 
 struct InterfaceBuilder {
 	const std::string Name;

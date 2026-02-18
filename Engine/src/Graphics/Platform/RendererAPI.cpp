@@ -8,7 +8,7 @@
 #include "Platform/OpenGL/StorageBuffer.h"
 #include "Platform/OpenGL/UniformBuffer.h"
 
-namespace Lava::Graphics {
+namespace VolcanicEngine::Graphics {
 
 void RendererAPI::Create(RendererBackend backend) {
 	switch(backend) {

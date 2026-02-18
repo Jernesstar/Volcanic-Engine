@@ -14,7 +14,7 @@
 
 using namespace VolcaniCore;
 
-namespace Lava::ECS {
+namespace VolcanicEngine::ECS {
 
 struct Event { };
 

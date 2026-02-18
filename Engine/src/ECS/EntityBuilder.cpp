@@ -2,7 +2,7 @@
 
 #include "ECS/World.h"
 
-namespace Lava::ECS {
+namespace VolcanicEngine::ECS {
 
 EntityBuilder::EntityBuilder(const Entity& entity) {
 	m_Handle = entity.GetHandle();

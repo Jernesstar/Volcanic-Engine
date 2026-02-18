@@ -31,9 +31,9 @@
 
 #include "App.h"
 
-using namespace Lava::Script;
+using namespace VolcanicEngine::Script;
 
-namespace Lava {
+namespace VolcanicEngine {
 
 static void RegisterGlobalFunctions();
 static void RegisterTypes();
@@ -104,7 +104,7 @@ void ScriptGlue::Copy(Ref<ScriptObject> src, Ref<ScriptObject> dst) {
 	// 	else if(fieldType == "array")
 	// 		*ours.As<CScriptArray>() = *field.As<CScriptArray>();
 	// 	else if(fieldType == "GridSet")
-	// 		*ours.As<Lava::GridSet>() = *field.As<Lava::GridSet>();
+	// 		*ours.As<VolcanicEngine::GridSet>() = *field.As<VolcanicEngine::GridSet>();
 	// }
 }
 

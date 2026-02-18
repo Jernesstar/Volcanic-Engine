@@ -4,11 +4,9 @@
 
 #include "ECS/World.h"
 
-#include "Component.h"
+using namespace VolcanicEngine::Physics;
 
-using namespace Lava::Physics;
-
-namespace Lava {
+namespace VolcanicEngine {
 
 PhysicsSystem::PhysicsSystem(ECS::World* world)
 	: System(world)

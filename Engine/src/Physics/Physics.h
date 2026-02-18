@@ -1,24 +1,24 @@
-#pragma once
+// #pragma once
 
-#include <VolcaniCore/Core/Defines.h>
+// #include <VolcaniCore/Core/Defines.h>
 
-#ifdef MAGMA_PHYSICS
-#define PX_PHYSX_STATIC_LIB
+// #ifdef MAGMA_PHYSICS
+// #define PX_PHYSX_STATIC_LIB
 
-#include <PxPhysics.h>
-#include <PxPhysicsAPI.h>
-using namespace physx;
+// #include <PxPhysics.h>
+// #include <PxPhysicsAPI.h>
+// using namespace physx;
 
-#endif
+// #endif
 
-namespace Lava::Physics {
+// namespace VolcanicEngine::Physics {
 
-extern void Init();
-extern void Close();
+// extern void Init();
+// extern void Close();
 
-#ifdef MAGMA_PHYSICS
-extern PxPhysics* GetPhysicsLib();
-extern PxDefaultCpuDispatcher* GetDispatcher();
-#endif
+// #ifdef MAGMA_PHYSICS
+// extern PxPhysics* GetPhysicsLib();
+// extern PxDefaultCpuDispatcher* GetDispatcher();
+// #endif
 
-}
+// }

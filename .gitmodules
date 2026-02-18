@@ -17,10 +17,13 @@
 [submodule "Engine/.vendor/lmdb"]
 	path = Engine/.vendor/lmdb
 	url = https://github.com/LMDB/lmdb.git
-[submodule "Engine/vendor/flecs"]
+[submodule "Engine/.vendor/flecs"]
 	path = Engine/.vendor/flecs
 	url = https://github.com/SanderMertens/flecs.git
 
+[submodule "Engine/.vendor/assimp"]
+	path = Engine/.vendor/assimp
+	url = https://github.com/LavaFlow-Technologies/assimp.git
 [submodule "Editor/.vendor/stb_image"]
 	path = Editor/.vendor/stb_image
 	url = https://github.com/LavaFlow-Technologies/stb_image.git

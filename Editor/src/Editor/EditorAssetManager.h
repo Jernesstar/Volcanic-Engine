@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Lava/Core/AssetManager.h>
+#include <Engine/Asset/AssetManager.h>
 
-namespace Lava {
+namespace VolcanicEditor {
 
 extern std::string AssetTypeToString(AssetType type);
 extern AssetType AssetTypeFromString(const std::string& str);

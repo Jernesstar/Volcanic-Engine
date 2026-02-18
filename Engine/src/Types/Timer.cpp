@@ -1,8 +1,8 @@
 #include "Timer.h"
 
-using namespace Lava::Script;
+using namespace VolcanicEngine::Script;
 
-namespace Lava {
+namespace VolcanicEngine {
 
 Timer::Timer(TimerType type, float time)
 	: m_Type(type), m_Time(time)

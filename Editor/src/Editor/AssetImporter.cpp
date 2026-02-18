@@ -24,12 +24,12 @@
 #include "ScriptManager.h"
 
 using namespace VolcaniCore;
-using namespace Magma::Graphics;
-using namespace Magma::Script;
+using namespace VolcanicEngine::Graphics;
+using namespace VolcanicEngine::Script;
 
 namespace fs = std::filesystem;
 
-namespace Magma {
+namespace VolcanicEditor {
 
 ImageData AssetImporter::GetImageData(const std::string& path, bool flip) {
 	stbi_set_flip_vertically_on_load((int)flip);

@@ -4,9 +4,9 @@
 
 #include "Component.h"
 
-using namespace Lava::ECS;
+using namespace VolcanicEngine::ECS;
 
-namespace Lava {
+namespace VolcanicEngine {
 
 class ScriptSystem : public System<ScriptComponent> {
 public:

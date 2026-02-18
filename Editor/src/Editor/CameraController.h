@@ -3,12 +3,12 @@
 #include "Camera.h"
 
 #include <VolcaniCore/Core/Time.h>
-#include <VolcaniCore/Core/Codes.h>
-#include <VolcaniCore/Event/Events.h>
+#include <VolcanicWindow/Codes.h>
+#include <VolcanicWindow/Events.h>
 
 using namespace VolcaniCore;
 
-namespace Lava::Graphics {
+namespace VolcanicEditor {
 
 enum class Control { Up, Down, Left, Right, Forward, Backward };
 

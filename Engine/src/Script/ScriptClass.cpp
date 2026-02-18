@@ -4,7 +4,7 @@
 
 using namespace VolcaniCore;
 
-namespace Lava::Script {
+namespace VolcanicEngine::Script {
 
 ScriptClass::ScriptClass(const std::string& name, asITypeInfo* type)
 	: Name(name)

@@ -1,6 +1,6 @@
 #include "GridSet3D.h"
 
-namespace Lava {
+namespace VolcanicEngine {
 
 void GridSet3D::RegisterInterface() {
 	

@@ -4,7 +4,7 @@
 
 using namespace VolcaniCore;
 
-namespace Lava::Graphics {
+namespace VolcanicEngine::Graphics {
 
 struct Point {
 	glm::vec3 Position;

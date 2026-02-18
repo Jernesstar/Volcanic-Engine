@@ -7,9 +7,9 @@
 #include <VolcaniCore/Core/List.h>
 #include <VolcaniCore/Core/UUID.h>
 
-#include <Lava/Script/ScriptObject.h>
+#include <Engine/Script/ScriptObject.h>
 
-namespace Lava::UI {
+namespace VolcanicEngine::UI {
 
 class UIPage;
 

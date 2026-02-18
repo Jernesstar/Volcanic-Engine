@@ -4,7 +4,7 @@
 
 #include <VolcaniCore/Core/Log.h>
 
-namespace Lava::UI {
+namespace VolcanicEngine::UI {
 
 static void TraverseElement(UIElement* element,
 							const Func<void, UIElement*>& func)

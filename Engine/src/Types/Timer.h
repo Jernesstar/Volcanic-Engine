@@ -2,7 +2,7 @@
 
 #include "Script/ScriptEngine.h"
 
-namespace Lava {
+namespace VolcanicEngine {
 
 enum class TimerType { Single, Repeat };
 

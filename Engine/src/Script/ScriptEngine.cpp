@@ -4,7 +4,7 @@
 
 using namespace VolcaniCore;
 
-namespace Lava::Script {
+namespace VolcanicEngine::Script {
 
 static asIScriptEngine* s_Engine;
 

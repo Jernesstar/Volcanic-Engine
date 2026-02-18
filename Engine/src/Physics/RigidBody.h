@@ -1,81 +1,81 @@
-#pragma once
+// #pragma once
 
-#include <VolcaniCore/Core/Math.h>
+// #include <VolcaniCore/Core/Math.h>
 
-#include "Shape.h"
+// #include "Shape.h"
 
-#ifdef MAGMA_PHYSICS
-using namespace physx;
-#endif
+// #ifdef MAGMA_PHYSICS
+// using namespace physx;
+// #endif
 
-namespace Lava::Physics {
+// namespace VolcanicEngine::Physics {
 
-class RigidBody : public Derivable<RigidBody> {
-public:
-	enum class Type { Static, Dynamic };
+// class RigidBody : public Derivable<RigidBody> {
+// public:
+// 	enum class Type { Static, Dynamic };
 
-	static Ref<RigidBody> Create(RigidBody::Type type,
-								 Ref<Shape> shape = nullptr,
-								 const Transform& t = { });
+// 	static Ref<RigidBody> Create(RigidBody::Type type,
+// 								 Ref<Shape> shape = nullptr,
+// 								 const Transform& t = { });
 
-public:
-	void* Data;
+// public:
+// 	void* Data;
 
-public:
-	RigidBody(RigidBody::Type type, Ref<Shape> shape, const Transform& t = { });
-	~RigidBody();
+// public:
+// 	RigidBody(RigidBody::Type type, Ref<Shape> shape, const Transform& t = { });
+// 	~RigidBody();
 
-	void SetGravity(bool gravity);
+// 	void SetGravity(bool gravity);
 
-#ifdef MAGMA_PHYSICS
-	bool operator ==(const RigidBody& other) const {
-		return m_Actor == other.m_Actor;
-	}
-	bool operator !=(const RigidBody& other) const {
-		return m_Actor != other.m_Actor;
-	}
-#endif
+// #ifdef MAGMA_PHYSICS
+// 	bool operator ==(const RigidBody& other) const {
+// 		return m_Actor == other.m_Actor;
+// 	}
+// 	bool operator !=(const RigidBody& other) const {
+// 		return m_Actor != other.m_Actor;
+// 	}
+// #endif
 
-	RigidBody::Type GetType() const { return m_Type; }
+// 	RigidBody::Type GetType() const { return m_Type; }
 
-	virtual void SetShape(Ref<Shape> shape) = 0;
-	Ref<Shape> GetShape() { return m_Shape; }
-	bool HasShape() const { return m_Shape != nullptr; }
+// 	virtual void SetShape(Ref<Shape> shape) = 0;
+// 	Ref<Shape> GetShape() { return m_Shape; }
+// 	bool HasShape() const { return m_Shape != nullptr; }
 
-	void UpdateTransform();
-	void SetTransform(const Transform& t);
-	const Transform& GetTransform() const { return m_Transform; }
+// 	void UpdateTransform();
+// 	void SetTransform(const Transform& t);
+// 	const Transform& GetTransform() const { return m_Transform; }
 
-protected:
-#ifdef MAGMA_PHYSICS
-	PxRigidActor* m_Actor;
-#endif
+// protected:
+// #ifdef MAGMA_PHYSICS
+// 	PxRigidActor* m_Actor;
+// #endif
 
-	RigidBody::Type m_Type;
-	Transform m_Transform;
+// 	RigidBody::Type m_Type;
+// 	Transform m_Transform;
 
-	Ref<Shape> m_Shape;
+// 	Ref<Shape> m_Shape;
 
-	friend class World;
-};
+// 	friend class World;
+// };
 
-class StaticBody : public RigidBody {
-public:
-	StaticBody(Ref<Shape> shape, const Transform& t = { });
-	~StaticBody() = default;
+// class StaticBody : public RigidBody {
+// public:
+// 	StaticBody(Ref<Shape> shape, const Transform& t = { });
+// 	~StaticBody() = default;
 
-	void SetShape(Ref<Shape> shape) override;
-};
+// 	void SetShape(Ref<Shape> shape) override;
+// };
 
-class DynamicBody : public RigidBody {
-public:
-	DynamicBody(Ref<Shape> shape, const Transform& t = { });
-	~DynamicBody() = default;
+// class DynamicBody : public RigidBody {
+// public:
+// 	DynamicBody(Ref<Shape> shape, const Transform& t = { });
+// 	~DynamicBody() = default;
 
-	void SetShape(Ref<Shape> shape) override;
+// 	void SetShape(Ref<Shape> shape) override;
 
-	void SetMass(float mass);
-	void ApplyForce(const glm::vec3& f);
-};
+// 	void SetMass(float mass);
+// 	void ApplyForce(const glm::vec3& f);
+// };
 
-}
+// }

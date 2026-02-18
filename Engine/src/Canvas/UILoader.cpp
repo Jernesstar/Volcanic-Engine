@@ -10,10 +10,10 @@
 #include <VolcaniCore/Core/Algo.h>
 #include <VolcaniCore/Core/FileUtils.h>
 
-#include <Lava/Core/JSONSerializer.h>
-#include <Lava/Core/BinaryWriter.h>
-#include <Lava/Core/BinaryReader.h>
-#include <Lava/UI/UI.h>
+#include <Engine/Core/JSONSerializer.h>
+#include <Engine/Core/BinaryWriter.h>
+#include <Engine/Core/BinaryReader.h>
+#include <Engine/UI/UI.h>
 
 #include "EditorApp.h"
 #include "AssetManager.h"
@@ -21,10 +21,10 @@
 
 namespace fs = std::filesystem;
 
-using namespace Lava;
-using namespace Lava::UI;
+using namespace VolcanicEngine;
+using namespace VolcanicEngine::UI;
 
-namespace Lava {
+namespace VolcanicEngine {
 
 static void LoadElement(UIPage& page, const rapidjson::Value& elementNode, 
 						const Theme& theme);
@@ -429,7 +429,7 @@ Theme UILoader::LoadTheme(const std::string& path) {
 
 }
 
-namespace Lava {
+namespace VolcanicEngine {
 
 template<>
 BinaryWriter& BinaryWriter::WriteObject(const UI::UINode& node) {
@@ -577,7 +577,7 @@ BinaryWriter& BinaryWriter::WriteObject(const UI::Button& button) {
 
 }
 
-namespace Lava {
+namespace VolcanicEngine {
 
 void UILoader::RuntimeSave(const UIPage& page, const std::string& projectPath,
 						   const std::string& exportPath)

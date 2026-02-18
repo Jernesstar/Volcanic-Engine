@@ -5,12 +5,12 @@
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-#include <VolcaniCore/Core/Input.h>
 #include <VolcaniCore/Core/Log.h>
+#include <VolcanicWindow/Core/Input.h>
 
 using namespace VolcaniCore;
 
-namespace Lava::Graphics {
+namespace VolcanicEditor {
 
 CameraController::CameraController(const MovementControls& controls)
 	: m_Controls(controls) { }

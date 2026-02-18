@@ -29,6 +29,8 @@ project "Engine"
         "%{Includes.glad}",
         "%{Includes.angelscript}",
         "%{Includes.soloud}",
+        "%{Includes.flecs}",
+        "%{Includes.lmdb}",
     }
 
     links {

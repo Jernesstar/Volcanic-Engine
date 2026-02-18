@@ -2,19 +2,19 @@
 
 #include <VolcaniCore/Core/Defines.h>
 
-#include <Lava/Core/Project.h>
-#include <Lava/Script/ScriptModule.h>
-
+#include "Project.h"
 #include "ECS/World.h"
+#include "Script/ScriptModule.h"
+
 // #include "UI/UI.h"
 // #include "SceneRenderer.h"
 
 using namespace VolcaniCore;
-using namespace Lava;
-using namespace Lava::Script;
-// using namespace Lava::UI;
+using namespace VolcanicEngine;
+using namespace VolcanicEngine::Script;
+// using namespace VolcanicEngine::UI;
 
-namespace Lava {
+namespace VolcanicEngine {
 
 class App {
 public:
@@ -26,7 +26,7 @@ public:
 	// bool RenderUI;
 	bool Running;
 
-	Func<void, Ref<ScriptModule>&> AppLoad;
+	// Func<void, Ref<ScriptModule>&> AppLoad;
 
 public:
 	App();
