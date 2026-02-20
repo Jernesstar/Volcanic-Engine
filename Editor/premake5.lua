@@ -16,11 +16,13 @@ project "Editor"
         "src",
         "src/**",
         "%{RootPath}",
+        "%{EngineVendorDir}",
         "%{EditorVendorDir}",
 
         "%{RootPath}/VolcaniCore/src",
-        "%{RootPath}/VolcaniCore/src/VolcaniCore",
-        "%{RootPath}/VolcanicWindow/**",
+        "%{RootPath}/VolcaniCore/src/**",
+        "%{RootPath}/Engine/src",
+        "%{RootPath}/Engine/src/**",
 
         "%{RootPath}/Editor/src",
         "%{RootPath}/Editor/src/**",
@@ -29,17 +31,21 @@ project "Editor"
         "%{Includes.glad}",
         "%{Includes.glfw}",
         "%{Includes.angelscript}",
+        "%{Includes.soloud}",
+        "%{Includes.flecs}",
+
+        "%{Includes.assimp}",
+        "%{Includes.glslang}",
+        "%{Includes.SPIRVCross}",
         "%{Includes.yaml_cpp}",
         "%{Includes.rapidjson}",
         "%{Includes.efsw}",
         "%{Includes.stb_image}",
-        "%{Includes.soloud}",
         "%{Includes.freetype}",
     }
 
     links {
         "VolcaniCore",
-        "VolcanicWindow",
 
         "glfw",
 

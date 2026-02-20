@@ -5,6 +5,8 @@
 #include "Application.h"
 #include "Assert.h"
 
+#include "Window/Events.h"
+
 namespace fs = std::filesystem;
 
 namespace VolcaniCore {
@@ -18,18 +20,29 @@ Application* Application::Get() {
 	return s_Instance;
 }
 
-Application::Application(const AppSpecification& spec) {
+Application::Application(const AppSpecification& spec,
+						const WindowSpecification& windowSpec)
+{
 	s_Instance = this;
 	s_Spec = spec;
+
+	VOLCANICORE_ASSERT(glfwInit(), "Failed to initialize GLFW");
+
+	s_Window = CreateRef<Window>();
+	s_Window->Init(windowSpec);
 }
 
 void Application::Run() {
-	while(true) {
+	while(s_Window->IsOpen()) {
 		TimePoint time = Time::GetTime();
 		TimeStep ts = time - m_LastFrame;
 		m_LastFrame = time;
 
+		Events::PollEvents();
+
 		s_Instance->OnUpdate(ts);
+
+		s_Window->Update();
 
 		if(!s_Spec.TickRate)
 			continue;

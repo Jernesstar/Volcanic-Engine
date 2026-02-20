@@ -2,8 +2,8 @@
 
 #include <VolcaniCore/Core/Defines.h>
 
-#include <Lava/Scene/Scene.h>
-#include <Lava/Scene/SceneRenderer.h>
+#include <EngineScene/Scene.h>
+#include <EngineScene/SceneRenderer.h>
 
 using namespace VolcaniCore;
 using namespace Lava;

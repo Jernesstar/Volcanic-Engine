@@ -1,12 +1,13 @@
 #pragma once
 
-#include "Camera.h"
-
 #include <VolcaniCore/Core/Time.h>
-#include <VolcanicWindow/Codes.h>
-#include <VolcanicWindow/Events.h>
+#include <VolcaniCore/Window/Codes.h>
+#include <VolcaniCore/Window/Events.h>
+
+#include <Engine/Graphics/Camera.h>
 
 using namespace VolcaniCore;
+using namespace VolcanicEngine::Graphics;
 
 namespace VolcanicEditor {
 

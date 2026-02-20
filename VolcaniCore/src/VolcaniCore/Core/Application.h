@@ -3,6 +3,8 @@
 #include "Time.h"
 #include "Defines.h"
 
+#include "Window/Window.h"
+
 int main(int argc, char** argv);
 
 namespace VolcaniCore {
@@ -14,7 +16,8 @@ struct AppSpecification {
 
 class Application {
 public:
-	Application(const AppSpecification& spec = { "Application" });
+	Application(const AppSpecification& spec = { "Application" },
+				const WindowSpecification& windowSpec = { "Application", 1280, 720 });
 	virtual ~Application() = default;
 
 	virtual void OnUpdate(TimeStep ts) = 0;
@@ -25,10 +28,11 @@ protected:
 
 	inline static Application* s_Instance;
 	inline static AppSpecification s_Spec;
-
+	inline static Ref<Window> s_Window;
 public:
 	static void Close(u32 code = 0);
 	static Application* Get();
+	static Ref<Window> GetWindow() { return s_Window; }
 
 	static std::string GetHomeDir();
 	static std::string GetCurrentDir();

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <Lava/Core/YAMLSerializer.h>
-#include <Lava/Core/AssetManager.h>
-#include <Lava/Script/ScriptObject.h>
-#include <Lava/Scene/Scene.h>
+#include <Engine/Core/YAMLSerializer.h>
+#include <Engine/Core/AssetManager.h>
+#include <Engine/Script/ScriptObject.h>
+#include <EngineScene/Scene.h>
 
 namespace Lava {
 

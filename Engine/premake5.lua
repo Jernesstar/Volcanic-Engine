@@ -5,7 +5,7 @@ project "Engine"
     staticruntime "Off"
 
     objdir ("%{RootPath}/build/Engine/obj")
-    targetdir ("%{RootPath}/build/Engine/bin")
+    targetdir ("%{RootPath}/build/Engine/lib")
 
     files {
         "src/**.h",
@@ -20,12 +20,12 @@ project "Engine"
 
         "%{RootPath}/VolcaniCore/src",
         "%{RootPath}/VolcaniCore/src/VolcaniCore",
-        "%{RootPath}/VolcanicWindow/**",
 
         "%{RootPath}/Engine/src",
         "%{RootPath}/Engine/src/**",
 
         "%{Includes.glm}",
+        "%{Includes.glfw}",
         "%{Includes.glad}",
         "%{Includes.angelscript}",
         "%{Includes.soloud}",
@@ -35,6 +35,8 @@ project "Engine"
 
     links {
         "VolcaniCore",
+
+        "glfw",
 
         "angelscript",
         "glad",
@@ -85,3 +87,4 @@ include "Engine/.deps/glad"
 include "Engine/.deps/soloud"
 include "Engine/.deps/lmdb"
 include "Engine/.deps/flecs"
+-- include "Engine/.deps/Jolt"

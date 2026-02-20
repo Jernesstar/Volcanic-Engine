@@ -14,9 +14,10 @@ project "VolcaniCore"
 
     includedirs {
         "src/",
-        "src/VolcaniCore",
+        "src/**",
 
         "%{Includes.glm}",
+        "%{Includes.glfw}",
     }
 
     defines {
@@ -39,3 +40,5 @@ project "VolcaniCore"
         links {
             "stdc++exp"
         }
+
+include "VolcaniCore/.deps/glfw"

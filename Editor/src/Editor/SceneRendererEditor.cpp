@@ -10,11 +10,11 @@
 
 #include <VolcaniCore/Core/Application.h>
 #include <VolcaniCore/Core/Input.h>
-#include <Lava/Graphics/Renderer.h>
-#include <Lava/Graphics/RendererAPI.h>
-#include <Lava/Graphics/Renderer2D.h>
-#include <Lava/Graphics/Renderer3D.h>
-#include <Lava/Graphics/StereographicCamera.h>
+#include <Engine/Graphics/Renderer.h>
+#include <Engine/Graphics/RendererAPI.h>
+#include <Engine/Graphics/Renderer2D.h>
+#include <Engine/Graphics/Renderer3D.h>
+#include <Engine/Graphics/StereographicCamera.h>
 
 #include "Scene/SceneVisualizerPanel.h"
 
@@ -36,8 +36,8 @@ EditorSceneRenderer::EditorSceneRenderer() {
 	GridPass =
 		RenderPass::Create("Grid",
 			AssetImporter::GetShader({
-				"Lava/assets/shaders/Grid.glsl.vert",
-				"Lava/assets/shaders/Grid.glsl.frag"
+				"Engineassets/shaders/Grid.glsl.vert",
+				"Engineassets/shaders/Grid.glsl.frag"
 			}), m_Output);
 	GridPass->SetData(Renderer2D::GetScreenBuffer());
 
@@ -63,51 +63,51 @@ EditorSceneRenderer::EditorSceneRenderer() {
 	BillboardPass =
 		RenderPass::Create("Billboard",
 			AssetImporter::GetShader({
-				"Lava/assets/shaders/Billboard.glsl.vert",
-				"Lava/assets/shaders/Billboard.glsl.frag"
+				"Engineassets/shaders/Billboard.glsl.vert",
+				"Engineassets/shaders/Billboard.glsl.frag"
 			}), m_Output);
 	BillboardPass->SetData(BillboardBuffer);
 
 	CameraIcon =
-		AssetImporter::GetTexture("Lava/assets/icons/CameraIcon.png");
+		AssetImporter::GetTexture("Engineassets/icons/CameraIcon.png");
 	DirectionalLightIcon =
-		AssetImporter::GetTexture("Lava/assets/icons/DirectionalLightIcon.png");
+		AssetImporter::GetTexture("Engineassets/icons/DirectionalLightIcon.png");
 	PointLightIcon =
-		AssetImporter::GetTexture("Lava/assets/icons/PointLightIcon.png");
+		AssetImporter::GetTexture("Engineassets/icons/PointLightIcon.png");
 	SpotlightIcon =
-		AssetImporter::GetTexture("Lava/assets/icons/SpotlightIcon.png");
+		AssetImporter::GetTexture("Engineassets/icons/SpotlightIcon.png");
 	ParticlesIcon =
-		AssetImporter::GetTexture("Lava/assets/icons/ParticlesIcon.png");
+		AssetImporter::GetTexture("Engineassets/icons/ParticlesIcon.png");
 
 	MeshPass =
 		RenderPass::Create("Mesh",
 			AssetImporter::GetShader({
-				"Lava/assets/shaders/Mesh.glsl.vert",
-				"Lava/assets/shaders/Mesh.glsl.frag"
+				"Engineassets/shaders/Mesh.glsl.vert",
+				"Engineassets/shaders/Mesh.glsl.frag"
 			}), m_Output);
 	MeshPass->SetData(Renderer3D::GetMeshBuffer());
 
 	MaskPass =
 		RenderPass::Create("Mask",
 			AssetImporter::GetShader({
-				"Lava/assets/shaders/Mask.glsl.vert",
-				"Lava/assets/shaders/Mask.glsl.frag"
+				"Engineassets/shaders/Mask.glsl.vert",
+				"Engineassets/shaders/Mask.glsl.frag"
 			}), Framebuffer::Create(window->GetWidth(), window->GetHeight()));
 	MaskPass->SetData(Renderer3D::GetMeshBuffer());
 
 	OutlinePass =
 		RenderPass::Create("Outline",
 			AssetImporter::GetShader({
-				"Lava/assets/shaders/Outline.glsl.vert",
-				"Lava/assets/shaders/Outline.glsl.frag"
+				"Engineassets/shaders/Outline.glsl.vert",
+				"Engineassets/shaders/Outline.glsl.frag"
 			}), m_Output);
 	OutlinePass->SetData(Renderer2D::GetScreenBuffer());
 
 	LinePass =
 		RenderPass::Create("Line",
 			AssetImporter::GetShader({
-				"Lava/assets/shaders/Line.glsl.vert",
-				"Lava/assets/shaders/Line.glsl.frag"
+				"Engineassets/shaders/Line.glsl.vert",
+				"Engineassets/shaders/Line.glsl.frag"
 			}), m_Output);
 	LinePass->SetData(Renderer3D::GetLineBuffer());
 

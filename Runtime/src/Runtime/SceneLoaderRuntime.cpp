@@ -8,20 +8,20 @@
 #include <VolcaniCore/Core/FileUtils.h>
 #include <VolcaniCore/Core/List.h>
 #include <VolcaniCore/Core/UUID.h>
-#include <Lava/Graphics/StereographicCamera.h>
-#include <Lava/Graphics/OrthographicCamera.h>
+#include <Engine/Graphics/StereographicCamera.h>
+#include <Engine/Graphics/OrthographicCamera.h>
 
-#include <Lava/Core/YAMLSerializer.h>
+#include <Engine/Core/YAMLSerializer.h>
 
-#include <Lava/Core/BinaryWriter.h>
-#include <Lava/Core/BinaryReader.h>
+#include <Engine/Core/BinaryWriter.h>
+#include <Engine/Core/BinaryReader.h>
 
-#include <Lava/Scene/Component.h>
+#include <EngineScene/Component.h>
 
-#include <Lava/Core/App.h>
-#include <Lava/Types/GridSet.h>
-#include <Lava/Types/GridSet3D.h>
-#include <Lava/Types/Timer.h>
+#include <Engine/Core/App.h>
+#include <EngineTypes/GridSet.h>
+#include <EngineTypes/GridSet3D.h>
+#include <EngineTypes/Timer.h>
 
 #undef near
 #undef far

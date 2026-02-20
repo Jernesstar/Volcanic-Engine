@@ -4,7 +4,7 @@
 
 using namespace rapidjson;
 
-namespace VolcanicEngine {
+namespace VolcanicEditor {
 
 Serializer& JSONSerializer::SetOptions(Serializer::Options options) {
 	if(options == Serializer::Options::ArrayOneLine)

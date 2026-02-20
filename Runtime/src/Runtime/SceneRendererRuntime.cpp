@@ -2,14 +2,14 @@
 
 #include <VolcaniCore/Core/Application.h>
 
-#include <Lava/Graphics/Renderer.h>
-#include <Lava/Graphics/RendererAPI.h>
-#include <Lava/Graphics/Renderer2D.h>
-#include <Lava/Graphics/Renderer3D.h>
-#include <Lava/Graphics/StereographicCamera.h>
-#include <Lava/Graphics/ShaderLibrary.h>
+#include <Engine/Graphics/Renderer.h>
+#include <Engine/Graphics/RendererAPI.h>
+#include <Engine/Graphics/Renderer2D.h>
+#include <Engine/Graphics/Renderer3D.h>
+#include <Engine/Graphics/StereographicCamera.h>
+#include <Engine/Graphics/ShaderLibrary.h>
 
-#include <Lava/Scene/Component.h>
+#include <EngineScene/Component.h>
 
 #include "App.h"
 

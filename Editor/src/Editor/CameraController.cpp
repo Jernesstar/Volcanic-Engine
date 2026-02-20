@@ -6,7 +6,7 @@
 #include <glm/gtx/quaternion.hpp>
 
 #include <VolcaniCore/Core/Log.h>
-#include <VolcanicWindow/Core/Input.h>
+#include <VolcaniCore/Window/Input.h>
 
 using namespace VolcaniCore;
 

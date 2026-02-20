@@ -2,18 +2,11 @@
 
 #include <VolcaniCore/Core/Defines.h>
 #include <VolcaniCore/Core/List.h>
-
-#include <glm/vec2.hpp>
-#include <glm/vec3.hpp>
-#include <glm/vec4.hpp>
-
-#include <glm/mat2x2.hpp>
-#include <glm/mat3x3.hpp>
-#include <glm/mat4x4.hpp>
+#include <VolcaniCore/Core/Math.h>
 
 using namespace VolcaniCore;
 
-namespace Lava {
+namespace VolcanicEditor {
 
 class Serializer {
 public:

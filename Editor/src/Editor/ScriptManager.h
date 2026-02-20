@@ -1,13 +1,14 @@
 #pragma once
 
-#include <Lava/Script/ScriptObject.h>
-#include <Lava/Utils/BinaryWriter.h>
+#include <VolcaniCore/Utils/BinaryWriter.h>
+
+#include <Engine/Script/ScriptObject.h>
 
 using namespace VolcaniCore;
-using namespace Lava;
-using namespace Lava::Script;
+using namespace Engine;
+using namespace Engine::Script;
 
-namespace Lava {
+namespace VolcanicEditor {
 
 // Loading, metadata, debugger, linting
 class ScriptManager {

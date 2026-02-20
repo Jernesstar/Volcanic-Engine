@@ -1,3 +1,3 @@
 #!/bin/bash
 
-cp build/Lava/bin/Lava /opt/Volcanic/Lava/Editor
+cp build/Enginebin/Lava /opt/Volcanic/EngineEditor

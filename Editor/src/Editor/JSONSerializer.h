@@ -10,7 +10,7 @@
 
 using namespace rapidjson;
 
-namespace VolcanicEngine {
+namespace VolcanicEditor {
 
 class JSONSerializer : public Serializer {
 public:
