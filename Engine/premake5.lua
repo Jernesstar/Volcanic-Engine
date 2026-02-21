@@ -39,10 +39,10 @@ project "Engine"
         "glfw",
 
         "angelscript",
-        "glad",
-        "soloud",
         "flecs",
+        "glad",
         "lmdb",
+        "soloud",
 
         "z"
     }

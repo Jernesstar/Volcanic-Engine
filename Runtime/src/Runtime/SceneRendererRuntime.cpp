@@ -9,11 +9,11 @@
 #include <Engine/Graphics/StereographicCamera.h>
 #include <Engine/Graphics/ShaderLibrary.h>
 
-#include <EngineScene/Component.h>
+#include <Engine/Scene/Component.h>
 
 #include "App.h"
 
-namespace Lava {
+namespace VolcanicRuntime {
 
 struct DirectionalLight {
 	glm::vec4 Position;

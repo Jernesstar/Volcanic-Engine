@@ -1,6 +1,6 @@
 #include "BinaryReader.h"
 
-namespace VolcanicEngine {
+namespace VolcaniCore {
 
 template<>
 BinaryReader& BinaryReader::ReadObject(std::string& str) {

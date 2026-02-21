@@ -6,7 +6,7 @@
 
 #include <Engine/Core/BinaryReader.h>
 
-namespace Lava {
+namespace VolcanicRuntime {
 
 RuntimeAssetManager::RuntimeAssetManager() {
 
@@ -23,7 +23,7 @@ RuntimeAssetManager::~RuntimeAssetManager() {
 
 }
 
-namespace Lava {
+namespace VolcanicRuntime {
 
 template<>
 BinaryReader& BinaryReader::ReadObject(Asset& asset) {
@@ -89,7 +89,7 @@ BinaryReader& BinaryReader::ReadObject(UUID& uuid) {
 
 }
 
-namespace Lava {
+namespace VolcanicRuntime {
 
 void RuntimeAssetManager::Load(Asset asset) {
 	if(!IsValid(asset) || IsLoaded(asset) || IsNativeAsset(asset))

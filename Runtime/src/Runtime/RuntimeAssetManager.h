@@ -4,9 +4,9 @@
 #include <Engine/Core/BinaryReader.h>
 
 using namespace VolcaniCore;
-using namespace Lava;
+using namespace VolcanicEngine;
 
-namespace Lava {
+namespace VolcanicRuntime {
 
 class ByteCodeReader : public asIBinaryStream {
 public:

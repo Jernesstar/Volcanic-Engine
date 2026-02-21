@@ -18,13 +18,12 @@
 #include "Runtime.h"
 #include "AssetManager.h"
 
-using namespace Lava;
-using namespace Lava::UI;
-using namespace Lava;
+using namespace VolcanicEngine;
+using namespace VolcanicEngine::UI;
 
 static UIPage* s_CurrentPage;
 
-namespace Lava {
+namespace VolcanicRuntime {
 
 template<>
 BinaryReader& BinaryReader::ReadObject(UI::UINode& node) {
@@ -203,7 +202,7 @@ BinaryReader& BinaryReader::ReadObject(UI::Button& button) {
 
 }
 
-namespace Lava {
+namespace VolcanicRuntime {
 
 void UILoader::Load(UIPage& page, const std::string& path) {
 	namespace fs = std::filesystem;

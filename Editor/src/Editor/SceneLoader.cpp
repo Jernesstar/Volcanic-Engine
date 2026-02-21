@@ -8,33 +8,35 @@
 #include <VolcaniCore/Core/FileUtils.h>
 #include <VolcaniCore/Core/List.h>
 #include <VolcaniCore/Core/UUID.h>
+#include <VolcaniCore/Utils/BinaryWriter.h>
+#include <VolcaniCore/Utils/BinaryReader.h>
 
-#include <Engine/Core/App.h>
-#include <Engine/Core/BinaryWriter.h>
-#include <Engine/Core/BinaryReader.h>
+#include <Engine/App/App.h>
+#include <Engine/ECS/Component.h>
+#include <Engine/Graphics/Mesh.h>
 #include <Engine/Graphics/StereographicCamera.h>
 #include <Engine/Graphics/OrthographicCamera.h>
 #include <Engine/Script/ScriptClass.h>
-#include <Engine/Scene/Component.h>
-#include <Engine/Types/GridSet.h>
-#include <Engine/Types/GridSet3D.h>
-#include <Engine/Types/Timer.h>
+#include <Engine/Script/Types/GridSet.h>
+#include <Engine/Script/Types/GridSet3D.h>
+#include <Engine/Script/Types/Timer.h>
 
-#include "Core/YAMLSerializer.h"
-#include "EditorApp.h"
+#include "YAMLSerializer.h"
+// #include "EditorApp.h"
 #include "ScriptManager.h"
 
 #undef near
 #undef far
 
-using namespace VolcanicEngine::ECS;
-using namespace VolcanicEngine::Physics;
 using namespace VolcanicEngine;
+using namespace VolcanicEngine::ECS;
+// using namespace VolcanicEngine::Physics;
+using namespace VolcanicEngine::Graphics;
 
 namespace VolcanicEditor {
 
 template<>
-Serializer& Serializer::Write(const VolcaniCore::Vertex& value) {
+Serializer& Serializer::Write(const Vertex& value) {
 	SetOptions(Serializer::Options::ArrayOneLine);
 	BeginSequence();
 		Write(value.Position);

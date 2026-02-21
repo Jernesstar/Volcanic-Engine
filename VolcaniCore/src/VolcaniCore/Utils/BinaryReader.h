@@ -6,9 +6,7 @@
 
 #include "FileStream.h"
 
-using namespace VolcaniCore;
-
-namespace VolcanicEngine {
+namespace VolcaniCore {
 
 class BinaryReader : public FileStream {
 public:

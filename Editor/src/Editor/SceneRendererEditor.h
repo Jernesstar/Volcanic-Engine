@@ -2,13 +2,13 @@
 
 #include <VolcaniCore/Core/Defines.h>
 
-#include <EngineScene/Scene.h>
-#include <EngineScene/SceneRenderer.h>
+#include <Engine/Scene/Scene.h>
+#include <Engine/Scene/SceneRenderer.h>
 
 using namespace VolcaniCore;
-using namespace Lava;
+using namespace VolcanicEngine;
 
-namespace Lava {
+namespace VolcanicEditor {
 
 class RuntimeSceneRenderer : public SceneRenderer {
 public:

@@ -3,21 +3,16 @@
 #include <VolcaniCore/Core/Application.h>
 #include <VolcaniCore/Core/CommandLineArgs.h>
 
-#include <Engine/Core/App.h>
-
 using namespace VolcaniCore;
 
-namespace Lava {
+namespace VolcanicRuntime {
 
-class Runtime : public Application {
+class RuntimeApp : public Application {
 public:
-	Runtime(const CommandLineArgs& args);
-	~Runtime();
+	RuntimeApp(const CommandLineArgs& args);
+	~RuntimeApp();
 
 	void OnUpdate(TimeStep ts) override;
-
-public:
-	Ref<App> m_App;
 };
 
 }

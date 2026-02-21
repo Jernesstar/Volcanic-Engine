@@ -1,11 +1,12 @@
 #pragma once
 
-#include <Engine/Core/YAMLSerializer.h>
-#include <Engine/Core/AssetManager.h>
+#include <Engine/Asset/AssetManager.h>
 #include <Engine/Script/ScriptObject.h>
-#include <EngineScene/Scene.h>
+#include <Engine/Scene/Scene.h>
 
-namespace Lava {
+#include "YAMLSerializer.h"
+
+namespace VolcanicEditor {
 
 extern void SaveScript(YAMLSerializer& serializer,
 	Ref<Script::ScriptObject> obj);

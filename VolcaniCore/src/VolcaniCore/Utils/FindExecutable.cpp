@@ -8,7 +8,7 @@
 	#include <unistd.h>
 #endif
 
-namespace VolcanicEngine {
+namespace VolcaniCore {
 
 std::string FindExecutablePath() {
 #ifdef VOLCANIC_WINDOWS

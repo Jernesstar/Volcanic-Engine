@@ -3,7 +3,7 @@
 #include "YAMLSerializer.h"
 #include "JSONSerializer.h"
 
-namespace Lava {
+namespace VolcanicEditor {
 
 template<>
 Serializer& Serializer::Write(const char* const& value) {

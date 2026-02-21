@@ -6,11 +6,12 @@ project "Runtime"
     rtti "Off"
     staticruntime "Off"
 
-    objdir ("%{RootPath}/build/Engine/obj")
-    targetdir ("%{RootPath}/build/Engine/bin")
+    objdir ("%{RootPath}/build/Runtime/obj")
+    targetdir ("%{RootPath}/build/Runtime/bin")
 
     files {
-        "src/**.cpp"
+        "src/Runtime/App/**.cpp",
+        -- "src/**.cpp"
     }
 
     includedirs {
@@ -29,9 +30,18 @@ project "Runtime"
     }
 
     links {
-        "Lava",
         "VolcaniCore",
+        "Engine",
+
+        "glfw",
+
         "angelscript",
+        "flecs",
+        "glad",
+        "lmdb",
+        "soloud",
+
+        "z"
     }
 
     defines {

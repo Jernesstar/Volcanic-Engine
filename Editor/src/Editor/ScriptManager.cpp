@@ -9,7 +9,7 @@
 
 namespace fs = std::filesystem;
 
-namespace Lava {
+namespace VolcanicEditor {
 
 static int IncludeCallback(const char* includeStr, const char* from,
 	CScriptBuilder* builder, void* param)

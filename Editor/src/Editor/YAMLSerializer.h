@@ -6,7 +6,7 @@
 
 #include <yaml-cpp/yaml.h>
 
-namespace Lava {
+namespace VolcanicEditor {
 
 class YAMLSerializer : public Serializer {
 public:

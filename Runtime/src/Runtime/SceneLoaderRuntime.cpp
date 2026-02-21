@@ -16,7 +16,7 @@
 #include <Engine/Core/BinaryWriter.h>
 #include <Engine/Core/BinaryReader.h>
 
-#include <EngineScene/Component.h>
+#include <Engine/Scene/Component.h>
 
 #include <Engine/Core/App.h>
 #include <EngineTypes/GridSet.h>
@@ -26,11 +26,11 @@
 #undef near
 #undef far
 
-using namespace Lava::ECS;
-using namespace Lava::Physics;
-using namespace Lava;
+using namespace VolcanicEngine;
+using namespace VolcanicEngine::ECS;
+using namespace VolcanicEngine::Physics;
 
-namespace Lava {
+namespace VolcanicRuntime {
 
 template<>
 BinaryReader& BinaryReader::ReadObject(glm::vec3& vec) {
@@ -323,7 +323,7 @@ BinaryReader& BinaryReader::ReadObject(Entity& entity) {
 
 }
 
-namespace Lava {
+namespace VolcanicRuntime {
 
 void SceneLoader::Load(Scene& scene, const std::string& path) {
 	namespace fs = std::filesystem;

@@ -24,7 +24,7 @@ YAML::Emitter& operator <<(YAML::Emitter& out, const glm::vec4& v) {
 
 }
 
-namespace Lava {
+namespace VolcanicEditor {
 
 Serializer& YAMLSerializer::SetOptions(Serializer::Options options) {
 	if(options == Serializer::Options::ArrayOneLine)

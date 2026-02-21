@@ -18,7 +18,7 @@
 
 #include "Scene/SceneVisualizerPanel.h"
 
-namespace Lava {
+namespace VolcanicEditor {
 
 EditorSceneRenderer::EditorSceneRenderer() {
 	Application::PushDir();

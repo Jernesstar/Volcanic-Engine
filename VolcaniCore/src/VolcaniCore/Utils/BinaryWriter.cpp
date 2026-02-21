@@ -1,7 +1,7 @@
 
 #include "BinaryWriter.h"
 
-namespace VolcanicEngine {
+namespace VolcaniCore {
 
 template<>
 BinaryWriter& BinaryWriter::WriteObject(const std::string& str) {

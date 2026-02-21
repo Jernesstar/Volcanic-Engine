@@ -8,8 +8,8 @@ project "Editor"
     targetdir ("%{RootPath}/build/Editor/bin")
 
     files {
-        "src/**.h",
-        "src/**.cpp",
+        "src/Editor/App/**.cpp",
+        -- "src/**.cpp",
     }
 
     includedirs {
@@ -49,16 +49,17 @@ project "Editor"
 
         "glfw",
 
-        "glad",
         "angelscript",
-
-        "efsw",
+        "flecs",
+        "glad",
+        "lmdb",
         "soloud",
+
+        "assimp",
+        "efsw",
         "stb_image",
         "freetype",
         "yaml-cpp",
-        "rapidjson",
-
         "glslang",
         "SPIRV-Cross",
 
@@ -100,6 +101,7 @@ project "Editor"
             "-Wno-pointer-arith"
         }
 
+include "Editor/.deps/assimp"
 include "Editor/.deps/stb_image"
 include "Editor/.deps/efsw"
 include "Editor/.deps/yaml-cpp"

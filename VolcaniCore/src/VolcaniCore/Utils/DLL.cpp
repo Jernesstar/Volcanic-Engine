@@ -8,7 +8,7 @@
 
 #include <VolcaniCore/Core/Assert.h>
 
-namespace VolcanicEngine {
+namespace VolcaniCore {
 
 DLL::DLL(const std::string& path)
 	: Path(path)

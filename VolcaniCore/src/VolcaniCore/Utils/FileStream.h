@@ -2,7 +2,7 @@
 
 #include <fstream>
 
-namespace VolcanicEngine {
+namespace VolcaniCore {
 
 class FileStream {
 public:

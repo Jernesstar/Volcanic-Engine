@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-namespace VolcanicEngine {
+namespace VolcaniCore {
 
 template<class T>
 class TypeIDGenerator {
