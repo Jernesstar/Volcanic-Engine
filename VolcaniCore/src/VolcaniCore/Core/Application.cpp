@@ -13,6 +13,10 @@ namespace VolcaniCore {
 
 void Application::Close(u32 code) {
 	delete s_Instance;
+
+	s_Window.reset();
+	glfwTerminate();
+
 	exit(code);
 }
 

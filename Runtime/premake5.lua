@@ -57,6 +57,7 @@ project "Runtime"
             "dl",
             "GL",
             "X11",
+            "wayland-client"
         }
 
     filter "system:windows"

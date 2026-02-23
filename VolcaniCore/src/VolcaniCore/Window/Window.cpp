@@ -74,6 +74,8 @@ Window::Window() {
 Window::~Window() {
 	if(m_NativeWindow)
 		glfwDestroyWindow(m_NativeWindow);
+	if(m_Spec.Embedded)
+		Shutdown();
 }
 
 void Window::Init(const WindowSpecification& spec) {
@@ -87,6 +89,8 @@ void Window::Init(const WindowSpecification& spec) {
 
 void Window::Update() {
 	glfwSwapBuffers(m_NativeWindow);
+	if(m_Spec.Embedded)
+		RenderFrame();
 }
 
 void Window::Maximize(bool enable) {
@@ -130,7 +134,11 @@ void Window::UndoSplashScreen() {
 	Init(m_Spec);
 }
 
-void Window::Resize(uint32_t width, uint32_t height) {
+void Window::SetEmbedded() {
+	m_Spec.Embedded = true;
+}
+
+void Window::Resize(u32 width, u32 height) {
 	if(!(width && height) || (width == m_Spec.Width && height == m_Spec.Height))
 		return;
 

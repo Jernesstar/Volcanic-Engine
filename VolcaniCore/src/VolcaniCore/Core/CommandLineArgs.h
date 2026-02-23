@@ -21,15 +21,14 @@ struct ArgList {
 
 class CommandLineArgs {
 public:
-	uint32_t Count;
+	u32 Count;
 
-	CommandLineArgs(uint32_t argc, char** argv)
-		: Count(argc - 1), m_Args(argc - 1)
+	CommandLineArgs(u32 argc, char** argv, bool skipFirst = true)
+		: Count(argc - (u32)skipFirst), m_Args(argc - (u32)skipFirst)
 	{
-		int32_t lastOption = -1;
-		// Skip the first command line argument, which is the executable itself
-		for(uint32_t i = 0; i < argc - 1; i++) {
-			m_Args.Add(std::string(argv[i + 1]));
+		i32 lastOption = -1;
+		for(u32 i = 0; i < Count; i++) {
+			m_Args.Add(std::string(argv[i + (u32)skipFirst]));
 			if(m_Args[i][0] == '-') {
 				lastOption = i;
 				m_ArgMap[m_Args[lastOption]] = ArgList(true);
@@ -39,7 +38,7 @@ public:
 		}
 	}
 
-	std::string operator [](uint32_t index) const {
+	std::string operator [](u32 index) const {
 		VOLCANICORE_ASSERT(index < Count);
 		return m_Args[index];
 	}

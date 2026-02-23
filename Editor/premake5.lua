@@ -46,6 +46,7 @@ project "Editor"
 
     links {
         "VolcaniCore",
+        "Engine",
 
         "glfw",
 
@@ -78,6 +79,7 @@ project "Editor"
             "dl",
             "GL",
             "X11",
+            "wayland-client"
         }
 
     filter "system:windows"

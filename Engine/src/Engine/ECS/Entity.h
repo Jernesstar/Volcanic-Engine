@@ -60,7 +60,7 @@ public:
 	std::string GetName() const {
 		auto name = m_Handle.name();
 		if(name.length())
-			return m_Handle.name().c_str();
+			return name.c_str();
 		return "";
 	}
 

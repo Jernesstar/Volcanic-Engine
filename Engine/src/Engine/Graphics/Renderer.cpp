@@ -18,13 +18,14 @@ const u64 Renderer::MaxInstances = MaxTriangles * 4;
 
 static FrameData s_Frame;
 static Ref<RenderPass> s_RenderPass;
-static List<DrawCommand*> s_Stack;
+static DrawCommand* s_Command;
 
 static bool s_OptionsValid = false;
 
 void Renderer::Init() {
 	s_Frame = { };
 
+	RendererAPI::Create(RendererBackend::OpenGL);
 	Renderer2D::Init();
 	Renderer3D::Init();
 }
@@ -51,7 +52,7 @@ void Renderer::StartPass(Ref<RenderPass> pass, bool pushCommand) {
 }
 
 void Renderer::EndPass() {
-	s_Stack.Clear();
+	s_Command = nullptr;
 	s_RenderPass = nullptr;
 }
 
@@ -60,41 +61,43 @@ Ref<RenderPass> Renderer::GetPass() {
 }
 
 DrawCommand* Renderer::PushCommand() {
-	s_Stack.Add(NewCommand());
-	return GetCommand();
+	s_Command = NewCommand();
+	return s_Command;
 }
 
 void Renderer::PopCommand() {
-	if(!s_Stack)
+	if(!s_Command)
 		return;
 
-	s_RenderPass->SetUniforms(s_Stack[-1]);
-	s_Stack.Pop();
+	s_RenderPass->SetUniforms(s_Command);
+	s_Command = nullptr;
 }
 
 DrawCommand* Renderer::GetCommand() {
-	return s_Stack[-1];
+	return s_Command;
 }
 
 DrawCommand* Renderer::NewCommand(bool usePrevious) {
-	// if(usePrevious && s_Stack && !s_Stack[-1]->Calls)
-	// 	return s_Stack[-1];
+	if(usePrevious && s_Command && !s_Command->DrawCalls)
+		return s_Command;
 
-	// return RendererAPI::Get()->NewDrawCommand(s_RenderPass->Get());
+	return RendererAPI::Get()->NewCommand(s_RenderPass->Get());
 }
 
 void Renderer::Clear() {
-	if(!s_Stack) {
-		// RendererAPI::Get()->NewDrawCommand(nullptr)->Clear = true;
-		// Renderer::Flush();
+	if(!s_Command) {
+		auto command = RendererAPI::Get()->NewCommand(nullptr);
+		command->Clear = true;
+		command->ClearColor = { 1.0f, 0.0f, 0.0f, 1.0f };
+		Renderer::Flush();
 	}
 	else
 		GetCommand()->Clear = true;
 }
 
 void Renderer::Resize(uint32_t width, uint32_t height) {
-	// GetCommand()->ViewportWidth = width;
-	// GetCommand()->ViewportHeight = height;
+	s_Command->ViewportW = width;
+	s_Command->ViewportH = height;
 }
 
 void Renderer::PushOptions() {
@@ -106,7 +109,7 @@ void Renderer::PopOptions(uint32_t count) {
 }
 
 void Renderer::Flush() {
-	s_Stack.Clear();
+	s_Command = nullptr;
 	RendererAPI::Get()->EndFrame();
 }
 

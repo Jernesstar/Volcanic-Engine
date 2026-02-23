@@ -7,8 +7,6 @@
 
 #include "Core/Buffer.h"
 
-using namespace VolcaniCore;
-
 namespace VolcaniCore {
 
 struct WindowSpecification {
@@ -22,6 +20,7 @@ struct WindowSpecification {
 	bool Fullscreen = false;
 	bool Maximized = false;
 	bool Minimized = false;
+	bool Embedded = false;
 };
 
 struct Icon {
@@ -40,6 +39,7 @@ public:
 	void Update();
 	bool IsOpen() const { return !glfwWindowShouldClose(m_NativeWindow); }
 
+	void SetEmbedded();
 	void Maximize(bool enable = true);
 	void Minimize();
 	void Fullscreen(bool enable = true);
@@ -60,10 +60,12 @@ private:
 	GLFWwindow* m_NativeWindow = nullptr;
 };
 
-extern void* GetNativeWindowHandle(GLFWwindow* window);
-extern void* GetNativeDisplayHandle();
-extern void EmbedWindow(const char* handleStr);
-extern void UpdateBounds(u32 x, u32 y, u32 w, u32 h);
-extern void SetVisible(bool visible);
-
 }
+
+void* GetNativeWindowHandle(GLFWwindow* window);
+void* GetNativeDisplayHandle();
+bool EmbedWindow(const char* handleStr);
+void UpdateBounds(u32 x, u32 y, u32 w, u32 h);
+void SetVisible(bool visible);
+void RenderFrame();
+void Shutdown();
