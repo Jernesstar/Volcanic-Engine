@@ -1,6 +1,9 @@
 #pragma once
 
 #define GLM_ENABLE_EXPERIMENTAL
+#define NDEBUG
+#define assert(x) 
+
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>

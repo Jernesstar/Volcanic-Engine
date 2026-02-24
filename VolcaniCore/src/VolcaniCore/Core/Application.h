@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Time.h"
-#include "Defines.h"
+#include "Core/TimeUtils.h"
+#include "Core/Defines.h"
 
 #include "Window/Window.h"
 

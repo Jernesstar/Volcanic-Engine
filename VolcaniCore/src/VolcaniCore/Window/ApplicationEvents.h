@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Event.h"
-#include "Core/Time.h"
+#include "Core/TimeUtils.h"
 
 namespace VolcaniCore {
 

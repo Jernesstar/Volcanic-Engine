@@ -2,7 +2,7 @@
 
 #include <tuple>
 
-#include <VolcaniCore/Core/Time.h>
+#include <VolcaniCore/Core/TimeUtils.h>
 
 #include "Entity.h"
 

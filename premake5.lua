@@ -6,9 +6,9 @@ workspace "VolcanicEngine"
     filter "system:windows"
         defines {
             "VOLCANIC_WINDOWS",
-            "_DEBUG",
             "_WIN32",
             "_WIN64",
+            "NDEBUG"
         }
 
     filter "system:linux"

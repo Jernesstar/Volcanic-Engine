@@ -49,6 +49,7 @@ project "Engine"
 
     defines {
         "NOMINMAX",
+        "NDEBUG",
         "WIN32_LEAN_AND_MEAN",
         "YAML_CPP_STATIC_DEFINE",
     }

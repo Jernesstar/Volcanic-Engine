@@ -45,7 +45,9 @@ project "Runtime"
     }
 
     defines {
+        "WIN32_LEAN_AND_MEAN",
         "NOMINMAX",
+        "NDEBUG",
     }
 
     filter "action:vs* or system:linux"

@@ -22,6 +22,9 @@ project "VolcaniCore"
 
     defines {
         "GLM_FORCE_CXX20",
+        "NOMINMAX",
+        "NDEBUG",
+        "WIN32_LEAN_AND_MEAN",
     }
 
     filter "toolset:gcc or toolset:clang"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <VolcaniCore/Core/Time.h>
+#include <VolcaniCore/Core/TimeUtils.h>
 #include <VolcaniCore/Window/Codes.h>
 #include <VolcaniCore/Window/Events.h>
 

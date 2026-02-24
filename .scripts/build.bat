@@ -13,4 +13,4 @@ if "%Target%" == "" (
 )
 
 cd build
-mingw32-make.exe -f %Target%
+mingw32-make.exe config=release -f %Target%
