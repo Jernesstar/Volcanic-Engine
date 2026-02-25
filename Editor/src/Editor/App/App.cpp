@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iterator>
 
+#include <VolcaniCore/Window/Events.h>
 #include <Engine/Graphics/Renderer.h>
 
 using namespace VolcanicEngine::Graphics;
@@ -13,10 +14,9 @@ using namespace VolcanicEngine::Graphics;
 namespace VolcanicEditor {
 
 std::mutex s_IOMutex;
-
 void StandardIO() {
 	std::string line;
-	while (std::getline(std::cin, line)) {
+	while(std::getline(std::cin, line)) {
 		if(line.empty())
 			continue;
 
@@ -50,7 +50,7 @@ EditorApp::EditorApp(const CommandLineArgs& args)
 	: Application({ "Editor" })
 {
 	Renderer::Init();
-
+	Log::Info("Editor started");
 	std::thread(StandardIO).detach();
 }
 
