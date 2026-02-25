@@ -7,7 +7,7 @@
 
 using namespace VolcaniCore;
 
-using Bytes = Buffer<uint8_t>;
+using Bytes = Buffer<u8>;
 
 namespace VolcanicEngine {
 
@@ -45,7 +45,7 @@ private:
 
 class Registry {
 public:
-	Registry(const std::string& path, uint32_t maxDatabases);
+	Registry(const std::string& path, u32 maxDatabases);
 	~Registry();
 
 	Database* NewDatabase(const std::string& name);

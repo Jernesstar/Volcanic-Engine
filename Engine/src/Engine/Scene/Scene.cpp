@@ -14,22 +14,22 @@ Scene::Scene(const std::string& name)
 	: Name(name) { }
 
 void Scene::OnUpdate(TimeStep ts) {
-	// EntityWorld.OnUpdate(ts);
+	EntityWorld.OnUpdate(ts);
 }
 
 void Scene::OnRender(SceneRenderer& renderer) {
-	// auto& world = EntityWorld.GetNative();
+	auto& world = EntityWorld.GetNative();
 
-	// renderer.Begin();
+	renderer.Begin();
 
-	// world.query_builder()
-	// .with<CameraComponent>()
-	// .build()
-	// .each(
-	// 	[&](flecs::entity id)
-	// 	{
-	// 		renderer.SubmitCamera(Entity{ id });
-	// 	});
+	world.query_builder()
+	.with<CameraComponent>()
+	.build()
+	.each(
+		[&](flecs::entity id)
+		{
+			renderer.SubmitCamera(Entity{ id });
+		});
 
 	// world.query_builder()
 	// .with<SkyboxComponent>()
@@ -40,25 +40,25 @@ void Scene::OnRender(SceneRenderer& renderer) {
 	// 		renderer.SubmitSkybox(Entity{ id });
 	// 	});
 
-	// world.query_builder()
-	// .with<DirectionalLightComponent>().or_()
-	// .with<PointLightComponent>().or_()
-	// .with<SpotlightComponent>()
-	// .build()
-	// .each(
-	// 	[&](flecs::entity id)
-	// 	{
-	// 		renderer.SubmitLight(Entity{ id });
-	// 	});
+	world.query_builder()
+	.with<DirectionalLightComponent>().or_()
+	.with<PointLightComponent>().or_()
+	.with<SpotlightComponent>()
+	.build()
+	.each(
+		[&](flecs::entity id)
+		{
+			renderer.SubmitLight(Entity{ id });
+		});
 
-	// world.query_builder()
-	// .with<ParticleEmitterComponent>()
-	// .build()
-	// .each(
-	// 	[&](flecs::entity id)
-	// 	{
-	// 		renderer.SubmitParticles(Entity{ id });
-	// 	});
+	world.query_builder()
+	.with<ParticleEmitterComponent>()
+	.build()
+	.each(
+		[&](flecs::entity id)
+		{
+			renderer.SubmitParticles(Entity{ id });
+		});
 
 	// world.query_builder()
 	// .with<MeshComponent>().and_().with<TransformComponent>()
@@ -69,7 +69,7 @@ void Scene::OnRender(SceneRenderer& renderer) {
 	// 		renderer.SubmitMesh(Entity{ id });
 	// 	});
 
-	// renderer.Render();
+	renderer.Render();
 }
 
 void Scene::RegisterSystems() {

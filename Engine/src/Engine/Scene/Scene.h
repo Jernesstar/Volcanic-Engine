@@ -14,7 +14,7 @@ class Scene {
 public:
 	std::string Name;
 
-	// ECS::World EntityWorld;
+	ECS::World EntityWorld;
 
 public:
 	Scene(const std::string& name = "Untitled Scene");

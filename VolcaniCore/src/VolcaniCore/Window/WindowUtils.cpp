@@ -27,6 +27,7 @@
 #include <GLFW/glfw3native.h>
 
 #include "Core/Application.h"
+#include "Core/Log.h"
 
 void* GetNativeWindowHandle(GLFWwindow* window) {
 #if VOLCANIC_LINUX
@@ -113,7 +114,7 @@ bool EmbedWindow(const char* handleStr) {
 	s_Data->glfwX11Window = glfwGetX11Window(s_Data->renderWindow);
 
 	if (!s_Data->x11Display || !s_Data->glfwX11Window) {
-		fprintf(stderr, "Failed to get X11 handles\n");
+		VolcaniCore::Log::Info("Failed to get X11 handles");
 		return false;
 	}
 
@@ -137,7 +138,7 @@ bool EmbedWindow(const char* handleStr) {
 	s_Data->glfwSurface = glfwGetWaylandWindow(s_Data->renderWindow);
 
 	if(!s_Data->waylandDisplay || !s_Data->glfwSurface) {
-		fprintf(stderr, "Failed to get Wayland handles\n");
+		VolcaniCore::Log::Error("Failed to get Wayland handles");
 		return false;
 	}
 
@@ -152,7 +153,7 @@ bool EmbedWindow(const char* handleStr) {
 	wl_display_roundtrip(s_Data->waylandDisplay);
 
 	if(!s_Data->compositor || !s_Data->subcompositor) {
-		fprintf(stderr, "Failed to get required Wayland protocols\n");
+		VolcaniCore::Log::Info("Failed to get required Wayland protocols");
 		return false;
 	}
 
@@ -161,7 +162,7 @@ bool EmbedWindow(const char* handleStr) {
 		s_Data->subcompositor, s_Data->glfwSurface, s_Data->parentSurface);
 
 	if (!s_Data->subsurface) {
-		fprintf(stderr, "Failed to create subsurface\n");
+		VolcaniCore::Log::Info("Failed to create subsurface");
 		return false;
 	}
 

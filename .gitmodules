@@ -45,3 +45,6 @@
 [submodule "Editor/.vendor/SPIRV-Cross"]
 	path = Editor/.vendor/SPIRV-Cross
 	url = https://github.com/KhronosGroup/SPIRV-Cross.git
+[submodule "VolcaniCore/.vendor/spdlog"]
+	path = VolcaniCore/.vendor/spdlog
+	url = https://github.com/gabime/spdlog.git

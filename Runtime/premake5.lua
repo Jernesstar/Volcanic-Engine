@@ -22,11 +22,16 @@ project "Runtime"
         "%{RootPath}/Engine/src",
         "%{RootPath}/Engine/src/**",
 
-        "%{Includes.angelscript}",
-        "%{VendorPaths.angelscript}",
-        "%{LavaVendorDir}",
-
         "%{Includes.glm}",
+        "%{Includes.glfw}",
+        "%{Includes.spdlog}",
+
+        "%{Includes.angelscript}",
+        "%{Includes.flecs}",
+        "%{Includes.glad}",
+        "%{Includes.lmdb}",
+        "%{Includes.soloud}",
+        "%{VendorPaths.angelscript}",
     }
 
     links {

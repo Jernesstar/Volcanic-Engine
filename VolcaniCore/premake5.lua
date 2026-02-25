@@ -18,6 +18,7 @@ project "VolcaniCore"
 
         "%{Includes.glm}",
         "%{Includes.glfw}",
+        "%{Includes.spdlog}",
     }
 
     defines {

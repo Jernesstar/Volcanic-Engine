@@ -26,11 +26,14 @@ project "Engine"
 
         "%{Includes.glm}",
         "%{Includes.glfw}",
-        "%{Includes.glad}",
+        "%{Includes.spdlog}",
+
         "%{Includes.angelscript}",
-        "%{Includes.soloud}",
         "%{Includes.flecs}",
+        "%{Includes.glad}",
         "%{Includes.lmdb}",
+        "%{Includes.soloud}",
+        "%{VendorPaths.angelscript}",
     }
 
     links {

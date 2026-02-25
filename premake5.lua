@@ -43,6 +43,7 @@ Includes = {}
 -- VolcaniCore libraries
 VendorPaths["glm"]                = "%{VolcaniCoreVendorDir}/glm"
 VendorPaths["glfw"]               = "%{VolcaniCoreVendorDir}/glfw"
+VendorPaths["spdlog"]             = "%{VolcaniCoreVendorDir}/spdlog"
 -- Engine libraries
 VendorPaths["angelscript"]        = "%{EngineVendorDir}/angelscript"
 VendorPaths["soloud"]             = "%{EngineVendorDir}/soloud"
@@ -62,6 +63,7 @@ VendorPaths["freetype"]           = "%{EditorVendorDir}/freetype"
 -- VolcaniCore libraries
 Includes["glm"]                   = "%{VendorPaths.glm}"
 Includes["glfw"]                  = "%{VendorPaths.glfw}/include"
+Includes["spdlog"]                = "%{VendorPaths.spdlog}/include"
 -- Engine libraries
 Includes["angelscript"]           = "%{VendorPaths.angelscript}/angelscript/include"
 Includes["soloud"]                = "%{VendorPaths.soloud}/include"

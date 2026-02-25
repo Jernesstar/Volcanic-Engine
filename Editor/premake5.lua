@@ -28,11 +28,15 @@ project "Editor"
         "%{RootPath}/Editor/src/**",
 
         "%{Includes.glm}",
-        "%{Includes.glad}",
         "%{Includes.glfw}",
+        "%{Includes.spdlog}",
+
         "%{Includes.angelscript}",
-        "%{Includes.soloud}",
         "%{Includes.flecs}",
+        "%{Includes.glad}",
+        "%{Includes.lmdb}",
+        "%{Includes.soloud}",
+        "%{VendorPaths.angelscript}",
 
         "%{Includes.assimp}",
         "%{Includes.glslang}",
