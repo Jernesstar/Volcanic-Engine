@@ -12,7 +12,6 @@
 #include <VolcaniCore/Utils/BinaryReader.h>
 
 #include <Engine/App/App.h>
-#include <Engine/ECS/Component.h>
 #include <Engine/Graphics/Mesh.h>
 #include <Engine/Graphics/StereographicCamera.h>
 #include <Engine/Graphics/OrthographicCamera.h>
@@ -20,6 +19,8 @@
 #include <Engine/Script/Types/GridSet.h>
 #include <Engine/Script/Types/GridSet3D.h>
 #include <Engine/Script/Types/Timer.h>
+#include <Engine/Scene/Component.h>
+#include <Engine/Canvas/Component.h>
 
 #include "YAMLSerializer.h"
 // #include "EditorApp.h"

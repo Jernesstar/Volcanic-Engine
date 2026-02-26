@@ -13,14 +13,24 @@ namespace VolcanicEngine {
 
 struct DatabaseQuery {
 	Bytes Key;
+
+	DatabaseQuery(Bytes&& key)
+		: Key(std::move(key)) { }
+	DatabaseQuery(const std::string& key)
+		: Key((u8*)key.data(), key.size(), 0, false) { }
+	DatabaseQuery(const char* key)
+		: Key((u8*)key, strlen(key), 0, false) { }
+	DatabaseQuery(u32 key)
+		: Key((u8*)&key, sizeof(u32), 0, false) { }
 };
 
 struct DatabaseResult {
 	bool Success = false;
 	Bytes Data;
 
+	operator bool() const { return Success; }
 	template<typename T>
-	T Get() {
+	T& Get() {
 		return *(T*)Data.Get();
 	}
 };

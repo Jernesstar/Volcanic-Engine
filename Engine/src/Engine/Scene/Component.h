@@ -59,40 +59,40 @@ struct TransformComponent : public Component {
 };
 
 struct AudioComponent : public Component {
-	// Asset AudioAsset;
+	Asset AudioAsset;
 
 	AudioComponent() = default;
-	// AudioComponent(const Asset& asset)
-	// 	: AudioAsset(asset) { }
+	AudioComponent(const Asset& asset)
+		: AudioAsset(asset) { }
 	AudioComponent(const AudioComponent& other) = default;
 };
 
 struct MeshComponent : public Component {
-	// Asset MeshSourceAsset;
-	// Asset MaterialAsset;
+	Asset MeshSourceAsset;
+	Asset MaterialAsset;
 
 	MeshComponent() = default;
-	// MeshComponent(const Asset& source, const Asset& mat)
-	// 	: MeshSourceAsset(source), MaterialAsset(mat) { }
+	MeshComponent(const Asset& source, const Asset& mat)
+		: MeshSourceAsset(source), MaterialAsset(mat) { }
 	MeshComponent(const MeshComponent& other) = default;
 };
 
 struct SkyboxComponent : public Component {
-	// Asset CubemapAsset;
+	Asset CubemapAsset;
 
 	SkyboxComponent() = default;
-	// SkyboxComponent(const Asset& asset)
-	// 	: CubemapAsset(asset) { }
+	SkyboxComponent(const Asset& asset)
+		: CubemapAsset(asset) { }
 	SkyboxComponent(const SkyboxComponent& other) = default;
 };
 
 struct ScriptComponent : public Component {
-	// Asset ModuleAsset;
-	// Ref<ScriptObject> Instance;
+	Asset ModuleAsset;
+	Ref<ScriptObject> Instance;
 
 	ScriptComponent() = default;
-	// ScriptComponent(const Asset& asset, Ref<ScriptObject> obj)
-	// 	: ModuleAsset(asset), Instance(obj) { }
+	ScriptComponent(const Asset& asset, Ref<ScriptObject> obj)
+		: ModuleAsset(asset), Instance(obj) { }
 	ScriptComponent(const ScriptComponent& other) = default;
 	ScriptComponent(ScriptComponent&& other) = default;
 };
@@ -162,13 +162,13 @@ struct ParticleEmitterComponent : public Component {
 	f32 ParticleLifetime; // In milliseconds
 	f32 SpawnInterval; // In milliseconds
 	f32 Offset;
-	// Asset MaterialAsset;
+	Asset MaterialAsset;
 
 	ParticleEmitterComponent() = default;
-	// ParticleEmitterComponent(const Vec3& pos, u64 max, f32 lifetime,
-	// 	f32 spawnInterval, f32 offset, const Asset& asset)
-	// 	: Position(pos), MaxParticleCount(max), ParticleLifetime(lifetime),
-	// 	SpawnInterval(spawnInterval), Offset(offset), MaterialAsset(asset) { }
+	ParticleEmitterComponent(const Vec3& pos, u64 max, f32 lifetime,
+		f32 spawnInterval, f32 offset, const Asset& asset)
+		: Position(pos), MaxParticleCount(max), ParticleLifetime(lifetime),
+		SpawnInterval(spawnInterval), Offset(offset), MaterialAsset(asset) { }
 	ParticleEmitterComponent(const ParticleEmitterComponent& other) = default;
 };
 

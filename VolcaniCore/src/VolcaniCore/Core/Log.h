@@ -9,7 +9,7 @@ namespace VolcaniCore {
 class Log {
 public:
 	static void Init() {
-		auto logger = spdlog::basic_logger_mt("basic_logger", "logs/basic.txt");
+		auto logger = spdlog::basic_logger_mt("basic_logger", "~/logs/VolcanicEngine.txt");
 		spdlog::set_default_logger(logger);
 	}
 

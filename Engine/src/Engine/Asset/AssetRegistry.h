@@ -5,10 +5,10 @@
 #include <VolcaniCore/Core/List.h>
 
 #include <Engine/Graphics/Mesh.h>
-#include <Engine/Graphics/Shader.h>
-#include <Engine/Graphics/Texture.h>
-#include <Engine/Graphics/Cubemap.h>
-#include <Engine/Graphics/RendererAPI.h>
+#include <Engine/Graphics/Platform/Shader.h>
+#include <Engine/Graphics/Platform/Texture.h>
+#include <Engine/Graphics/Platform/Cubemap.h>
+#include <Engine/Graphics/Platform/RendererAPI.h>
 #include <Engine/Audio/Sound.h>
 #include <Engine/Script/ScriptModule.h>
 #include <Engine/Script/ScriptClass.h>
@@ -66,6 +66,7 @@ public:
 	~AssetRegistry();
 
 	void Add(Asset asset);
+	void Remove(Asset asset);
 
 	bool IsValid(Asset asset) const;
 	bool IsLoaded(Asset asset) const;
@@ -77,17 +78,16 @@ public:
 	void NameAsset(Asset asset, const std::string& name);
 	void RemoveName(Asset asset);
 
-	void For(const Function<void, Asset>& cb);
+	void For(const Func<void, Asset>& cb);
 	void Clear();
 
 	std::string GetAssetName(Asset asset) const;
 	Asset FindAsset(const std::string& lookup) const;
 
 private:
-	Database* m_AssetRegistry;
-	Database* m_AssetData;
-	Map<UUID, List<Asset>> m_References;
-	Map<Asset, std::string> m_NamedAssets;
+	Registry m_Registry;
+	Database* m_AssetMetadata; // ID, Type, Ref, Name
+	Database* m_AssetData; // ID, Data
 };
 
 }

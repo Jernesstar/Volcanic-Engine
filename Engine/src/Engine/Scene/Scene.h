@@ -13,7 +13,6 @@ namespace VolcanicEngine {
 class Scene {
 public:
 	std::string Name;
-
 	ECS::World EntityWorld;
 
 public:
