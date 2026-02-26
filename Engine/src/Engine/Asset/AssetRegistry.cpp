@@ -2,12 +2,12 @@
 
 namespace VolcanicEngine {
 
-AssetRegistry::AssetRegistry()
-	: m_Registry("./volc/assets/registry.db", 2)
-{
+AssetRegistry::AssetRegistry() {
+	m_Registry = ("./volc/assets/registry.db", 2);
 	m_AssetMetadata = m_Registry.NewDatabase("AssetMetadata");
 	m_AssetData = m_Registry.NewDatabase("AssetData");
 }
+
 AssetRegistry::~AssetRegistry() { }
 
 void AssetRegistry::Add(Asset asset) { }
@@ -19,10 +19,9 @@ bool AssetRegistry::IsValid(Asset asset) const {
 }
 
 bool AssetRegistry::IsLoaded(Asset asset) const {
-	auto res = m_AssetMetadata->Query({ "ID" });
+	auto res = m_AssetMetadata->Query({ (u64)asset.ID });
 	if(res) {
 		auto& asset = res.Get<Asset>();
-		return asset.ID == asset.ID && asset.Type == asset.Type;
 	}
 }
 

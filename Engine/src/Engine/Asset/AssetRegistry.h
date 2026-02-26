@@ -67,6 +67,8 @@ public:
 
 	void Add(Asset asset);
 	void Remove(Asset asset);
+	void Set(Asset asset, Bytes data);
+	Bytes Get(Asset asset);
 
 	bool IsValid(Asset asset) const;
 	bool IsLoaded(Asset asset) const;
@@ -85,7 +87,7 @@ public:
 	Asset FindAsset(const std::string& lookup) const;
 
 private:
-	Registry m_Registry;
+	Registry* m_Registry;
 	Database* m_AssetMetadata; // ID, Type, Ref, Name
 	Database* m_AssetData; // ID, Data
 };

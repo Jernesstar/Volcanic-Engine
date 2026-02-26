@@ -36,8 +36,8 @@ EditorSceneRenderer::EditorSceneRenderer() {
 	GridPass =
 		RenderPass::Create("Grid",
 			AssetImporter::GetShader({
-				"Engineassets/shaders/Grid.glsl.vert",
-				"Engineassets/shaders/Grid.glsl.frag"
+				"Engine/assets/shaders/Grid.glsl.vert",
+				"Engine/assets/shaders/Grid.glsl.frag"
 			}), m_Output);
 	GridPass->SetData(Renderer2D::GetScreenBuffer());
 
@@ -63,51 +63,51 @@ EditorSceneRenderer::EditorSceneRenderer() {
 	BillboardPass =
 		RenderPass::Create("Billboard",
 			AssetImporter::GetShader({
-				"Engineassets/shaders/Billboard.glsl.vert",
-				"Engineassets/shaders/Billboard.glsl.frag"
+				"Engine/assets/shaders/Billboard.glsl.vert",
+				"Engine/assets/shaders/Billboard.glsl.frag"
 			}), m_Output);
 	BillboardPass->SetData(BillboardBuffer);
 
 	CameraIcon =
-		AssetImporter::GetTexture("Engineassets/icons/CameraIcon.png");
+		AssetImporter::GetTexture("Engine/assets/icons/CameraIcon.png");
 	DirectionalLightIcon =
-		AssetImporter::GetTexture("Engineassets/icons/DirectionalLightIcon.png");
+		AssetImporter::GetTexture("Engine/assets/icons/DirectionalLightIcon.png");
 	PointLightIcon =
-		AssetImporter::GetTexture("Engineassets/icons/PointLightIcon.png");
+		AssetImporter::GetTexture("Engine/assets/icons/PointLightIcon.png");
 	SpotlightIcon =
-		AssetImporter::GetTexture("Engineassets/icons/SpotlightIcon.png");
+		AssetImporter::GetTexture("Engine/assets/icons/SpotlightIcon.png");
 	ParticlesIcon =
-		AssetImporter::GetTexture("Engineassets/icons/ParticlesIcon.png");
+		AssetImporter::GetTexture("Engine/assets/icons/ParticlesIcon.png");
 
 	MeshPass =
 		RenderPass::Create("Mesh",
 			AssetImporter::GetShader({
-				"Engineassets/shaders/Mesh.glsl.vert",
-				"Engineassets/shaders/Mesh.glsl.frag"
+				"Engine/assets/shaders/Mesh.glsl.vert",
+				"Engine/assets/shaders/Mesh.glsl.frag"
 			}), m_Output);
 	MeshPass->SetData(Renderer3D::GetMeshBuffer());
 
 	MaskPass =
 		RenderPass::Create("Mask",
 			AssetImporter::GetShader({
-				"Engineassets/shaders/Mask.glsl.vert",
-				"Engineassets/shaders/Mask.glsl.frag"
+				"Engine/assets/shaders/Mask.glsl.vert",
+				"Engine/assets/shaders/Mask.glsl.frag"
 			}), Framebuffer::Create(window->GetWidth(), window->GetHeight()));
 	MaskPass->SetData(Renderer3D::GetMeshBuffer());
 
 	OutlinePass =
 		RenderPass::Create("Outline",
 			AssetImporter::GetShader({
-				"Engineassets/shaders/Outline.glsl.vert",
-				"Engineassets/shaders/Outline.glsl.frag"
+				"Engine/assets/shaders/Outline.glsl.vert",
+				"Engine/assets/shaders/Outline.glsl.frag"
 			}), m_Output);
 	OutlinePass->SetData(Renderer2D::GetScreenBuffer());
 
 	LinePass =
 		RenderPass::Create("Line",
 			AssetImporter::GetShader({
-				"Engineassets/shaders/Line.glsl.vert",
-				"Engineassets/shaders/Line.glsl.frag"
+				"Engine/assets/shaders/Line.glsl.vert",
+				"Engine/assets/shaders/Line.glsl.frag"
 			}), m_Output);
 	LinePass->SetData(Renderer3D::GetLineBuffer());
 

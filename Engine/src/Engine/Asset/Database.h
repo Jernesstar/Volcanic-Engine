@@ -20,8 +20,8 @@ struct DatabaseQuery {
 		: Key((u8*)key.data(), key.size(), 0, false) { }
 	DatabaseQuery(const char* key)
 		: Key((u8*)key, strlen(key), 0, false) { }
-	DatabaseQuery(u32 key)
-		: Key((u8*)&key, sizeof(u32), 0, false) { }
+	DatabaseQuery(u64 key)
+		: Key((u8*)&key, sizeof(u64), 0, false) { }
 };
 
 struct DatabaseResult {
