@@ -17,7 +17,7 @@ using namespace VolcanicEngine::Script;
 namespace VolcanicEngine::ECS {
 
 struct Component {
-	uint8_t _;
+	u8 _;
 
 	Component() = default;
 	Component(const Component& other) = default;

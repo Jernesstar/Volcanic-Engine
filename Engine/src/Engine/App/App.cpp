@@ -1,216 +1,214 @@
 #include "App.h"
 
-// #include <VolcaniCore/Core/Application.h>
-// #include <VolcaniCore/Core/Input.h>
-// #include <VolcaniCore/Core/Log.h>
-// #include <VolcaniCore/Core/List.h>
-// #include <VolcaniCore/Core/FileUtils.h>
+#include <VolcaniCore/Core/Application.h>
+#include <VolcaniCore/Core/Log.h>
+#include <VolcaniCore/Core/List.h>
+#include <VolcaniCore/Core/FileUtils.h>
+#include <VolcaniCore/Window/Input.h>
 
-// #include <Engine/Graphics/Renderer.h>
-// #include <Engine/Graphics/Renderer2D.h>
-// #include <Engine/Graphics/Renderer3D.h>
+#include <Engine/Graphics/Renderer.h>
+#include <Engine/Graphics/Renderer2D.h>
+#include <Engine/Graphics/Renderer3D.h>
 
-// #include <Engine/Script/ScriptModule.h>
-// #include <Engine/Script/ScriptClass.h>
-// #include <Engine/Script/ScriptObject.h>
-// #include <Engine/UI/UIRenderer.h>
-// #include <Engine/Physics/Physics.h>
+#include <Engine/Script/ScriptModule.h>
+#include <Engine/Script/ScriptClass.h>
+#include <Engine/Script/ScriptObject.h>
+#include <Engine/Physics/Physics.h>
 
-// #include "ScriptGlue.h"
+#include <Engine/Asset/AssetManager.h>
 
-// using namespace VolcanicEngine::Script;
-// using namespace VolcanicEngine::ECS;
+#include "ScriptGlue.h"
+
+using namespace VolcanicEngine::Script;
+using namespace VolcanicEngine::ECS;
 // using namespace VolcanicEngine::Physics;
 
 namespace fs = std::filesystem;
 
 namespace VolcanicEngine {
 
-// static Ref<ScriptModule> s_AppModule = nullptr;
-// static Ref<ScriptObject> s_AppObject = nullptr;
+static Ref<ScriptModule> s_AppModule = nullptr;
+static Ref<ScriptObject> s_AppObject = nullptr;
 
-// static bool s_ScreenPrepared = false;
-// static bool s_ShouldSwitchScreen = false;
-// static bool s_ShouldPushScreen = false;
-// static bool s_ShouldPopScreen = false;
-// static std::string s_NewScreenName = "";
+static bool s_ScreenPrepared = false;
+static bool s_ShouldSwitchScreen = false;
+static bool s_ShouldPushScreen = false;
+static bool s_ShouldPopScreen = false;
+static std::string s_NewScreenName = "";
 
-// static Scene* s_ShouldLoadScene = nullptr;
-// static UIPage* s_ShouldLoadUI = nullptr;
+static Scene* s_ShouldLoadScene = nullptr;
+static Canvas* s_ShouldLoadCanvas = nullptr;
 
-// struct RuntimeScreen {
-// 	Ref<Scene> World;
-// 	UIPage UI;
-// 	Ref<ScriptModule> Script;
-// 	Ref<ScriptObject> ScriptObj;
+struct RuntimeScreen {
+	Ref<Scene> World;
+	Ref<Canvas> UI;
+	Ref<ScriptModule> Script;
+	Ref<ScriptObject> ScriptObj;
 
-// 	RuntimeScreen()
-// 		: World(CreateRef<Scene>("")), UI("")
-// 	{
-// 	}
+	RuntimeScreen()
+		: World(CreateRef<Scene>("")), UI(CreateRef<Canvas>("")) { }
 
-// 	~RuntimeScreen() {
-// 		ScriptObj->Call("OnClose");
-// 		ScriptObj.reset();
-// 		Script.reset();
+	~RuntimeScreen() {
+		ScriptObj->Call("OnClose");
+		ScriptObj.reset();
+		Script.reset();
 
-// 		App::Get()->GetRenderer().OnSceneClose();
-// 		UI.Clear();
-// 		World->UnregisterSystems();
-// 		World.reset();
-// 	}
-// };
+		App::Get()->GetSceneRenderer().OnSceneClose();
+		World->UnregisterSystems();
+		World.reset();
+		// UI.Clear();
+	}
+};
 
-// static RuntimeScreen* s_Screen = nullptr;
+static RuntimeScreen* s_Screen = nullptr;
 
-// static Scene& ScriptGetScene() {
-// 	return *s_Screen->World;
-// }
+static Scene& ScriptGetScene() {
+	return *s_Screen->World;
+}
 
-// static UIPage& ScriptGetUI() {
-// 	return s_Screen->UI;
-// }
+static Canvas& ScriptGetUI() {
+	return *s_Screen->UI;
+}
 
-// static asIScriptObject* GetScriptApp() {
-// 	auto* handle = s_AppObject->GetHandle();
-// 	handle->AddRef();
-// 	return handle;
-// }
+static asIScriptObject* GetScriptApp() {
+	auto* handle = s_AppObject->GetHandle();
+	handle->AddRef();
+	return handle;
+}
 
-// static AssetManager& GetAssetManagerInstance() {
-// 	return *AssetManager::Get();
-// }
+static AssetManager& GetAssetManagerInstance() {
+	return *AssetManager::Get();
+}
 
-// static void ScriptLoadScene(const std::string& name, App* app) {
-// 	s_Screen->World->Name = name;
-// 	s_Screen->World->EntityWorld.Reset();
-// 	s_Screen->World->UnregisterSystems();
-// 	s_Screen->World->RegisterSystems();
-// 	app->GetRenderer().OnSceneLoad();
-// 	app->SceneLoad(*s_Screen->World);
+static void ScriptLoadScene(const std::string& name, App* app) {
+	s_Screen->World->Name = name;
+	s_Screen->World->EntityWorld.Reset();
+	s_Screen->World->UnregisterSystems();
+	s_Screen->World->RegisterSystems();
+	app->GetSceneRenderer().OnSceneLoad();
+	app->SceneLoad(*s_Screen->World);
 
-// 	List<Entity> list;
-// 	s_Screen->World->EntityWorld
-// 	.ForEach<ScriptComponent>(
-// 		[&](Entity entity)
-// 		{
-// 			auto& sc = entity.Set<ScriptComponent>();
-// 			if(sc.Instance)
-// 				list.Add(entity);
-// 		});
+	List<Entity> list;
+	// s_Screen->World->EntityWorld
+	// .ForEach<ScriptComponent>(
+	// 	[&](Entity entity)
+	// 	{
+	// 		auto& sc = entity.Set<ScriptComponent>();
+	// 		if(sc.Instance)
+	// 			list.Add(entity);
+	// 	});
 
-// 	list.ForEach(
-// 		[](Entity& entity)
-// 		{
-// 			auto& sc = entity.Set<ScriptComponent>();
-// 			auto old = sc.Instance;
-// 			if(!old->IsInitialized()) { // i.e Editor
-// 				sc.Instance = old->GetClass()->Instantiate(entity);
-// 				ScriptGlue::Copy(old, sc.Instance);
-// 			}
+	// list.ForEach(
+	// 	[](Entity& entity)
+	// 	{
+	// 		auto& sc = entity.Set<ScriptComponent>();
+	// 		auto old = sc.Instance;
+	// 		if(!old->IsInitialized()) { // i.e Editor
+	// 			sc.Instance = old->GetClass()->Instantiate(entity);
+	// 			ScriptGlue::Copy(old, sc.Instance);
+	// 		}
 
-// 			sc.Instance->Call("OnStart");
-// 		});
+	// 		sc.Instance->Call("OnStart");
+	// 	});
+}
 
-// }
-
-// static void ScriptLoadUI(const std::string& name, App* app) {
-// 	s_Screen->UI.Name = name;
-// 	app->UILoad(s_Screen->UI);
-// }
+static void ScriptLoadUI(const std::string& name, App* app) {
+	s_Screen->UI->Name = name;
+	app->UILoad(*s_Screen->UI);
+}
 
 static void AppLog(const std::string& msg, App* app) {
-	// app->Log(msg);
+	app->Log(msg);
 }
 
 App::App() {
 	s_Instance = this;
 
-	// ScriptEngine::RegisterSingleton("AppClass", "App", this);
+	ScriptEngine::RegisterSingleton("AppClass", "App", this);
 
-	// ScriptEngine::RegisterMethod<App>(
-	// 	"AppClass", "void SwitchScreen(const string &in)", &App::SwitchScreen);
-	// ScriptEngine::RegisterMethod<App>(
-	// 	"AppClass", "void PushScreen(const string &in)", &App::PushScreen);
-	// ScriptEngine::RegisterMethod<App>(
-	// 	"AppClass", "void PopScreen()", &App::PopScreen);
-	// ScriptEngine::Get()->RegisterObjectMethod("AppClass",
-	// 	"void Log(const string &in)", asFUNCTION(AppLog), asCALL_CDECL_OBJLAST);
+	ScriptEngine::RegisterMethod<App>(
+		"AppClass", "void SwitchScreen(const string &in)", &App::SwitchScreen);
+	ScriptEngine::RegisterMethod<App>(
+		"AppClass", "void PushScreen(const string &in)", &App::PushScreen);
+	ScriptEngine::RegisterMethod<App>(
+		"AppClass", "void PopScreen()", &App::PopScreen);
+	ScriptEngine::Get()->RegisterObjectMethod("AppClass",
+		"void Log(const string &in)", asFUNCTION(AppLog), asCALL_CDECL_OBJLAST);
 
-	// ScriptEngine::Get()->RegisterObjectMethod(
-	// 	"AppClass", "void LoadScene(const string &in)",
-	// 	asFUNCTION(ScriptLoadScene), asCALL_CDECL_OBJLAST);
-	// ScriptEngine::Get()->RegisterObjectMethod(
-	// 	"AppClass", "void LoadUI(const string &in)",
-	// 	asFUNCTION(ScriptLoadUI), asCALL_CDECL_OBJLAST);
+	ScriptEngine::Get()->RegisterObjectMethod(
+		"AppClass", "void LoadScene(const string &in)",
+		asFUNCTION(ScriptLoadScene), asCALL_CDECL_OBJLAST);
+	ScriptEngine::Get()->RegisterObjectMethod(
+		"AppClass", "void LoadUI(const string &in)",
+		asFUNCTION(ScriptLoadUI), asCALL_CDECL_OBJLAST);
 
-	// ScriptEngine::Get()->RegisterGlobalFunction(
-	// 	"SceneClass& get_Scene() property",
-	// 	asFUNCTION(ScriptGetScene), asCALL_CDECL);
-	// ScriptEngine::Get()->RegisterGlobalFunction(
-	// 	"UIPageClass& get_UIPage() property",
-	// 	asFUNCTION(ScriptGetUI), asCALL_CDECL);
+	ScriptEngine::Get()->RegisterGlobalFunction(
+		"SceneClass& get_Scene() property",
+		asFUNCTION(ScriptGetScene), asCALL_CDECL);
+	ScriptEngine::Get()->RegisterGlobalFunction(
+		"CanvasClass& get_Canvas() property",
+		asFUNCTION(ScriptGetUI), asCALL_CDECL);
 
-	// ScriptEngine::Get()->RegisterGlobalFunction(
-	// 	"IApp@ get_ScriptApp() property",
-	// 	asFUNCTION(GetScriptApp), asCALL_CDECL);
-	// ScriptEngine::Get()->RegisterGlobalFunction(
-	// 	"AssetManagerClass& get_AssetManager() property",
-	// 	asFUNCTION(GetAssetManagerInstance), asCALL_CDECL);
+	ScriptEngine::Get()->RegisterGlobalFunction(
+		"IApp@ get_ScriptApp() property",
+		asFUNCTION(GetScriptApp), asCALL_CDECL);
+	ScriptEngine::Get()->RegisterGlobalFunction(
+		"AssetManagerClass& get_AssetManager() property",
+		asFUNCTION(GetAssetManagerInstance), asCALL_CDECL);
 }
 
 void App::OnLoad() {
-	// s_AppModule = CreateRef<ScriptModule>();
-	// AppLoad(s_AppModule);
+	s_AppModule = CreateRef<ScriptModule>();
+	AppLoad(s_AppModule);
 
-	// s_AppObject = s_AppModule->GetClass(m_Project.App)->Instantiate();
-	// s_AppObject->Call("OnLoad");
+	s_AppObject = s_AppModule->GetClass(m_Project.App)->Instantiate();
+	s_AppObject->Call("OnLoad");
 }
 
 void App::OnClose() {
-	// delete s_Screen;
-	// s_Screen = nullptr;
-	// s_ScreenPrepared = false;
+	delete s_Screen;
+	s_Screen = nullptr;
+	s_ScreenPrepared = false;
 
-	// if(s_AppObject)
-	// 	s_AppObject->Call("OnClose");
+	if(s_AppObject)
+		s_AppObject->Call("OnClose");
 
-	// s_AppObject.reset();
-	// s_AppModule.reset();
+	s_AppObject.reset();
+	s_AppModule.reset();
 }
 
 void App::OnUpdate(TimeStep ts) {
-	// if(!Running)
-	// 	return;
+	if(!Running)
+		return;
 
-	// if(s_ShouldSwitchScreen)
-	// 	ScreenSet(s_NewScreenName);
-	// else if(s_ShouldPushScreen)
-	// 	ScreenPush(s_NewScreenName);
-	// else if(s_ShouldPopScreen)
-	// 	ScreenPop();
+	if(s_ShouldSwitchScreen)
+		ScreenSet(s_NewScreenName);
+	else if(s_ShouldPushScreen)
+		ScreenPush(s_NewScreenName);
+	else if(s_ShouldPopScreen)
+		ScreenPop();
 
-	// s_AppObject->Call("OnUpdate", (float)ts);
+	s_AppObject->Call("OnUpdate", (f32)ts);
 
-	// if(!s_Screen)
-	// 	return;
+	if(!s_Screen)
+		return;
 
-	// s_Screen->ScriptObj->Call("OnUpdate", (float)ts);
+	s_Screen->ScriptObj->Call("OnUpdate", (f32)ts);
 
-	// s_Screen->World->OnUpdate(ts);
-	// m_SceneRenderer.Update(ts);
-	// s_Screen->World->OnRender(m_SceneRenderer);
+	s_Screen->World->OnUpdate(ts);
+	m_SceneRenderer.Update(ts);
+	s_Screen->World->OnRender(m_SceneRenderer);
 
-	// if(RenderScene) {
-	// 	auto output = m_SceneRenderer.GetOutput();
-	// 	Renderer2D::DrawFullscreenQuad(output, AttachmentTarget::Color);
-	// 	Renderer::Flush();
-	// }
+	if(RenderScene) {
+		auto output = m_SceneRenderer.GetOutput();
+		Renderer2D::DrawFullscreenQuad(output, AttachmentTarget::Color);
+		Renderer::Flush();
+	}
 
-	// if(!RenderUI)
-	// 	return;
+	if(!RenderUI)
+		return;
 
-	// s_Screen->UI.Traverse(
+	// s_Screen->UI->Traverse(
 	// 	[&](UIElement* element, TraversalStage state)
 	// 	{
 	// 		if(state == TraversalStage::Begin) {
@@ -239,127 +237,128 @@ void App::OnUpdate(TimeStep ts) {
 	// 	});
 }
 
-// void App::LoadScene(Scene* scene) {
-// 	s_ShouldLoadScene = scene;
-// }
+void App::LoadScene(Scene* scene) {
+	s_ShouldLoadScene = scene;
+}
 
-// void App::LoadUI(UIPage* ui) {
-// 	s_ShouldLoadUI = ui;
-// }
+void App::LoadCanvas(Canvas* canvas) {
+	s_ShouldLoadCanvas = canvas;
+}
 
-// Scene* App::GetScene() {
-// 	VOLCANICORE_ASSERT(s_Screen);
-// 	return s_Screen->World.get();
-// }
+Scene* App::GetScene() {
+	VOLCANICORE_ASSERT(s_Screen);
+	return s_Screen->World.get();
+}
 
-// UIPage* App::GetUI() {
-// 	VOLCANICORE_ASSERT(s_Screen);
-// 	return &s_Screen->UI;
-// }
+Canvas* App::GetCanvas() {
+	VOLCANICORE_ASSERT(s_Screen);
+	return s_Screen->UI.get();
+}
 
-// void App::SwitchScreen(const std::string& name) {
-// 	if (!ChangeScreen) {
-// 		Running = false;
-// 		return;
-// 	}
+void App::SwitchScreen(const std::string& name) {
+	if(!ChangeScreen) {
+		Running = false;
+		return;
+	}
 
-// 	s_ShouldSwitchScreen = true;
-// 	s_NewScreenName = name;
-// }
+	s_ShouldSwitchScreen = true;
+	s_NewScreenName = name;
+}
 
-// void App::PushScreen(const std::string& name) {
-// 	if (!ChangeScreen) {
-// 		Running = false;
-// 		return;
-// 	}
+void App::PushScreen(const std::string& name) {
+	if(!ChangeScreen) {
+		Running = false;
+		return;
+	}
 
-// 	s_ShouldPushScreen = true;
-// 	s_NewScreenName = name;
-// }
+	s_ShouldPushScreen = true;
+	s_NewScreenName = name;
+}
 
-// void App::PopScreen(const std::string& name) {
-// 	if (!ChangeScreen) {
-// 		Running = false;
-// 		return;
-// 	}
+void App::PopScreen(const std::string& name) {
+	if(!ChangeScreen) {
+		Running = false;
+		return;
+	}
 
-// 	s_ShouldPopScreen = true;
-// 	s_NewScreenName = name;
-// }
+	s_ShouldPopScreen = true;
+	s_NewScreenName = name;
+}
 
-// void App::ScreenSet(const std::string& name) {
-// 	s_ShouldSwitchScreen = false;
-// 	if(name == "")
-// 		return;
+void App::ScreenSet(const std::string& name) {
+	s_ShouldSwitchScreen = false;
+	if(name == "")
+		return;
 
-// 	auto [found, idx] =
-// 		m_Project.Screens.Find(
-// 			[name](const Screen& screen) { return screen.Name == name; });
-// 	if(!found) {
-// 		VOLCANICORE_LOG_INFO("Screen '%s' was not found", name.c_str());
-// 		return;
-// 	}
-// 	else
-// 		VOLCANICORE_LOG_INFO("Found screen '%s'", name.c_str());
+	auto [found, idx] =
+		m_Project.Screens.Find(
+			[name](const Screen& screen) { return screen.Name == name; });
 
-// 	auto& screen = m_Project.Screens[idx];
-// 	if(!s_ScreenPrepared)
-// 		PrepareScreen();
-// 	s_ScreenPrepared = false;
+	if(!found) {
+		Log::Info("Screen '%s' was not found", name.c_str());
+		return;
+	}
+	else
+		Log::Info("Found screen '%s'", name.c_str());
 
-// 	s_Screen->World->Name = screen.Scene;
-// 	s_Screen->UI.Name = screen.UI;
+	auto& screen = m_Project.Screens[idx];
+	if(!s_ScreenPrepared)
+		PrepareScreen();
 
-// 	ScreenLoad(s_Screen->Script, screen.Name);
-// 	auto scriptClass = s_Screen->Script->GetClass(name);
-// 	s_Screen->ScriptObj = scriptClass->Instantiate();
+	s_ScreenPrepared = false;
 
-// 	if(s_ShouldLoadScene) {
-// 		m_SceneRenderer.OnSceneLoad();
-// 		s_Screen->World->RegisterSystems();
-// 		*s_Screen->World = *s_ShouldLoadScene;
-// 		s_ShouldLoadScene = nullptr;
+	s_Screen->World->Name = screen.Scene;
+	s_Screen->UI->Name = screen.Canvas;
 
-// 		List<Entity> list;
-// 		s_Screen->World->EntityWorld
-// 		.ForEach<ScriptComponent>(
-// 			[&](Entity entity)
-// 			{
-// 				const auto& sc = entity.Get<ScriptComponent>();
-// 				if(sc.Instance)
-// 					list.Add(entity);
-// 			});
+	ScreenLoad(s_Screen->Script, screen.Name);
+	auto scriptClass = s_Screen->Script->GetClass(name);
+	s_Screen->ScriptObj = scriptClass->Instantiate();
 
-// 		list.ForEach(
-// 			[](Entity& entity)
-// 			{
-// 				auto& sc = entity.Set<ScriptComponent>();
-// 				auto old = sc.Instance;
-// 				sc.Instance = old->GetClass()->Instantiate(entity);
-// 				ScriptGlue::Copy(old, sc.Instance);
-// 				sc.Instance->Call("OnStart");
-// 			});
+	if(s_ShouldLoadScene) {
+		m_SceneRenderer.OnSceneLoad();
+		s_Screen->World->RegisterSystems();
+		*s_Screen->World = *s_ShouldLoadScene;
+		s_ShouldLoadScene = nullptr;
 
-// 	}
-// 	else if(screen.Scene != "")
-// 		ScriptLoadScene(screen.Scene, this);
+		List<Entity> list;
+		// s_Screen->World->EntityWorld
+		// .ForEach<ScriptComponent>(
+		// 	[&](Entity entity)
+		// 	{
+		// 		const auto& sc = entity.Get<ScriptComponent>();
+		// 		if(sc.Instance)
+		// 			list.Add(entity);
+		// 	});
 
-// 	if(s_ShouldLoadUI) {
-// 		s_Screen->UI = *s_ShouldLoadUI;
-// 		s_ShouldLoadUI = nullptr;
-// 	}
-// 	else if(screen.UI != "")
-// 		UILoad(s_Screen->UI);
+		// list.ForEach(
+		// 	[](Entity& entity)
+		// 	{
+		// 		auto& sc = entity.Set<ScriptComponent>();
+		// 		auto old = sc.Instance;
+		// 		sc.Instance = old->GetClass()->Instantiate(entity);
+		// 		ScriptGlue::Copy(old, sc.Instance);
+		// 		sc.Instance->Call("OnStart");
+		// 	});
+	}
+	else if(screen.Scene != "")
+		ScriptLoadScene(screen.Scene, this);
 
-// 	s_Screen->ScriptObj->Call("OnLoad");
-// }
+	if(s_ShouldLoadCanvas) {
+		*s_Screen->UI = *s_ShouldLoadCanvas;
+		s_ShouldLoadCanvas = nullptr;
+	}
+	else if(screen.Canvas != "")
+		UILoad(*s_Screen->UI);
 
-// void App::ScreenPush(const std::string& name) {
+	s_Screen->ScriptObj->Call("OnLoad");
+}
 
-// }
+void App::ScreenPush(const std::string& name) {
 
-// void App::ScreenPop() {
+}
 
-// }
+void App::ScreenPop() {
+
+}
 
 }

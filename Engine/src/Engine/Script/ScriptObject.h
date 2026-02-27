@@ -30,7 +30,8 @@ class ScriptFunction {
 class ScriptObject {
 public:
 	ScriptObject();
-	ScriptObject(asIScriptObject* handle);
+	ScriptObject(asIScriptObject* handle, ScriptClass* cl,
+				 bool initialized);
 	~ScriptObject();
 
 	uint32_t AddRef();

@@ -31,14 +31,14 @@ void Scene::OnRender(SceneRenderer& renderer) {
 			renderer.SubmitCamera(Entity{ id });
 		});
 
-	// world.query_builder()
-	// .with<SkyboxComponent>()
-	// .build()
-	// .each(
-	// 	[&](flecs::entity id)
-	// 	{
-	// 		renderer.SubmitSkybox(Entity{ id });
-	// 	});
+	world.query_builder()
+	.with<SkyboxComponent>()
+	.build()
+	.each(
+		[&](flecs::entity id)
+		{
+			renderer.SubmitSkybox(Entity{ id });
+		});
 
 	world.query_builder()
 	.with<DirectionalLightComponent>().or_()
@@ -60,14 +60,14 @@ void Scene::OnRender(SceneRenderer& renderer) {
 			renderer.SubmitParticles(Entity{ id });
 		});
 
-	// world.query_builder()
-	// .with<MeshComponent>().and_().with<TransformComponent>()
-	// .build()
-	// .each(
-	// 	[&](flecs::entity id)
-	// 	{
-	// 		renderer.SubmitMesh(Entity{ id });
-	// 	});
+	world.query_builder()
+	.with<MeshComponent>().and_().with<TransformComponent>()
+	.build()
+	.each(
+		[&](flecs::entity id)
+		{
+			renderer.SubmitMesh(Entity{ id });
+		});
 
 	renderer.Render();
 }

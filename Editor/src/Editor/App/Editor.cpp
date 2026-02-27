@@ -44,7 +44,11 @@ void StandardIO() {
 			}
 			if(arg["--open_project"]) {
 				std::string path = arg["--open_project"];
-				Editor::OpenProject(path.c_str());
+				Editor::OpenProject(path);
+			}
+			if(arg["--new_project"]) {
+				std::string path = arg["--open_project"];
+				Editor::NewProject(path);
 			}
 		}
 	}
@@ -54,6 +58,54 @@ void Editor::Init(const CommandLineArgs& args) {
 	Log::Init();
 	Renderer::Init();
 	std::thread(StandardIO).detach();
+}
+
+void Editor::Close() {
+
+}
+
+void Editor::Update(TimeStep ts) {
+
+}
+
+void Editor::Render() {
+
+}
+
+void OpenProject(const std::string& path) {
+
+}
+
+void NewProject(const std::string& path) {
+
+}
+
+void SaveProject() {
+
+}
+
+void NewScene(const std::string& path) {
+
+}
+
+void OpenScene(const std::string& name) {
+
+}
+
+void SaveScene(const std::string& name) {
+
+}
+
+void NewCanvas(const std::string& name) {
+
+}
+
+void OpenCanvas(const std::string& name) {
+
+}
+
+void SaveCanvas(const std::string& name) {
+
 }
 
 }

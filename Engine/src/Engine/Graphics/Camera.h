@@ -1,9 +1,6 @@
 #pragma once
 
-#include <glm/vec3.hpp>
-#include <glm/mat4x4.hpp>
-
-#include <VolcaniCore/Core/Defines.h>
+#include <VolcaniCore/Core/Math.h>
 #include <VolcaniCore/Core/Template.h>
 
 using namespace VolcaniCore;
@@ -16,47 +13,46 @@ public:
 
 public:
 	static Ref<Camera> Create(Camera::Type type);
-	static Ref<Camera> Create(Camera::Type type, float fovOrRotation);
+	static Ref<Camera> Create(Camera::Type type, f32 fovOrRotation);
 
 public:
 	Camera(Camera::Type type);
-	Camera(Camera::Type type, uint32_t width, uint32_t height,
-			float near, float far);
+	Camera(Camera::Type type, u32 width, u32 height, f32 near, f32 far);
 	virtual ~Camera() = default;
 
-	virtual void Resize(uint32_t width, uint32_t height);
-	virtual void SetProjection(float near, float far);
+	virtual void Resize(u32 width, u32 height);
+	virtual void SetProjection(f32 near, f32 far);
 
-	void SetPosition(const glm::vec3& pos);
-	void SetDirection(const glm::vec3& dir);
-	void SetPositionDirection(const glm::vec3& pos, const glm::vec3& dir);
+	void SetPosition(const Vec3& pos);
+	void SetDirection(const Vec3& dir);
+	void SetPositionDirection(const Vec3& pos, const Vec3& dir);
 
 	Camera::Type GetType() const { return m_Type; }
 
-	const glm::vec3& GetPosition()  const { return Position; }
-	const glm::vec3& GetDirection() const { return Direction; }
+	const Vec3& GetPosition()  const { return Position; }
+	const Vec3& GetDirection() const { return Direction; }
 	
-	uint32_t GetViewportWidth() const { return ViewportWidth; }
-	uint32_t GetViewportHeight() const { return ViewportHeight; }
-	float GetNear() const { return Near; }
-	float GetFar()	const { return Far; }
+	u32 GetViewportWidth() const { return ViewportWidth; }
+	u32 GetViewportHeight() const { return ViewportHeight; }
+	f32 GetNear() const { return Near; }
+	f32 GetFar()	const { return Far; }
 
-	const glm::mat4& GetView()           const { return View; }
-	const glm::mat4& GetProjection()     const { return Projection; }
-	const glm::mat4& GetViewProjection() const { return ViewProjection; }
+	const Mat4& GetView()           const { return View; }
+	const Mat4& GetProjection()     const { return Projection; }
+	const Mat4& GetViewProjection() const { return ViewProjection; }
 
 protected:
-	glm::vec3 Position	= { 0.0f, 0.0f, 0.0f };
-	glm::vec3 Direction = { 0.0f, 0.0f, -1.0f };
+	Vec3 Position = { 0.0f, 0.0f, 0.0f };
+	Vec3 Direction = { 0.0f, 0.0f, -1.0f };
 
-	uint32_t ViewportWidth  = 800;
-	uint32_t ViewportHeight = 600;
-	float Near = 0.001f;
-	float Far  = 1000.0f;
+	u32 ViewportWidth  = 800;
+	u32 ViewportHeight = 600;
+	f32 Near = 0.001f;
+	f32 Far  = 1000.0f;
 
-	glm::mat4 Projection{ 1.0f };
-	glm::mat4 View{ 1.0f };
-	glm::mat4 ViewProjection{ 1.0f };
+	Mat4 Projection{ 1.0f };
+	Mat4 View{ 1.0f };
+	Mat4 ViewProjection{ 1.0f };
 
 protected:
 	virtual void CalculateView() = 0;

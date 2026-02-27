@@ -1,5 +1,6 @@
 #pragma once
 
+#include <VolcaniCore/Core/TimeUtils.h>
 #include <VolcaniCore/Core/Buffer.h>
 
 #include "Graphics/RenderPass.h"
@@ -31,6 +32,28 @@ public:
 
 protected:
 	Ref<Framebuffer> m_Output;
+};
+
+class RuntimeSceneRenderer : public SceneRenderer {
+public:
+	RuntimeSceneRenderer();
+	~RuntimeSceneRenderer();
+
+	void Update(TimeStep ts);
+
+	void Begin();
+	void SubmitCamera(const Entity& entity);
+	void SubmitSkybox(const Entity& entity);
+	void SubmitLight(const Entity& entity);
+	void SubmitParticles(const Entity& entity);
+	void SubmitMesh(const Entity& entity);
+	void Render();
+
+	void OnSceneLoad();
+	void OnSceneClose();
+
+private:
+	void InitMips();
 };
 
 }

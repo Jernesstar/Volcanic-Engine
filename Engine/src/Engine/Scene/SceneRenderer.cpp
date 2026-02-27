@@ -1,26 +1,26 @@
 #include "SceneRenderer.h"
 
 #include <VolcaniCore/Core/Application.h>
+#include <VolcaniCore/Core/Math.h>
 
 #include <Engine/Graphics/Renderer.h>
-#include <Engine/Graphics/RendererAPI.h>
 #include <Engine/Graphics/Renderer2D.h>
 #include <Engine/Graphics/Renderer3D.h>
 #include <Engine/Graphics/StereographicCamera.h>
-#include <Engine/Graphics/ShaderLibrary.h>
+#include <Engine/Graphics/Platform/RendererAPI.h>
 
 #include <Engine/Scene/Component.h>
 
 #include "App.h"
 
-namespace VolcanicRuntime {
+namespace VolcanicEngine {
 
 struct DirectionalLight {
-	glm::vec4 Position;
-	glm::vec4 Ambient;
-	glm::vec4 Diffuse;
-	glm::vec4 Specular;
-	glm::vec4 Direction;
+	Vec4 Position;
+	Vec4 Ambient;
+	Vec4 Diffuse;
+	Vec4 Specular;
+	Vec4 Direction;
 
 	DirectionalLight(const DirectionalLightComponent& dc)
 		: Position(dc.Position, 0.0f), Ambient(dc.Ambient, 0.0f),
@@ -29,15 +29,15 @@ struct DirectionalLight {
 };
 
 struct PointLight {
-	glm::vec4 Position;
-	glm::vec4 Ambient;
-	glm::vec4 Diffuse;
-	glm::vec4 Specular;
+	Vec4 Position;
+	Vec4 Ambient;
+	Vec4 Diffuse;
+	Vec4 Specular;
 
-	float Constant;
-	float Linear;
-	float Quadratic;
-	float BloomStrength;
+	f32 Constant;
+	f32 Linear;
+	f32 Quadratic;
+	f32 BloomStrength;
 
 	PointLight(const PointLightComponent& pc)
 		: Position(pc.Position, 0.0f), Ambient(pc.Ambient, 0.0f),
@@ -47,16 +47,16 @@ struct PointLight {
 };
 
 struct Spotlight {
-	glm::vec4 Position;
-	glm::vec4 Ambient;
-	glm::vec4 Diffuse;
-	glm::vec4 Specular;
-	glm::vec4 Direction;
+	Vec4 Position;
+	Vec4 Ambient;
+	Vec4 Diffuse;
+	Vec4 Specular;
+	Vec4 Direction;
 
-	float CutoffAngle;
-	float OuterCutoffAngle;
-	float _padding1;
-	float _padding2;
+	f32 CutoffAngle;
+	f32 OuterCutoffAngle;
+	f32 _padding1;
+	f32 _padding2;
 
 	Spotlight(const SpotlightComponent& sc)
 		: Position(sc.Position, 0.0f), Ambient(sc.Ambient, 0.0f),
@@ -66,24 +66,24 @@ struct Spotlight {
 };
 
 struct BloomMip {
-	glm::vec2 Size;
-	glm::ivec2 IntSize;
+	Vec2 Size;
+	Vec2i IntSize;
 	Ref<Texture> Sampler;
 };
 
 struct ParticleData {
 	Vec3 Position;
 	Vec3 Velocity;
-	float Life;
+	f32 Life;
 };
 
 struct ParticleEmitter {
 	Vec3 Position;
-	uint64_t MaxParticleCount;
-	float ParticleLifetime; // In milliseconds
-	float SpawnInterval; // In milliseconds
-	float Offset;
-	float Timer;
+	u64 MaxParticleCount;
+	f32 ParticleLifetime; // In milliseconds
+	f32 SpawnInterval; // In milliseconds
+	f32 Offset;
+	f32 Timer;
 
 	Ref<Texture> Material;
 	Ref<StorageBuffer> ParticleBuffer;
@@ -92,14 +92,28 @@ struct ParticleEmitter {
 };
 
 static List<BloomMip> s_MipChain;
-static uint32_t s_MipChainLength = 10;
-static float s_FilterRadius = 0.005f;
-static float s_Exposure = 1.0f;
-static float s_BloomStrength = 0.04f;
+static u32 s_MipChainLength = 10;
+static f32 s_FilterRadius = 0.005f;
+static f32 s_Exposure = 1.0f;
+static f32 s_BloomStrength = 0.04f;
 
-static Map<uint64_t, ParticleEmitter> s_ParticleEmitters;
-
+static Map<u64, ParticleEmitter> s_ParticleEmitters;
 static Map<UUID, DrawCommand*> s_MaterialMeshes;
+
+static Ref<RenderPass> LightingPass;
+static Ref<RenderPass> LightPass;
+
+static Ref<RenderPass> DownsamplePass;
+static Ref<RenderPass> UpsamplePass;
+static Ref<RenderPass> BloomPass;
+
+static Ref<RenderPass> EmitterPass;
+static Ref<RenderPass> UpdatePass;
+static Ref<RenderPass> ParticlePass;
+
+static Ref<UniformBuffer> DirectionalLightBuffer;
+static Ref<UniformBuffer> PointLightBuffer;
+static Ref<UniformBuffer> SpotlightBuffer;
 
 RuntimeSceneRenderer::RuntimeSceneRenderer() {
 	auto window = Application::GetWindow();
@@ -147,26 +161,26 @@ RuntimeSceneRenderer::RuntimeSceneRenderer() {
 
 	LightingPass =
 		RenderPass::Create("Lighting",
-			ShaderLibrary::Get("Lighting"), m_Output);
+			AssetManager::Get()->Load<Shader>("Lighting"), m_Output);
 	LightingPass->SetData(Renderer3D::GetMeshBuffer());
 
 	BaseLayer = Framebuffer::Create(window->GetWidth(), window->GetHeight());
 
 	LightPass =
 		RenderPass::Create("Light",
-			ShaderLibrary::Get("Light"), BaseLayer);
+			AssetManager::Get()->Load<Shader>("Light"), BaseLayer);
 	LightPass->SetData(Renderer2D::GetScreenBuffer());
 
 	InitMips();
 	DownsamplePass =
 		RenderPass::Create("Bloom-Downsample",
-			ShaderLibrary::Get("Bloom-Downsample"), Mips);
+			AssetManager::Get()->Load<Shader>("Bloom-Downsample"), Mips);
 	UpsamplePass =
 		RenderPass::Create("Bloom-Upsample",
-			ShaderLibrary::Get("Bloom-Upsample"), Mips);
+			AssetManager::Get()->Load<Shader>("Bloom-Upsample"), Mips);
 	BloomPass =
 		RenderPass::Create("Bloom",
-			ShaderLibrary::Get("Bloom"), m_Output);
+			AssetManager::Get()->Load<Shader>("Bloom"), m_Output);
 
 	DownsamplePass->SetData(Renderer2D::GetScreenBuffer());
 	UpsamplePass->SetData(Renderer2D::GetScreenBuffer());
@@ -174,13 +188,13 @@ RuntimeSceneRenderer::RuntimeSceneRenderer() {
 
 	EmitterPass =
 		RenderPass::Create("Particle-Emit",
-			ShaderLibrary::Get("Particle-Emit"));
+			AssetManager::Get()->Load<Shader>("Particle-Emit"));
 	UpdatePass =
 		RenderPass::Create("Particle-Update",
-			ShaderLibrary::Get("Particle-Update"));
+			AssetManager::Get()->Load<Shader>("Particle-Update"));
 	ParticlePass =
 		RenderPass::Create("Particle-Draw",
-			ShaderLibrary::Get("Particle-DefaultDraw"), m_Output);
+			AssetManager::Get()->Load<Shader>("Particle-DefaultDraw"), m_Output);
 	ParticlePass->SetData(Renderer3D::GetMeshBuffer());
 }
 
@@ -216,12 +230,12 @@ void RuntimeSceneRenderer::OnSceneLoad() {
 				emitter.MaxParticleCount = component.MaxParticleCount;
 
 				Buffer<ParticleData> data(emitter.MaxParticleCount);
-				for(uint32_t i = 0; i < emitter.MaxParticleCount; i++)
+				for(u32 i = 0; i < emitter.MaxParticleCount; i++)
 					data.Set(i, ParticleData{ });
 
 				Buffer<int> freelist(emitter.MaxParticleCount + 1);
 				freelist.Set(0, (int)emitter.MaxParticleCount);
-				for(uint32_t i = 1; i <= emitter.MaxParticleCount; i++)
+				for(u32 i = 1; i <= emitter.MaxParticleCount; i++)
 					freelist.Set(i, int(i) - 1);
 
 				emitter.ParticleBuffer =
@@ -240,20 +254,20 @@ void RuntimeSceneRenderer::OnSceneClose() {
 void RuntimeSceneRenderer::Update(TimeStep ts) {
 	Renderer::StartPass(EmitterPass);
 	{
-		int workGroupSize = 64;
+		i32 workGroupSize = 64;
 		auto* command = Renderer::GetCommand();
 		command->UniformData
-		.SetInput("u_TimeStep", (float)ts);
+		.SetInput("u_TimeStep", (f32)ts);
 
 		for(auto& [_, emitter] : s_ParticleEmitters) {
 			emitter.Timer += (float)ts;
-			uint32_t particlesToSpawn = emitter.Timer / emitter.SpawnInterval;
+			u32 particlesToSpawn = emitter.Timer / emitter.SpawnInterval;
 			emitter.Timer = glm::mod(emitter.Timer, emitter.SpawnInterval);
 
 			if(particlesToSpawn <= 0)
 				continue;
 
-			uint32_t numWorkGroups =
+			u32 numWorkGroups =
 				(particlesToSpawn + workGroupSize - 1) / workGroupSize;
 
 			auto* command = Renderer::NewCommand();
@@ -276,12 +290,12 @@ void RuntimeSceneRenderer::Update(TimeStep ts) {
 
 	Renderer::StartPass(UpdatePass);
 	{
-		int workGroupSize = 128;
+		i32 workGroupSize = 128;
 		auto* command = Renderer::GetCommand();
 		command->UniformData
-		.SetInput("u_TimeStep", (float)ts);
+		.SetInput("u_TimeStep", (f32)ts);
 		for(auto& [_, emitter] : s_ParticleEmitters) {
-			uint32_t numWorkGroups =
+			u32 numWorkGroups =
 				(emitter.MaxParticleCount + workGroupSize - 1) / workGroupSize;
 
 			command = Renderer::NewCommand();
@@ -336,9 +350,7 @@ void RuntimeSceneRenderer::SubmitCamera(const Entity& entity) {
 
 void RuntimeSceneRenderer::SubmitSkybox(const Entity& entity) {
 	auto& sc = entity.Get<SkyboxComponent>();
-	auto* assetManager = AssetManager::Get();
-	assetManager->Load(sc.CubemapAsset);
-	auto cubemap = assetManager->Get<Cubemap>(sc.CubemapAsset);
+	auto cubemap = AssetManager::Get()->Get<Cubemap>(sc.CubemapAsset);
 
 	LightingCommand->UniformData
 	.SetInput("u_Skybox", CubemapSlot{ cubemap, 0 });
@@ -529,10 +541,10 @@ void RuntimeSceneRenderer::Render() {
 void RuntimeSceneRenderer::InitMips() {
 	auto window = Application::GetWindow();
 
-	glm::vec2 mipSize((float)window->GetWidth(), (float)window->GetHeight());
-	glm::ivec2 mipIntSize(window->GetWidth(), window->GetHeight());
+	Vec2 mipSize((f32)window->GetWidth(), (f32)window->GetHeight());
+	Vec2i mipIntSize(window->GetWidth(), window->GetHeight());
 	List<Ref<Texture>> textures;
-	for(uint32_t i = 0; i < s_MipChainLength; i++) {
+	for(u32 i = 0; i < s_MipChainLength; i++) {
 		BloomMip mip;
 
 		mipSize *= 0.5f;
@@ -563,7 +575,7 @@ void RuntimeSceneRenderer::Downsample() {
 	.SetInput("u_SrcTexture",
 		TextureSlot{ BaseLayer->Get(AttachmentTarget::Color), 0 });
 
-	uint32_t i = 0;
+	u32 i = 0;
 	for(const auto& mip : s_MipChain) {
 		command->ViewportWidth = mip.IntSize.x;
 		command->ViewportHeight = mip.IntSize.y;
@@ -590,7 +602,7 @@ void RuntimeSceneRenderer::Upsample() {
 	command->UniformData
 	.SetInput("u_FilterRadius", s_FilterRadius);
 
-	for(uint32_t i = s_MipChainLength - 1; i > 0; i--) {
+	for(u32 i = s_MipChainLength - 1; i > 0; i--) {
 		const BloomMip& mip = s_MipChain[i];
 		const BloomMip& nextMip = s_MipChain[i - 1];
 

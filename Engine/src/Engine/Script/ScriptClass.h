@@ -22,27 +22,23 @@ public:
 	void SetInstanceMethod(const VolcaniCore::List<std::string>& args);
 
 	template<typename... Args>
-	ScriptObject Instantiate(Args&&... args) const {
+	Ref<ScriptObject> Instantiate(Args&&... args) const {
 		ScriptFunc func = GetFunc();
 		asIScriptObject* obj =
 			func.CallReturn<asIScriptObject*>(std::forward<Args>(args)...);
 
-		ScriptObject newObj(obj);
-		newObj.m_Class = (ScriptClass*)this;
-		newObj.m_Initialized = true;
-		newObj.AddRef();
+		Ref<ScriptObject> newObj =
+			CreateRef<ScriptObject>(obj, const_cast<ScriptClass*>(this), true);
 		return newObj;
 	}
 
-	ScriptObject Construct() const {
+	Ref<ScriptObject> Construct() const {
 		asIScriptObject* obj =
 			(asIScriptObject*)ScriptEngine::Get()
 								->CreateUninitializedScriptObject(m_Type);
 
-		ScriptObject newObj(obj);
-		newObj.m_Class = (ScriptClass*)this;
-		newObj.m_Initialized = false;
-		newObj.AddRef();
+		Ref<ScriptObject> newObj =
+			CreateRef<ScriptObject>(obj, const_cast<ScriptClass*>(this), false);
 		return newObj;
 	}
 

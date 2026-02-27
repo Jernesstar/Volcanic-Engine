@@ -27,8 +27,12 @@ ScriptObject::ScriptObject() {
 	m_RefCount = 1;
 }
 
-ScriptObject::ScriptObject(asIScriptObject* obj) {
+ScriptObject::ScriptObject(asIScriptObject* obj, ScriptClass* cl,
+						   bool initialized)
+{
 	m_Handle = obj;
+	m_Class = cl;
+	m_Initialized = initialized;
 	AddRef();
 }
 

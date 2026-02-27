@@ -9,10 +9,10 @@ public:
 	static AssetManager* Get() { return s_Instance; }
 
 public:
-	void LoadRegistry();
+	AssetManager() { s_Instance = this; }
 
-	virtual void Load(Asset asset) = 0;
-	virtual void Unload(Asset asset) = 0;
+	template<typename T>
+	Ref<T> Load(Asset asset) = 0;
 
 	Ref<AssetRegistry> GetRegistry() const { return m_AssetRegistry; }
 

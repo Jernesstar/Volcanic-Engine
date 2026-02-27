@@ -16,6 +16,8 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include "Defines.h"
+
 namespace VolcaniCore {
 
 using Vec2f = glm::vec2;
@@ -38,22 +40,22 @@ using Mat2 = Mat2f;
 using Mat3 = Mat3f;
 using Mat4 = Mat4f;
 
-constexpr float PI = 3.14159265358979328462f;
-constexpr float e  = 2.71828182859f;
+constexpr f32 PI = 3.14159265358979328462f;
+constexpr f32 e  = 2.71828182859f;
 
-static constexpr float RadToDeg(float radians) {
+static constexpr f32 RadToDeg(f32 radians) {
 	return (180.0f / PI) * radians;
 }
-static constexpr float DegToRad(float degrees) {
+static constexpr f32 DegToRad(f32 degrees) {
 	return (PI / 180.0f) * degrees;
 }
 
 struct Transform {
-	glm::vec3 Translation = { 0.0f, 0.0f, 0.0f };
-	glm::vec3 Rotation	  = { 0.0f, 0.0f, 0.0f };
-	glm::vec3 Scale 	  = { 1.0f, 1.0f, 1.0f };
+	Vec3 Translation = { 0.0f, 0.0f, 0.0f };
+	Vec3 Rotation = { 0.0f, 0.0f, 0.0f };
+	Vec3 Scale = { 1.0f, 1.0f, 1.0f };
 
-	glm::mat4 GetTransform() const {
+	Mat4 GetTransform() const {
 		return glm::translate(glm::mat4(1.0f), Translation)
 			 * glm::toMat4(glm::quat(Rotation))
 			 * glm::scale(glm::mat4(1.0f), Scale);
