@@ -71,8 +71,6 @@ public:
 	Bytes Get(Asset asset);
 
 	bool IsValid(Asset asset) const;
-	bool IsLoaded(Asset asset) const;
-	
 	bool HasRefs(Asset asset) const;
 	void AddRef(Asset base, Asset ref);
 	const VolcaniCore::List<Asset>& GetRefs(Asset asset) const;

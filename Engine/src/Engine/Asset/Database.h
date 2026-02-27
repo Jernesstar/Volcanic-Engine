@@ -11,16 +11,16 @@ using Bytes = Buffer<u8>;
 
 namespace VolcanicEngine {
 
-struct DatabaseQuery {
+struct DatabaseKey {
 	Bytes Key;
 
-	DatabaseQuery(Bytes&& key)
+	DatabaseKey(Bytes&& key)
 		: Key(std::move(key)) { }
-	DatabaseQuery(const std::string& key)
+	DatabaseKey(const std::string& key)
 		: Key((u8*)key.data(), key.size(), 0, false) { }
-	DatabaseQuery(const char* key)
+	DatabaseKey(const char* key)
 		: Key((u8*)key, strlen(key), 0, false) { }
-	DatabaseQuery(u64 key)
+	DatabaseKey(u64 key)
 		: Key((u8*)&key, sizeof(u64), 0, false) { }
 };
 
@@ -43,10 +43,11 @@ public:
 
 public:
 	Database(const std::string& name, MDB_env* registry, MDB_dbi handle);
-	~Database() = default;
+	~Database();
 
-	void Insert(const Bytes& key, const Bytes& value);
-	DatabaseResult Query(const DatabaseQuery& query);
+	void Insert(const DatabaseKey& key, const Bytes& value);
+	DatabaseResult Query(const DatabaseKey& key);
+	void Remove(const DatabaseKey& key);
 
 private:
 	MDB_env* m_Registry;
