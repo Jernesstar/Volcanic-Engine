@@ -117,7 +117,9 @@ static Ref<UniformBuffer> SpotlightBuffer;
 
 RuntimeSceneRenderer::RuntimeSceneRenderer() {
 	auto window = Application::GetWindow();
-	m_Output = Framebuffer::Create(window->GetWidth(), window->GetHeight());
+	m_Output =
+		RendererAPI::Get()->CreateFramebuffer(
+			{ window->GetWidth(), window->GetHeight() });
 
 	DirectionalLightBuffer =
 		UniformBuffer::Create(
@@ -131,7 +133,7 @@ RuntimeSceneRenderer::RuntimeSceneRenderer() {
 			}, 1);
 
 	PointLightBuffer =
-		UniformBuffer::Create(
+		RendererAPI::Get()->CreateUniformBuffer({
 			BufferLayout
 			{
 				{ "Position",  BufferDataType::Vec4 },
@@ -142,7 +144,8 @@ RuntimeSceneRenderer::RuntimeSceneRenderer() {
 				{ "Linear",	   BufferDataType::Float },
 				{ "Quadratic", BufferDataType::Float },
 				{ "BloomStrength", BufferDataType::Float },
-			}, 50);
+			}, 50
+		});
 
 	SpotlightBuffer =
 		UniformBuffer::Create(

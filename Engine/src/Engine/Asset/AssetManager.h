@@ -12,7 +12,13 @@ public:
 	AssetManager() { s_Instance = this; }
 
 	template<typename T>
-	Ref<T> Load(Asset asset) = 0;
+	Ref<T> Load(Asset asset);
+
+	template<typename T>
+	Ref<T> Load(const std::string& name) {
+		Asset asset = m_AssetRegistry->FindAsset(name);
+		return Load<T>(asset);
+	}
 
 	Ref<AssetRegistry> GetRegistry() const { return m_AssetRegistry; }
 
