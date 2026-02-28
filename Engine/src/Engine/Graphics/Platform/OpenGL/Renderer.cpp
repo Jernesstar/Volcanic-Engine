@@ -345,11 +345,20 @@ void Renderer::EndFrame() {
 		else
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+		if(cmd.Pass && cmd.Pass->Output) {
+			uint32_t i = 0;
+			for(auto& [target, idx] : cmd.Outputs)
+				cmd.Pass->Output->Attach(target, idx, i++);
+		}
+
 		if(cmd.Pass && cmd.Pass->Buffer)
 			cmd.Pass->Buffer->As<OpenGL::DrawBuffer>()->Array->Bind();
 		else
 			s_EmptyVAO->Bind();
-			// glBindVertexArray(0);
+
+		if(cmd.Pass && cmd.ComputeX && cmd.ComputeY && cmd.ComputeZ)
+			cmd.Pass->Pipeline->As<OpenGL::Shader>()
+				->Compute(cmd.ComputeX, cmd.ComputeY, cmd.ComputeZ);
 
 		for(auto& call : cmd.DrawCalls)
 			SubmitDrawCall(cmd, call);

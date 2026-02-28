@@ -158,6 +158,9 @@ struct DrawCommand {
 	DrawUniforms Uniforms;
 	List<DrawCall> DrawCalls;
 
+	// Which render targets to use within the framebuffer
+	List<Pair<AttachmentTarget, uint32_t>> Outputs;
+
 	// The buffer domain of the draw command
 	u32 VerticesIndex = 0;
 	u32 IndicesIndex  = 0;
@@ -173,7 +176,7 @@ struct DrawCommand {
 	f32 ViewportX = 0.0f, ViewportY = 0.0f, ViewportW = 0.0f, ViewportH = 0.0f;
 
 	bool Compute = false;
-	u32 ComputeX = 0, ComputeY = 0, ComputeZ = 0;
+	u32 ComputeX = 0, ComputeY = 1, ComputeZ = 1;
 
 	DepthTestingMode DepthTesting = DepthTestingMode::On;
 	BlendingMode Blending = BlendingMode::Off;

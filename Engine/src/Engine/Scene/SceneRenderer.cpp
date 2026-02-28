@@ -11,7 +11,7 @@
 
 #include <Engine/Scene/Component.h>
 
-#include "App.h"
+#include "App/App.h"
 
 namespace VolcanicEngine {
 
@@ -68,7 +68,7 @@ struct Spotlight {
 struct BloomMip {
 	Vec2 Size;
 	Vec2i IntSize;
-	Ref<Texture> Sampler;
+	Ref<Attachment> Sampler;
 };
 
 struct ParticleData {
@@ -100,6 +100,8 @@ static f32 s_BloomStrength = 0.04f;
 static Map<u64, ParticleEmitter> s_ParticleEmitters;
 static Map<UUID, DrawCommand*> s_MaterialMeshes;
 
+static DrawCommand* LightCommand;
+static DrawCommand* LightingCommand;
 static Ref<RenderPass> LightingPass;
 static Ref<RenderPass> LightPass;
 
@@ -115,14 +117,21 @@ static Ref<UniformBuffer> DirectionalLightBuffer;
 static Ref<UniformBuffer> PointLightBuffer;
 static Ref<UniformBuffer> SpotlightBuffer;
 
+static Ref<Framebuffer> BaseLayer;
+static Ref<Framebuffer> Mips;
+
 RuntimeSceneRenderer::RuntimeSceneRenderer() {
 	auto window = Application::GetWindow();
 	m_Output =
 		RendererAPI::Get()->CreateFramebuffer(
-			{ window->GetWidth(), window->GetHeight() });
+			{
+				{
+					{ AttachmentTarget::Color, window->GetWidth(), window->GetHeight() }
+				}
+			});
 
 	DirectionalLightBuffer =
-		UniformBuffer::Create(
+		RendererAPI::Get()->CreateUniformBuffer({
 			BufferLayout
 			{
 				{ "Position",  BufferDataType::Vec4 },
@@ -130,7 +139,8 @@ RuntimeSceneRenderer::RuntimeSceneRenderer() {
 				{ "Diffuse",   BufferDataType::Vec4 },
 				{ "Specular",  BufferDataType::Vec4 },
 				{ "Direction", BufferDataType::Vec4 },
-			}, 1);
+			}, 1
+		});
 
 	PointLightBuffer =
 		RendererAPI::Get()->CreateUniformBuffer({
@@ -148,7 +158,7 @@ RuntimeSceneRenderer::RuntimeSceneRenderer() {
 		});
 
 	SpotlightBuffer =
-		UniformBuffer::Create(
+		RendererAPI::Get()->CreateUniformBuffer({
 			BufferLayout
 			{
 				{ "Position",  BufferDataType::Vec4 },
@@ -160,14 +170,21 @@ RuntimeSceneRenderer::RuntimeSceneRenderer() {
 				{ "OuterCutoffAngle", BufferDataType::Float },
 				{ "_padding1", BufferDataType::Float },
 				{ "_padding2", BufferDataType::Float },
-			}, 50);
+			}, 50
+		});
 
 	LightingPass =
 		RenderPass::Create("Lighting",
 			AssetManager::Get()->Load<Shader>("Lighting"), m_Output);
 	LightingPass->SetData(Renderer3D::GetMeshBuffer());
 
-	BaseLayer = Framebuffer::Create(window->GetWidth(), window->GetHeight());
+	BaseLayer =
+		RendererAPI::Get()->CreateFramebuffer(
+			{
+				{
+					{ AttachmentTarget::Color, window->GetWidth(), window->GetHeight() }
+				}
+			});
 
 	LightPass =
 		RenderPass::Create("Light",
@@ -242,9 +259,11 @@ void RuntimeSceneRenderer::OnSceneLoad() {
 					freelist.Set(i, int(i) - 1);
 
 				emitter.ParticleBuffer =
-					StorageBuffer::Create(particleLayout, data);
+					RendererAPI::Get()->CreateStorageBuffer({ particleLayout });
+				emitter.ParticleBuffer->SetData(data);
 				emitter.FreeListBuffer =
-					StorageBuffer::Create(freeListLayout, freelist);
+					RendererAPI::Get()->CreateStorageBuffer({ freeListLayout });
+				emitter.FreeListBuffer->SetData(freelist);
 			}
 		});
 }
@@ -259,8 +278,8 @@ void RuntimeSceneRenderer::Update(TimeStep ts) {
 	{
 		i32 workGroupSize = 64;
 		auto* command = Renderer::GetCommand();
-		command->UniformData
-		.SetInput("u_TimeStep", (f32)ts);
+		command->Uniforms
+		.Set("u_TimeStep", (f32)ts);
 
 		for(auto& [_, emitter] : s_ParticleEmitters) {
 			emitter.Timer += (float)ts;
@@ -275,18 +294,18 @@ void RuntimeSceneRenderer::Update(TimeStep ts) {
 
 			auto* command = Renderer::NewCommand();
 			command->ComputeX = numWorkGroups;
-			command->UniformData
-			.SetInput("u_ParticlesToSpawn", (int)particlesToSpawn);
-			command->UniformData
-			.SetInput("u_Emitter.Position", emitter.Position);
-			command->UniformData
-			.SetInput("u_Emitter.ParticleLifetime", emitter.ParticleLifetime);
-			command->UniformData
-			.SetInput("u_Emitter.Offset", emitter.Offset);
-			command->UniformData
-			.SetInput(StorageSlot{ emitter.ParticleBuffer, "", 0 });
-			command->UniformData
-			.SetInput(StorageSlot{ emitter.FreeListBuffer, "", 1 });
+			command->Uniforms
+			.Set("u_ParticlesToSpawn", (i32)particlesToSpawn);
+			command->Uniforms
+			.Set("u_Emitter.Position", emitter.Position);
+			command->Uniforms
+			.Set("u_Emitter.ParticleLifetime", emitter.ParticleLifetime);
+			command->Uniforms
+			.Set("u_Emitter.Offset", emitter.Offset);
+			command->Uniforms
+			.Set(StorageSlot{ emitter.ParticleBuffer, "", 0 });
+			command->Uniforms
+			.Set(StorageSlot{ emitter.FreeListBuffer, "", 1 });
 		}
 	}
 	Renderer::EndPass();
@@ -295,27 +314,27 @@ void RuntimeSceneRenderer::Update(TimeStep ts) {
 	{
 		i32 workGroupSize = 128;
 		auto* command = Renderer::GetCommand();
-		command->UniformData
-		.SetInput("u_TimeStep", (f32)ts);
+		command->Uniforms
+		.Set("u_TimeStep", (f32)ts);
 		for(auto& [_, emitter] : s_ParticleEmitters) {
 			u32 numWorkGroups =
 				(emitter.MaxParticleCount + workGroupSize - 1) / workGroupSize;
 
 			command = Renderer::NewCommand();
 			command->ComputeX = numWorkGroups;
-			command->UniformData
-			.SetInput(StorageSlot{ emitter.ParticleBuffer, "", 0 });
-			command->UniformData
-			.SetInput(StorageSlot{ emitter.FreeListBuffer, "", 1 });
+			command->Uniforms
+			.Set(StorageSlot{ emitter.ParticleBuffer, "", 0 });
+			command->Uniforms
+			.Set(StorageSlot{ emitter.FreeListBuffer, "", 1 });
 		}
 	}
 	Renderer::EndPass();
 }
 
 void RuntimeSceneRenderer::Begin() {
-	LightCommand = RendererAPI::Get()->NewDrawCommand(LightPass->Get());
+	LightCommand = RendererAPI::Get()->NewCommand(LightPass->Get());
 	LightCommand->Clear = true;
-	LightCommand->DepthTest = DepthTestingMode::On;
+	LightCommand->DepthTesting = DepthTestingMode::On;
 	LightCommand->Blending = BlendingMode::Greatest;
 	LightCommand->Culling = CullingMode::Off;
 
@@ -335,7 +354,7 @@ void RuntimeSceneRenderer::Begin() {
 		Composite();
 	}
 
-	LightingCommand = RendererAPI::Get()->NewDrawCommand(LightingPass->Get());
+	LightingCommand = RendererAPI::Get()->NewCommand(LightingPass->Get());
 }
 
 void RuntimeSceneRenderer::SubmitCamera(const Entity& entity) {
@@ -343,20 +362,20 @@ void RuntimeSceneRenderer::SubmitCamera(const Entity& entity) {
 	if(!camera)
 		return;
 
-	LightingCommand->UniformData
-	.SetInput("u_View", camera->GetView());
-	LightingCommand->UniformData
-	.SetInput("u_ViewProj", camera->GetViewProjection());
-	LightingCommand->UniformData
-	.SetInput("u_CameraPosition", camera->GetPosition());
+	LightingCommand->Uniforms
+	.Set("u_View", camera->GetView());
+	LightingCommand->Uniforms
+	.Set("u_ViewProj", camera->GetViewProjection());
+	LightingCommand->Uniforms
+	.Set("u_CameraPosition", camera->GetPosition());
 }
 
 void RuntimeSceneRenderer::SubmitSkybox(const Entity& entity) {
-	auto& sc = entity.Get<SkyboxComponent>();
-	auto cubemap = AssetManager::Get()->Get<Cubemap>(sc.CubemapAsset);
+	// auto& sc = entity.Get<SkyboxComponent>();
+	// auto cubemap = AssetManager::Get()->Get<Cubemap>(sc.CubemapAsset);
 
-	LightingCommand->UniformData
-	.SetInput("u_Skybox", CubemapSlot{ cubemap, 0 });
+	// LightingCommand->Uniforms
+	// .Set("u_Skybox", CubemapSlot{ cubemap, 0 });
 }
 
 void RuntimeSceneRenderer::SubmitLight(const Entity& entity) {
@@ -381,28 +400,28 @@ void RuntimeSceneRenderer::SubmitParticles(const Entity& entity) {
 	Renderer::StartPass(ParticlePass);
 	{
 		auto* command = Renderer::GetCommand();
-		command->UniformData
-		.SetInput("u_View",
-			LightingCommand->UniformData.Mat4Uniforms["u_View"]);
-		command->UniformData
-		.SetInput("u_ViewProj",
-			LightingCommand->UniformData.Mat4Uniforms["u_ViewProj"]);
-		command->UniformData
-		.SetInput("u_BillboardWidth", 0.1f);
-		command->UniformData
-		.SetInput("u_BillboardHeight", 0.1f);
+		command->Uniforms
+		.Set("u_View",
+			LightingCommand->Uniforms.Mat4Uniforms["u_View"]);
+		command->Uniforms
+		.Set("u_ViewProj",
+			LightingCommand->Uniforms.Mat4Uniforms["u_ViewProj"]);
+		command->Uniforms
+		.Set("u_BillboardWidth", 0.1f);
+		command->Uniforms
+		.Set("u_BillboardHeight", 0.1f);
 
-		command->DepthTest = DepthTestingMode::On;
+		command->DepthTesting = DepthTestingMode::On;
 		command->Culling = CullingMode::Off;
 		command->Blending = BlendingMode::Greatest;
-		command->UniformData
-		.SetInput("u_Texture", TextureSlot{ emitter.Material, 0 });
+		command->Uniforms
+		.Set("u_Texture", TextureSlot{ emitter.Material, 0 });
 
-		auto& call = command->NewDrawCall();
-		call.VertexCount = 6;
-		call.InstanceCount = emitter.MaxParticleCount;
-		call.Primitive = PrimitiveType::Triangle;
-		call.Partition = PartitionType::Instanced;
+		auto* call = command->NewCall();
+		call->VertexCount = 6;
+		call->InstanceCount = emitter.MaxParticleCount;
+		call->Primitive = DrawPrimitive::Triangle;
+		call->Partition = DrawPartition::Instanced;
 	}
 	Renderer::EndPass();
 }
@@ -412,11 +431,10 @@ void RuntimeSceneRenderer::SubmitMesh(const Entity& entity) {
 	auto& mc = entity.Get<MeshComponent>();
 	auto* assetManager = AssetManager::Get();
 
-	if(!assetManager->IsValid(mc.MeshSourceAsset))
-		return;
+	// if(!assetManager->IsValid(mc.MeshSourceAsset))
+	// 	return;
 
-	assetManager->Load(mc.MeshSourceAsset);
-	auto mesh = assetManager->Get<Mesh>(mc.MeshSourceAsset);
+	auto mesh = assetManager->Load<Mesh>(mc.MeshSourceAsset);
 
 	if(!mc.MaterialAsset.ID) {
 		Renderer::StartPass(LightingPass);
@@ -427,110 +445,109 @@ void RuntimeSceneRenderer::SubmitMesh(const Entity& entity) {
 		return;
 	}
 
-	if(!assetManager->IsValid(mc.MaterialAsset))
-		return;
+	// if(!assetManager->IsValid(mc.MaterialAsset))
+	// 	return;
 
-	VolcaniCore::Material mat;
-	assetManager->Load(mc.MaterialAsset);
-	auto material = assetManager->Get<Lava::Material>(mc.MaterialAsset);
+	// VolcaniCore::Material mat;
+	// auto material = assetManager->Load<VolcanicEngine::Material>(mc.MaterialAsset);
 
-	if(material->TextureUniforms.count("u_Diffuse")) {
-		UUID id = material->TextureUniforms["u_Diffuse"];
-		Asset textureAsset = { id, AssetType::Texture };
-		assetManager->Load(textureAsset);
-		mat.Diffuse = assetManager->Get<Texture>(textureAsset);
-	}
+	// if(material->TextureUniforms.count("u_Diffuse")) {
+	// 	UUID id = material->TextureUniforms["u_Diffuse"];
+	// 	Asset textureAsset = { id, AssetType::Texture };
+	// 	assetManager->Load(textureAsset);
+	// 	mat.Diffuse = assetManager->Get<Texture>(textureAsset);
+	// }
 
-	if(material->TextureUniforms.count("u_Specular")) {
-		UUID id = material->TextureUniforms["u_Specular"];
-		Asset textureAsset = { id, AssetType::Texture };
-		assetManager->Load(textureAsset);
-		mat.Specular = assetManager->Get<Texture>(textureAsset);
-	}
+	// if(material->TextureUniforms.count("u_Specular")) {
+	// 	UUID id = material->TextureUniforms["u_Specular"];
+	// 	Asset textureAsset = { id, AssetType::Texture };
+	// 	assetManager->Load(textureAsset);
+	// 	mat.Specular = assetManager->Get<Texture>(textureAsset);
+	// }
 
-	if(material->TextureUniforms.count("u_Emissive")) {
-		UUID id = material->TextureUniforms["u_Emissive"];
-		Asset textureAsset = { id, AssetType::Texture };
-		assetManager->Load(textureAsset);
-		mat.Emissive = assetManager->Get<Texture>(textureAsset);
-	}
+	// if(material->TextureUniforms.count("u_Emissive")) {
+	// 	UUID id = material->TextureUniforms["u_Emissive"];
+	// 	Asset textureAsset = { id, AssetType::Texture };
+	// 	assetManager->Load(textureAsset);
+	// 	mat.Emissive = assetManager->Get<Texture>(textureAsset);
+	// }
 
-	if(material->Vec4Uniforms.count("u_DiffuseColor"))
-		mat.DiffuseColor = material->Vec4Uniforms["u_DiffuseColor"];
-	if(material->Vec4Uniforms.count("u_SpecularColor"))
-		mat.SpecularColor = material->Vec4Uniforms["u_SpecularColor"];
-	if(material->Vec4Uniforms.count("u_EmissiveColor"))
-		mat.EmissiveColor = material->Vec4Uniforms["u_EmissiveColor"];
+	// if(material->Vec4Uniforms.count("u_DiffuseColor"))
+	// 	mat.DiffuseColor = material->Vec4Uniforms["u_DiffuseColor"];
+	// if(material->Vec4Uniforms.count("u_SpecularColor"))
+	// 	mat.SpecularColor = material->Vec4Uniforms["u_SpecularColor"];
+	// if(material->Vec4Uniforms.count("u_EmissiveColor"))
+	// 	mat.EmissiveColor = material->Vec4Uniforms["u_EmissiveColor"];
 
 
-	DrawCommand* command;
-	if(!s_MaterialMeshes.count(mc.MaterialAsset.ID)) {
-		command = s_MaterialMeshes[mc.MaterialAsset.ID] =
-			RendererAPI::Get()->NewDrawCommand(LightingPass->Get());
+	// DrawCommand* command;
+	// if(!s_MaterialMeshes.count(mc.MaterialAsset.ID)) {
+	// 	command = s_MaterialMeshes[mc.MaterialAsset.ID] =
+	// 		RendererAPI::Get()->NewCommand(LightingPass->Get());
 
-		command->UniformData
-		.SetInput("u_Material.IsTextured", (bool)mat.Diffuse);
-		command->UniformData
-		.SetInput("u_Material.Diffuse", TextureSlot{ mat.Diffuse, 0 });
-		command->UniformData
-		.SetInput("u_Material.Specular", TextureSlot{ mat.Specular, 1 });
-		command->UniformData
-		.SetInput("u_Material.Emissive", TextureSlot{ mat.Emissive, 2 });
+	// 	command->Uniforms
+	// 	.Set("u_Material.IsTextured", (bool)mat.Diffuse);
+	// 	command->Uniforms
+	// 	.Set("u_Material.Diffuse", TextureSlot{ mat.Diffuse, 0 });
+	// 	command->Uniforms
+	// 	.Set("u_Material.Specular", TextureSlot{ mat.Specular, 1 });
+	// 	command->Uniforms
+	// 	.Set("u_Material.Emissive", TextureSlot{ mat.Emissive, 2 });
 
-		command->UniformData
-		.SetInput("u_Material.DiffuseColor", mat.DiffuseColor);
-		command->UniformData
-		.SetInput("u_Material.SpecularColor", mat.SpecularColor);
-		command->UniformData
-		.SetInput("u_Material.EmissiveColor", mat.EmissiveColor);
-	}
+	// 	command->Uniforms
+	// 	.Set("u_Material.DiffuseColor", mat.DiffuseColor);
+	// 	command->Uniforms
+	// 	.Set("u_Material.SpecularColor", mat.SpecularColor);
+	// 	command->Uniforms
+	// 	.Set("u_Material.EmissiveColor", mat.EmissiveColor);
+	// }
 
-	command = s_MaterialMeshes[mc.MaterialAsset.ID];
+	// command = s_MaterialMeshes[mc.MaterialAsset.ID];
 
-	Renderer3D::DrawMesh(mesh, tc, command);
+	// Renderer3D::DrawMesh(mesh, tc, command);
 }
 
 void RuntimeSceneRenderer::Render() {
 	Renderer3D::End();
 
-	LightingCommand->UniformData
-	.SetInput("u_DirectionalLightCount", (int32_t)HasDirectionalLight);
-	LightingCommand->UniformData
-	.SetInput("u_PointLightCount", (int32_t)PointLightCount);
-	LightingCommand->UniformData
-	.SetInput("u_SpotlightCount", (int32_t)SpotlightCount);
+	LightingCommand->Uniforms
+	.Set("u_DirectionalLightCount", (int32_t)HasDirectionalLight);
+	LightingCommand->Uniforms
+	.Set("u_PointLightCount", (int32_t)PointLightCount);
+	LightingCommand->Uniforms
+	.Set("u_SpotlightCount", (int32_t)SpotlightCount);
 
-	LightingCommand->UniformData
-	.SetInput(UniformSlot{ DirectionalLightBuffer, "", 0 });
-	LightingCommand->UniformData
-	.SetInput(UniformSlot{ PointLightBuffer, "", 1 });
-	LightingCommand->UniformData
-	.SetInput(UniformSlot{ SpotlightBuffer, "", 2 });
+	LightingCommand->Uniforms
+	.Set(UniformSlot{ DirectionalLightBuffer, "", 0 });
+	LightingCommand->Uniforms
+	.Set(UniformSlot{ PointLightBuffer, "", 1 });
+	LightingCommand->Uniforms
+	.Set(UniformSlot{ SpotlightBuffer, "", 2 });
 
-	LightCommand->UniformData
-	.SetInput("u_View",
-		LightingCommand->UniformData.Mat4Uniforms["u_View"]);
-	LightCommand->UniformData
-	.SetInput("u_ViewProj",
-		LightingCommand->UniformData.Mat4Uniforms["u_ViewProj"]);
-	LightCommand->UniformData
-	.SetInput("u_Radius", 1.0f);
-	LightCommand->UniformData
-	.SetInput("u_CameraPosition",
-		LightingCommand->UniformData.Vec3Uniforms["u_CameraPosition"]);
-	LightCommand->UniformData
-	.SetInput("u_ViewportWidth", (float)Application::GetWindow()->GetWidth());
-	LightCommand->UniformData
-	.SetInput("u_ViewportHeight", (float)Application::GetWindow()->GetHeight());
-	LightCommand->UniformData
-	.SetInput(UniformSlot{ PointLightBuffer, "", 1 });
+	LightCommand->Uniforms
+	.Set("u_View",
+		LightingCommand->Uniforms.Mat4Uniforms["u_View"]);
+	LightCommand->Uniforms
+	.Set("u_ViewProj",
+		LightingCommand->Uniforms.Mat4Uniforms["u_ViewProj"]);
+	LightCommand->Uniforms
+	.Set("u_Radius", 1.0f);
+	LightCommand->Uniforms
+	.Set("u_CameraPosition",
+		LightingCommand->Uniforms.Vec3Uniforms["u_CameraPosition"]);
+	LightCommand->Uniforms
+	.Set("u_ViewportW", (float)Application::GetWindow()->GetWidth());
+	LightCommand->Uniforms
+	.Set("u_ViewportH", (float)Application::GetWindow()->GetHeight());
+	LightCommand->Uniforms
+	.Set(UniformSlot{ PointLightBuffer, "", 1 });
 
-	auto& call = LightCommand->NewDrawCall();
-	call.VertexCount = 6;
-	call.InstanceStart = 0;
-	call.InstanceCount = PointLightCount;
-	call.Primitive = PrimitiveType::Triangle;
-	call.Partition = PartitionType::Instanced;
+	auto* call = LightCommand->NewCall();
+	call->VertexCount = 6;
+	call->InstanceOffset = 0;
+	call->InstanceCount = PointLightCount;
+	call->Primitive = DrawPrimitive::Triangle;
+	call->Partition = DrawPartition::Instanced;
 
 	Renderer::Flush();
 
@@ -546,84 +563,80 @@ void RuntimeSceneRenderer::InitMips() {
 
 	Vec2 mipSize((f32)window->GetWidth(), (f32)window->GetHeight());
 	Vec2i mipIntSize(window->GetWidth(), window->GetHeight());
-	List<Ref<Texture>> textures;
+	List<AttachmentSpec> textures;
 	for(u32 i = 0; i < s_MipChainLength; i++) {
 		BloomMip mip;
-
 		mipSize *= 0.5f;
 		mipIntSize /= 2;
 		mip.Size = mipSize;
 		mip.IntSize = mipIntSize;
-
-		mip.Sampler =
-			Texture::Create(mipIntSize.x, mipIntSize.y, Texture::Format::Float);
-
 		s_MipChain.Add(mip);
-		textures.Add(mip.Sampler);
+		textures.Add(
+			{ AttachmentTarget::Color, (u32)mip.IntSize.x, (u32)mip.IntSize.y });
 	}
 
-	Mips = Framebuffer::Create(
-		{
-			{ AttachmentTarget::Color, textures }
-		});
+	Mips = RendererAPI::Get()->CreateFramebuffer({ textures });
+
+	for(u32 i = 0; i < s_MipChainLength; i++) {
+		auto& mip = s_MipChain[i];
+		mip.Sampler = Mips->Get(AttachmentTarget::Color, i);
+	}
 }
 
 void RuntimeSceneRenderer::Downsample() {
+	auto att = BaseLayer->Get(AttachmentTarget::Color);
 	auto* command = Renderer::NewCommand();
 	command->Clear = true;
-	command->UniformData
-	.SetInput("u_SrcResolution",
-		glm::vec2{ BaseLayer->GetWidth(), BaseLayer->GetHeight() });
-	command->UniformData
-	.SetInput("u_SrcTexture",
-		TextureSlot{ BaseLayer->Get(AttachmentTarget::Color), 0 });
+	command->Uniforms
+	.Set("u_SrcResolution", Vec2{ att->Spec.Width, att->Spec.Height })
+	.Set("u_SrcTexture", AttachmentSlot{ att, 0 });
 
 	u32 i = 0;
 	for(const auto& mip : s_MipChain) {
-		command->ViewportWidth = mip.IntSize.x;
-		command->ViewportHeight = mip.IntSize.y;
-		command->DepthTest = DepthTestingMode::Off;
+		command->ViewportW = mip.IntSize.x;
+		command->ViewportH = mip.IntSize.y;
+		command->DepthTesting = DepthTestingMode::Off;
 		command->Blending = BlendingMode::Off;
 		command->Culling = CullingMode::Off;
 		command->Outputs = { { AttachmentTarget::Color, i++ } };
 
-		auto& call = command->NewDrawCall();
-		call.VertexCount = 6;
-		call.Primitive = PrimitiveType::Triangle;
-		call.Partition = PartitionType::Single;
+		auto* call = command->NewCall();
+		call->VertexCount = 6;
+		call->Primitive = DrawPrimitive::Triangle;
+		call->Partition = DrawPartition::Single;
 
 		command = Renderer::NewCommand();
-		command->UniformData
-		.SetInput("u_SrcResolution", mip.Size);
-		command->UniformData
-		.SetInput("u_SrcTexture", TextureSlot{ mip.Sampler, 0 });
+		command->Uniforms
+		.Set("u_SrcResolution", mip.Size);
+		command->Uniforms
+		.Set("u_SrcTexture", AttachmentSlot{ mip.Sampler, 0 });
 	}
 }
 
 void RuntimeSceneRenderer::Upsample() {
 	auto* command = Renderer::NewCommand();
-	command->UniformData
-	.SetInput("u_FilterRadius", s_FilterRadius);
+	command->Uniforms
+	.Set("u_FilterRadius", s_FilterRadius);
 
 	for(u32 i = s_MipChainLength - 1; i > 0; i--) {
 		const BloomMip& mip = s_MipChain[i];
 		const BloomMip& nextMip = s_MipChain[i - 1];
 
-		command->ViewportWidth = nextMip.IntSize.x;
-		command->ViewportHeight = nextMip.IntSize.y;
-		command->DepthTest = DepthTestingMode::Off;
+		command->ViewportW = nextMip.IntSize.x;
+		command->ViewportH = nextMip.IntSize.y;
+		command->DepthTesting = DepthTestingMode::Off;
 		command->Blending = BlendingMode::Additive;
 		command->Culling = CullingMode::Off;
 		command->Outputs = { { AttachmentTarget::Color, i - 1 } };
-		command->UniformData
-		.SetInput("u_SrcTexture", TextureSlot{ mip.Sampler, 0 });
-		command->UniformData
-		.SetInput("u_SrcResolution", mip.Size);
+		command->Uniforms
+		.Set("u_SrcTexture", AttachmentSlot{ mip.Sampler, 0 });
+		command->Uniforms
+		.Set("u_SrcResolution", mip.Size);
 
-		auto& call = command->NewDrawCall();
-		call.VertexCount = 6;
-		call.Primitive = PrimitiveType::Triangle;
-		call.Partition = PartitionType::Single;
+		auto* call = command->NewCall();
+		call->VertexCount = 6;
+		call->Primitive = DrawPrimitive::Triangle;
+		call->Partition = DrawPartition::Single;
 
 		command = Renderer::NewCommand();
 	}
@@ -632,27 +645,24 @@ void RuntimeSceneRenderer::Upsample() {
 void RuntimeSceneRenderer::Composite() {
 	auto* command = Renderer::NewCommand();
 	command->Clear = true;
-	command->ViewportWidth = Application::GetWindow()->GetWidth();
-	command->ViewportHeight = Application::GetWindow()->GetHeight();
-	command->DepthTest = DepthTestingMode::Off;
+	command->ViewportW = Application::GetWindow()->GetWidth();
+	command->ViewportH = Application::GetWindow()->GetHeight();
+	command->DepthTesting = DepthTestingMode::Off;
 	command->Blending = BlendingMode::Greatest;
 	command->Culling = CullingMode::Off;
 
-	command->UniformData
-	.SetInput("u_Exposure", s_Exposure);
-	command->UniformData
-	.SetInput("u_BloomStrength", s_BloomStrength);
-	command->UniformData
-	.SetInput("u_BloomTexture",
-		TextureSlot{ Mips->Get(AttachmentTarget::Color), 0 });
-	command->UniformData
-	.SetInput("u_SceneTexture",
-		TextureSlot{ BaseLayer->Get(AttachmentTarget::Color), 1 });
+	command->Uniforms
+	.Set("u_Exposure", s_Exposure)
+	.Set("u_BloomStrength", s_BloomStrength)
+	.Set("u_BloomTexture",
+		AttachmentSlot{ Mips->Get(AttachmentTarget::Color), 0 })
+	.Set("u_SceneTexture",
+		AttachmentSlot{ BaseLayer->Get(AttachmentTarget::Color), 1 });
 
-	auto& call = command->NewDrawCall();
-	call.VertexCount = 6;
-	call.Primitive = PrimitiveType::Triangle;
-	call.Partition = PartitionType::Single;
+	auto* call = command->NewCall();
+	call->VertexCount = 6;
+	call->Primitive = DrawPrimitive::Triangle;
+	call->Partition = DrawPartition::Single;
 }
 
 }

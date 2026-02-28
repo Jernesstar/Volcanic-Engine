@@ -54,6 +54,14 @@ public:
 
 private:
 	void InitMips();
+	void Downsample();
+	void Upsample();
+	void Composite();
+
+private:
+	bool HasDirectionalLight = false;
+	u32 SpotlightCount = 0;
+	u32 PointLightCount = 0;
 };
 
 }

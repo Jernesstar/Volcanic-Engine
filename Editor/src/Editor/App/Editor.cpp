@@ -69,42 +69,42 @@ void Editor::Update(TimeStep ts) {
 }
 
 void Editor::Render() {
+	
+}
+
+void Editor::OpenProject(const std::string& path) {
 
 }
 
-void OpenProject(const std::string& path) {
+void Editor::NewProject(const std::string& path) {
 
 }
 
-void NewProject(const std::string& path) {
+void Editor::SaveProject() {
 
 }
 
-void SaveProject() {
+void Editor::NewScene(const std::string& path) {
 
 }
 
-void NewScene(const std::string& path) {
+void Editor::OpenScene(const std::string& name) {
 
 }
 
-void OpenScene(const std::string& name) {
+void Editor::SaveScene(const std::string& name) {
 
 }
 
-void SaveScene(const std::string& name) {
+void Editor::NewCanvas(const std::string& name) {
 
 }
 
-void NewCanvas(const std::string& name) {
+void Editor::OpenCanvas(const std::string& name) {
 
 }
 
-void OpenCanvas(const std::string& name) {
-
-}
-
-void SaveCanvas(const std::string& name) {
+void Editor::SaveCanvas(const std::string& name) {
 
 }
 

@@ -3,20 +3,17 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/intersect.hpp>
 
-#include "Editor/AssetManager.h"
-#include "Editor/AssetImporter.h"
-#include "Editor/EditorApp.h"
-#include "Editor/Tab.h"
-
 #include <VolcaniCore/Core/Application.h>
-#include <VolcaniCore/Core/Input.h>
+#include <VolcaniCore/Window/Input.h>
 #include <Engine/Graphics/Renderer.h>
-#include <Engine/Graphics/RendererAPI.h>
 #include <Engine/Graphics/Renderer2D.h>
 #include <Engine/Graphics/Renderer3D.h>
 #include <Engine/Graphics/StereographicCamera.h>
+#include <Engine/Graphics/Platform/RendererAPI.h>
 
-#include "Scene/SceneVisualizerPanel.h"
+#include "App/Editor.h"
+#include "Asset/AssetManager.h"
+#include "Asset/AssetImporter.h"
 
 namespace VolcanicEditor {
 
