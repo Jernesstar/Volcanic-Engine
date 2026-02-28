@@ -18,7 +18,6 @@ project "flecs"
 
     defines {
         -- "flecs_EXPORTS",
-        "flecs_STATIC",
         "FLECS_STATIC",
         "FLECS_DEBUG",
         -- "FLECS_NDEBUG",

@@ -21,7 +21,7 @@ public:
 
 	template<typename TComponent>
 	bool Has() const {
-		// return m_Handle.get<TComponent>() != nullptr;
+		return m_Handle.has<TComponent>();
 	}
 
 	template<typename TComponent, typename ...Args>
@@ -32,21 +32,22 @@ public:
 
 	template<typename TComponent>
 	const TComponent& Get() const {
-		// return *m_Handle.get<TComponent>();
+		return m_Handle.get<TComponent>();
 	}
 
 	template<typename TComponent>
 	TComponent& Set() {
 		if(!Has<TComponent>())
 			Add<TComponent>();
-		// else
-		// 	m_Handle.modified<TComponent>();
-		// return *m_Handle.get_mut<TComponent>();
+		else
+			m_Handle.modified<TComponent>();
+
+		return m_Handle.get_mut<TComponent>();
 	}
 
 	template<typename TComponent>
 	void Remove() {
-		// m_Handle.remove<TComponent>();
+		m_Handle.remove<TComponent>();
 	}
 
 	operator bool() const { return IsValid(); }

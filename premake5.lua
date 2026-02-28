@@ -68,7 +68,7 @@ Includes["spdlog"]                = "%{VendorPaths.spdlog}/include"
 Includes["angelscript"]           = "%{VendorPaths.angelscript}/angelscript/include"
 Includes["soloud"]                = "%{VendorPaths.soloud}/include"
 Includes["glad"]                  = "%{VendorPaths.glad}/include"
-Includes["flecs"]                 = "%{VendorPaths.flecs}/distr"
+Includes["flecs"]                 = "%{VendorPaths.flecs}/include"
 Includes["lmdb"]                  = "%{VendorPaths.lmdb}/lmdb/libraries/liblmdb"
 -- Editor libraries
 Includes["assimp"]                = "%{VendorPaths.assimp}/include"

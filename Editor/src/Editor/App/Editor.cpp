@@ -50,9 +50,17 @@ void StandardIO() {
 				std::string path = arg["--open_project"];
 				Editor::NewProject(path);
 			}
+			if(arg["--open-scene"]) {
+				std::string name = arg["--open-scene"];
+				Editor::OpenScene(name);
+			}
 		}
 	}
 }
+
+static Ref<Project> s_CurrentProject;
+static Ref<Scene> s_CurrentScene;
+static Ref<Canvas> s_CurrentCanvas;
 
 void Editor::Init(const CommandLineArgs& args) {
 	Log::Init();
