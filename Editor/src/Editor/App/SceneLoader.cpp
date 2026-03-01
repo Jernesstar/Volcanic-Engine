@@ -22,8 +22,7 @@
 #include <Engine/Scene/Component.h>
 #include <Engine/Canvas/Component.h>
 
-#include "Asset/AssetManager.h"
-#include "YAMLSerializer.h"
+#include "../Asset/AssetManager.h"
 #include "ScriptManager.h"
 
 #undef near
@@ -50,10 +49,6 @@ Serializer& Serializer::Write(const Asset& value) {
 	EndMapping();
 	return *this;
 }
-
-}
-
-namespace VolcanicEditor {
 
 static void DeserializeEntity(YAML::Node entityNode, Scene& scene);
 static void SerializeEntity(YAMLSerializer& out, const Entity& entity);
@@ -452,7 +447,7 @@ void SerializeEntity(YAMLSerializer& serializer, const Entity& entity) {
 Ref<ScriptObject> LoadScript(Entity entity, Asset asset,
 	YAML::Node& scriptComponentNode)
 {
-	auto mod = AssetManager::Get()->Load<ScriptModule>(asset);
+	auto mod = AssetManager::Get()->Get<ScriptModule>(asset);
 	if(!mod) {
 		Log::Info(
 			"Could not load script module %lu, needed for Entity %lu",
@@ -636,25 +631,25 @@ void DeserializeEntity(YAML::Node entityNode, Scene& scene) {
 			auto typeStr	   = rigidBodyNode["Type"].as<std::string>();
 			auto shapeTypeStr  = rigidBodyNode["ShapeType"].as<std::string>();
 
-			RigidBody::Type type =
-				(typeStr == "Static") ? RigidBody::Type::Static
-									  : RigidBody::Type::Dynamic;
-			Shape::Type shapeType;
-			if(shapeTypeStr == "Box")	  shapeType = Shape::Type::Box;
-			if(shapeTypeStr == "Sphere")  shapeType = Shape::Type::Sphere;
-			if(shapeTypeStr == "Plane")	  shapeType = Shape::Type::Plane;
-			if(shapeTypeStr == "Capsule") shapeType = Shape::Type::Capsule;
-			if(shapeTypeStr == "Mesh")	  shapeType = Shape::Type::Mesh;
+			// RigidBody::Type type =
+			// 	(typeStr == "Static") ? RigidBody::Type::Static
+			// 						  : RigidBody::Type::Dynamic;
+			// Shape::Type shapeType;
+			// if(shapeTypeStr == "Box")	  shapeType = Shape::Type::Box;
+			// if(shapeTypeStr == "Sphere")  shapeType = Shape::Type::Sphere;
+			// if(shapeTypeStr == "Plane")	  shapeType = Shape::Type::Plane;
+			// if(shapeTypeStr == "Capsule") shapeType = Shape::Type::Capsule;
+			// if(shapeTypeStr == "Mesh")	  shapeType = Shape::Type::Mesh;
 	
-			Ref<RigidBody> body;
-			if(shapeType == Shape::Type::Mesh)
-				body = RigidBody::Create(type);
-			else {
-				Ref<Shape> shape = Shape::Create(shapeType);
-				body = RigidBody::Create(type, shape);
-			}
+			// Ref<RigidBody> body;
+			// if(shapeType == Shape::Type::Mesh)
+			// 	body = RigidBody::Create(type);
+			// else {
+			// 	Ref<Shape> shape = Shape::Create(shapeType);
+			// 	body = RigidBody::Create(type, shape);
+			// }
 
-			entity.Add<RigidBodyComponent>(body);
+			// entity.Add<RigidBodyComponent>(body);
 		}
 		else
 			entity.Add<RigidBodyComponent>();
@@ -719,7 +714,7 @@ void DeserializeEntity(YAML::Node entityNode, Scene& scene) {
 
 }
 
-namespace VolcanicEngine {
+namespace VolcaniCore {
 
 template<>
 BinaryWriter& BinaryWriter::WriteObject(const glm::vec3& vec) {
@@ -794,7 +789,7 @@ BinaryWriter& BinaryWriter::WriteObject(const ScriptComponent& comp) {
 	for(uint32_t i = 0; i < handle->GetPropertyCount(); i++) {
 		ScriptField field = obj->GetProperty(i);
 		bool editorField =
-			ScriptManager::FieldHasMetadata(
+			VolcanicEditor::ScriptManager::FieldHasMetadata(
 				comp.Instance->GetClass()->Name, field.Name, "EditorField");
 		if(!editorField) {
 			Write((int)-1);
@@ -866,10 +861,10 @@ BinaryWriter& BinaryWriter::WriteObject(const ScriptComponent& comp) {
 
 template<>
 BinaryWriter& BinaryWriter::WriteObject(const RigidBodyComponent& comp) {
-	auto body = comp.Body;
+	// auto body = comp.Body;
 
-	Write((uint8_t)body->GetType());
-	Write((uint8_t)body->GetShape()->GetType());
+	// Write((uint8_t)body->GetType());
+	// Write((uint8_t)body->GetShape()->GetType());
 
 	return *this;
 }
@@ -977,7 +972,7 @@ BinaryWriter& BinaryWriter::WriteObject(const Entity& entity) {
 
 }
 
-namespace VolcanicEngine {
+namespace VolcanicEditor {
 
 void SceneLoader::RuntimeSave(const Scene& scene,
 							  const std::string& projectPath,

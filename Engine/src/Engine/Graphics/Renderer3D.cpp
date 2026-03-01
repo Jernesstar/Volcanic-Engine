@@ -164,10 +164,9 @@ void Renderer3D::Begin(Ref<Camera> camera) {
 		return;
 
 	auto* command = Renderer::GetCommand();
-	// command->UniformData
-	// .SetInput("u_ViewProj", camera->GetViewProjection());
-	// command->UniformData
-	// .SetInput("u_CameraPosition", camera->GetPosition());
+	command->Uniforms
+	.Set("u_ViewProj", camera->GetViewProjection())
+	.Set("u_CameraPosition", camera->GetPosition());
 }
 
 void Renderer3D::End() {

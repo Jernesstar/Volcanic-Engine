@@ -20,7 +20,10 @@ public:
 	Ref<T> Get(Asset asset) {
 		if(!m_AssetRegistry->IsLoaded(asset))
 			Load(asset);
-		return m_AssetRegistry->Get<T>(asset);
+
+		// Bytes bytes = m_AssetRegistry->Get(asset);
+		// return AssetData<T>::CreateRef(bytes);
+		return nullptr;
 	}
 
 	template<typename T>
@@ -35,7 +38,7 @@ protected:
 	Ref<AssetRegistry> m_AssetRegistry;
 
 private:
-	static AssetManager* s_Instance;
+	inline static AssetManager* s_Instance;
 };
 
 

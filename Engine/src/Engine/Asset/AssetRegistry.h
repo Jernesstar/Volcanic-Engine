@@ -67,7 +67,7 @@ public:
 
 	void Add(Asset asset);
 	void Remove(Asset asset);
-	void Set(Asset asset, Bytes data);
+	void Set(Asset asset, Bytes&& data);
 	Bytes Get(Asset asset);
 
 	bool IsLoaded(Asset asset) const;

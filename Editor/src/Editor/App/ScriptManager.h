@@ -37,8 +37,7 @@ public:
 	static bool FieldHasMetadata(const std::string& _class,
 		const std::string& field, const std::string& str)
 	{
-		return
-			s_FieldMetadata[_class + "::" + field].Find(str);
+		return s_FieldMetadata[_class + "::" + field].Find(str);
 	}
 
 	static void RunCodeAnalysis();

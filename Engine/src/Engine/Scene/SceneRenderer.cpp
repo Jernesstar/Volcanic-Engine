@@ -175,7 +175,7 @@ RuntimeSceneRenderer::RuntimeSceneRenderer() {
 
 	LightingPass =
 		RenderPass::Create("Lighting",
-			AssetManager::Get()->Load<Shader>("Lighting"), m_Output);
+			AssetManager::Get()->Get<Shader>("Lighting"), m_Output);
 	LightingPass->SetData(Renderer3D::GetMeshBuffer());
 
 	BaseLayer =
@@ -188,19 +188,19 @@ RuntimeSceneRenderer::RuntimeSceneRenderer() {
 
 	LightPass =
 		RenderPass::Create("Light",
-			AssetManager::Get()->Load<Shader>("Light"), BaseLayer);
+			AssetManager::Get()->Get<Shader>("Light"), BaseLayer);
 	LightPass->SetData(Renderer2D::GetScreenBuffer());
 
 	InitMips();
 	DownsamplePass =
 		RenderPass::Create("Bloom-Downsample",
-			AssetManager::Get()->Load<Shader>("Bloom-Downsample"), Mips);
+			AssetManager::Get()->Get<Shader>("Bloom-Downsample"), Mips);
 	UpsamplePass =
 		RenderPass::Create("Bloom-Upsample",
-			AssetManager::Get()->Load<Shader>("Bloom-Upsample"), Mips);
+			AssetManager::Get()->Get<Shader>("Bloom-Upsample"), Mips);
 	BloomPass =
 		RenderPass::Create("Bloom",
-			AssetManager::Get()->Load<Shader>("Bloom"), m_Output);
+			AssetManager::Get()->Get<Shader>("Bloom"), m_Output);
 
 	DownsamplePass->SetData(Renderer2D::GetScreenBuffer());
 	UpsamplePass->SetData(Renderer2D::GetScreenBuffer());
@@ -208,13 +208,13 @@ RuntimeSceneRenderer::RuntimeSceneRenderer() {
 
 	EmitterPass =
 		RenderPass::Create("Particle-Emit",
-			AssetManager::Get()->Load<Shader>("Particle-Emit"));
+			AssetManager::Get()->Get<Shader>("Particle-Emit"));
 	UpdatePass =
 		RenderPass::Create("Particle-Update",
-			AssetManager::Get()->Load<Shader>("Particle-Update"));
+			AssetManager::Get()->Get<Shader>("Particle-Update"));
 	ParticlePass =
 		RenderPass::Create("Particle-Draw",
-			AssetManager::Get()->Load<Shader>("Particle-DefaultDraw"), m_Output);
+			AssetManager::Get()->Get<Shader>("Particle-DefaultDraw"), m_Output);
 	ParticlePass->SetData(Renderer3D::GetMeshBuffer());
 }
 
@@ -434,7 +434,7 @@ void RuntimeSceneRenderer::SubmitMesh(const Entity& entity) {
 	// if(!assetManager->IsValid(mc.MeshSourceAsset))
 	// 	return;
 
-	auto mesh = assetManager->Load<Mesh>(mc.MeshSourceAsset);
+	auto mesh = assetManager->Get<Mesh>(mc.MeshSourceAsset);
 
 	if(!mc.MaterialAsset.ID) {
 		Renderer::StartPass(LightingPass);
@@ -449,26 +449,26 @@ void RuntimeSceneRenderer::SubmitMesh(const Entity& entity) {
 	// 	return;
 
 	// VolcaniCore::Material mat;
-	// auto material = assetManager->Load<VolcanicEngine::Material>(mc.MaterialAsset);
+	// auto material = assetManager->Get<VolcanicEngine::Material>(mc.MaterialAsset);
 
 	// if(material->TextureUniforms.count("u_Diffuse")) {
 	// 	UUID id = material->TextureUniforms["u_Diffuse"];
 	// 	Asset textureAsset = { id, AssetType::Texture };
-	// 	assetManager->Load(textureAsset);
+	// 	assetManager->Get(textureAsset);
 	// 	mat.Diffuse = assetManager->Get<Texture>(textureAsset);
 	// }
 
 	// if(material->TextureUniforms.count("u_Specular")) {
 	// 	UUID id = material->TextureUniforms["u_Specular"];
 	// 	Asset textureAsset = { id, AssetType::Texture };
-	// 	assetManager->Load(textureAsset);
+	// 	assetManager->Get(textureAsset);
 	// 	mat.Specular = assetManager->Get<Texture>(textureAsset);
 	// }
 
 	// if(material->TextureUniforms.count("u_Emissive")) {
 	// 	UUID id = material->TextureUniforms["u_Emissive"];
 	// 	Asset textureAsset = { id, AssetType::Texture };
-	// 	assetManager->Load(textureAsset);
+	// 	assetManager->Get(textureAsset);
 	// 	mat.Emissive = assetManager->Get<Texture>(textureAsset);
 	// }
 

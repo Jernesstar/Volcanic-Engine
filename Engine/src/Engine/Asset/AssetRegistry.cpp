@@ -5,9 +5,7 @@
 namespace VolcanicEngine {
 
 AssetRegistry::AssetRegistry() {
-	Application::PushDir();
 	m_Registry = new Registry("./.volc/assets/registry.db", 2);
-	Application::PopDir();
 	m_AssetMetadata = m_Registry->NewDatabase("AssetMetadata");
 	m_AssetData = m_Registry->NewDatabase("AssetData");
 }
@@ -25,12 +23,16 @@ void AssetRegistry::Remove(Asset asset) {
 	m_AssetMetadata->Remove((u64)asset.ID);
 }
 
+bool AssetRegistry::IsLoaded(Asset asset) const {
+	return false;
+}
+
 bool AssetRegistry::IsValid(Asset asset) const {
 	return asset.ID != 0 && asset.Type != AssetType::None;
 }
 
 bool AssetRegistry::HasRefs(Asset asset) const {
-
+	return false;
 }
 
 void AssetRegistry::AddRef(Asset base, Asset ref) {
