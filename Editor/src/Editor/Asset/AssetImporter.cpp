@@ -21,9 +21,13 @@
 #include <VolcaniCore/Core/Assert.h>
 #include <VolcaniCore/Core/FileUtils.h>
 
+#include <Engine/Graphics/Mesh.h>
+#include <Engine/Graphics/Platform/RendererAPI.h>
+
 #include "ScriptManager.h"
 
 using namespace VolcaniCore;
+using namespace VolcanicEngine::Audio;
 using namespace VolcanicEngine::Graphics;
 using namespace VolcanicEngine::Script;
 
@@ -32,58 +36,59 @@ namespace fs = std::filesystem;
 namespace VolcanicEditor {
 
 ImageData AssetImporter::GetImageData(const std::string& path, bool flip) {
-	stbi_set_flip_vertically_on_load((int)flip);
+	stbi_set_flip_vertically_on_load((i32)flip);
 	ImageData image;
-	int width, height, bpp;
-	uint8_t* pixels = stbi_load(path.c_str(), &width, &height, &bpp, 4);
+	i32 width, height, bpp;
+	u8* pixels = stbi_load(path.c_str(), &width, &height, &bpp, 4);
 	if(!pixels) {
-		VOLCANICORE_LOG_WARNING("Could not load image '%s'", path.c_str());
+		Log::Warning("Could not load image '%s'", path.c_str());
 		return { };
 	}
 
-	image.Width = (uint32_t)width;
-	image.Height = (uint32_t)height;
+	image.Width = (u32)width;
+	image.Height = (u32)height;
 	image.Data = Buffer(pixels, image.Width * image.Height * 4);
 	return image;
 }
 
 Ref<Texture> AssetImporter::GetTexture(const std::string& path, bool flip) {
 	ImageData image = GetImageData(path, flip);
-	auto texture = Texture::Create(image.Width, image.Height);
+	auto texture = 
+		RendererAPI::Get()->CreateTexture({ image.Width, image.Height });
 	texture->SetData(image.Data);
 	return texture;
 }
 
-Ref<Cubemap> AssetImporter::GetCubemap(const std::string& folder) {
-	List<fs::path> paths;
-	for(auto path : FileUtils::GetFiles(folder, { ".png", ".jpg", ".jpeg" }))
-		paths.Add(fs::path(path));
+// Ref<Cubemap> AssetImporter::GetCubemap(const std::string& folder) {
+// 	List<fs::path> paths;
+// 	for(auto path : FileUtils::GetFiles(folder, { ".png", ".jpg", ".jpeg" }))
+// 		paths.Add(fs::path(path));
 
-	if(paths.Count() < 6)
-		VOLCANICORE_LOG_WARNING(
-			"Folder %s does not have at least 6 images", folder.c_str());
+// 	if(paths.Count() < 6)
+// 		Log::Warning(
+// 			"Folder %s does not have at least 6 images", folder.c_str());
 
-	Map<std::string, int> map =
-	{
-		{ "right", 0 }, { "left",	1 },
-		{ "top",   2 }, { "bottom", 3 },
-		{ "front", 4 }, { "back",	5 }
-	};
-	List<ImageData> output(6);
-	for(uint32_t i = 0; i < 6; i++)
-		output.Emplace();
+// 	Map<std::string, i32> map =
+// 	{
+// 		{ "right", 0 }, { "left",	1 },
+// 		{ "top",   2 }, { "bottom", 3 },
+// 		{ "front", 4 }, { "back",	5 }
+// 	};
+// 	List<ImageData> output(6);
+// 	for(u32 i = 0; i < 6; i++)
+// 		output.Emplace();
 
-	for(auto& path : paths)
-		output[map[path.filename().string()]] = GetImageData(path.string());
+// 	for(auto& path : paths)
+// 		output[map[path.filename().string()]] = GetImageData(path.string());
 
-	return Cubemap::Create(output);
-}
+// 	return Cubemap::Create(output);
+// }
 
 static SubMesh LoadMesh(const aiMesh* mesh) {
 	Buffer<Vertex> vertices(mesh->mNumVertices);
-	Buffer<uint32_t> indices(mesh->mNumFaces * 3);
+	Buffer<u32> indices(mesh->mNumFaces * 3);
 
-	for(uint32_t i = 0; i < mesh->mNumVertices; i++) {
+	for(u32 i = 0; i < mesh->mNumVertices; i++) {
 		const aiVector3D& pos	   = mesh->mVertices[i];
 		const aiVector3D& normal   = mesh->mNormals[i];
 		const aiVector3D& texCoord =
@@ -98,7 +103,7 @@ static SubMesh LoadMesh(const aiMesh* mesh) {
 		vertices.Add(v);
 	}
 
-	for(uint32_t i = 0; i < mesh->mNumFaces; i++) {
+	for(u32 i = 0; i < mesh->mNumFaces; i++) {
 		const aiFace& face = mesh->mFaces[i];
 		indices.Add(face.mIndices[0]);
 		indices.Add(face.mIndices[1]);
@@ -157,7 +162,7 @@ static Material LoadMaterial(const std::string& dir, const aiMaterial* mat) {
 
 Ref<Mesh> AssetImporter::GetMesh(const std::string& path) {
 	Assimp::Importer importer;
-	uint32_t loadFlags = aiProcess_Triangulate
+	u32 loadFlags = aiProcess_Triangulate
 						| aiProcess_GenSmoothNormals
 						| aiProcess_FlipUVs
 						| aiProcess_JoinIdenticalVertices;
@@ -170,11 +175,11 @@ Ref<Mesh> AssetImporter::GetMesh(const std::string& path) {
 	mesh->SubMeshes.Allocate(scene->mNumMeshes);
 	mesh->Materials.Allocate(scene->mNumMaterials);
 
-	for(uint32_t i = 0; i < scene->mNumMeshes; i++)
+	for(u32 i = 0; i < scene->mNumMeshes; i++)
 		mesh->SubMeshes.AddMove(LoadMesh(scene->mMeshes[i]));
 
 	auto dir = (fs::path(path).parent_path() / "textures").string();
-	for(uint32_t i = 0; i < scene->mNumMaterials; i++)
+	for(u32 i = 0; i < scene->mNumMaterials; i++)
 		mesh->Materials.Add(LoadMaterial(dir, scene->mMaterials[i]));
 
 	return mesh;
@@ -184,7 +189,7 @@ void AssetImporter::GetMeshData(const std::string& path,
 	List<SubMesh>& meshes, List<MaterialPaths>& materialPaths)
 {
 	Assimp::Importer importer;
-	uint32_t loadFlags = aiProcess_Triangulate
+	u32 loadFlags = aiProcess_Triangulate
 						| aiProcess_GenSmoothNormals
 						| aiProcess_FlipUVs
 						| aiProcess_JoinIdenticalVertices;
@@ -196,11 +201,11 @@ void AssetImporter::GetMeshData(const std::string& path,
 	meshes.Allocate(scene->mNumMeshes);
 	materialPaths.Allocate(scene->mNumMaterials);
 
-	for(uint32_t i = 0; i < scene->mNumMeshes; i++)
+	for(u32 i = 0; i < scene->mNumMeshes; i++)
 		meshes.AddMove(LoadMesh(scene->mMeshes[i]));
 
 	auto dir = (fs::path(path).parent_path() / "textures").string();
-	for(uint32_t i = 0; i < scene->mNumMaterials; i++) {
+	for(u32 i = 0; i < scene->mNumMaterials; i++) {
 		auto mat = scene->mMaterials[i];
 		auto diffusePath = GetMaterialPath(dir, mat, aiTextureType_DIFFUSE);
 		auto specularPath = GetMaterialPath(dir, mat, aiTextureType_SPECULAR);
@@ -224,7 +229,12 @@ bool StringContains(const std::string& str, const std::string& subStr) {
 	return str.find(subStr) != std::string::npos;
 }
 
-ShaderFile TryGetShader(const std::string& path) {
+struct ShaderFile {
+	const std::string Path;
+	const Graphics::ShaderFileType Type;
+};
+
+VolcanicEditor::ShaderFile TryGetShader(const std::string& path) {
 	std::size_t dot = path.find_first_of('.');
 	if(dot == std::string::npos)
 		VOLCANICORE_ASSERT_ARGS(false,
@@ -233,17 +243,17 @@ ShaderFile TryGetShader(const std::string& path) {
 
 	std::string str = path.substr(dot);
 	if(StringContains(str, "vert") || StringContains(str, "vs"))
-		return ShaderFile{ path, ShaderType::Vertex };
+		return ShaderFile{ path, ShaderFileType::Vertex };
 	if(StringContains(str, "frag") || StringContains(str, "fs"))
-		return ShaderFile{ path, ShaderType::Fragment };
+		return ShaderFile{ path, ShaderFileType::Fragment };
 	if(StringContains(str, "geom") || StringContains(str, "gs"))
-		return ShaderFile{ path, ShaderType::Geometry };
+		return ShaderFile{ path, ShaderFileType::Geometry };
 	if(StringContains(str, "comp") || StringContains(str, "compute"))
-		return ShaderFile{ path, ShaderType::Compute };
+		return ShaderFile{ path, ShaderFileType::Compute };
 
 	VOLCANICORE_ASSERT_ARGS(false, "File %s is of unknown shader type",
 							path.c_str());
-	return ShaderFile{ "", ShaderType::Unknown };
+	return ShaderFile{ "", ShaderFileType::Unknown };
 }
 
 List<ShaderFile> GetShaders(const List<std::string>& paths) {
@@ -270,35 +280,33 @@ List<ShaderFile> GetShaders(const std::string& shaderFolder,
 	return GetShaders(paths);
 }
 
-Ref<ShaderPipeline> AssetImporter::GetShader(const List<std::string>& paths) {
-	List<Shader> list(paths.Count());
+Ref<Shader> AssetImporter::GetShader(const List<std::string>& paths) {
+	List<Graphics::ShaderFile> list(paths.Count());
 	for(auto path : paths) {
 		auto file = TryGetShader(path);
 		auto str = FileUtils::ReadFile(file.Path);
-		Buffer<void> data(sizeof(char), str.size() + 1);
-		data.Set(str.c_str(), str.size() + 1);
-		// Buffer<uint32_t> code = AssetImporter::GetShaderData(path);
-		// Buffer<void> data(sizeof(uint32_t), code.GetCount());
-		// data.Set(code.Get(), code.GetCount());
+		// Buffer<u32> code = AssetImporter::GetShaderData(path);
 
-		list.AddMove({ file.Type, std::move(data) });
+		list.Emplace(file.Type, str);
 	}
 
-	return ShaderPipeline::Create(list);
+	auto shader = RendererAPI::Get()->CreateShader({});
+	shader->SetShaderData(std::move(list));
+	return shader;
 }
 
-Buffer<uint32_t> AssetImporter::GetShaderData(const std::string& path) {
+Buffer<u32> AssetImporter::GetShaderData(const std::string& path) {
 	glslang::InitializeProcess();
 
 	ShaderFile file = TryGetShader(path);
 	EShLanguage stage;
-	if(file.Type == ShaderType::Vertex)
+	if(file.Type == ShaderFileType::Vertex)
 		stage = EShLangVertex;
-	else if(file.Type == ShaderType::Fragment)
+	else if(file.Type == ShaderFileType::Fragment)
 		stage = EShLangFragment;
-	else if(file.Type == ShaderType::Compute)
+	else if(file.Type == ShaderFileType::Compute)
 		stage = EShLangCompute;
-	else if(file.Type == ShaderType::Geometry)
+	else if(file.Type == ShaderFileType::Geometry)
 		stage = EShLangGeometry;
 
 	glslang::TShader shader(stage);
@@ -314,14 +322,14 @@ Buffer<uint32_t> AssetImporter::GetShaderData(const std::string& path) {
 	const TBuiltInResource* resources = GetDefaultResources();
 	bool forceDefaults = false;
 	bool forwardCompatible = true; // Warn deprecated features
-	int defaultVersion = 100;
+	i32 defaultVersion = 100;
 	EProfile defaultProfile = ENoProfile;
 	EShMessages messageFlags = (EShMessages)(EShMsgDefault | EShMsgSpvRules);
 	bool parsed =
 		shader.parse(resources, defaultVersion, defaultProfile,
 					 forceDefaults, forwardCompatible, messageFlags);
 	if(!parsed) {
-		VOLCANICORE_LOG_ERROR("Failed to parse '%s': %s",
+		Log::Error("Failed to parse '%s': %s",
 			path.c_str(), shader.getInfoLog());
 		glslang::FinalizeProcess();
 		return { };
@@ -331,14 +339,14 @@ Buffer<uint32_t> AssetImporter::GetShaderData(const std::string& path) {
 	program.addShader(&shader);
 	bool linked = program.link(messageFlags);
 	if(!linked) {
-		VOLCANICORE_LOG_ERROR("Failed to link '%s': %s",
+		Log::Error("Failed to link '%s': %s",
 			path.c_str(), program.getInfoLog());
 		glslang::FinalizeProcess();
 		return { };
 	}
 
 	glslang::TIntermediate& intermediateRef = *program.getIntermediate(stage);
-	std::vector<uint32_t> spirv;
+	std::vector<u32> spirv;
 	glslang::SpvOptions options{};
 	options.validate = true;
 	options.stripDebugInfo = true;
@@ -352,14 +360,14 @@ Buffer<uint32_t> AssetImporter::GetShaderData(const std::string& path) {
 	spv::SpvBuildLogger logger;
 	glslang::GlslangToSpv(intermediateRef, spirv, &logger, &options);
 	if(!spirv.size()) {
-		VOLCANICORE_LOG_INFO("SPIRV Log: %s", logger.getAllMessages().c_str());
+		Log::Info("SPIRV Log: %s", logger.getAllMessages().c_str());
 		glslang::FinalizeProcess();
 		return { };
 	}
 
 	glslang::FinalizeProcess();
 
-	Buffer<uint32_t> data(spirv.size());
+	Buffer<u32> data(spirv.size());
 	data.Set(spirv.data(), spirv.size());
 
 	return data;

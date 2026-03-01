@@ -1,57 +1,52 @@
-// #pragma once
+#pragma once
 
-// #include <Engine/Graphics/Mesh.h>
-// #include <Engine/Graphics/Platform/Texture.h>
-// #include <Engine/Graphics/Platform/Cubemap.h>
-// #include <Engine/Graphics/Platform/Shader.h>
+#include <Engine/Graphics/Mesh.h>
+#include <Engine/Graphics/Platform/Texture.h>
+#include <Engine/Graphics/Platform/Cubemap.h>
+#include <Engine/Graphics/Platform/Shader.h>
 
-// #include <Engine/Audio/Sound.h>
-// #include <Engine/Script/ScriptModule.h>
+#include <Engine/Audio/Sound.h>
+#include <Engine/Script/ScriptModule.h>
 
-// using namespace VolcaniCore;
-// using namespace VolcanicEngine;
+using namespace VolcaniCore;
+using namespace VolcanicEngine;
 
-// namespace VolcanicEditor {
-// struct MaterialPaths {
-// 	std::string Diffuse;
-// 	std::string Specular;
-// 	std::string Emissive;
-// 	glm::vec4 DiffuseColor;
-// 	glm::vec4 SpecularColor;
-// 	glm::vec4 EmissiveColor;
+namespace VolcanicEditor {
 
-// 	std::string operator[](uint32_t i) { return *(&Diffuse + i); }
-// };
+struct MaterialPaths {
+	std::string Diffuse;
+	std::string Specular;
+	std::string Emissive;
+	glm::vec4 DiffuseColor;
+	glm::vec4 SpecularColor;
+	glm::vec4 EmissiveColor;
 
-// struct ShaderFile {
-// 	const std::string Path;
-// 	const Graphics::ShaderFileType Type;
-// };
+	std::string operator[](u32 i) { return *(&Diffuse + i); }
+};
 
-// class AssetImporter {
-// public:
-// 	static Graphics::ImageData GetImageData(const std::string& path,
-// 		bool flip = true);
+class AssetImporter {
+public:
+	static Graphics::ImageData GetImageData(const std::string& path,
+		bool flip = true);
 
-// 	static Ref<Graphics::Mesh> GetMesh(const std::string& path);
-// 	static void GetMeshData(const std::string& path,
-// 		List<Graphics::SubMesh>& mesh,
-// 		List<MaterialPaths>& materialPaths);
+	static Ref<Graphics::Mesh> GetMesh(const std::string& path);
+	static void GetMeshData(const std::string& path,
+		List<Graphics::SubMesh>& mesh,
+		List<MaterialPaths>& materialPaths);
 
-// 	static Ref<Graphics::Texture> GetTexture(const std::string& path,
-// 		bool flip = true);
-// 	static Ref<Graphics::Cubemap> GetCubemap(const std::string& path);
+	static Ref<Graphics::Texture> GetTexture(const std::string& path,
+		bool flip = true);
+	// static Ref<Graphics::Cubemap> GetCubemap(const std::string& path);
 
-// 	static VolcaniCore::Buffer<uint32_t> GetShaderData(const std::string& path);
-// 	static Ref<Graphics::ShaderPipeline> GetShader(
-// 		const List<std::string>& path);
+	static VolcaniCore::Buffer<u32> GetShaderData(const std::string& path);
+	static Ref<Graphics::Shader> GetShader(const List<std::string>& path);
 
-// 	static VolcaniCore::Buffer<f32> GetAudioData(const std::string& path);
-// 	static Ref<Audio::Sound> GetAudio(const std::string& path);
+	static VolcaniCore::Buffer<f32> GetAudioData(const std::string& path);
+	static Ref<Audio::Sound> GetAudio(const std::string& path);
 
-// 	static asIScriptModule* GetScriptData(const std::string& path,
-// 		bool* error = nullptr, std::string name = "");
-// 	static Ref<Script::ScriptModule> GetScript(const std::string& path);
-// };
+	static asIScriptModule* GetScriptData(const std::string& path,
+		bool* error = nullptr, std::string name = "");
+	static Ref<Script::ScriptModule> GetScript(const std::string& path);
+};
 
-// }
+}

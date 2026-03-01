@@ -2,6 +2,8 @@
 
 #include <Engine/Asset/AssetManager.h>
 
+using namespace VolcanicEngine;
+
 namespace VolcanicEditor {
 
 extern std::string AssetTypeToString(AssetType type);
@@ -14,6 +16,7 @@ public:
 
 	void Load(Asset asset) override;
 	void Unload(Asset asset) override;
+
 	uint32_t AddReloadCallback(const Func<void, Asset, bool>& callback);
 	void RemoveReloadCallback(uint32_t id);
 
@@ -24,9 +27,7 @@ public:
 	std::string GetPath(VolcaniCore::UUID id) const;
 	VolcaniCore::UUID GetFromPath(const std::string& path) const;
 
-	const auto& GetRegistry() const { return m_AssetRegistry; }
-
-	void Clear() override;
+	// void Clear() override;
 	void Load(const std::string& path);
 	void Save();
 	void RuntimeSave(const std::string& exportPath);

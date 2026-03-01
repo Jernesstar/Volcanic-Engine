@@ -7,8 +7,15 @@
 #include <iterator>
 
 #include <VolcaniCore/Window/Events.h>
-#include <Engine/Graphics/Renderer.h>
 
+#include <Engine/App/App.h>
+#include <Engine/Graphics/Renderer.h>
+#include <Engine/Scene/Scene.h>
+#include <Engine/Canvas/Canvas.h>
+
+#include "SceneLoader.h"
+
+using namespace VolcanicEngine;
 using namespace VolcanicEngine::Graphics;
 
 namespace VolcanicEditor {
@@ -58,6 +65,7 @@ void StandardIO() {
 	}
 }
 
+static Ref<App> s_App;
 static Ref<Project> s_CurrentProject;
 static Ref<Scene> s_CurrentScene;
 static Ref<Canvas> s_CurrentCanvas;
@@ -77,7 +85,7 @@ void Editor::Update(TimeStep ts) {
 }
 
 void Editor::Render() {
-	
+
 }
 
 void Editor::OpenProject(const std::string& path) {

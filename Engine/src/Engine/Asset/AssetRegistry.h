@@ -70,6 +70,7 @@ public:
 	void Set(Asset asset, Bytes data);
 	Bytes Get(Asset asset);
 
+	bool IsLoaded(Asset asset) const;
 	bool IsValid(Asset asset) const;
 	bool HasRefs(Asset asset) const;
 	void AddRef(Asset base, Asset ref);

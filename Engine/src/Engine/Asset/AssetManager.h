@@ -1,3 +1,5 @@
+#pragma once
+
 #include "AssetRegistry.h"
 
 #include <VolcaniCore/Core/Template.h>
@@ -11,13 +13,20 @@ public:
 public:
 	AssetManager() { s_Instance = this; }
 
-	template<typename T>
-	Ref<T> Load(Asset asset);
+	virtual void Load(Asset asset) = 0;
+	virtual void Unload(Asset asset) = 0;
 
 	template<typename T>
-	Ref<T> Load(const std::string& name) {
+	Ref<T> Get(Asset asset) {
+		if(!m_AssetRegistry->IsLoaded(asset))
+			Load(asset);
+		return m_AssetRegistry->Get<T>(asset);
+	}
+
+	template<typename T>
+	Ref<T> Get(const std::string& name) {
 		Asset asset = m_AssetRegistry->FindAsset(name);
-		return Load<T>(asset);
+		return Get<T>(asset);
 	}
 
 	Ref<AssetRegistry> GetRegistry() const { return m_AssetRegistry; }

@@ -4,14 +4,18 @@
 #include <Engine/Script/ScriptObject.h>
 #include <Engine/Scene/Scene.h>
 
-#include "YAMLSerializer.h"
+#include "Utils/YAMLSerializer.h"
+
+using namespace VolcanicEngine;
+using namespace VolcanicEngine::ECS;
+// using namespace VolcanicEngine::Physics;
+using namespace VolcanicEngine::Graphics;
+using namespace VolcanicEngine::Script;
 
 namespace VolcanicEditor {
 
-extern void SaveScript(YAMLSerializer& serializer,
-	Ref<Script::ScriptObject> obj);
-extern Ref<Script::ScriptObject> LoadScript(Entity entity, Asset asset,
-	YAML::Node& scriptComponentNode);
+extern void SaveScript(YAMLSerializer& serializer, Ref<ScriptObject> obj);
+extern Ref<ScriptObject> LoadScript(Entity entity, Asset asset, YAML::Node& node);
 
 class SceneLoader {
 public:

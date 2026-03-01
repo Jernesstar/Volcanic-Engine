@@ -22,17 +22,12 @@
 #include <Engine/Scene/Component.h>
 #include <Engine/Canvas/Component.h>
 
+#include "Asset/AssetManager.h"
 #include "YAMLSerializer.h"
-// #include "EditorApp.h"
 #include "ScriptManager.h"
 
 #undef near
 #undef far
-
-using namespace VolcanicEngine;
-using namespace VolcanicEngine::ECS;
-// using namespace VolcanicEngine::Physics;
-using namespace VolcanicEngine::Graphics;
 
 namespace VolcanicEditor {
 
@@ -346,44 +341,44 @@ void SerializeEntity(YAMLSerializer& serializer, const Entity& entity) {
 		serializer.EndMapping();
 	}
 	if(entity.Has<RigidBodyComponent>()) {
-		auto body = entity.Get<RigidBodyComponent>().Body;
-		serializer.WriteKey("RigidBodyComponent")
-		.BeginMapping();
+		// auto body = entity.Get<RigidBodyComponent>().Body;
+		// serializer.WriteKey("RigidBodyComponent")
+		// .BeginMapping();
 
-		if(body) {
-			auto type = body->GetType();
-			auto t = type == RigidBody::Type::Static ? "Static" : "Dynamic";
+		// if(body) {
+		// 	auto type = body->GetType();
+		// 	auto t = type == RigidBody::Type::Static ? "Static" : "Dynamic";
 
-			serializer.WriteKey("Body")
-				.BeginMapping()
-					.WriteKey("Type").Write(t);
+		// 	serializer.WriteKey("Body")
+		// 		.BeginMapping()
+		// 			.WriteKey("Type").Write(t);
 
-			if(body->HasShape()) {
-				std::string shapeType;
-				switch(body->GetShape()->GetType()) {
-					case Shape::Type::Box:
-						shapeType = "Box";
-						break;
-					case Shape::Type::Sphere:
-						shapeType = "Sphere";
-						break;
-					case Shape::Type::Plane:
-						shapeType = "Plane";
-						break;
-					case Shape::Type::Capsule:
-						shapeType = "Capsule";
-						break;
-					case Shape::Type::Mesh:
-						shapeType = "Mesh";
-						break;
-				}
+		// 	if(body->HasShape()) {
+		// 		std::string shapeType;
+		// 		switch(body->GetShape()->GetType()) {
+		// 			case Shape::Type::Box:
+		// 				shapeType = "Box";
+		// 				break;
+		// 			case Shape::Type::Sphere:
+		// 				shapeType = "Sphere";
+		// 				break;
+		// 			case Shape::Type::Plane:
+		// 				shapeType = "Plane";
+		// 				break;
+		// 			case Shape::Type::Capsule:
+		// 				shapeType = "Capsule";
+		// 				break;
+		// 			case Shape::Type::Mesh:
+		// 				shapeType = "Mesh";
+		// 				break;
+		// 		}
 
-				serializer.WriteKey("ShapeType").Write(shapeType);
-			}
+		// 		serializer.WriteKey("ShapeType").Write(shapeType);
+		// 	}
 
-			serializer.EndMapping(); // Body
-		}
-		serializer.EndMapping(); // RigidBodyComponent
+		// 	serializer.EndMapping(); // Body
+		// }
+		// serializer.EndMapping(); // RigidBodyComponent
 	}
 	if(entity.Has<DirectionalLightComponent>()) {
 		const auto& light = entity.Get<DirectionalLightComponent>();
@@ -457,10 +452,9 @@ void SerializeEntity(YAMLSerializer& serializer, const Entity& entity) {
 Ref<ScriptObject> LoadScript(Entity entity, Asset asset,
 	YAML::Node& scriptComponentNode)
 {
-	AssetManager::Get()->Load(asset);
-	auto mod = AssetManager::Get()->Get<ScriptModule>(asset);
+	auto mod = AssetManager::Get()->Load<ScriptModule>(asset);
 	if(!mod) {
-		VOLCANICORE_LOG_INFO(
+		Log::Info(
 			"Could not load script module %lu, needed for Entity %lu",
 			(uint64_t)asset.ID, (uint64_t)entity.GetHandle());
 		return nullptr;
@@ -472,7 +466,7 @@ Ref<ScriptObject> LoadScript(Entity entity, Asset asset,
 	auto className = scriptComponentNode["Class"].as<std::string>();
 	auto _class = mod->GetClass(className);
 	if(!_class) {
-		VOLCANICORE_LOG_INFO(
+		Log::Info(
 			"Could not find class '%s' in module %lu, needed for Entity %lu",
 			className.c_str(), (uint64_t)asset.ID, (uint64_t)entity.GetHandle());
 		return nullptr;
@@ -626,7 +620,7 @@ void DeserializeEntity(YAML::Node entityNode, Scene& scene) {
 		auto id = scriptComponentNode["ModuleID"].as<uint64_t>();
 		Asset asset = { id, AssetType::Script };
 
-		if(!id || !AssetManager::Get()->IsValid(asset))
+		if(!id || !AssetManager::Get()->GetRegistry()->IsValid(asset))
 			entity.Add<ScriptComponent>();
 		else {
 			auto obj =

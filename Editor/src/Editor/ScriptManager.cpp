@@ -5,7 +5,7 @@
 #include <VolcaniCore/Core/Application.h>
 #include <VolcaniCore/Core/FileUtils.h>
 
-#include "Core/Editor.h"
+#include "App/Editor.h"
 
 namespace fs = std::filesystem;
 

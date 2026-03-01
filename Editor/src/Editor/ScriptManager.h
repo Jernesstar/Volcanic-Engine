@@ -5,8 +5,8 @@
 #include <Engine/Script/ScriptObject.h>
 
 using namespace VolcaniCore;
-using namespace Engine;
-using namespace Engine::Script;
+using namespace VolcanicEngine;
+using namespace VolcanicEngine::Script;
 
 namespace VolcanicEditor {
 
