@@ -68,8 +68,7 @@ void SceneLoader::EditorLoad(Scene& scene, const std::string& path) {
 
 	scene.Name = sceneNode["Name"].as<std::string>();
 
-	for(auto node : sceneNode["Entities"])
-		DeserializeEntity(node["Entity"], scene);
+	for(auto node : sceneN\e["Entity"], scene);
 }
 
 void SceneLoader::EditorSave(const Scene& scene, const std::string& path) {
@@ -124,22 +123,22 @@ void SaveScript(YAMLSerializer& serializer, Ref<ScriptObject> obj) {
 		else if(field.TypeID == asTYPEID_INT8) {
 			serializer
 				.WriteKey("Type").Write(std::string("int8"))
-				.WriteKey("Value").Write((int32_t)*field.As<i8>());
+				.WriteKey("Value").Write((i32)*field.As<i8>());
 		}
 		else if(field.TypeID == asTYPEID_INT16) {
 			serializer
 				.WriteKey("Type").Write(std::string("int16"))
-				.WriteKey("Value").Write((int32_t)*field.As<int16_t>());
+				.WriteKey("Value").Write((i32)*field.As<i16>());
 		}
 		else if(field.TypeID == asTYPEID_INT32) {
 			serializer
 				.WriteKey("Type").Write(std::string("int32"))
-				.WriteKey("Value").Write(*field.As<int32_t>());
+				.WriteKey("Value").Write(*field.As<i32>());
 		}
 		else if(field.TypeID == asTYPEID_INT64) {
 			serializer
 				.WriteKey("Type").Write(std::string("int64"))
-				.WriteKey("Value").Write(*field.As<int64_t>());
+				.WriteKey("Value").Write(*field.As<i64>());
 		}
 		else if(field.TypeID == asTYPEID_UINT8) {
 			serializer
@@ -149,7 +148,7 @@ void SaveScript(YAMLSerializer& serializer, Ref<ScriptObject> obj) {
 		else if(field.TypeID == asTYPEID_UINT16) {
 			serializer
 				.WriteKey("Type").Write(std::string("uint16"))
-				.WriteKey("Value").Write((u32)*field.As<uint16_t>());
+				.WriteKey("Value").Write((u32)*field.As<u16>());
 		}
 		else if(field.TypeID == asTYPEID_UINT32) {
 			serializer
@@ -201,6 +200,11 @@ void SaveScript(YAMLSerializer& serializer, Ref<ScriptObject> obj) {
 			serializer
 				.WriteKey("Type").Write(std::string("Vec3"))
 				.WriteKey("Value").Write(*field.As<Vec3>());
+		}
+		else if(std::string(field.Type->GetName()) == "Vec2") {
+			serializer
+				.WriteKey("Type").Write(std::string("Vec2"))
+				.WriteKey("Value").Write(*field.As<Vec2>());
 		}
 		else if(std::string(field.Type->GetName()) == "GridSet") {
 			serializer
@@ -541,174 +545,174 @@ void DeserializeEntity(YAML::Node entityNode, Scene& scene) {
 
 	auto components = entityNode["Components"];
 
-	auto cameraComponentNode = components["CameraComponent"];
-	if(cameraComponentNode) {
-		auto cameraNode = cameraComponentNode["Camera"];
-		auto pos  = cameraNode["Position"]		.as<Vec3>();
-		auto dir  = cameraNode["Direction"]		.as<Vec3>();
-		auto w	  = cameraNode["ViewportWidth"] .as<u32>();
-		auto h	  = cameraNode["ViewportHeight"].as<u32>();
-		auto near = cameraNode["Near"]			.as<f32>();
-		auto far  = cameraNode["Far"]			.as<f32>();
-		auto typeStr = cameraNode["Type"].as<std::string>();
-		f32 fr;
-		Camera::Type type;
+	// auto cameraComponentNode = components["CameraComponent"];
+	// if(cameraComponentNode) {
+	// 	auto cameraNode = cameraComponentNode["Camera"];
+	// 	auto pos  = cameraNode["Position"]		.as<Vec3>();
+	// 	auto dir  = cameraNode["Direction"]		.as<Vec3>();
+	// 	auto w	  = cameraNode["ViewportWidth"] .as<u32>();
+	// 	auto h	  = cameraNode["ViewportHeight"].as<u32>();
+	// 	auto near = cameraNode["Near"]			.as<f32>();
+	// 	auto far  = cameraNode["Far"]			.as<f32>();
+	// 	auto typeStr = cameraNode["Type"].as<std::string>();
+	// 	f32 fr;
+	// 	Camera::Type type;
 
-		if(typeStr == "Stereographic") {
-			type = Camera::Type::Stereo;
-			fr = cameraNode["VerticalFOV"].as<f32>();
-		}
-		else if(typeStr == "Orthographic") {
-			type = Camera::Type::Ortho;
-			fr = cameraNode["Rotation"].as<f32>();
-		}
+	// 	if(typeStr == "Stereographic") {
+	// 		type = Camera::Type::Stereo;
+	// 		fr = cameraNode["VerticalFOV"].as<f32>();
+	// 	}
+	// 	else if(typeStr == "Orthographic") {
+	// 		type = Camera::Type::Ortho;
+	// 		fr = cameraNode["Rotation"].as<f32>();
+	// 	}
 
-		auto camera = Camera::Create(type, fr);
-		camera->SetPositionDirection(pos, dir);
-		camera->SetProjection(near, far);
-		camera->Resize(w, h);
+	// 	auto camera = Camera::Create(type, fr);
+	// 	camera->SetPositionDirection(pos, dir);
+	// 	camera->SetProjection(near, far);
+	// 	camera->Resize(w, h);
 
-		entity.Add<CameraComponent>(camera);
-	}
+	// 	entity.Add<CameraComponent>(camera);
+	// }
 
-	auto tagComponentNode = components["TagComponent"];
-	if(tagComponentNode) {
-		auto tag = tagComponentNode["Tag"].as<std::string>();
-		entity.Add<TagComponent>(tag);
-	}
+	// auto tagComponentNode = components["TagComponent"];
+	// if(tagComponentNode) {
+	// 	auto tag = tagComponentNode["Tag"].as<std::string>();
+	// 	entity.Add<TagComponent>(tag);
+	// }
 
-	auto transformComponentNode = components["TransformComponent"];
-	if(transformComponentNode) {
-		auto transformNode = transformComponentNode["Transform"];
-		entity.Add<TransformComponent>(
-			Transform
-			{
-				.Translation = transformNode["Translation"].as<Vec3>(),
-				.Rotation	 = transformNode["Rotation"].as<Vec3>(),
-				.Scale		 = transformNode["Scale"].as<Vec3>()
-			});
-	}
+	// auto transformComponentNode = components["TransformComponent"];
+	// if(transformComponentNode) {
+	// 	auto transformNode = transformComponentNode["Transform"];
+	// 	entity.Add<TransformComponent>(
+	// 		Transform
+	// 		{
+	// 			.Translation = transformNode["Translation"].as<Vec3>(),
+	// 			.Rotation	 = transformNode["Rotation"].as<Vec3>(),
+	// 			.Scale		 = transformNode["Scale"].as<Vec3>()
+	// 		});
+	// }
 
-	auto audioComponentNode = components["AudioComponent"];
-	if(audioComponentNode) {
-		auto id = audioComponentNode["AssetID"].as<u64>();
-		entity.Add<AudioComponent>(Asset{ id, AssetType::Audio });
-	}
+	// auto audioComponentNode = components["AudioComponent"];
+	// if(audioComponentNode) {
+	// 	auto id = audioComponentNode["AssetID"].as<u64>();
+	// 	entity.Add<AudioComponent>(Asset{ id, AssetType::Audio });
+	// }
 
-	auto meshComponentNode = components["MeshComponent"];
-	if(meshComponentNode) {
-		auto sourceID = meshComponentNode["MeshSourceID"].as<u64>();
-		auto materialID = meshComponentNode["MaterialID"].as<u64>();
-		entity.Add<MeshComponent>(
-			Asset{ sourceID, AssetType::Mesh },
-			Asset{ materialID, AssetType::Material });
-	}
+	// auto meshComponentNode = components["MeshComponent"];
+	// if(meshComponentNode) {
+	// 	auto sourceID = meshComponentNode["MeshSourceID"].as<u64>();
+	// 	auto materialID = meshComponentNode["MaterialID"].as<u64>();
+	// 	entity.Add<MeshComponent>(
+	// 		Asset{ sourceID, AssetType::Mesh },
+	// 		Asset{ materialID, AssetType::Material });
+	// }
 
-	auto skyboxComponentNode = components["SkyboxComponent"];
-	if(skyboxComponentNode) {
-		auto id = skyboxComponentNode["AssetID"].as<u64>();
-		entity.Add<SkyboxComponent>(Asset{ id, AssetType::Cubemap });
-	}
+	// auto skyboxComponentNode = components["SkyboxComponent"];
+	// if(skyboxComponentNode) {
+	// 	auto id = skyboxComponentNode["AssetID"].as<u64>();
+	// 	entity.Add<SkyboxComponent>(Asset{ id, AssetType::Cubemap });
+	// }
 
-	auto scriptComponentNode = components["ScriptComponent"];
-	if(scriptComponentNode) {
-		auto id = scriptComponentNode["ModuleID"].as<u64>();
-		Asset asset = { id, AssetType::Script };
+	// auto scriptComponentNode = components["ScriptComponent"];
+	// if(scriptComponentNode) {
+	// 	auto id = scriptComponentNode["ModuleID"].as<u64>();
+	// 	Asset asset = { id, AssetType::Script };
 
-		if(!id || !asset)
-			entity.Add<ScriptComponent>();
-		else {
-			auto obj = LoadScript(entity, asset, scriptComponentNode);
-			entity.Add<ScriptComponent>(asset, obj);
-		}
-	}
+	// 	if(!id || !asset)
+	// 		entity.Add<ScriptComponent>();
+	// 	else {
+	// 		auto obj = LoadScript(entity, asset, scriptComponentNode);
+	// 		entity.Add<ScriptComponent>(asset, obj);
+	// 	}
+	// }
 
-	auto rigidBodyComponentNode = components["RigidBodyComponent"];
-	if(rigidBodyComponentNode) {
-		auto rigidBodyNode = rigidBodyComponentNode["Body"];
-		if(rigidBodyNode) {
-			auto typeStr	   = rigidBodyNode["Type"].as<std::string>();
-			auto shapeTypeStr  = rigidBodyNode["ShapeType"].as<std::string>();
+	// auto rigidBodyComponentNode = components["RigidBodyComponent"];
+	// if(rigidBodyComponentNode) {
+	// 	auto rigidBodyNode = rigidBodyComponentNode["Body"];
+	// 	if(rigidBodyNode) {
+	// 		auto typeStr	   = rigidBodyNode["Type"].as<std::string>();
+	// 		auto shapeTypeStr  = rigidBodyNode["ShapeType"].as<std::string>();
 
-			// RigidBody::Type type =
-			// 	(typeStr == "Static") ? RigidBody::Type::Static
-			// 						  : RigidBody::Type::Dynamic;
-			// Shape::Type shapeType;
-			// if(shapeTypeStr == "Box")	  shapeType = Shape::Type::Box;
-			// if(shapeTypeStr == "Sphere")  shapeType = Shape::Type::Sphere;
-			// if(shapeTypeStr == "Plane")	  shapeType = Shape::Type::Plane;
-			// if(shapeTypeStr == "Capsule") shapeType = Shape::Type::Capsule;
-			// if(shapeTypeStr == "Mesh")	  shapeType = Shape::Type::Mesh;
+	// 		// RigidBody::Type type =
+	// 		// 	(typeStr == "Static") ? RigidBody::Type::Static
+	// 		// 						  : RigidBody::Type::Dynamic;
+	// 		// Shape::Type shapeType;
+	// 		// if(shapeTypeStr == "Box")	  shapeType = Shape::Type::Box;
+	// 		// if(shapeTypeStr == "Sphere")  shapeType = Shape::Type::Sphere;
+	// 		// if(shapeTypeStr == "Plane")	  shapeType = Shape::Type::Plane;
+	// 		// if(shapeTypeStr == "Capsule") shapeType = Shape::Type::Capsule;
+	// 		// if(shapeTypeStr == "Mesh")	  shapeType = Shape::Type::Mesh;
 	
-			// Ref<RigidBody> body;
-			// if(shapeType == Shape::Type::Mesh)
-			// 	body = RigidBody::Create(type);
-			// else {
-			// 	Ref<Shape> shape = Shape::Create(shapeType);
-			// 	body = RigidBody::Create(type, shape);
-			// }
+	// 		// Ref<RigidBody> body;
+	// 		// if(shapeType == Shape::Type::Mesh)
+	// 		// 	body = RigidBody::Create(type);
+	// 		// else {
+	// 		// 	Ref<Shape> shape = Shape::Create(shapeType);
+	// 		// 	body = RigidBody::Create(type, shape);
+	// 		// }
 
-			// entity.Add<RigidBodyComponent>(body);
-		}
-		else
-			entity.Add<RigidBodyComponent>();
-	}
+	// 		// entity.Add<RigidBodyComponent>(body);
+	// 	}
+	// 	else
+	// 		entity.Add<RigidBodyComponent>();
+	// }
 
-	auto directionalLightComponentNode = components["DirectionalLightComponent"];
-	if(directionalLightComponentNode) {
-		auto lightNode = directionalLightComponentNode["Light"];
-		entity.Add<DirectionalLightComponent>(
-			lightNode["Ambient"].as<Vec3>(),
-			lightNode["Diffuse"].as<Vec3>(),
-			lightNode["Specular"].as<Vec3>(),
-			lightNode["Position"].as<Vec3>(),
-			lightNode["Direction"].as<Vec3>());
-	}
+	// auto directionalLightComponentNode = components["DirectionalLightComponent"];
+	// if(directionalLightComponentNode) {
+	// 	auto lightNode = directionalLightComponentNode["Light"];
+	// 	entity.Add<DirectionalLightComponent>(
+	// 		lightNode["Ambient"].as<Vec3>(),
+	// 		lightNode["Diffuse"].as<Vec3>(),
+	// 		lightNode["Specular"].as<Vec3>(),
+	// 		lightNode["Position"].as<Vec3>(),
+	// 		lightNode["Direction"].as<Vec3>());
+	// }
 
-	auto pointLightComponentNode = components["PointLightComponent"];
-	if(pointLightComponentNode) {
-		auto lightNode = pointLightComponentNode["Light"];
-		entity.Add<PointLightComponent>(
-			lightNode["Ambient"].as<Vec3>(),
-			lightNode["Diffuse"].as<Vec3>(),
-			lightNode["Specular"].as<Vec3>(),
-			lightNode["Position"].as<Vec3>(),
-			lightNode["Constant"].as<f32>(),
-			lightNode["Linear"].as<f32>(),
-			lightNode["Quadratic"].as<f32>(),
-			lightNode["Bloom"].as<bool>());
-	}
+	// auto pointLightComponentNode = components["PointLightComponent"];
+	// if(pointLightComponentNode) {
+	// 	auto lightNode = pointLightComponentNode["Light"];
+	// 	entity.Add<PointLightComponent>(
+	// 		lightNode["Ambient"].as<Vec3>(),
+	// 		lightNode["Diffuse"].as<Vec3>(),
+	// 		lightNode["Specular"].as<Vec3>(),
+	// 		lightNode["Position"].as<Vec3>(),
+	// 		lightNode["Constant"].as<f32>(),
+	// 		lightNode["Linear"].as<f32>(),
+	// 		lightNode["Quadratic"].as<f32>(),
+	// 		lightNode["Bloom"].as<bool>());
+	// }
 
-	auto spotlightComponentNode = components["SpotlightComponent"];
-	if(spotlightComponentNode) {
-		auto lightNode = spotlightComponentNode["Light"];
-		entity.Add<SpotlightComponent>(
-			lightNode["Ambient"].as<Vec3>(),
-			lightNode["Diffuse"].as<Vec3>(),
-			lightNode["Specular"].as<Vec3>(),
-			lightNode["Position"].as<Vec3>(),
-			lightNode["Direction"].as<Vec3>(),
-			lightNode["CutoffAngle"].as<f32>(),
-			lightNode["OuterCutoffAngle"].as<f32>());
-	}
+	// auto spotlightComponentNode = components["SpotlightComponent"];
+	// if(spotlightComponentNode) {
+	// 	auto lightNode = spotlightComponentNode["Light"];
+	// 	entity.Add<SpotlightComponent>(
+	// 		lightNode["Ambient"].as<Vec3>(),
+	// 		lightNode["Diffuse"].as<Vec3>(),
+	// 		lightNode["Specular"].as<Vec3>(),
+	// 		lightNode["Position"].as<Vec3>(),
+	// 		lightNode["Direction"].as<Vec3>(),
+	// 		lightNode["CutoffAngle"].as<f32>(),
+	// 		lightNode["OuterCutoffAngle"].as<f32>());
+	// }
 
-	auto particleEmitterComponentNode = components["ParticleEmitterComponent"];
-	if(particleEmitterComponentNode) {
-		Asset asset
-		{
-			particleEmitterComponentNode["MaterialID"].as<u64>(),
-			AssetType::Material
-		};
-		entity.Add<ParticleEmitterComponent>(
-			particleEmitterComponentNode["Position"].as<Vec3>(),
-			particleEmitterComponentNode["MaxParticleCount"].as<u64>(),
-			particleEmitterComponentNode["ParticleLifetime"].as<f32>(),
-			particleEmitterComponentNode["SpawnInterval"].as<f32>(),
-			particleEmitterComponentNode["Offset"].as<f32>(),
-			asset);
+	// auto particleEmitterComponentNode = components["ParticleEmitterComponent"];
+	// if(particleEmitterComponentNode) {
+	// 	Asset asset
+	// 	{
+	// 		particleEmitterComponentNode["MaterialID"].as<u64>(),
+	// 		AssetType::Material
+	// 	};
+	// 	entity.Add<ParticleEmitterComponent>(
+	// 		particleEmitterComponentNode["Position"].as<Vec3>(),
+	// 		particleEmitterComponentNode["MaxParticleCount"].as<u64>(),
+	// 		particleEmitterComponentNode["ParticleLifetime"].as<f32>(),
+	// 		particleEmitterComponentNode["SpawnInterval"].as<f32>(),
+	// 		particleEmitterComponentNode["Offset"].as<f32>(),
+	// 		asset);
 
-		entity.GetHandle().modified<ParticleEmitterComponent>();
-	}
+	// 	entity.GetHandle().modified<ParticleEmitterComponent>();
+	// }
 }
 
 }

@@ -5,7 +5,7 @@
 namespace VolcanicEngine {
 
 AssetRegistry::AssetRegistry() {
-	m_Registry = new Registry("./.volc/assets/registry.db", 2);
+	m_Registry = new Registry("./.volc/asset_registry.db", 2);
 	m_AssetMetadata = m_Registry->NewDatabase("AssetMetadata");
 	m_AssetData = m_Registry->NewDatabase("AssetData");
 }

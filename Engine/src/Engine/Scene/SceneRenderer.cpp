@@ -218,6 +218,10 @@ RuntimeSceneRenderer::RuntimeSceneRenderer() {
 	ParticlePass->SetData(Renderer3D::GetMeshBuffer());
 }
 
+RuntimeSceneRenderer::~RuntimeSceneRenderer() {
+
+}
+
 void RuntimeSceneRenderer::OnSceneLoad() {
 	auto* scene = App::Get()->GetScene();
 

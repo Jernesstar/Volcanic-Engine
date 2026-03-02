@@ -255,6 +255,12 @@ Canvas* App::GetCanvas() {
 	return s_Screen->UI.get();
 }
 
+void App::PrepareScreen() {
+	s_ScreenPrepared = true;
+	delete s_Screen;
+	s_Screen = new RuntimeScreen();
+}
+
 void App::SwitchScreen(const std::string& name) {
 	if(!ChangeScreen) {
 		Running = false;

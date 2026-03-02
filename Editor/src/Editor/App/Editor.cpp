@@ -6,15 +6,20 @@
 #include <sstream>
 #include <iterator>
 
+#include <VolcaniCore/Core/Application.h>
 #include <VolcaniCore/Window/Events.h>
 
 #include <Engine/App/App.h>
 #include <Engine/Graphics/Renderer.h>
 #include <Engine/Scene/Scene.h>
+#include <Engine/Scene/SceneRenderer.h>
 #include <Engine/Canvas/Canvas.h>
+
+#include "./SceneRenderer.h"
 
 #include "SceneLoader.h"
 
+using namespace VolcaniCore;
 using namespace VolcanicEngine;
 using namespace VolcanicEngine::Graphics;
 
@@ -43,24 +48,26 @@ void StandardIO() {
 		}
 
 		CommandLineArgs arg(tokens.size(), args, false);
+		if(arg["--embed_window"]) {
+			std::string handle = arg["--embed_window"];
+			EmbedWindow(handle.c_str());
+		}
+		if(arg["--open_project"]) {
+			std::string path = arg["--open_project"];
+			Editor::OpenProject(path);
+		}
+		if(arg["--new_project"]) {
+			std::string path = arg["--new_project"];
+			Editor::NewProject(path);
+		}
+		if(arg["--open_scene"]) {
+			std::string name = arg["--open_scene"];
+			Editor::OpenScene(name);
+			Log::Info("Loaded");
+		}
+
 		{
 			std::lock_guard<std::mutex> lock(s_IOMutex);
-			if(arg["--embed_window"]) {
-				std::string handle = arg["--embed_window"];
-				EmbedWindow(handle.c_str());
-			}
-			if(arg["--open_project"]) {
-				std::string path = arg["--open_project"];
-				Editor::OpenProject(path);
-			}
-			if(arg["--new_project"]) {
-				std::string path = arg["--open_project"];
-				Editor::NewProject(path);
-			}
-			if(arg["--open-scene"]) {
-				std::string name = arg["--open-scene"];
-				Editor::OpenScene(name);
-			}
 		}
 	}
 }
@@ -70,10 +77,20 @@ static Ref<Project> s_CurrentProject;
 static Ref<Scene> s_CurrentScene;
 static Ref<Canvas> s_CurrentCanvas;
 
+static Ref<EditorSceneRenderer> s_EditorSceneRenderer;
+static Ref<RuntimeSceneRenderer> s_RuntimeSceneRenderer;
+
+enum class TabType { None, Scene, Canvas };
+
+static TabType s_TabType = TabType::None;
+
 void Editor::Init(const CommandLineArgs& args) {
 	Log::Init();
 	Renderer::Init();
 	std::thread(StandardIO).detach();
+
+	s_EditorSceneRenderer = CreateRef<EditorSceneRenderer>();
+	// s_RuntimeSceneRenderer = CreateRef<RuntimeSceneRenderer>();
 }
 
 void Editor::Close() {
@@ -81,15 +98,18 @@ void Editor::Close() {
 }
 
 void Editor::Update(TimeStep ts) {
-
+	if(s_TabType == TabType::Scene)
+		s_CurrentScene->OnUpdate(ts);
 }
 
 void Editor::Render() {
 
+	if(s_TabType == TabType::Scene)
+		s_CurrentScene->OnRender(*s_EditorSceneRenderer);
 }
 
 void Editor::OpenProject(const std::string& path) {
-
+	Application::PushDir(path);
 }
 
 void Editor::NewProject(const std::string& path) {
@@ -105,7 +125,9 @@ void Editor::NewScene(const std::string& path) {
 }
 
 void Editor::OpenScene(const std::string& name) {
-
+	s_CurrentScene = CreateRef<Scene>(name);
+	SceneLoader::EditorLoad(*s_CurrentScene, "Object/Scene/" + name + ".scene");
+	s_TabType = TabType::Scene;
 }
 
 void Editor::SaveScene(const std::string& name) {
