@@ -2,6 +2,7 @@
 
 #include <Engine/Asset/AssetManager.h>
 
+using namespace VolcaniCore;
 using namespace VolcanicEngine;
 
 namespace VolcanicEditor {
@@ -14,27 +15,26 @@ public:
 	EditorAssetManager();
 	~EditorAssetManager();
 
-	void Load(Asset asset) override;
-	void Unload(Asset asset) override;
+	void Build(Asset asset);
 
-	uint32_t AddReloadCallback(const Func<void, Asset, bool>& callback);
-	void RemoveReloadCallback(uint32_t id);
+	u32 AddReloadCallback(const Func<void, Asset, bool>& callback);
+	void RemoveReloadCallback(u32 id);
 
-	Asset Add(AssetType type, VolcaniCore::UUID id = 0, bool primary = true,
+	Asset Add(AssetType type, UUID id = 0, bool primary = true,
 		const std::string& path = "");
 	void Remove(Asset asset);
 
 	std::string GetPath(VolcaniCore::UUID id) const;
 	VolcaniCore::UUID GetFromPath(const std::string& path) const;
 
-	// void Clear() override;
-	void Load(const std::string& path);
+	void Clear();
+	void LoadRegistry(const std::string& path);
 	void Save();
 	void RuntimeSave(const std::string& exportPath);
 
 public:
 	std::string m_Path;
-	Map<VolcaniCore::UUID, std::string> m_Paths;
+	Map<UUID, std::string> m_Paths;
 };
 
 }

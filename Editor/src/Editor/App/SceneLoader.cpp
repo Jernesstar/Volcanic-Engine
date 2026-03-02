@@ -44,7 +44,7 @@ Serializer& Serializer::Write(const Vertex& value) {
 template<>
 Serializer& Serializer::Write(const Asset& value) {
 	BeginMapping();
-		WriteKey("ID").Write((uint64_t)value.ID);
+		WriteKey("ID").Write((u64)value.ID);
 		WriteKey("Type").Write(AssetTypeToString(value.Type));
 	EndMapping();
 	return *this;
@@ -103,7 +103,7 @@ void SaveScript(YAMLSerializer& serializer, Ref<ScriptObject> obj) {
 	serializer.WriteKey("Fields").BeginSequence();
 
 	auto* handle = obj->GetHandle();
-	for(uint32_t i = 0; i < handle->GetPropertyCount(); i++) {
+	for(u32 i = 0; i < handle->GetPropertyCount(); i++) {
 		ScriptField field = obj->GetProperty(i);
 		bool editorField =
 			ScriptManager::FieldHasMetadata(
@@ -124,7 +124,7 @@ void SaveScript(YAMLSerializer& serializer, Ref<ScriptObject> obj) {
 		else if(field.TypeID == asTYPEID_INT8) {
 			serializer
 				.WriteKey("Type").Write(std::string("int8"))
-				.WriteKey("Value").Write((int32_t)*field.As<int8_t>());
+				.WriteKey("Value").Write((int32_t)*field.As<i8>());
 		}
 		else if(field.TypeID == asTYPEID_INT16) {
 			serializer
@@ -144,32 +144,32 @@ void SaveScript(YAMLSerializer& serializer, Ref<ScriptObject> obj) {
 		else if(field.TypeID == asTYPEID_UINT8) {
 			serializer
 				.WriteKey("Type").Write(std::string("uint8"))
-				.WriteKey("Value").Write((uint32_t)*field.As<uint8_t>());
+				.WriteKey("Value").Write((u32)*field.As<u8>());
 		}
 		else if(field.TypeID == asTYPEID_UINT16) {
 			serializer
 				.WriteKey("Type").Write(std::string("uint16"))
-				.WriteKey("Value").Write((uint32_t)*field.As<uint16_t>());
+				.WriteKey("Value").Write((u32)*field.As<uint16_t>());
 		}
 		else if(field.TypeID == asTYPEID_UINT32) {
 			serializer
 				.WriteKey("Type").Write(std::string("uint32"))
-				.WriteKey("Value").Write(*field.As<uint32_t>());
+				.WriteKey("Value").Write(*field.As<u32>());
 		}
 		else if(field.TypeID == asTYPEID_UINT64) {
 			serializer
 				.WriteKey("Type").Write(std::string("uint64"))
-				.WriteKey("Value").Write(*field.As<uint64_t>());
+				.WriteKey("Value").Write(*field.As<u64>());
 		}
 		else if(field.TypeID == asTYPEID_FLOAT) {
 			serializer
 				.WriteKey("Type").Write(std::string("float"))
-				.WriteKey("Value").Write(*field.As<float>());
+				.WriteKey("Value").Write(*field.As<f32>());
 		}
 		else if(field.TypeID == asTYPEID_DOUBLE) {
 			serializer
 				.WriteKey("Type").Write(std::string("double"))
-				.WriteKey("Value").Write(*(float*)field.As<double>());
+				.WriteKey("Value").Write(*(f32*)field.As<f64>());
 		}
 		else if(std::string(field.Type->GetName()) == "string") {
 			serializer
@@ -185,9 +185,9 @@ void SaveScript(YAMLSerializer& serializer, Ref<ScriptObject> obj) {
 			serializer
 					.BeginSequence();
 			auto* data = field.As<CScriptArray>();
-			for(uint32_t i = 0; i < data->GetSize(); i++)
+			for(u32 i = 0; i < data->GetSize(); i++)
 				serializer
-					.Write(*(uint32_t*)data->At(i));
+					.Write(*(u32*)data->At(i));
 
 			serializer
 				.EndSequence();
@@ -213,10 +213,10 @@ void SaveScript(YAMLSerializer& serializer, Ref<ScriptObject> obj) {
 
 			serializer.WriteKey("Data")
 				.BeginSequence();
-			for(uint32_t y = 0; y < grid->GetHeight(); y++) {
+			for(u32 y = 0; y < grid->GetHeight(); y++) {
 				serializer.SetOptions(Serializer::Options::ArrayOneLine);
 				serializer.BeginSequence();
-				for(uint32_t x = 0; x < grid->GetWidth(); x++)
+				for(u32 x = 0; x < grid->GetWidth(); x++)
 					serializer.Write(*grid->At(x, y));
 				serializer.EndSequence();
 			}
@@ -227,8 +227,8 @@ void SaveScript(YAMLSerializer& serializer, Ref<ScriptObject> obj) {
 		// Script Type
 		else if(field.Is(ScriptQualifier::ScriptObject)) {
 			// auto* type = field.Type;
-			// for(uint32_t i = 0; i < type->GetPropertyCount(); i++) {
-			// 	uint64_t offset;
+			// for(u32 i = 0; i < type->GetPropertyCount(); i++) {
+			// 	u64 offset;
 			// 	type->GetProperty()
 			// }
 		}
@@ -245,7 +245,7 @@ void SerializeEntity(YAMLSerializer& serializer, const Entity& entity) {
 	serializer.WriteKey("Entity").BeginMapping(); // Entity
 
 	serializer.WriteKey("Name").Write(entity.GetName());
-	serializer.WriteKey("ID").Write((uint64_t)entity.GetHandle());
+	serializer.WriteKey("ID").Write((u64)entity.GetHandle());
 
 	serializer.WriteKey("Components")
 	.BeginMapping(); // Components
@@ -303,7 +303,7 @@ void SerializeEntity(YAMLSerializer& serializer, const Entity& entity) {
 		Asset asset = entity.Get<AudioComponent>().AudioAsset;
 		serializer.WriteKey("AudioComponent")
 		.BeginMapping()
-			.WriteKey("AssetID").Write((uint64_t)asset.ID)
+			.WriteKey("AssetID").Write((u64)asset.ID)
 		.EndMapping();
 	}
 	if(entity.Has<MeshComponent>()) {
@@ -311,15 +311,15 @@ void SerializeEntity(YAMLSerializer& serializer, const Entity& entity) {
 		Asset material = entity.Get<MeshComponent>().MaterialAsset;
 		serializer.WriteKey("MeshComponent")
 		.BeginMapping()
-			.WriteKey("MeshSourceID").Write((uint64_t)meshSource.ID)
-			.WriteKey("MaterialID").Write((uint64_t)material.ID)
+			.WriteKey("MeshSourceID").Write((u64)meshSource.ID)
+			.WriteKey("MaterialID").Write((u64)material.ID)
 		.EndMapping();
 	}
 	if(entity.Has<SkyboxComponent>()) {
 		Asset asset = entity.Get<SkyboxComponent>().CubemapAsset;
 		serializer.WriteKey("SkyboxComponent")
 		.BeginMapping()
-			.WriteKey("AssetID").Write((uint64_t)asset.ID)
+			.WriteKey("AssetID").Write((u64)asset.ID)
 		.EndMapping();
 	}
 	if(entity.Has<ScriptComponent>()) {
@@ -328,7 +328,7 @@ void SerializeEntity(YAMLSerializer& serializer, const Entity& entity) {
 
 		serializer.WriteKey("ScriptComponent")
 		.BeginMapping()
-			.WriteKey("ModuleID").Write((uint64_t)comp.ModuleAsset.ID);
+			.WriteKey("ModuleID").Write((u64)comp.ModuleAsset.ID);
 
 		if(obj)
 			SaveScript(serializer, obj);
@@ -435,7 +435,7 @@ void SerializeEntity(YAMLSerializer& serializer, const Entity& entity) {
 			.WriteKey("ParticleLifetime").Write(system.ParticleLifetime)
 			.WriteKey("SpawnInterval").Write(system.SpawnInterval)
 			.WriteKey("Offset").Write(system.Offset)
-			.WriteKey("MaterialID").Write((uint64_t)system.MaterialAsset.ID)
+			.WriteKey("MaterialID").Write((u64)system.MaterialAsset.ID)
 		.EndMapping(); // ParticleEmitterComponent
 	}
 
@@ -451,7 +451,7 @@ Ref<ScriptObject> LoadScript(Entity entity, Asset asset,
 	if(!mod) {
 		Log::Info(
 			"Could not load script module %lu, needed for Entity %lu",
-			(uint64_t)asset.ID, (uint64_t)entity.GetHandle());
+			(u64)asset.ID, (u64)entity.GetHandle());
 		return nullptr;
 	}
 
@@ -463,7 +463,7 @@ Ref<ScriptObject> LoadScript(Entity entity, Asset asset,
 	if(!_class) {
 		Log::Info(
 			"Could not find class '%s' in module %lu, needed for Entity %lu",
-			className.c_str(), (uint64_t)asset.ID, (uint64_t)entity.GetHandle());
+			className.c_str(), (u64)asset.ID, (u64)entity.GetHandle());
 		return nullptr;
 	}
 
@@ -480,34 +480,34 @@ Ref<ScriptObject> LoadScript(Entity entity, Asset asset,
 		if(type == "bool")
 			*(bool*)address = value.as<bool>();
 		else if(type == "int8")
-			*(int8_t*)address = (int8_t)value.as<int32_t>();
+			*(i8*)address = (i8)value.as<int32_t>();
 		else if(type == "int16")
-			*(int16_t*)address = (int16_t)value.as<int32_t>();
+			*(i16*)address = (i16)value.as<int32_t>();
 		else if(type == "int32")
 			*(int32_t*)address = value.as<int32_t>();
 		else if(type == "int64")
 			*(int64_t*)address = value.as<int64_t>();
 		else if(type == "uint8")
-			*(uint8_t*)address = (uint8_t)value.as<uint32_t>();
+			*(u8*)address = (u8)value.as<u32>();
 		else if(type == "uint16")
-			*(uint16_t*)address = (uint16_t)value.as<uint32_t>();
+			*(u16*)address = (u16)value.as<u32>();
 		else if(type == "uint32")
-			*(uint32_t*)address = value.as<uint32_t>();
+			*(u32*)address = value.as<u32>();
 		else if(type == "uint64")
-			*(uint64_t*)address = value.as<uint64_t>();
+			*(u64*)address = value.as<u64>();
 		else if(type == "float")
-			*(float*)address = value.as<float>();
+			*(f32*)address = value.as<f32>();
 		else if(type == "double")
-			*(double*)address = value.as<float>();
+			*(f64*)address = value.as<f32>();
 		else if(type == "string")
 			*(std::string*)address = value.as<std::string>();
 		else if(type == "array") {
-			auto data = value.as<List<uint32_t>>();
-			for(uint32_t i = 0; i < data.Count(); i++)
+			auto data = value.as<List<u32>>();
+			for(u32 i = 0; i < data.Count(); i++)
 				((CScriptArray*)address)->InsertLast(data.At(i));
 		}
 		else if(type == "Asset") {
-			((Asset*)address)->ID = value["ID"].as<uint64_t>();
+			((Asset*)address)->ID = value["ID"].as<u64>();
 			((Asset*)address)->Type =
 				AssetTypeFromString(value["Type"].as<std::string>());
 		}
@@ -515,14 +515,14 @@ Ref<ScriptObject> LoadScript(Entity entity, Asset asset,
 			*(Vec3*)address = value.as<Vec3>();
 		else if(type == "GridSet") {
 			auto* grid = (GridSet*)address;
-			auto width = value["Width"].as<uint32_t>();
-			auto height = value["Height"].as<uint32_t>();
+			auto width = value["Width"].as<u32>();
+			auto height = value["Height"].as<u32>();
 			grid->Resize(width, height);
 
-			uint32_t x = 0, y = 0;
+			u32 x = 0, y = 0;
 			for(auto row : value["Data"]) {
 				for(auto val : row)
-					*grid->At(x++, y) = (uint8_t)val.as<uint32_t>();
+					*grid->At(x++, y) = (u8)val.as<u32>();
 				x = 0;
 				y++;
 			}
@@ -533,7 +533,7 @@ Ref<ScriptObject> LoadScript(Entity entity, Asset asset,
 }
 
 void DeserializeEntity(YAML::Node entityNode, Scene& scene) {
-	uint64_t entityID = entityNode["ID"].as<uint64_t>();
+	u64 entityID = entityNode["ID"].as<u64>();
 	Entity entity = scene.EntityWorld.AddEntity(entityID);
 	auto name = entityNode["Name"].as<std::string>();
 	if(name != "" && name.find_first_not_of(' ') != std::string::npos)
@@ -544,23 +544,23 @@ void DeserializeEntity(YAML::Node entityNode, Scene& scene) {
 	auto cameraComponentNode = components["CameraComponent"];
 	if(cameraComponentNode) {
 		auto cameraNode = cameraComponentNode["Camera"];
-		auto pos  = cameraNode["Position"]		.as<glm::vec3>();
-		auto dir  = cameraNode["Direction"]		.as<glm::vec3>();
-		auto w	  = cameraNode["ViewportWidth"] .as<uint32_t>();
-		auto h	  = cameraNode["ViewportHeight"].as<uint32_t>();
-		auto near = cameraNode["Near"]			.as<float>();
-		auto far  = cameraNode["Far"]			.as<float>();
+		auto pos  = cameraNode["Position"]		.as<Vec3>();
+		auto dir  = cameraNode["Direction"]		.as<Vec3>();
+		auto w	  = cameraNode["ViewportWidth"] .as<u32>();
+		auto h	  = cameraNode["ViewportHeight"].as<u32>();
+		auto near = cameraNode["Near"]			.as<f32>();
+		auto far  = cameraNode["Far"]			.as<f32>();
 		auto typeStr = cameraNode["Type"].as<std::string>();
-		float fr;
+		f32 fr;
 		Camera::Type type;
 
 		if(typeStr == "Stereographic") {
 			type = Camera::Type::Stereo;
-			fr = cameraNode["VerticalFOV"].as<float>();
+			fr = cameraNode["VerticalFOV"].as<f32>();
 		}
 		else if(typeStr == "Orthographic") {
 			type = Camera::Type::Ortho;
-			fr = cameraNode["Rotation"].as<float>();
+			fr = cameraNode["Rotation"].as<f32>();
 		}
 
 		auto camera = Camera::Create(type, fr);
@@ -583,22 +583,22 @@ void DeserializeEntity(YAML::Node entityNode, Scene& scene) {
 		entity.Add<TransformComponent>(
 			Transform
 			{
-				.Translation = transformNode["Translation"].as<glm::vec3>(),
-				.Rotation	 = transformNode["Rotation"].as<glm::vec3>(),
-				.Scale		 = transformNode["Scale"].as<glm::vec3>()
+				.Translation = transformNode["Translation"].as<Vec3>(),
+				.Rotation	 = transformNode["Rotation"].as<Vec3>(),
+				.Scale		 = transformNode["Scale"].as<Vec3>()
 			});
 	}
 
 	auto audioComponentNode = components["AudioComponent"];
 	if(audioComponentNode) {
-		auto id = audioComponentNode["AssetID"].as<uint64_t>();
+		auto id = audioComponentNode["AssetID"].as<u64>();
 		entity.Add<AudioComponent>(Asset{ id, AssetType::Audio });
 	}
 
 	auto meshComponentNode = components["MeshComponent"];
 	if(meshComponentNode) {
-		auto sourceID = meshComponentNode["MeshSourceID"].as<uint64_t>();
-		auto materialID = meshComponentNode["MaterialID"].as<uint64_t>();
+		auto sourceID = meshComponentNode["MeshSourceID"].as<u64>();
+		auto materialID = meshComponentNode["MaterialID"].as<u64>();
 		entity.Add<MeshComponent>(
 			Asset{ sourceID, AssetType::Mesh },
 			Asset{ materialID, AssetType::Material });
@@ -606,20 +606,19 @@ void DeserializeEntity(YAML::Node entityNode, Scene& scene) {
 
 	auto skyboxComponentNode = components["SkyboxComponent"];
 	if(skyboxComponentNode) {
-		auto id = skyboxComponentNode["AssetID"].as<uint64_t>();
+		auto id = skyboxComponentNode["AssetID"].as<u64>();
 		entity.Add<SkyboxComponent>(Asset{ id, AssetType::Cubemap });
 	}
 
 	auto scriptComponentNode = components["ScriptComponent"];
 	if(scriptComponentNode) {
-		auto id = scriptComponentNode["ModuleID"].as<uint64_t>();
+		auto id = scriptComponentNode["ModuleID"].as<u64>();
 		Asset asset = { id, AssetType::Script };
 
-		if(!id || !AssetManager::Get()->GetRegistry()->IsValid(asset))
+		if(!id || !asset)
 			entity.Add<ScriptComponent>();
 		else {
-			auto obj =
-				LoadScript(entity, asset, scriptComponentNode);
+			auto obj = LoadScript(entity, asset, scriptComponentNode);
 			entity.Add<ScriptComponent>(asset, obj);
 		}
 	}
@@ -659,24 +658,24 @@ void DeserializeEntity(YAML::Node entityNode, Scene& scene) {
 	if(directionalLightComponentNode) {
 		auto lightNode = directionalLightComponentNode["Light"];
 		entity.Add<DirectionalLightComponent>(
-			lightNode["Ambient"].as<glm::vec3>(),
-			lightNode["Diffuse"].as<glm::vec3>(),
-			lightNode["Specular"].as<glm::vec3>(),
-			lightNode["Position"].as<glm::vec3>(),
-			lightNode["Direction"].as<glm::vec3>());
+			lightNode["Ambient"].as<Vec3>(),
+			lightNode["Diffuse"].as<Vec3>(),
+			lightNode["Specular"].as<Vec3>(),
+			lightNode["Position"].as<Vec3>(),
+			lightNode["Direction"].as<Vec3>());
 	}
 
 	auto pointLightComponentNode = components["PointLightComponent"];
 	if(pointLightComponentNode) {
 		auto lightNode = pointLightComponentNode["Light"];
 		entity.Add<PointLightComponent>(
-			lightNode["Ambient"].as<glm::vec3>(),
-			lightNode["Diffuse"].as<glm::vec3>(),
-			lightNode["Specular"].as<glm::vec3>(),
-			lightNode["Position"].as<glm::vec3>(),
-			lightNode["Constant"].as<float>(),
-			lightNode["Linear"].as<float>(),
-			lightNode["Quadratic"].as<float>(),
+			lightNode["Ambient"].as<Vec3>(),
+			lightNode["Diffuse"].as<Vec3>(),
+			lightNode["Specular"].as<Vec3>(),
+			lightNode["Position"].as<Vec3>(),
+			lightNode["Constant"].as<f32>(),
+			lightNode["Linear"].as<f32>(),
+			lightNode["Quadratic"].as<f32>(),
 			lightNode["Bloom"].as<bool>());
 	}
 
@@ -684,28 +683,28 @@ void DeserializeEntity(YAML::Node entityNode, Scene& scene) {
 	if(spotlightComponentNode) {
 		auto lightNode = spotlightComponentNode["Light"];
 		entity.Add<SpotlightComponent>(
-			lightNode["Ambient"].as<glm::vec3>(),
-			lightNode["Diffuse"].as<glm::vec3>(),
-			lightNode["Specular"].as<glm::vec3>(),
-			lightNode["Position"].as<glm::vec3>(),
-			lightNode["Direction"].as<glm::vec3>(),
-			lightNode["CutoffAngle"].as<float>(),
-			lightNode["OuterCutoffAngle"].as<float>());
+			lightNode["Ambient"].as<Vec3>(),
+			lightNode["Diffuse"].as<Vec3>(),
+			lightNode["Specular"].as<Vec3>(),
+			lightNode["Position"].as<Vec3>(),
+			lightNode["Direction"].as<Vec3>(),
+			lightNode["CutoffAngle"].as<f32>(),
+			lightNode["OuterCutoffAngle"].as<f32>());
 	}
 
 	auto particleEmitterComponentNode = components["ParticleEmitterComponent"];
 	if(particleEmitterComponentNode) {
 		Asset asset
 		{
-			particleEmitterComponentNode["MaterialID"].as<uint64_t>(),
+			particleEmitterComponentNode["MaterialID"].as<u64>(),
 			AssetType::Material
 		};
 		entity.Add<ParticleEmitterComponent>(
-			particleEmitterComponentNode["Position"].as<glm::vec3>(),
-			particleEmitterComponentNode["MaxParticleCount"].as<uint64_t>(),
-			particleEmitterComponentNode["ParticleLifetime"].as<float>(),
-			particleEmitterComponentNode["SpawnInterval"].as<float>(),
-			particleEmitterComponentNode["Offset"].as<float>(),
+			particleEmitterComponentNode["Position"].as<Vec3>(),
+			particleEmitterComponentNode["MaxParticleCount"].as<u64>(),
+			particleEmitterComponentNode["ParticleLifetime"].as<f32>(),
+			particleEmitterComponentNode["SpawnInterval"].as<f32>(),
+			particleEmitterComponentNode["Offset"].as<f32>(),
 			asset);
 
 		entity.GetHandle().modified<ParticleEmitterComponent>();
@@ -717,7 +716,7 @@ void DeserializeEntity(YAML::Node entityNode, Scene& scene) {
 namespace VolcaniCore {
 
 template<>
-BinaryWriter& BinaryWriter::WriteObject(const glm::vec3& vec) {
+BinaryWriter& BinaryWriter::WriteObject(const Vec3& vec) {
 	Write(vec.x);
 	Write(vec.y);
 	Write(vec.z);
@@ -728,7 +727,7 @@ template<>
 BinaryWriter& BinaryWriter::WriteObject(const CameraComponent& comp) {
 	auto camera = comp.Cam;
 
-	Write((uint32_t)camera->GetType());
+	Write((u32)camera->GetType());
 	if(camera->GetType() == Camera::Type::Stereo)
 		Write(camera->As<StereographicCamera>()->GetVerticalFOV());
 	else
@@ -760,21 +759,21 @@ BinaryWriter& BinaryWriter::WriteObject(const TransformComponent& comp) {
 
 template<>
 BinaryWriter& BinaryWriter::WriteObject(const AudioComponent& comp) {
-	Write((uint64_t)comp.AudioAsset.ID);
+	Write((u64)comp.AudioAsset.ID);
 
 	return *this;
 }
 
 template<>
 BinaryWriter& BinaryWriter::WriteObject(const MeshComponent& comp) {
-	Write((uint64_t)comp.MeshSourceAsset.ID);
-	Write((uint64_t)comp.MaterialAsset.ID);
+	Write((u64)comp.MeshSourceAsset.ID);
+	Write((u64)comp.MaterialAsset.ID);
 	return *this;
 }
 
 template<>
 BinaryWriter& BinaryWriter::WriteObject(const SkyboxComponent& comp) {
-	Write((uint64_t)comp.CubemapAsset.ID);
+	Write((u64)comp.CubemapAsset.ID);
 	return *this;
 }
 
@@ -783,10 +782,10 @@ BinaryWriter& BinaryWriter::WriteObject(const ScriptComponent& comp) {
 	auto obj = comp.Instance;
 	auto* handle = obj->GetHandle();
 
-	Write((uint64_t)comp.ModuleAsset.ID);
+	Write((u64)comp.ModuleAsset.ID);
 	Write(obj->GetClass()->Name);
 
-	for(uint32_t i = 0; i < handle->GetPropertyCount(); i++) {
+	for(u32 i = 0; i < handle->GetPropertyCount(); i++) {
 		ScriptField field = obj->GetProperty(i);
 		bool editorField =
 			VolcanicEditor::ScriptManager::FieldHasMetadata(
@@ -804,49 +803,49 @@ BinaryWriter& BinaryWriter::WriteObject(const ScriptComponent& comp) {
 		if(field.TypeID == asTYPEID_BOOL)
 			Write(*field.As<bool>());
 		else if(field.TypeID == asTYPEID_INT8)
-			Write(*field.As<int8_t>());
+			Write(*field.As<i8>());
 		else if(field.TypeID == asTYPEID_INT16)
-			Write(*field.As<int16_t>());
+			Write(*field.As<i16>());
 		else if(field.TypeID == asTYPEID_INT32)
-			Write(*field.As<int32_t>());
+			Write(*field.As<i32>());
 		else if(field.TypeID == asTYPEID_INT64)
-			Write(*field.As<int64_t>());
+			Write(*field.As<i64>());
 		else if(field.TypeID == asTYPEID_UINT8)
-			Write(*field.As<uint8_t>());
+			Write(*field.As<u8>());
 		else if(field.TypeID == asTYPEID_UINT16)
-			Write(*field.As<uint16_t>());
+			Write(*field.As<u16>());
 		else if(field.TypeID == asTYPEID_UINT32)
-			Write(*field.As<uint32_t>());
+			Write(*field.As<u32>());
 		else if(field.TypeID == asTYPEID_UINT64)
-			Write(*field.As<uint64_t>());
+			Write(*field.As<u64>());
 		else if(field.TypeID == asTYPEID_FLOAT)
-			Write(*field.As<float>());
+			Write(*field.As<f32>());
 		else if(field.TypeID == asTYPEID_DOUBLE)
-			Write(*field.As<double>());
+			Write(*field.As<f64>());
 		else if(typeName == "string")
 			Write(*field.As<std::string>());
 		else if(typeName == "array") {
 			auto* array = field.As<CScriptArray>();
 			auto subTypeID = array->GetArrayObjectType()->GetSubTypeId();
 			auto* subType = ScriptEngine::Get()->GetTypeInfoById(subTypeID);
-			uint64_t size = 0;
+			u64 size = 0;
 			if(subType)
 				size = subType->GetSize();
 			else
 				size = ScriptEngine::Get()->GetSizeOfPrimitiveType(subTypeID);
 
-			uint32_t count = array->GetSize();
-			Write((uint32_t)count);
+			u32 count = array->GetSize();
+			Write((u32)count);
 			// Works for primitive and POD types
 			WriteData(array->GetBuffer(), size * count);
 		}
 		else if(typeName == "Asset") {
 			auto asset = *field.As<Asset>();
-			Write((uint64_t)asset.ID);
-			Write((uint8_t)asset.Type);
+			Write((u64)asset.ID);
+			Write((u8)asset.Type);
 		}
 		else if(typeName == "Vec3")
-			Write(*field.As<glm::vec3>());
+			Write(*field.As<Vec3>());
 		else if(typeName == "GridSet") {
 			auto* grid = field.As<GridSet>();
 			Write(grid->GetWidth());
@@ -863,8 +862,8 @@ template<>
 BinaryWriter& BinaryWriter::WriteObject(const RigidBodyComponent& comp) {
 	// auto body = comp.Body;
 
-	// Write((uint8_t)body->GetType());
-	// Write((uint8_t)body->GetShape()->GetType());
+	// Write((u8)body->GetType());
+	// Write((u8)body->GetShape()->GetType());
 
 	return *this;
 }
@@ -914,33 +913,33 @@ BinaryWriter& BinaryWriter::WriteObject(const ParticleEmitterComponent& comp) {
 	Write(comp.ParticleLifetime);
 	Write(comp.SpawnInterval);
 	Write(comp.Offset);
-	Write((uint64_t)comp.MaterialAsset.ID);
+	Write((u64)comp.MaterialAsset.ID);
 
 	return *this;
 }
 
 template<>
 BinaryWriter& BinaryWriter::WriteObject(const Entity& entity) {
-	Write((uint64_t)entity.GetHandle());
+	Write((u64)entity.GetHandle());
 	Write(entity.GetName());
 
 	std::bitset<12> componentBits;
-	componentBits |= ((uint16_t)entity.Has<CameraComponent>()			<< 0);
-	componentBits |= ((uint16_t)entity.Has<TagComponent>()				<< 1);
-	componentBits |= ((uint16_t)entity.Has<TransformComponent>()		<< 2);
-	componentBits |= ((uint16_t)entity.Has<AudioComponent>()			<< 3);
-	componentBits |= ((uint16_t)entity.Has<MeshComponent>()				<< 4);
-	componentBits |= ((uint16_t)entity.Has<SkyboxComponent>()			<< 5);
-	componentBits |= ((uint16_t)entity.Has<ScriptComponent>()			<< 6);
+	componentBits |= ((u16)entity.Has<CameraComponent>()			<< 0);
+	componentBits |= ((u16)entity.Has<TagComponent>()				<< 1);
+	componentBits |= ((u16)entity.Has<TransformComponent>()			<< 2);
+	componentBits |= ((u16)entity.Has<AudioComponent>()				<< 3);
+	componentBits |= ((u16)entity.Has<MeshComponent>()				<< 4);
+	componentBits |= ((u16)entity.Has<SkyboxComponent>()			<< 5);
+	componentBits |= ((u16)entity.Has<ScriptComponent>()			<< 6);
 	if(entity.Has<ScriptComponent>() && !entity.Get<ScriptComponent>().Instance)
 		componentBits.set(6, false);
-	componentBits |= ((uint16_t)entity.Has<RigidBodyComponent>()		<< 7);
-	componentBits |= ((uint16_t)entity.Has<DirectionalLightComponent>() << 8);
-	componentBits |= ((uint16_t)entity.Has<PointLightComponent>()		<< 9);
-	componentBits |= ((uint16_t)entity.Has<SpotlightComponent>()		<< 10);
-	componentBits |= ((uint16_t)entity.Has<ParticleEmitterComponent>()	<< 11);
+	componentBits |= ((u16)entity.Has<RigidBodyComponent>()			<< 7);
+	componentBits |= ((u16)entity.Has<DirectionalLightComponent>()	<< 8);
+	componentBits |= ((u16)entity.Has<PointLightComponent>()		<< 9);
+	componentBits |= ((u16)entity.Has<SpotlightComponent>()			<< 10);
+	componentBits |= ((u16)entity.Has<ParticleEmitterComponent>()	<< 11);
 
-	Write((uint16_t)componentBits.to_ulong());
+	Write((u16)componentBits.to_ulong());
 
 	if(componentBits.test(0))
 		Write(entity.Get<CameraComponent>());
@@ -990,9 +989,9 @@ void SceneLoader::RuntimeSave(const Scene& scene,
 
 	writer.Write(scene.Name);
 
-	uint64_t entityCount = 0;
-	uint64_t idx = writer.GetPosition();
-	writer.Advance(sizeof(uint64_t));
+	u64 entityCount = 0;
+	u64 idx = writer.GetPosition();
+	writer.Advance(sizeof(u64));
 
 	scene.EntityWorld
 	.ForEach(

@@ -373,10 +373,10 @@ Buffer<u32> AssetImporter::GetShaderData(const std::string& path) {
 	return data;
 }
 
-Buffer<float> AssetImporter::GetAudioData(const std::string& path) {
+Buffer<f32> AssetImporter::GetAudioData(const std::string& path) {
 	SoLoud::Wav sound;
 	VOLCANICORE_ASSERT(sound.load(path.c_str()) == 0);
-	Buffer<float> data(sound.mSampleCount);
+	Buffer<f32> data(sound.mSampleCount);
 	data.Set(sound.mData, sound.mSampleCount);
 	return data;
 }

@@ -89,12 +89,12 @@ asIScriptModule* ScriptManager::LoadScript(const List<std::string>& paths,
 	if(!metadata)
 		return handle;
 
-	for(uint32_t i = 0; i < handle->GetFunctionCount(); i++) {
+	for(u32 i = 0; i < handle->GetFunctionCount(); i++) {
 		asIScriptFunction* func = handle->GetFunctionByIndex(i);
 
 	}
 
-	for(uint32_t i = 0; i < handle->GetObjectTypeCount(); i++) {
+	for(u32 i = 0; i < handle->GetObjectTypeCount(); i++) {
 		asITypeInfo* type = handle->GetObjectTypeByIndex(i);
 		int id = type->GetTypeId();
 		std::string className = type->GetName();
@@ -103,7 +103,7 @@ asIScriptModule* ScriptManager::LoadScript(const List<std::string>& paths,
 		for(auto str : builder.GetMetadataForType(id))
 			list.Add(str);
 
-		for(uint32_t i = 0; i < type->GetPropertyCount(); i++) {
+		for(u32 i = 0; i < type->GetPropertyCount(); i++) {
 			for(auto str : builder.GetMetadataForTypeProperty(id, i)) {
 				const char* name;
 				type->GetProperty(i, &name);
@@ -111,7 +111,7 @@ asIScriptModule* ScriptManager::LoadScript(const List<std::string>& paths,
 			}
 		}
 
-		for(uint32_t i = 0; i < type->GetMethodCount(); i++) {
+		for(u32 i = 0; i < type->GetMethodCount(); i++) {
 			asIScriptFunction* method = type->GetMethodByIndex(i);
 			for(auto str : builder.GetMetadataForTypeMethod(id, method)) {
 				std::string name = method->GetName();
@@ -135,11 +135,11 @@ public:
 		: m_Writer(writer) { }
 	~ByteCodeWriter() = default;
 
-	int Read(void* data, uint32_t size) override {
+	int Read(void* data, u32 size) override {
 		return 1;
 	}
 
-	int Write(const void* data, uint32_t size) override {
+	int Write(const void* data, u32 size) override {
 		m_Writer->WriteData(data, (uint64_t)size);
 		return 0;
 	}
@@ -164,9 +164,9 @@ void ScriptManager::RunCodeAnalysis() {
 static asIScriptContext* s_Context = nullptr;
 static asIScriptFunction* s_LastFunction = nullptr;
 static asIScriptModule* s_LastModule = nullptr;
-static uint32_t s_StackLevel = 0;
+static u32 s_StackLevel = 0;
 static bool s_Suspended = false;
-static uint8_t s_Action = 0;
+static u8 s_Action = 0;
 
 static void DebugLineCallback(asIScriptContext* ctx) {
 

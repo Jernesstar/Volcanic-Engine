@@ -25,10 +25,10 @@ enum class AssetType : u8 {
 	Texture,
 	Cubemap,
 	Shader,
+	Material,
 	Font,
 	Audio,
 	Script,
-	Material,
 	Custom
 };
 
@@ -36,7 +36,9 @@ struct Asset {
 	UUID ID = 0;
 	AssetType Type = AssetType::None;
 	bool Primary = true;
+
 	operator uint64_t() const { return ID; }
+	operator bool() const { return ID != 0 && Type != AssetType::None; }
 };
 
 }
@@ -54,12 +56,6 @@ struct hash<VolcanicEngine::Asset> {
 
 namespace VolcanicEngine {
 
-template<typename T>
-struct AssetRef {
-	T* Data;
-	bool Loaded;
-};
-
 class AssetRegistry {
 public:
 	AssetRegistry();
@@ -67,23 +63,20 @@ public:
 
 	void Add(Asset asset);
 	void Remove(Asset asset);
-	void Set(Asset asset, Bytes&& data);
-	Bytes Get(Asset asset);
+	void SetData(Asset asset, Bytes&& data);
+	Bytes GetData(Asset asset);
 
-	bool IsLoaded(Asset asset) const;
-	bool IsValid(Asset asset) const;
 	bool HasRefs(Asset asset) const;
 	void AddRef(Asset base, Asset ref);
 	const VolcaniCore::List<Asset>& GetRefs(Asset asset) const;
 
 	void NameAsset(Asset asset, const std::string& name);
 	void RemoveName(Asset asset);
+	std::string GetAssetName(Asset asset) const;
+	Asset FindAsset(const std::string& lookup) const;
 
 	void For(const Func<void, Asset>& cb);
 	void Clear();
-
-	std::string GetAssetName(Asset asset) const;
-	Asset FindAsset(const std::string& lookup) const;
 
 private:
 	Registry* m_Registry;

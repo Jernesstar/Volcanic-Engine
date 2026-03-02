@@ -28,7 +28,12 @@ EditorSceneRenderer::EditorSceneRenderer() {
 	m_Controller.TranslationSpeed = 25.0f;
 
 	auto window = Application::GetWindow();
-	m_Output = Framebuffer::Create(window->GetWidth(), window->GetHeight());
+	m_Output =
+		RendererAPI::Get()->CreateFramebuffer({
+			{
+				{ AttachmentTarget::Color, window->GetWidth(), window->GetHeight() }
+			}
+		});
 
 	GridPass =
 		RenderPass::Create("Grid",
@@ -43,19 +48,16 @@ EditorSceneRenderer::EditorSceneRenderer() {
 		{
 			{ "Position", BufferDataType::Vec3 }
 		},
-		true, // Dynamic
-		true  // Structure of arrays, aka. Instanced
+		true // Structure of arrays, aka. Instanced
 	};
 
-	DrawBufferSpecification specs
+	DrawBufferSpec specs
 	{
+		.InstanceCount = 152,
 		.VertexLayout = { },
 		.InstanceLayout = instanceLayout,
-		.MaxIndexCount = 0,
-		.MaxVertexCount = 0,
-		.MaxInstanceCount = 152
 	};
-	BillboardBuffer = RendererAPI::Get()->NewDrawBuffer(specs);
+	BillboardBuffer = RendererAPI::Get()->NewBuffer(specs);
 
 	BillboardPass =
 		RenderPass::Create("Billboard",
@@ -89,7 +91,13 @@ EditorSceneRenderer::EditorSceneRenderer() {
 			AssetImporter::GetShader({
 				"Engine/assets/shaders/Mask.glsl.vert",
 				"Engine/assets/shaders/Mask.glsl.frag"
-			}), Framebuffer::Create(window->GetWidth(), window->GetHeight()));
+			}),
+			RendererAPI::Get()->CreateFramebuffer({
+				{
+					{ AttachmentTarget::Color, window->GetWidth(), window->GetHeight() }
+				}
+			})
+		);
 	MaskPass->SetData(Renderer3D::GetMeshBuffer());
 
 	OutlinePass =
@@ -112,7 +120,6 @@ EditorSceneRenderer::EditorSceneRenderer() {
 }
 
 EditorSceneRenderer::~EditorSceneRenderer() {
-	RendererAPI::Get()->ReleaseBuffer(BillboardBuffer);
 }
 
 void EditorSceneRenderer::Update(TimeStep ts) {
@@ -120,14 +127,14 @@ void EditorSceneRenderer::Update(TimeStep ts) {
 		m_Controller.OnUpdate(ts);
 }
 
-void EditorSceneRenderer::SetContext(SceneVisualizerPanel* panel) {
-	RootPanel = panel;
-	Renderer3D::End();
-	Renderer2D::End();
-	Renderer3D::GetMeshBuffer()->Clear();
-	// Renderer3D::GetCubemapBuffer()->Clear();
-	Renderer3D::GetLineBuffer()->Clear();
-}
+// void EditorSceneRenderer::SetContext(SceneVisualizerPanel* panel) {
+// 	RootPanel = panel;
+// 	Renderer3D::End();
+// 	Renderer2D::End();
+// 	Renderer3D::GetMeshBuffer()->Clear();
+// 	// Renderer3D::GetCubemapBuffer()->Clear();
+// 	Renderer3D::GetLineBuffer()->Clear();
+// }
 
 void EditorSceneRenderer::AddBillboard(const glm::vec3& pos, uint32_t type) {
 	glm::vec3 cameraPos = m_Controller.GetCamera()->GetPosition();
@@ -153,16 +160,14 @@ void EditorSceneRenderer::Begin() {
 	auto camera = m_Controller.GetCamera();
 
 	{
-		MeshCommand =
-			RendererAPI::Get()->NewDrawCommand(MeshPass->Get());
+		MeshCommand = RendererAPI::Get()->NewCommand(MeshPass->Get());
 		MeshCommand->Clear = true;
-		MeshCommand->UniformData
-		.SetInput("u_ViewProj", camera->GetViewProjection());
-		MeshCommand->UniformData
-		.SetInput("u_CameraPosition", camera->GetPosition());
+		MeshCommand->Uniforms
+		.Set("u_ViewProj", camera->GetViewProjection())
+		.Set("u_CameraPosition", camera->GetPosition());
 	}
 
-	BillboardBuffer->Clear(DrawBufferIndex::Instances);
+	BillboardBuffer->Clear();
 	Billboards.Clear();
 
 	glm::vec3 pos = camera->GetPosition();
@@ -174,12 +179,12 @@ void EditorSceneRenderer::Begin() {
 	// 	AddBillboard(pos + t * dir, 0);
 		AddBillboard(glm::vec3(0.0f), 0);
 
-	LineCommand = RendererAPI::Get()->NewDrawCommand(LinePass->Get());
-	LineCommand->DepthTest = DepthTestingMode::On;
+	LineCommand = RendererAPI::Get()->NewCommand(LinePass->Get());
+	LineCommand->DepthTesting = DepthTestingMode::On;
 	LineCommand->Blending = BlendingMode::Greatest;
 	LineCommand->Culling = CullingMode::Off;
-	LineCommand->UniformData
-	.SetInput("u_ViewProj", m_Controller.GetCamera()->GetViewProjection());
+	LineCommand->Uniforms
+	.Set("u_ViewProj", m_Controller.GetCamera()->GetViewProjection());
 }
 
 void EditorSceneRenderer::SubmitCamera(const Entity& entity) {
@@ -236,27 +241,24 @@ void EditorSceneRenderer::SubmitCamera(const Entity& entity) {
 		6, 5, // Back Right
 	};
 
-	auto* buffer = LinePass->Get()->BufferData;
-	RendererAPI::Get()
-	->SetBufferData(buffer, DrawBufferIndex::Vertices, points, 9, 0);
-	RendererAPI::Get()
-	->SetBufferData(buffer, DrawBufferIndex::Indices, indices, indexCount);
+	auto* buffer = LinePass->Get()->Buffer;
+	buffer->Add(DrawBufferIndex::E_Vertex, points, 9);
+	buffer->Add(DrawBufferIndex::E_Index, indices, indexCount);
 
-	auto& call = LineCommand->NewDrawCall();
-	call.VertexCount = 9;
-	call.IndexCount = indexCount;
-	call.Partition = PartitionType::Single;
-	call.Primitive = PrimitiveType::Line;
+	auto* call = LineCommand->NewCall();
+	call->VertexCount = 9;
+	call->IndexCount = indexCount;
+	call->Partition = DrawPartition::Single;
+	call->Primitive = DrawPrimitive::Line;
 }
 
 void EditorSceneRenderer::SubmitSkybox(const Entity& entity) {
 	auto& sc = entity.Get<SkyboxComponent>();
 	auto* assetManager = AssetManager::Get();
-	assetManager->Load(sc.CubemapAsset);
-	auto cubemap = assetManager->Get<Cubemap>(sc.CubemapAsset);
+	// auto cubemap = assetManager->Get<Cubemap>(sc.CubemapAsset);
 
-	MeshCommand->UniformData
-	.SetInput("u_Skybox", CubemapSlot{ cubemap });
+	// MeshCommand->Uniforms
+	// .Set("u_Skybox", CubemapSlot{ cubemap });
 }
 
 void EditorSceneRenderer::SubmitLight(const Entity& entity) {
@@ -289,7 +291,7 @@ void EditorSceneRenderer::SubmitMesh(const Entity& entity) {
 	auto& tc = entity.Get<TransformComponent>();
 	auto& mc = entity.Get<MeshComponent>();
 
-	if(!assetManager->IsValid(mc.MeshSourceAsset))
+	if(!mc.MeshSourceAsset)
 		return;
 
 	assetManager->Load(mc.MeshSourceAsset);
@@ -304,30 +306,14 @@ void EditorSceneRenderer::SubmitMesh(const Entity& entity) {
 		return;
 	}
 
-	if(!assetManager->IsValid(mc.MaterialAsset))
+	if(!mc.MaterialAsset)
 		return;
 
-	VolcaniCore::Material mat;
 	assetManager->Load(mc.MaterialAsset);
-	auto material = assetManager->Get<Lava::Material>(mc.MaterialAsset);
+	auto material = assetManager->Get<DrawUniforms>(mc.MaterialAsset);
 
-	if(material->TextureUniforms.count("u_Diffuse")) {
-		UUID id = material->TextureUniforms["u_Diffuse"];
-		Asset textureAsset = { id, AssetType::Texture };
-		assetManager->Load(textureAsset);
-		mat.Diffuse = assetManager->Get<Texture>(textureAsset);
-	}
-	if(material->Vec4Uniforms.count("u_DiffuseColor"))
-		mat.DiffuseColor = material->Vec4Uniforms["u_DiffuseColor"];
-
-	DrawCommand* command =
-		RendererAPI::Get()->NewDrawCommand(MeshPass->Get());
-	command->UniformData
-	.SetInput("u_Material.IsTextured", (bool)mat.Diffuse);
-	command->UniformData
-	.SetInput("u_Material.Diffuse", TextureSlot{ mat.Diffuse, 0 });
-	command->UniformData
-	.SetInput("u_Material.DiffuseColor", mat.DiffuseColor);
+	DrawCommand* command = RendererAPI::Get()->NewCommand(MeshPass->Get());
+	command->Uniforms = *material;
 
 	Renderer3D::DrawMesh(mesh, tc, command);
 }
@@ -336,39 +322,38 @@ void EditorSceneRenderer::Render() {
 	Renderer3D::End();
 
 	auto* assetManager = AssetManager::Get();
-	if(Selected && Selected.Has<TransformComponent>()
+	if(Selected
+	&& Selected.Has<TransformComponent>()
 	&& Selected.Has<MeshComponent>()
-	&& assetManager->IsValid(Selected.Get<MeshComponent>().MeshSourceAsset))
+	&& Selected.Get<MeshComponent>().MeshSourceAsset)
 	{
 		auto& tc = Selected.Get<TransformComponent>();
 		auto& mc = Selected.Get<MeshComponent>();
 
-		assetManager->Load(mc.MeshSourceAsset);
 		auto mesh = assetManager->Get<Mesh>(mc.MeshSourceAsset);
-
 		{
-			auto* command =
-				RendererAPI::Get()->NewDrawCommand(MaskPass->Get());
+			auto* command = RendererAPI::Get()->NewCommand(MaskPass->Get());
 			command->Clear = true;
-			command->UniformData
-			.SetInput("u_ViewProj",
-				MeshCommand->UniformData.Mat4Uniforms["u_ViewProj"]);
-			command->UniformData
-			.SetInput("u_Color", glm::vec4(1.0f));
+			command->Uniforms
+			.Set("u_ViewProj",
+				MeshCommand->Uniforms.Mat4Uniforms["u_ViewProj"]);
+			command->Uniforms
+			.Set("u_Color", glm::vec4(1.0f));
 
 			Renderer3D::DrawMesh(mesh, tc, command);
 		}
 
 		Renderer::StartPass(OutlinePass);
 		{
-			auto width = m_Output->GetWidth();
-			auto height = m_Output->GetHeight();
+			auto att = m_Output->Get(AttachmentTarget::Color, 0);
+			auto width = att->Spec.Width;
+			auto height = att->Spec.Height;
 
 			auto* command = Renderer::GetCommand();
-			command->UniformData
-			.SetInput("u_PixelSize", 1.0f / glm::vec2(width, height));
-			command->UniformData
-			.SetInput("u_Color", glm::vec3(0.0f, 0.0f, 1.0f));
+			command->Uniforms
+			.Set("u_PixelSize", 1.0f / glm::vec2(width, height));
+			command->Uniforms
+			.Set("u_Color", glm::vec3(0.0f, 0.0f, 1.0f));
 
 			auto mask = MaskPass->GetOutput();
 			Renderer2D::DrawFullscreenQuad(mask, AttachmentTarget::Color);
@@ -382,18 +367,17 @@ void EditorSceneRenderer::Render() {
 	for(auto [pos, type] : Billboards) {
 		DrawCommand* command;
 		if(type == 0) {
-			command = RendererAPI::Get()->NewDrawCommand(GridPass->Get());
-			command->UniformData
-			.SetInput("u_CameraPosition", camera->GetPosition());
+			command = RendererAPI::Get()->NewCommand(GridPass->Get());
+			command->Uniforms
+			.Set("u_CameraPosition", camera->GetPosition());
 		}
 		else {
-			command = RendererAPI::Get()->NewDrawCommand(BillboardPass->Get());
-			command->UniformData
-			.SetInput("u_View", camera->GetView());
-			command->UniformData
-			.SetInput("u_BillboardWidth", 1.0f);
-			command->UniformData
-			.SetInput("u_BillboardHeight", 1.0f);
+			command = RendererAPI::Get()->NewCommand(BillboardPass->Get());
+			command->Uniforms
+			.Set("u_View", camera->GetView())
+			.Set("u_BillboardWidth", 1.0f)
+			.Set("u_BillboardHeight", 1.0f);
+
 			Ref<Texture> icon;
 			if(type == 1)
 				icon = CameraIcon;
@@ -406,26 +390,26 @@ void EditorSceneRenderer::Render() {
 			else if(type == 5)
 				icon = ParticlesIcon;
 
-			command->UniformData
-			.SetInput("u_Texture", TextureSlot{ icon, 0 });
+			command->Uniforms
+			.Set("u_Texture", TextureSlot{ icon, 0 });
 		}
 
-		command->DepthTest = DepthTestingMode::On;
+		command->DepthTesting = DepthTestingMode::On;
 		command->Blending = BlendingMode::Greatest;
 		command->Culling = CullingMode::Off;
-		command->UniformData
-		.SetInput("u_ViewProj", camera->GetViewProjection());
+		command->Uniforms
+		.Set("u_ViewProj", camera->GetViewProjection());
 
-		auto& call = command->NewDrawCall();
-		call.VertexCount = 6;
-		call.Primitive = PrimitiveType::Triangle;
-		call.Partition = PartitionType::Single;
+		auto* call = command->NewCall();
+		call->VertexCount = 6;
+		call->Partition = DrawPartition::Single;
+		call->Primitive = DrawPrimitive::Triangle;
 
 		if(type != 0) {
-			call.Partition = PartitionType::Instanced;
-			call.InstanceStart = BillboardBuffer->InstancesCount;
-			call.InstanceCount = 1;
-			BillboardBuffer->AddInstance(glm::value_ptr(pos));
+			call->Partition = DrawPartition::Instanced;
+			call->InstanceOffset = BillboardBuffer->GetInstanceCount();
+			call->InstanceCount = 1;
+			BillboardBuffer->Add(DrawBufferIndex::E_Instance, glm::value_ptr(pos), 1);
 		}
 	}
 
@@ -463,15 +447,6 @@ void EditorSceneRenderer::Render() {
 		call.Partition = PartitionType::Single;
 		call.Primitive = PrimitiveType::Line;
 	}
-
-	// auto* editor = RootPanel->GetTab()
-	// 	->GetPanel("ComponentEditor")->As<ComponentEditorPanel>();
-	// if(Selected && Selected.Has<RigidBodyComponent>()
-	// && editor->IsFocused<RigidBodyComponent>(Selected))
-	// {
-		
-	// }
-
 #endif
 
 	Renderer::Flush();

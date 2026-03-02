@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Engine/Core/AssetManager.h>
-#include <Engine/Core/BinaryReader.h>
+#include <VolcaniCore/Utils/BinaryReader.h>
+#include <Engine/Asset/AssetManager.h>
 
 using namespace VolcaniCore;
 using namespace VolcanicEngine;

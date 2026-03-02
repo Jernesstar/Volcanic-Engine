@@ -23,12 +23,12 @@ void AssetRegistry::Remove(Asset asset) {
 	m_AssetMetadata->Remove((u64)asset.ID);
 }
 
-bool AssetRegistry::IsLoaded(Asset asset) const {
-	return false;
+void AssetRegistry::SetData(Asset asset, Bytes&& data) {
+	m_AssetData->Insert((u64)asset.ID, std::move(data));
 }
 
-bool AssetRegistry::IsValid(Asset asset) const {
-	return asset.ID != 0 && asset.Type != AssetType::None;
+Bytes AssetRegistry::GetData(Asset asset) {
+	return m_AssetData->Query((u64)asset.ID).Data;
 }
 
 bool AssetRegistry::HasRefs(Asset asset) const {
@@ -40,6 +40,30 @@ void AssetRegistry::AddRef(Asset base, Asset ref) {
 }
 
 const List<Asset>& AssetRegistry::GetRefs(Asset asset) const {
+
+}
+
+void AssetRegistry::NameAsset(Asset asset, const std::string& name) {
+
+}
+
+void AssetRegistry::RemoveName(Asset asset) {
+
+}
+
+std::string AssetRegistry::GetAssetName(Asset asset) const {
+
+}
+
+Asset AssetRegistry::FindAsset(const std::string& lookup) const {
+
+}
+
+void AssetRegistry::For(const Func<void, Asset>& cb) {
+
+}
+
+void AssetRegistry::Clear() {
 
 }
 
