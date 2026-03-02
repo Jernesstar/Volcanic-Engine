@@ -16,6 +16,7 @@
 #include <Engine/Canvas/Canvas.h>
 
 #include "./SceneRenderer.h"
+#include "../Asset/AssetManager.h"
 
 #include "SceneLoader.h"
 
@@ -52,19 +53,6 @@ void StandardIO() {
 			std::string handle = arg["--embed_window"];
 			EmbedWindow(handle.c_str());
 		}
-		if(arg["--open_project"]) {
-			std::string path = arg["--open_project"];
-			Editor::OpenProject(path);
-		}
-		if(arg["--new_project"]) {
-			std::string path = arg["--new_project"];
-			Editor::NewProject(path);
-		}
-		if(arg["--open_scene"]) {
-			std::string name = arg["--open_scene"];
-			Editor::OpenScene(name);
-			Log::Info("Loaded");
-		}
 
 		{
 			std::lock_guard<std::mutex> lock(s_IOMutex);
@@ -77,6 +65,8 @@ static Ref<Project> s_CurrentProject;
 static Ref<Scene> s_CurrentScene;
 static Ref<Canvas> s_CurrentCanvas;
 
+static Ref<EditorAssetManager> s_AssetManager;
+
 static Ref<EditorSceneRenderer> s_EditorSceneRenderer;
 static Ref<RuntimeSceneRenderer> s_RuntimeSceneRenderer;
 
@@ -87,10 +77,25 @@ static TabType s_TabType = TabType::None;
 void Editor::Init(const CommandLineArgs& args) {
 	Log::Init();
 	Renderer::Init();
-	std::thread(StandardIO).detach();
+	// std::thread(StandardIO).detach();
 
+	s_AssetManager = CreateRef<EditorAssetManager>();
 	s_EditorSceneRenderer = CreateRef<EditorSceneRenderer>();
 	// s_RuntimeSceneRenderer = CreateRef<RuntimeSceneRenderer>();
+
+	if(args["--open_project"]) {
+		std::string path = args["--open_project"];
+		Editor::OpenProject(path);
+	}
+	if(args["--new_project"]) {
+		std::string path = args["--new_project"];
+		Editor::NewProject(path);
+	}
+	if(args["--open_scene"]) {
+		std::string name = args["--open_scene"];
+		Editor::OpenScene(name);
+		Log::Info("Loaded");
+	}
 }
 
 void Editor::Close() {
@@ -103,7 +108,6 @@ void Editor::Update(TimeStep ts) {
 }
 
 void Editor::Render() {
-
 	if(s_TabType == TabType::Scene)
 		s_CurrentScene->OnRender(*s_EditorSceneRenderer);
 }
@@ -127,7 +131,8 @@ void Editor::NewScene(const std::string& path) {
 void Editor::OpenScene(const std::string& name) {
 	s_CurrentScene = CreateRef<Scene>(name);
 	SceneLoader::EditorLoad(*s_CurrentScene, "Object/Scene/" + name + ".scene");
-	s_TabType = TabType::Scene;
+	Log::Info("Loaded scene {}", name);
+	// s_TabType = TabType::Scene;
 }
 
 void Editor::SaveScene(const std::string& name) {

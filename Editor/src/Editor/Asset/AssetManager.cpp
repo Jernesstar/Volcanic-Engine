@@ -294,9 +294,8 @@ Asset EditorAssetManager::Add(AssetType type, UUID id, bool primary,
 void EditorAssetManager::Remove(Asset asset) {
 	Unload(asset);
 
-	// Ensures accidently removing an asset won't break references
-	// m_AssetRegistry->Remove(asset);
-	// m_Paths.erase(asset.ID);
+	m_AssetRegistry->Remove(asset);
+	m_Paths.erase(asset.ID);
 }
 
 UUID EditorAssetManager::GetFromPath(const std::string& path) const {
