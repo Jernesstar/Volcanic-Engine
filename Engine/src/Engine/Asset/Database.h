@@ -35,18 +35,28 @@ struct DatabaseResult {
 	}
 };
 
+struct DatabaseValueCount {
+	bool Success = false;
+	u64 Count = 0;
+
+	operator bool() const { return Success; }
+};
+
 class Registry;
 
 class Database {
 public:
 	const std::string Name;
+	const bool MultiValue;
 
 public:
-	Database(const std::string& name, MDB_env* registry, MDB_dbi handle);
+	Database(const std::string& name, MDB_env* registry, MDB_dbi handle,
+			 bool multiValue = false);
 	~Database();
 
 	void Insert(DatabaseKey&& key, Bytes&& value);
 	DatabaseResult Query(DatabaseKey&& key);
+	DatabaseValueCount Count(DatabaseKey&& key);
 	void Remove(DatabaseKey&& key);
 
 private:
@@ -59,7 +69,7 @@ public:
 	Registry(const std::string& path, u32 maxDatabases);
 	~Registry();
 
-	Database* NewDatabase(const std::string& name);
+	Database* NewDatabase(const std::string& name, bool multiValue = false);
 	Database* GetDatabase(const std::string& name);
 
 private:

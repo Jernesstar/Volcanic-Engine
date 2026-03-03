@@ -116,6 +116,8 @@ void Editor::Render() {
 void Editor::OpenProject(const std::string& path) {
 	Application::PushDir(path);
 	s_AssetManager->LoadRegistry();
+	auto refs = s_AssetManager->GetRegistry()->HasRefs({ 17930437727414257517ULL, AssetType::Script });
+	Log::Info("Refs: {}", refs);
 }
 
 void Editor::NewProject(const std::string& path) {
@@ -133,7 +135,6 @@ void Editor::NewScene(const std::string& path) {
 void Editor::OpenScene(const std::string& name) {
 	s_CurrentScene = CreateRef<Scene>(name);
 	SceneLoader::EditorLoad(*s_CurrentScene, "Object/Scene/" + name + ".scene");
-	Log::Info("Loaded scene {}", name);
 	// s_TabType = TabType::Scene;
 }
 

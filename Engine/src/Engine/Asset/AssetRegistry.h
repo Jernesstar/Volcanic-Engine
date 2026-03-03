@@ -68,7 +68,7 @@ public:
 
 	bool HasRefs(Asset asset) const;
 	void AddRef(Asset base, Asset ref);
-	const VolcaniCore::List<Asset>& GetRefs(Asset asset) const;
+	VolcaniCore::List<Asset> GetRefs(Asset asset) const;
 
 	void NameAsset(Asset asset, const std::string& name);
 	void RemoveName(Asset asset);
@@ -80,8 +80,10 @@ public:
 
 private:
 	Registry* m_Registry;
-	Database* m_AssetMetadata; // ID, Type, Ref, Name
-	Database* m_AssetData; // ID, Data
+	Database* m_AssetMetadata;	// ID: ID, Type, Primary
+	Database* m_AssetRefs;		// ID: Refs
+	Database* m_AssetNames;		// ID: Name
+	Database* m_AssetData;		// ID: Data
 };
 
 }
