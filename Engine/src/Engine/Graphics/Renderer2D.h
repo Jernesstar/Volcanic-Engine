@@ -6,7 +6,7 @@
 #include "Platform/Texture.h"
 #include "Platform/Framebuffer.h"
 
-#include "OrthographicCamera.h"
+#include "Camera.h"
 #include "Quad.h"
 #include "Text.h"
 

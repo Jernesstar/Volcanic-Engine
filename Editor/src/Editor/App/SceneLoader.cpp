@@ -13,8 +13,7 @@
 
 #include <Engine/App/App.h>
 #include <Engine/Graphics/Mesh.h>
-#include <Engine/Graphics/StereographicCamera.h>
-#include <Engine/Graphics/OrthographicCamera.h>
+#include <Engine/Graphics/Camera.h>
 #include <Engine/Script/ScriptClass.h>
 #include <Engine/Script/Types/GridSet.h>
 #include <Engine/Script/Types/GridSet3D.h>
@@ -266,21 +265,36 @@ void SerializeEntity(YAMLSerializer& serializer, const Entity& entity) {
 	if(entity.Has<CameraComponent>()) {
 		auto& camera = entity.Get<CameraComponent>().Cam;
 		auto type = camera->GetType();
-		auto s = type == Camera::Type::Ortho ? "Orthographic" : "Stereographic";
+		std::string s;
+		switch(type) {
+			case Camera::Type::Orthographic:
+				s = "Orthographic";
+				break;
+			case Camera::Type::Stereographic:
+				s = "Stereographic";
+				break;
+			case Camera::Type::Isometric:
+				s = "Isometric";
+				break;
+		}
 
 		serializer.WriteKey("CameraComponent")
 		.BeginMapping()
 			.WriteKey("Camera").BeginMapping()
 			.WriteKey("Type").Write(s);
 
-		if(type == Camera::Type::Stereo)
-			serializer
-			.WriteKey("VerticalFOV")
-			.Write(camera->As<StereographicCamera>()->GetVerticalFOV());
-		else if(type == Camera::Type::Ortho)
+		if(type == Camera::Type::Orthographic)
 			serializer
 			.WriteKey("Rotation")
 			.Write(camera->As<OrthographicCamera>()->GetRotation());
+		if(type == Camera::Type::Stereographic)
+			serializer
+			.WriteKey("VerticalFOV")
+			.Write(camera->As<StereographicCamera>()->GetVerticalFOV());
+		else if(type == Camera::Type::Isometric)
+			serializer
+			.WriteKey("Distance")
+			.Write(camera->As<IsometricCamera>()->R);
 
 		serializer
 			.WriteKey("Position").Write(camera->GetPosition())
@@ -561,19 +575,25 @@ void DeserializeEntity(YAML::Node entityNode, Scene& scene) {
 		auto near = cameraNode["Near"]			.as<f32>();
 		auto far  = cameraNode["Far"]			.as<f32>();
 		auto typeStr = cameraNode["Type"].as<std::string>();
-		f32 fr;
 		Camera::Type type;
+		Ref<Camera> camera;
 
-		if(typeStr == "Stereographic") {
-			type = Camera::Type::Stereo;
-			fr = cameraNode["VerticalFOV"].as<f32>();
+		if(typeStr == "Orthographic") {
+			type = Camera::Type::Orthographic;
+			f32 rotation = cameraNode["Rotation"].as<f32>();
+			camera = CreateRef<OrthographicCamera>(rotation);
 		}
-		else if(typeStr == "Orthographic") {
-			type = Camera::Type::Ortho;
-			fr = cameraNode["Rotation"].as<f32>();
+		else if(typeStr == "Stereographic") {
+			type = Camera::Type::Stereographic;
+			f32 fov = cameraNode["VerticalFOV"].as<f32>();
+			camera = CreateRef<StereographicCamera>(fov);
+		}
+		else if(typeStr == "Isometric") {
+			type = Camera::Type::Isometric;
+			f32 dist = cameraNode["Distance"].as<f32>();
+			camera = CreateRef<IsometricCamera>(dist);
 		}
 
-		auto camera = Camera::Create(type, fr);
 		camera->SetPositionDirection(pos, dir);
 		camera->SetProjection(near, far);
 		camera->Resize(w, h);
@@ -628,8 +648,8 @@ void DeserializeEntity(YAML::Node entityNode, Scene& scene) {
 		if(!asset)
 			entity.Add<ScriptComponent>();
 		else {
-			auto obj = LoadScript(entity, asset, scriptComponentNode);
-			entity.Add<ScriptComponent>(asset, obj);
+			// auto obj = LoadScript(entity, asset, scriptComponentNode);
+			// entity.Add<ScriptComponent>(asset, obj);
 		}
 	}
 
@@ -739,10 +759,12 @@ BinaryWriter& BinaryWriter::WriteObject(const CameraComponent& comp) {
 	auto camera = comp.Cam;
 
 	Write((u32)camera->GetType());
-	if(camera->GetType() == Camera::Type::Stereo)
-		Write(camera->As<StereographicCamera>()->GetVerticalFOV());
-	else
+	if(camera->GetType() == Camera::Type::Orthographic)
 		Write(camera->As<OrthographicCamera>()->GetRotation());
+	else if(camera->GetType() == Camera::Type::Stereographic)
+		Write(camera->As<StereographicCamera>()->GetVerticalFOV());
+	else if(camera->GetType() == Camera::Type::Isometric)
+		Write(camera->As<IsometricCamera>()->R);
 
 	Write(camera->GetPosition());
 	Write(camera->GetDirection());

@@ -5,7 +5,7 @@
 namespace VolcanicEngine {
 
 AssetRegistry::AssetRegistry() {
-	m_Registry = new Registry("./.volc/asset_registry.db", 2);
+	m_Registry = new Registry(".volc/asset_registry", 2);
 	m_AssetMetadata = m_Registry->NewDatabase("AssetMetadata");
 	m_AssetData = m_Registry->NewDatabase("AssetData");
 }
@@ -15,8 +15,8 @@ AssetRegistry::~AssetRegistry() {
 }
 
 void AssetRegistry::Add(Asset asset) {
-	m_AssetMetadata->Insert(
-		(u64)asset.ID, { (u8*)&asset, sizeof(Asset), 0, false });
+	Bytes bytes = { (u8*)&asset, sizeof(Asset), 0, false };
+	m_AssetMetadata->Insert((u64)asset.ID, std::move(bytes));
 }
 
 void AssetRegistry::Remove(Asset asset) {

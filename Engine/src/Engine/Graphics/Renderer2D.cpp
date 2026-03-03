@@ -6,7 +6,6 @@
 #include "Platform/RendererAPI.h"
 
 #include "Graphics/Renderer.h"
-#include "Graphics/OrthographicCamera.h"
 
 using namespace VolcaniCore;
 

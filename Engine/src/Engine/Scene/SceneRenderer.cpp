@@ -6,7 +6,7 @@
 #include <Engine/Graphics/Renderer.h>
 #include <Engine/Graphics/Renderer2D.h>
 #include <Engine/Graphics/Renderer3D.h>
-#include <Engine/Graphics/StereographicCamera.h>
+#include <Engine/Graphics/Camera.h>
 #include <Engine/Graphics/Platform/RendererAPI.h>
 
 #include <Engine/Scene/Component.h>
@@ -166,7 +166,7 @@ RuntimeSceneRenderer::RuntimeSceneRenderer() {
 				{ "Diffuse",   BufferDataType::Vec4 },
 				{ "Specular",  BufferDataType::Vec4 },
 				{ "Direction", BufferDataType::Vec4 },
-				{ "CutoffAngle",	  BufferDataType::Float },
+				{ "CutoffAngle", BufferDataType::Float },
 				{ "OuterCutoffAngle", BufferDataType::Float },
 				{ "_padding1", BufferDataType::Float },
 				{ "_padding2", BufferDataType::Float },

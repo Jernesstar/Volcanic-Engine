@@ -10,7 +10,7 @@
 
 using namespace VolcaniCore;
 
-namespace VolcanicEditor {
+namespace VolcanicEngine {
 
 CameraController::CameraController(const MovementControls& controls)
 	: m_Controls(controls) { }

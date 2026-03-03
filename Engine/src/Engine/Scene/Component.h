@@ -4,7 +4,7 @@
 
 #include <VolcaniCore/Core/Math.h>
 
-#include "Graphics/StereographicCamera.h"
+#include "Graphics/Camera.h"
 #include "Asset/AssetManager.h"
 #include "Physics/RigidBody.h"
 #include "Script/ScriptObject.h"

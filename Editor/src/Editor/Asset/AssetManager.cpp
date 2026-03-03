@@ -227,7 +227,9 @@ static efsw::FileWatcher* s_FileWatcher;
 static FileWatcher* s_Listener;
 static List<efsw::WatchID> s_WatcherIDs;
 
-EditorAssetManager::EditorAssetManager() {
+EditorAssetManager::EditorAssetManager()
+	: AssetManager()
+{
 	s_FileWatcher = new efsw::FileWatcher();
 	s_Listener = new FileWatcher(this);
 }
@@ -288,6 +290,7 @@ Asset EditorAssetManager::Add(AssetType type, UUID id, bool primary,
 	if(path != "")
 		m_Paths[newAsset.ID] = path;
 
+	m_AssetRegistry->Add(newAsset);
 	return newAsset;
 }
 
@@ -322,49 +325,41 @@ void EditorAssetManager::Clear() {
 }
 
 void EditorAssetManager::LoadRegistry() {
-	auto rootPath = "Asset";
+	m_AssetRegistry = CreateRef<AssetRegistry>();
+	
+	auto rootPath = fs::path("Asset");
 	m_Path = (rootPath / ".magma.assetpk").string();
+
+	List<fs::path> paths
+	{
+		(rootPath / "Mesh"),
+		(rootPath / "Texture"),
+		(rootPath / "Cubemap"),
+		(rootPath / "Shader"),
+		(rootPath / "Material"),
+		(rootPath / "Font"),
+		(rootPath / "Audio"),
+		(rootPath / "Script"),
+		// (rootPath / "Custom")
+	};
+
+	for(auto& assetDir : paths)
+		if(fs::exists(assetDir))
+			s_WatcherIDs.Add(
+				s_FileWatcher->addWatch(assetDir.string(), s_Listener));
+
+	s_FileWatcher->watch();
 
 	YAML::Node file;
 	try {
 		file = YAML::LoadFile(m_Path);
 	}
 	catch(YAML::ParserException e) {
-		VOLCANICORE_ASSERT_ARGS(false, "Could not load file %s: %s",
-								m_Path.c_str(), e.what());
+		VOLCANICORE_ASSERT_ARGS(false, "Could not load file {}: {}",
+								m_Path, e.what());
 	}
 
-	fs::path assetDir;
-	assetDir = rootPath / "Mesh";
-	if(fs::exists(assetDir))
-		s_WatcherIDs.Add(
-			s_FileWatcher->addWatch(assetDir.string(), s_Listener));
-	assetDir = rootPath / "Image";
-	if(fs::exists(assetDir))
-		s_WatcherIDs.Add(
-			s_FileWatcher->addWatch(assetDir.string(), s_Listener));
-	assetDir = rootPath / "Cubemap";
-	if(fs::exists(assetDir))
-		s_WatcherIDs.Add(
-			s_FileWatcher->addWatch(assetDir.string(), s_Listener));
-	assetDir = rootPath / "Shader";
-	if(fs::exists(assetDir))
-		s_WatcherIDs.Add(
-			s_FileWatcher->addWatch(assetDir.string(), s_Listener));
-	assetDir = rootPath / "Font";
-	if(fs::exists(assetDir))
-		s_WatcherIDs.Add(
-			s_FileWatcher->addWatch(assetDir.string(), s_Listener));
-	assetDir = rootPath / "Audio";
-	if(fs::exists(assetDir))
-		s_WatcherIDs.Add(
-			s_FileWatcher->addWatch(assetDir.string(), s_Listener));
-	assetDir = rootPath / "Script";
-	if(fs::exists(assetDir))
-		s_WatcherIDs.Add(
-			s_FileWatcher->addWatch(assetDir.string(), s_Listener));
-
-	s_FileWatcher->watch();
+	Log::Info("Loading Asset Registry at path '{}'", m_Path);
 
 	auto assetPackNode = file["AssetPack"];
 	if(!assetPackNode)
@@ -376,9 +371,11 @@ void EditorAssetManager::LoadRegistry() {
 		UUID id = node["ID"].as<u64>();
 		std::string path;
 		if(node["Path"]) {
-			path = (rootPath / node["Path"].as<std::string>()).generic_string();
-			if(!fs::exists(path))
+			path = (paths[(u32)type - 1] / node["Path"].as<std::string>()).generic_string();
+			if(!fs::exists(path)) {
+				Log::Warning("Asset path '{}' does not exist", path);
 				continue;
+			}
 		}
 
 		Asset asset = Add(type, id, true, path);
@@ -386,32 +383,18 @@ void EditorAssetManager::LoadRegistry() {
 			m_AssetRegistry->NameAsset(asset, node["Name"].as<std::string>());
 	}
 
-	// New assets
-	List<fs::path> paths
-	{
-		(rootPath / "Mesh"),
-		(rootPath / "Image"),
-		(rootPath / "Cubemap"),
-		(rootPath / "Shader"),
-		(rootPath / "Font"),
-		(rootPath / "Audio"),
-		(rootPath / "Script"),
-	};
 	u32 i = 1;
 	for(auto& folder : paths) {
 		for(auto path : FileUtils::GetFiles(folder.string())) {
 			if(i == 1)
 				path = FileUtils::GetFiles(path, { ".obj" })[0];
-			if(!GetFromPath(path))
+			if(!GetFromPath(path)) {
+				Log::Info("Loading Asset at path '{}'", path);
 				Add((AssetType)i, 0, true, path);
+			}
 		}
 		i++;
 	}
-
-	// m_AssetRegistry[Asset{ 10012345, AssetType::Mesh }] = true;
-	// m_MeshAssets[10012345] = Mesh::Create(MeshType::Cube);
-	// m_AssetRegistry[Asset{ 10112345, AssetType::Mesh }] = true;
-	// m_MeshAssets[10112345] = Mesh::Create(MeshType::Quad);
 }
 
 void EditorAssetManager::Save() {
@@ -423,15 +406,14 @@ void EditorAssetManager::Save() {
 
 	YAMLSerializer serializer;
 	serializer.BeginMapping();
-
 	serializer.WriteKey("AssetPack").BeginMapping();
 
 	serializer.WriteKey("Assets").BeginSequence();
 	m_AssetRegistry->For(
 		[&](Asset asset)
 		{
-			// if(!asset.Primary || IsNativeAsset(asset))
-			// 	continue;
+			if(!asset.Primary)
+				return;
 
 			serializer.BeginMapping();
 			serializer.WriteKey("Asset").BeginMapping();

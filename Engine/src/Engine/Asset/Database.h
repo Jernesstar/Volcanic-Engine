@@ -45,9 +45,9 @@ public:
 	Database(const std::string& name, MDB_env* registry, MDB_dbi handle);
 	~Database();
 
-	void Insert(const DatabaseKey& key, const Bytes& value);
-	DatabaseResult Query(const DatabaseKey& key);
-	void Remove(const DatabaseKey& key);
+	void Insert(DatabaseKey&& key, Bytes&& value);
+	DatabaseResult Query(DatabaseKey&& key);
+	void Remove(DatabaseKey&& key);
 
 private:
 	MDB_env* m_Registry;

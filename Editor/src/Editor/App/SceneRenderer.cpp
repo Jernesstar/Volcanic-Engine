@@ -8,7 +8,7 @@
 #include <Engine/Graphics/Renderer.h>
 #include <Engine/Graphics/Renderer2D.h>
 #include <Engine/Graphics/Renderer3D.h>
-#include <Engine/Graphics/StereographicCamera.h>
+#include <Engine/Graphics/Camera.h>
 #include <Engine/Graphics/Platform/RendererAPI.h>
 
 #include "App/Editor.h"

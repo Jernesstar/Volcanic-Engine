@@ -135,30 +135,30 @@ static Ref<Texture> LoadTexture(const std::string& dir,
 	return AssetImporter::GetTexture(path, false);
 }
 
-static MeshMaterial LoadMaterial(const std::string& dir, const aiMaterial* mat) {
-	glm::vec4 diffuse = glm::vec4(0.0f);
-	glm::vec4 specular = glm::vec4(0.0f);
-	glm::vec4 emissive = glm::vec4(0.0f);
+// static MeshMaterial LoadMaterial(const std::string& dir, const aiMaterial* mat) {
+// 	glm::vec4 diffuse = glm::vec4(0.0f);
+// 	glm::vec4 specular = glm::vec4(0.0f);
+// 	glm::vec4 emissive = glm::vec4(0.0f);
 
-	aiColor4D color;
-	if(mat->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS)
-		diffuse = glm::vec4(color.r, color.g, color.b, color.a);
-	if(mat->Get(AI_MATKEY_COLOR_SPECULAR, color) == AI_SUCCESS)
-		specular = glm::vec4(color.r, color.g, color.b, color.a);
-	if(mat->Get(AI_MATKEY_COLOR_EMISSIVE, color) == AI_SUCCESS)
-		emissive = glm::vec4(color.r, color.g, color.b, color.a);
+// 	aiColor4D color;
+// 	if(mat->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS)
+// 		diffuse = glm::vec4(color.r, color.g, color.b, color.a);
+// 	if(mat->Get(AI_MATKEY_COLOR_SPECULAR, color) == AI_SUCCESS)
+// 		specular = glm::vec4(color.r, color.g, color.b, color.a);
+// 	if(mat->Get(AI_MATKEY_COLOR_EMISSIVE, color) == AI_SUCCESS)
+// 		emissive = glm::vec4(color.r, color.g, color.b, color.a);
 
-	return Material{
-		.Diffuse  = LoadTexture(dir, mat, aiTextureType_DIFFUSE),
-		.Specular = LoadTexture(dir, mat, aiTextureType_SPECULAR),
-		.Emissive = LoadTexture(dir, mat, aiTextureType_EMISSIVE),
-		// .Roughness = LoadTexture(dir, mat, aiTextureType_DIFFUSE_ROUGHNESS)
+// 	return Material{
+// 		.Diffuse  = LoadTexture(dir, mat, aiTextureType_DIFFUSE),
+// 		.Specular = LoadTexture(dir, mat, aiTextureType_SPECULAR),
+// 		.Emissive = LoadTexture(dir, mat, aiTextureType_EMISSIVE),
+// 		// .Roughness = LoadTexture(dir, mat, aiTextureType_DIFFUSE_ROUGHNESS)
 
-		.DiffuseColor  = diffuse,
-		.SpecularColor = specular,
-		.EmissiveColor = emissive
-	};
-}
+// 		.DiffuseColor  = diffuse,
+// 		.SpecularColor = specular,
+// 		.EmissiveColor = emissive
+// 	};
+// }
 
 Ref<Mesh> AssetImporter::GetMesh(const std::string& path) {
 	Assimp::Importer importer;
@@ -173,14 +173,14 @@ Ref<Mesh> AssetImporter::GetMesh(const std::string& path) {
 
 	Ref<Mesh> mesh = CreateRef<Mesh>(MeshType::Model);
 	mesh->SubMeshes.Allocate(scene->mNumMeshes);
-	mesh->Materials.Allocate(scene->mNumMaterials);
+	// mesh->Materials.Allocate(scene->mNumMaterials);
 
 	for(u32 i = 0; i < scene->mNumMeshes; i++)
 		mesh->SubMeshes.AddMove(LoadMesh(scene->mMeshes[i]));
 
 	auto dir = (fs::path(path).parent_path() / "textures").string();
-	for(u32 i = 0; i < scene->mNumMaterials; i++)
-		mesh->Materials.Add(LoadMaterial(dir, scene->mMaterials[i]));
+	// for(u32 i = 0; i < scene->mNumMaterials; i++)
+	// 	mesh->Materials.Add(LoadMaterial(dir, scene->mMaterials[i]));
 
 	return mesh;
 }

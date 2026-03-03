@@ -1,15 +1,17 @@
 #include "Database.h"
 
+#include <VolcaniCore/Core/FileUtils.h>
+
 namespace VolcanicEngine {
 
 Database::Database(const std::string& name, MDB_env* registry, MDB_dbi handle)
-	: Name(name), m_Handle(handle) { }
+	: Name(name), m_Handle(handle), m_Registry(registry) { }
 
 Database::~Database() {
-	mdb_dbi_close(m_Registry, m_Handle);
+	// mdb_dbi_close(m_Registry, m_Handle);
 }
 
-void Database::Insert(const DatabaseKey& key, const Bytes& value) {
+void Database::Insert(DatabaseKey&& key, Bytes&& value) {
 	MDB_txn* txn;
 	MDB_val mdbKey, mdbValue;
 
@@ -30,7 +32,7 @@ void Database::Insert(const DatabaseKey& key, const Bytes& value) {
 	mdb_txn_commit(txn);
 }
 
-DatabaseResult Database::Query(const DatabaseKey& query) {
+DatabaseResult Database::Query(DatabaseKey&& query) {
 	MDB_txn* txn;
 	MDB_val key, value;
 
@@ -42,8 +44,9 @@ DatabaseResult Database::Query(const DatabaseKey& query) {
 	int rc = mdb_get(txn, m_Handle, &key, &value);
 	if(rc == MDB_NOTFOUND) {
 		mdb_txn_abort(txn);
-		return { };
-	} else if(rc != 0) {
+		return { false };
+	}
+	else if(rc != 0) {
 		mdb_txn_abort(txn);
 		throw std::runtime_error("Failed to read bytes!");
 	}
@@ -56,7 +59,7 @@ DatabaseResult Database::Query(const DatabaseKey& query) {
 	return val;
 }
 
-void Database::Remove(const DatabaseKey& key) {
+void Database::Remove(DatabaseKey&& key) {
 	MDB_txn* txn;
 	MDB_val mdbKey;
 
@@ -75,8 +78,9 @@ void Database::Remove(const DatabaseKey& key) {
 }
 
 Registry::Registry(const std::string& path, uint32_t maxDatabases) {
+	fs::create_directories(path);
 	mdb_env_create(&m_Handle);
-	mdb_env_set_maxdbs(m_Handle, 8);
+	mdb_env_set_maxdbs(m_Handle, maxDatabases);
 	mdb_env_open(m_Handle, path.c_str(), 0, 0664);
 }
 

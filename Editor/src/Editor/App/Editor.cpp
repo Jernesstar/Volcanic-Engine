@@ -99,7 +99,8 @@ void Editor::Init(const CommandLineArgs& args) {
 }
 
 void Editor::Close() {
-
+	s_AssetManager.reset();
+	Renderer::Close();
 }
 
 void Editor::Update(TimeStep ts) {

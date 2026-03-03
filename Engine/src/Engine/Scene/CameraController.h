@@ -9,7 +9,7 @@
 using namespace VolcaniCore;
 using namespace VolcanicEngine::Graphics;
 
-namespace VolcanicEditor {
+namespace VolcanicEngine {
 
 enum class Control { Up, Down, Left, Right, Forward, Backward };
 

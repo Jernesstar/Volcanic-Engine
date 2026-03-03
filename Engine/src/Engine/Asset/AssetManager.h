@@ -16,7 +16,37 @@ using namespace VolcanicEngine::Script;
 namespace VolcanicEngine {
 
 template<typename T>
-extern Ref<T> LoadFromBytes(Bytes&& bytes);
+static Ref<T> LoadFromBytes(Bytes&& bytes);
+
+template<>
+inline Ref<Texture> LoadFromBytes<Texture>(Bytes&& bytes) {
+	return nullptr;
+}
+template<>
+inline Ref<Mesh> LoadFromBytes<Mesh>(Bytes&& bytes) {
+	return nullptr;
+}
+template<>
+inline Ref<Cubemap> LoadFromBytes<Cubemap>(Bytes&& bytes) {
+	return nullptr;
+}
+template<>
+inline Ref<Shader> LoadFromBytes<Shader>(Bytes&& bytes) {
+	return nullptr;
+}
+template<>
+inline Ref<Sound> LoadFromBytes<Sound>(Bytes&& bytes) {
+	return nullptr;
+}
+template<>
+inline Ref<ScriptModule> LoadFromBytes<ScriptModule>(Bytes&& bytes) {
+	return nullptr;
+}
+
+template<>
+inline Ref<Material> LoadFromBytes<Material>(Bytes&& bytes) {
+	return nullptr;
+}
 
 class AssetManager : public Derivable<AssetManager> {
 public:
@@ -132,6 +162,5 @@ protected:
 private:
 	inline static AssetManager* s_Instance;
 };
-
 
 }
