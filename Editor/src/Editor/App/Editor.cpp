@@ -114,6 +114,7 @@ void Editor::Render() {
 
 void Editor::OpenProject(const std::string& path) {
 	Application::PushDir(path);
+	s_AssetManager->LoadRegistry();
 }
 
 void Editor::NewProject(const std::string& path) {

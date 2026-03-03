@@ -259,27 +259,16 @@ void Renderer3D::DrawMesh(Ref<Mesh> mesh, const glm::mat4& tr,
 void Renderer3D::DrawQuad(Ref<Quad> quad, const glm::mat4& tr,
 						  DrawCommand* command)
 {
-	Ref<Mesh> mesh;
-	if(quad->IsTextured)
-		mesh =
-			Mesh::Create(MeshType::Quad,
-						 Material{ .Diffuse = quad->GetTexture() });
-	else
-		mesh = Mesh::Create(MeshType::Quad, quad->GetColor());
-
-	DrawMesh(mesh, tr, command);
 }
 
 void Renderer3D::DrawQuad(Ref<Texture> texture, const glm::mat4& tr,
 						  DrawCommand* command)
 {
-	DrawQuad(Quad::Create(texture), tr, command);
 }
 
 void Renderer3D::DrawQuad(const glm::vec4& color, const glm::mat4& tr,
 						  DrawCommand* command)
 {
-	DrawQuad(Quad::Create(1, 1, color), tr, command);
 }
 
 void Renderer3D::DrawPoint(const Point& point, const glm::mat4& tr,

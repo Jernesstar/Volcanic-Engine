@@ -16,16 +16,6 @@ struct Vertex {
 	Vec2 TexCoord;
 };
 
-struct Material {
-	Ref<Texture> Diffuse = nullptr;
-	Ref<Texture> Specular = nullptr;
-	Ref<Texture> Emissive = nullptr;
-
-	Vec4 DiffuseColor = Vec4(0.0f);
-	Vec4 SpecularColor = Vec4(0.0f);
-	Vec4 EmissiveColor = Vec4(0.0f);
-};
-
 struct SubMesh {
 	Buffer<Vertex> Vertices;
 	Buffer<u32> Indices;
@@ -38,16 +28,12 @@ class Mesh {
 public:
 	static Ref<Mesh> Create(MeshType type,
 							Buffer<Vertex>&& vertices,
-							Buffer<u32>&& indices,
-							const Material& material = { });
-	static Ref<Mesh> Create(MeshType type,
-							const Material& material = { });
-	static Ref<Mesh> Create(MeshType type, const Vec4& color);
+							Buffer<u32>&& indices);
+	static Ref<Mesh> Create(MeshType type);
 
 public:
 	const MeshType Type;
 	List<SubMesh> SubMeshes;
-	List<Material> Materials;
 
 public:
 	Mesh(MeshType type)

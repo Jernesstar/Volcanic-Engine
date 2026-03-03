@@ -6,17 +6,15 @@ namespace VolcanicEngine::Graphics {
 
 Ref<Mesh> Mesh::Create(MeshType type,
 						Buffer<Vertex>&& vertices,
-						Buffer<uint32_t>&& indices,
-						const Material& material)
+						Buffer<u32>&& indices)
 {
 	auto mesh = CreateRef<Mesh>(type);
 	mesh->SubMeshes.Emplace(std::move(vertices), std::move(indices), 0U);
-	mesh->Materials.Add(material);
 	return mesh;
 }
 
-Ref<Mesh> Mesh::Create(MeshType type, const Material& material) {
-	Buffer<uint32_t> indices;
+Ref<Mesh> Mesh::Create(MeshType type) {
+	Buffer<u32> indices;
 	Buffer<Vertex> vertices;
 
 	switch(type) {
@@ -96,11 +94,7 @@ Ref<Mesh> Mesh::Create(MeshType type, const Material& material) {
 		}
 	}
 
-	return Create(type, std::move(vertices), std::move(indices), material);
-}
-
-Ref<Mesh> Mesh::Create(MeshType type, const glm::vec4& color) {
-	return Create(type, Material{ .DiffuseColor = color });
+	return Create(type, std::move(vertices), std::move(indices));
 }
 
 }

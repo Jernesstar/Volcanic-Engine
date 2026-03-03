@@ -4,7 +4,7 @@
 
 #include <VolcaniCore/Core/Template.h>
 
-#include <Engine/Graphics/Platform/RendererAPI.h>
+#include <Engine/Graphics/Material.h>
 #include <Engine/Audio/Sound.h>
 #include <Engine/Script/ScriptModule.h>
 
@@ -14,6 +14,9 @@ using namespace VolcanicEngine::Graphics;
 using namespace VolcanicEngine::Script;
 
 namespace VolcanicEngine {
+
+template<typename T>
+extern Ref<T> LoadFromBytes(Bytes&& bytes);
 
 class AssetManager : public Derivable<AssetManager> {
 public:
@@ -30,34 +33,20 @@ public:
 
 		Bytes bytes = m_AssetRegistry->GetData(asset);
 
-		if(asset.Type == AssetType::Mesh) {
-			// Ref<Mesh> asset = CreateRef<Mesh>(bytes);
-			// m_MeshAssets[asset.ID] = asset;
-		}
-		else if(asset.Type == AssetType::Texture) {
-			// Ref<Texture> asset = CreateRef<Texture>(bytes);
-			// m_TextureAssets[asset.ID] = asset;
-		}
-		else if(asset.Type == AssetType::Cubemap) {
-			// Ref<Cubemap> asset = CreateRef<Cubemap>(bytes);
-			// m_CubemapAssets[asset.ID] = asset;
-		}
-		else if(asset.Type == AssetType::Shader) {
-			// Ref<Shader> asset = CreateRef<Shader>(bytes);
-			// m_ShaderAssets[asset.ID] = asset;
-		}
-		else if(asset.Type == AssetType::Audio) {
-			// Ref<Audio> asset = CreateRef<Audio>(bytes);
-			// m_AudioAssets[asset.ID] = asset;
-		}
-		else if(asset.Type == AssetType::Script) {
-			// Ref<Script> asset = CreateRef<Script>(bytes);
-			// m_ScriptAssets[asset.ID] = asset;
-		}
-		else if(asset.Type == AssetType::Material) {
-			// Ref<Material> asset = CreateRef<Material>(bytes);
-			// m_MaterialAssets[asset.ID] = asset;
-		}
+		if(asset.Type == AssetType::Mesh)
+			m_MeshAssets[asset.ID] = LoadFromBytes<Mesh>(std::move(bytes));
+		else if(asset.Type == AssetType::Texture)
+			m_TextureAssets[asset.ID] = LoadFromBytes<Texture>(std::move(bytes));
+		else if(asset.Type == AssetType::Cubemap)
+			m_CubemapAssets[asset.ID] = LoadFromBytes<Cubemap>(std::move(bytes));
+		else if(asset.Type == AssetType::Shader)
+			m_ShaderAssets[asset.ID] = LoadFromBytes<Shader>(std::move(bytes));
+		else if(asset.Type == AssetType::Audio)
+			m_AudioAssets[asset.ID] = LoadFromBytes<Sound>(std::move(bytes));
+		else if(asset.Type == AssetType::Script)
+			m_ScriptAssets[asset.ID] = LoadFromBytes<ScriptModule>(std::move(bytes));
+		else if(asset.Type == AssetType::Material)
+			m_MaterialAssets[asset.ID] = LoadFromBytes<Material>(std::move(bytes));
 	}
 
 	void Unload(Asset asset) {
@@ -70,8 +59,8 @@ public:
 			m_MeshAssets.erase(asset.ID);
 		else if(asset.Type == AssetType::Texture)
 			m_TextureAssets.erase(asset.ID);
-		// else if(asset.Type == AssetType::Cubemap)
-		// 	m_CubemapAssets.erase(asset.ID);
+		else if(asset.Type == AssetType::Cubemap)
+			m_CubemapAssets.erase(asset.ID);
 		else if(asset.Type == AssetType::Shader)
 			m_ShaderAssets.erase(asset.ID);
 		else if(asset.Type == AssetType::Audio)
@@ -90,8 +79,8 @@ public:
 			return std::reinterpret_pointer_cast<T>(m_MeshAssets[asset.ID]);
 		else if(asset.Type == AssetType::Texture)
 			return std::reinterpret_pointer_cast<T>(m_TextureAssets[asset.ID]);
-		// else if(asset.Type == AssetType::Cubemap)
-		// 	return std::reinterpret_pointer_cast<T>(m_CubemapAssets[asset.ID]);
+		else if(asset.Type == AssetType::Cubemap)
+			return std::reinterpret_pointer_cast<T>(m_CubemapAssets[asset.ID]);
 		else if(asset.Type == AssetType::Shader)
 			return std::reinterpret_pointer_cast<T>(m_ShaderAssets[asset.ID]);
 		else if(asset.Type == AssetType::Audio)
@@ -119,7 +108,7 @@ public:
 
 		m_MeshAssets.clear();
 		m_TextureAssets.clear();
-		// m_CubemapAssets.clear();
+		m_CubemapAssets.clear();
 		m_ShaderAssets.clear();
 		m_MaterialAssets.clear();
 		m_AudioAssets.clear();
@@ -134,9 +123,9 @@ protected:
 
 	Map<UUID, Ref<Mesh>> m_MeshAssets;
 	Map<UUID, Ref<Texture>> m_TextureAssets;
-	// Map<UUID, Ref<Cubemap>> m_CubemapAssets;
+	Map<UUID, Ref<Cubemap>> m_CubemapAssets;
 	Map<UUID, Ref<Shader>> m_ShaderAssets;
-	Map<UUID, Ref<DrawUniforms>> m_MaterialAssets;
+	Map<UUID, Ref<Material>> m_MaterialAssets;
 	Map<UUID, Ref<Sound>> m_AudioAssets;
 	Map<UUID, Ref<ScriptModule>> m_ScriptAssets;
 

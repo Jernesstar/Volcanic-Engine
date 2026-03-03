@@ -321,8 +321,8 @@ void EditorAssetManager::Clear() {
 	s_WatcherIDs.Clear();
 }
 
-void EditorAssetManager::LoadRegistry(const std::string& path) {
-	auto rootPath = fs::path(path) / "Asset";
+void EditorAssetManager::LoadRegistry() {
+	auto rootPath = "Asset";
 	m_Path = (rootPath / ".magma.assetpk").string();
 
 	YAML::Node file;
@@ -373,7 +373,7 @@ void EditorAssetManager::LoadRegistry(const std::string& path) {
 	for(auto assetNode : assetPackNode["Assets"]) {
 		auto node = assetNode["Asset"];
 		AssetType type = AssetTypeFromString(node["Type"].as<std::string>());
-		UUID id = node["ID"].as<uint64_t>();
+		UUID id = node["ID"].as<u64>();
 		std::string path;
 		if(node["Path"]) {
 			path = (rootPath / node["Path"].as<std::string>()).generic_string();
@@ -435,7 +435,7 @@ void EditorAssetManager::Save() {
 
 			serializer.BeginMapping();
 			serializer.WriteKey("Asset").BeginMapping();
-			serializer.WriteKey("ID").Write((uint64_t)asset.ID);
+			serializer.WriteKey("ID").Write((u64)asset.ID);
 			serializer.WriteKey("Type").Write(AssetTypeToString(asset.Type));
 			auto name = m_AssetRegistry->GetAssetName(asset);
 			if(name != "")
@@ -458,14 +458,18 @@ void EditorAssetManager::Save() {
 	serializer.Finalize(m_Path);
 }
 
+void EditorAssetManager::Export(const std::string& exportPath) {
+
+}
+
 }
 
 namespace VolcaniCore {
 
 template<>
 BinaryWriter& BinaryWriter::WriteObject(const Asset& asset) {
-	Write((uint64_t)asset.ID);
-	Write((uint8_t)asset.Type);
+	Write((u64)asset.ID);
+	Write((u8)asset.Type);
 	Write((bool)asset.Primary);
 
 	auto reg = AssetManager::Get()->GetRegistry();
@@ -473,12 +477,12 @@ BinaryWriter& BinaryWriter::WriteObject(const Asset& asset) {
 		const auto& refs = reg->GetRefs(asset);
 		Write(refs.Count());
 		for(const auto& ref : refs) {
-			Write((uint64_t)ref.ID);
-			Write((uint8_t)ref.Type);
+			Write((u64)ref.ID);
+			Write((u8)ref.Type);
 		}
 	}
 	else
-		Write((uint64_t)0);
+		Write((u64)0);
 
 	Write(reg->GetAssetName(asset));
 
@@ -511,7 +515,7 @@ BinaryWriter& BinaryWriter::WriteObject(const Mat4& mat) {
 
 template<>
 BinaryWriter& BinaryWriter::WriteObject(const UUID& uuid) {
-	Write((uint64_t)uuid);
+	Write((u64)uuid);
 	return *this;
 }
 

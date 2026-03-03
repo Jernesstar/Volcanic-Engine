@@ -15,6 +15,11 @@ public:
 	EditorAssetManager();
 	~EditorAssetManager();
 
+	void LoadRegistry();
+	void Export(const std::string& exportPath);
+	void Clear();
+	void Save();
+
 	void Build(Asset asset);
 
 	u32 AddReloadCallback(const Func<void, Asset, bool>& callback);
@@ -26,11 +31,6 @@ public:
 
 	std::string GetPath(VolcaniCore::UUID id) const;
 	VolcaniCore::UUID GetFromPath(const std::string& path) const;
-
-	void Clear();
-	void LoadRegistry(const std::string& path);
-	void Save();
-	void RuntimeSave(const std::string& exportPath);
 
 public:
 	std::string m_Path;

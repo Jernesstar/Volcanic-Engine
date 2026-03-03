@@ -135,7 +135,7 @@ static Ref<Texture> LoadTexture(const std::string& dir,
 	return AssetImporter::GetTexture(path, false);
 }
 
-static Material LoadMaterial(const std::string& dir, const aiMaterial* mat) {
+static MeshMaterial LoadMaterial(const std::string& dir, const aiMaterial* mat) {
 	glm::vec4 diffuse = glm::vec4(0.0f);
 	glm::vec4 specular = glm::vec4(0.0f);
 	glm::vec4 emissive = glm::vec4(0.0f);

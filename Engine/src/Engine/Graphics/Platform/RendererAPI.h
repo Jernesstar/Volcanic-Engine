@@ -5,6 +5,7 @@
 #include "Framebuffer.h"
 #include "Shader.h"
 #include "Texture.h"
+#include "Cubemap.h"
 #include "StorageBuffer.h"
 #include "UniformBuffer.h"
 
@@ -52,6 +53,11 @@ struct TextureSlot {
 	u32 Binding = 0;
 };
 
+struct CubemapSlot {
+	Ref<Cubemap> Sampler = nullptr;
+	u32 Binding = 0;
+};
+
 struct AttachmentSlot {
 	Ref<Attachment> Sampler = nullptr;
 	u32 Binding = 0;
@@ -85,10 +91,11 @@ struct DrawUniforms {
 	List<StorageSlot> StorageBuffers;
 	Map<std::string, TextureSlot> TextureUniforms;
 	Map<std::string, AttachmentSlot> AttachmentUniforms;
+	Map<std::string, CubemapSlot> CubemapUniforms;
 
 	operator bool () const {
-		return UniformBuffers || StorageBuffers
-		|| IntUniforms.size() || FloatUniforms.size() || TextureUniforms.size()
+		return UniformBuffers || StorageBuffers || CubemapUniforms.size()
+		|| FloatUniforms.size() || TextureUniforms.size() || IntUniforms.size()
 		|| Vec2Uniforms.size() || Vec3Uniforms.size() || Vec4Uniforms.size()
 		|| Mat2Uniforms.size() || Mat3Uniforms.size() || Mat4Uniforms.size();
 	}
@@ -129,6 +136,10 @@ struct DrawUniforms {
 		TextureUniforms[name] = data;
 		return *this;
 	}
+	DrawUniforms& Set(const std::string& name, const CubemapSlot& data) {
+		CubemapUniforms[name] = data;
+		return *this;
+	}
 	DrawUniforms& Set(const std::string& name, const AttachmentSlot& data) {
 		AttachmentUniforms[name] = data;
 		return *this;
@@ -159,7 +170,7 @@ struct DrawCommand {
 	List<DrawCall> DrawCalls;
 
 	// Which render targets to use within the framebuffer
-	List<Pair<AttachmentTarget, uint32_t>> Outputs;
+	List<Pair<AttachmentTarget, u32>> Outputs;
 
 	// The buffer domain of the draw command
 	u32 VerticesIndex = 0;
