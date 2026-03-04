@@ -3,32 +3,33 @@
 #include <VolcaniCore/Core/Defines.h>
 #include <VolcaniCore/Core/List.h>
 
-#include "FileStream.h"
-
 namespace VolcaniCore {
 
-class BinaryWriter : public FileStream {
+class BytesWriter {
 public:
-	BinaryWriter(const std::string& path) {
-		m_Stream.open(path, std::ios::out | std::ios::binary);
-	}
+	Buffer<u8> Bytes;
 
-	BinaryWriter& WriteData(const void* data, uint64_t size) {
-		m_Stream.write((char*)data, size);
+public:
+	BytesWriter(u64 size)
+		: Bytes(size * 2) { }
+	~BytesWriter() = default;
+
+	BytesWriter& WriteData(const void* data, u64 byteCount) {
+		Bytes.Add(data, byteCount);
 		return *this;
 	}
 
 	template<typename TPrimitive>
-	BinaryWriter& WriteRaw(const TPrimitive& value) {
+	BytesWriter& WriteRaw(const TPrimitive& value) {
 		WriteData((void*)&value, sizeof(TPrimitive));
 		return *this;
 	}
 
 	template<typename TData>
-	BinaryWriter& WriteObject(const TData& value);
+	BytesWriter& WriteObject(const TData& value);
 
 	template<typename TData>
-	BinaryWriter& Write(const TData& value) {
+	BytesWriter& Write(const TData& value) {
 		if constexpr(std::is_trivial<TData>())
 			WriteRaw<TData>(value);
 		else
@@ -37,13 +38,13 @@ public:
 	}
 
 	template<typename T>
-	BinaryWriter& Write(const Buffer<T>& buffer) {
+	BytesWriter& Write(const Buffer<T>& buffer) {
 		Write(buffer.GetCount());
 		return WriteData(buffer.Get(), buffer.GetSize());
 	}
 
 	template<typename TData>
-	BinaryWriter& Write(const List<TData>& values) {
+	BytesWriter& Write(const List<TData>& values) {
 		WriteRaw<u64>(values.Count());
 		for(const auto& val : values)
 			Write(val);
@@ -52,7 +53,7 @@ public:
 	}
 
 	template<typename TKey, typename TValue>
-	BinaryWriter& Write(const Map<TKey, TValue>& map) {
+	BytesWriter& Write(const Map<TKey, TValue>& map) {
 		WriteRaw<u64>(map.size());
 		for(auto& [key, val] : map) {
 			Write(key);
@@ -63,7 +64,7 @@ public:
 	}
 
 	template<typename TKey, typename TValue>
-	BinaryWriter& Write(const OMap<TKey, TValue>& map) {
+	BytesWriter& Write(const OMap<TKey, TValue>& map) {
 		WriteRaw<u64>(map.size());
 		for(auto& [key, val] : map) {
 			Write(key);
@@ -75,7 +76,7 @@ public:
 };
 
 template<>
-inline BinaryWriter& BinaryWriter::WriteObject(const std::string& str) {
+inline BytesWriter& BytesWriter::WriteObject(const std::string& str) {
 	Write((u64)str.size());
 	if(str.size())
 		WriteData((void*)str.data(), str.size());

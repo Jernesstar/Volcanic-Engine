@@ -12,7 +12,7 @@ template<typename T>
 class Buffer {
 public:
 	Buffer() = default;
-	Buffer(uint64_t maxCount)
+	Buffer(u64 maxCount)
 		: m_MaxCount(maxCount)
 	{
 		if(maxCount)
@@ -32,15 +32,15 @@ public:
 		m_Data = (T*)malloc(GetMaxSize());
 		Set(list.begin(), list.size());
 	}
-	Buffer(T* data, uint64_t count, uint64_t maxCount = 0, bool own = true)
+	Buffer(T* data, u64 count, u64 maxCount = 0, bool own = true)
 		: m_MaxCount(maxCount), m_Count(count)
 	{
 		if(!m_MaxCount)
 			m_MaxCount = count;
 
-		if(own) {
+		if(own)
 			m_Data = data;
-		} else {
+		else {
 			m_Data = (T*)malloc(GetMaxSize());
 			memcpy(m_Data, data, GetSize());
 		}
@@ -73,15 +73,15 @@ public:
 		return *this;
 	}
 
-	T* Get(uint64_t i = 0) const {
+	T* Get(u64 i = 0) const {
 		VOLCANICORE_ASSERT((i == 0 && !m_Data) || (i < m_MaxCount));
 		return m_Data + i;
 	}
 
-	uint64_t GetCount()	   const { return m_Count; }
-	uint64_t GetMaxCount() const { return m_MaxCount; }
-	uint64_t GetSize()	   const { return m_Count	 * sizeof(T); }
-	uint64_t GetMaxSize()  const { return m_MaxCount * sizeof(T); }
+	u64 GetCount()		const { return m_Count; }
+	u64 GetMaxCount()	const { return m_MaxCount; }
+	u64 GetSize()		const { return m_Count * sizeof(T); }
+	u64 GetMaxSize()	const { return m_MaxCount * sizeof(T); }
 
 	Buffer<T> Copy() const {
 		T* newData = (T*)malloc(GetSize());
@@ -99,15 +99,15 @@ public:
 		Set(buffer.Get(), buffer.GetCount(), m_Count);
 	}
 
-	void Add(const void* data, uint64_t count) {
+	void Add(const void* data, u64 count) {
 		Set(data, count, m_Count);
 	}
 
-	void Set(uint64_t idx, const T& data) {
+	void Set(u64 idx, const T& data) {
 		Set(&data, 1, idx);
 	}
 
-	void Set(const void* data, uint64_t count, uint64_t offset = 0) {
+	void Set(const void* data, u64 count, u64 offset = 0) {
 		if(offset >= m_MaxCount)
 			return;
 		if(offset + count >= m_MaxCount)
@@ -124,7 +124,7 @@ public:
 		VOLCANICORE_ASSERT(m_Count <= m_MaxCount);
 	}
 
-	void AddRange(uint64_t count) {
+	void AddRange(u64 count) {
 		m_Count += count;
 		VOLCANICORE_ASSERT(m_Count <= m_MaxCount);
 	}
@@ -145,11 +145,11 @@ public:
 		m_MaxCount = 0;
 	}
 
-	void Reallocate(uint64_t additional) {
+	void Reallocate(u64 additional) {
 		Allocate(m_MaxCount + additional);
 	}
 
-	void Allocate(uint64_t count) {
+	void Allocate(u64 count) {
 		if(count <= m_MaxCount)
 			return;
 
@@ -165,15 +165,15 @@ public:
 
 private:
 	T* m_Data = nullptr;
-	uint64_t m_MaxCount = 0;
-	uint64_t m_Count = 0;
+	u64 m_MaxCount = 0;
+	u64 m_Count = 0;
 };
 
 template<>
 class Buffer<void> {
 public:
 	Buffer() = default;
-	Buffer(uint64_t size, uint64_t maxCount)
+	Buffer(u64 size, u64 maxCount)
 		: m_SizeT(size), m_MaxCount(maxCount)
 	{
 		VOLCANICORE_ASSERT(size != 0);
@@ -186,7 +186,7 @@ public:
 	{
 		std::swap(m_Data, other.m_Data);
 	}
-	Buffer(void* data, uint64_t size, uint64_t count, bool own = true)
+	Buffer(void* data, u64 size, u64 count, bool own = true)
 		: m_SizeT(size), m_MaxCount(count), m_Count(count)
 	{
 		if(!m_MaxCount)
@@ -215,16 +215,16 @@ public:
 		return *this;
 	}
 
-	void* Get(uint64_t i = 0) const {
+	void* Get(u64 i = 0) const {
 		VOLCANICORE_ASSERT((i == 0 && !m_Data) || (i < m_MaxCount));
 		return (char*)m_Data + i;
 	}
 
-	uint64_t GetCount()	   const { return m_Count; }
-	uint64_t GetMaxCount() const { return m_MaxCount; }
-	uint64_t GetSize()	   const { return m_Count	 * m_SizeT; }
-	uint64_t GetMaxSize()  const { return m_MaxCount * m_SizeT; }
-	uint64_t GetSizeT() const { return m_SizeT; }
+	u64 GetCount()	   const { return m_Count; }
+	u64 GetMaxCount() const { return m_MaxCount; }
+	u64 GetSize()	   const { return m_Count	 * m_SizeT; }
+	u64 GetMaxSize()  const { return m_MaxCount * m_SizeT; }
+	u64 GetSizeT() const { return m_SizeT; }
 
 	Buffer<void> Copy() {
 		void* newData = malloc(GetSize());
@@ -239,11 +239,11 @@ public:
 		Set(buffer.Get(), buffer.GetCount(), m_Count);
 	}
 
-	void Add(const void* data, uint64_t count) {
+	void Add(const void* data, u64 count) {
 		Set(data, count, m_Count);
 	}
 
-	void Set(const void* data, uint64_t count, uint64_t offset = 0) {
+	void Set(const void* data, u64 count, u64 offset = 0) {
 		if(offset >= m_MaxCount)
 			return;
 		if(offset + count >= m_MaxCount)
@@ -267,7 +267,7 @@ public:
 		m_Count = 0;
 	}
 
-	void Reallocate(uint64_t surplus) {
+	void Reallocate(u64 surplus) {
 		m_MaxCount += surplus;
 
 		void* newData = malloc(m_MaxCount);
@@ -278,9 +278,9 @@ public:
 
 private:
 	void* m_Data = nullptr;
-	uint64_t m_SizeT = 0;
-	uint64_t m_MaxCount = 0;
-	uint64_t m_Count = 0;
+	u64 m_SizeT = 0;
+	u64 m_MaxCount = 0;
+	u64 m_Count = 0;
 };
 
 }

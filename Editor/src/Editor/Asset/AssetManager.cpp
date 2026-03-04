@@ -10,8 +10,7 @@
 #include <VolcaniCore/Core/Application.h>
 #include <VolcaniCore/Core/FileUtils.h>
 #include <VolcaniCore/Core/Math.h>
-#include <VolcaniCore/Utils/BinaryWriter.h>
-#include <VolcaniCore/Utils/BinaryReader.h>
+#include <VolcaniCore/Utils/BytesWriter.h>
 
 #include <Engine/App/App.h>
 
@@ -80,12 +79,7 @@ public:
 
 	void Add(AssetType type, const std::string& path);
 	void Remove(AssetType type, const std::string& path);
-
-	void ReloadMesh(const std::string& path);
-	void ReloadTexture(const std::string& path);
-	void ReloadShader(const std::string& path);
-	void ReloadAudio(const std::string& path);
-	void ReloadScript(const std::string& path);
+	void Reload(AssetType type, const std::string& path);
 
 private:
 	EditorAssetManager* m_AssetManager;
@@ -112,36 +106,13 @@ void FileWatcher::handleFileAction(
 		for(auto callback : m_Callbacks)
 			callback(asset, 0);
 
-		switch(type) {
-			case AssetType::Mesh:
-				ReloadMesh(fullPath);
-				break;
-			case AssetType::Texture:
-				ReloadTexture(fullPath);
-				break;
-			// case AssetType::Cubemap:
-			// 	ReloadCubemap(fullPath);
-			// 	break;
-			case AssetType::Shader:
-				ReloadShader(fullPath);
-				break;
-			// case AssetType::Font:
-			// 	ReloadFont(fullPath);
-			// 	break;
-			case AssetType::Audio:
-				ReloadAudio(fullPath);
-				break;
-			case AssetType::Script:
-				ReloadScript(fullPath);
-				break;
-		}
+		Reload(type, fullPath);
 
 		for(auto callback : m_Callbacks)
 			callback(asset, 1);
 	}
 	else if(action == efsw::Actions::Moved) {
-		Log::Info("%s has moved from %s",
-			file.c_str(), oldFilename.c_str());
+		Log::Info("{} has moved from {}", file, oldFilename);
 		// m_AssetManager->Change(fullPath, asset);
 	}
 	else {
@@ -159,68 +130,34 @@ void FileWatcher::RemoveCallback(u32 id) {
 }
 
 void FileWatcher::Add(AssetType type, const std::string& path) {
-	Log::Info("Adding AssetType::%s at path '%s'",
-		AssetTypeToString(type).c_str(), path.c_str());
+	Log::Info("Adding AssetType::{} at path '{}'",
+				AssetTypeToString(type).c_str(), path);
 	m_AssetManager->Add(type, 0, true, path);
 }
 
 void FileWatcher::Remove(AssetType type, const std::string& path) {
-	Log::Info("Removing AssetType::%s at path '%s'",
-		AssetTypeToString(type).c_str(), path.c_str());
+	Log::Info("Removing AssetType::{} at path '{}'",
+				AssetTypeToString(type), path);
 	UUID id = m_AssetManager->GetFromPath(path);
 	m_AssetManager->Remove({ id, type });
 }
 
-void FileWatcher::ReloadMesh(const std::string& path) {
-	Log::Info("Reloading Mesh at path '%s'", path.c_str());
+void FileWatcher::Reload(AssetType type, const std::string& path) {
+	Log::Info("Reloading AssetType::{} at path '{}'",
+				AssetTypeToString(type), path);
 	UUID id = m_AssetManager->GetFromPath(path);
-	Asset asset = { id, AssetType::Mesh };
-	m_AssetManager->Unload(asset);
-	m_AssetManager->Build(asset);
-	m_AssetManager->Load(asset);
-}
+	Asset asset = { id, type };
 
-void FileWatcher::ReloadTexture(const std::string& path) {
-	Log::Info("Reloading Texture at path '%s'", path.c_str());
-	UUID id = m_AssetManager->GetFromPath(path);
-	Asset asset = { id, AssetType::Texture };
-	m_AssetManager->Unload(asset);
-	m_AssetManager->Build(asset);
-	m_AssetManager->Load(asset);
-}
-
-void FileWatcher::ReloadShader(const std::string& path) {
-	Log::Info("Reloading Shader at path '%s'", path.c_str());
-	UUID id = m_AssetManager->GetFromPath(path);
-	Asset asset = { id, AssetType::Shader };
-	m_AssetManager->Unload(asset);
-	m_AssetManager->Build(asset);
-	m_AssetManager->Load(asset);
-}
-
-void FileWatcher::ReloadAudio(const std::string& path) {
-	Log::Info("Reloading Audio at path '%s'", path.c_str());
-	UUID id = m_AssetManager->GetFromPath(path);
-	Asset asset = { id, AssetType::Audio };
-	m_AssetManager->Unload(asset);
-	m_AssetManager->Build(asset);
-	m_AssetManager->Load(asset);
-}
-
-void FileWatcher::ReloadScript(const std::string& path) {
-	Log::Info("Reloading Script at path '%s'", path.c_str());
-	UUID id = m_AssetManager->GetFromPath(path);
-	bool error;
-	auto mod = AssetImporter::GetScriptData(path, &error, "TestBuild");
-
-	if(!error) {
-		Asset asset = { id, AssetType::Script };
-		m_AssetManager->Unload(asset);
-		m_AssetManager->Build(asset);
-		m_AssetManager->Load(asset);
+	if(type == AssetType::Script) {
+		bool error;
+		auto mod = AssetImporter::GetScriptData(path, &error, "TestBuild");
+		if(error)
+			return;
 	}
-	else
-		Log::Info("Error occured when reloading script");
+
+	m_AssetManager->Unload(asset);
+	m_AssetManager->Build(asset);
+	m_AssetManager->Load(asset);
 }
 
 static efsw::FileWatcher* s_FileWatcher;
@@ -249,10 +186,25 @@ void EditorAssetManager::Build(Asset asset) {
 		List<SubMesh> meshes;
 		List<MaterialPaths> materials;
 		AssetImporter::GetMeshData(path, meshes, materials);
+
+		BytesWriter wr(
+			meshes.GetBuffer().GetSize() +
+			materials.GetBuffer().GetSize());
+
+		wr.Write(meshes.Count());
+		for(auto& mesh : meshes) {
+			wr.Write(mesh.Vertices);
+			wr.Write(mesh.Indices);
+			wr.Write(mesh.MaterialIndex);
+		}
+
+		// for(auto matPath : materials) {
+		// }
 	}
 	else if(asset.Type == AssetType::Texture) {
 		ImageData image = AssetImporter::GetImageData(path, false);
-		m_AssetRegistry->SetData(asset, std::move(image.Data));
+
+
 	}
 	else if(asset.Type == AssetType::Cubemap) {
 		const auto& refs = m_AssetRegistry->GetRefs(asset);
@@ -449,7 +401,7 @@ void EditorAssetManager::Export(const std::string& exportPath) {
 namespace VolcaniCore {
 
 template<>
-BinaryWriter& BinaryWriter::WriteObject(const Asset& asset) {
+BytesWriter& BytesWriter::WriteObject(const Asset& asset) {
 	Write((u64)asset.ID);
 	Write((u8)asset.Type);
 	Write((bool)asset.Primary);
@@ -472,31 +424,31 @@ BinaryWriter& BinaryWriter::WriteObject(const Asset& asset) {
 }
 
 template<>
-BinaryWriter& BinaryWriter::WriteObject(const Vec4& vec) {
+BytesWriter& BytesWriter::WriteObject(const Vec4& vec) {
 	WriteData(&vec.x, sizeof(Vec4));
 	return *this;
 }
 
 template<>
-BinaryWriter& BinaryWriter::WriteObject(const Mat2& mat) {
+BytesWriter& BytesWriter::WriteObject(const Mat2& mat) {
 	WriteData(glm::value_ptr(mat), sizeof(Mat2));
 	return *this;
 }
 
 template<>
-BinaryWriter& BinaryWriter::WriteObject(const Mat3& mat) {
+BytesWriter& BytesWriter::WriteObject(const Mat3& mat) {
 	WriteData(glm::value_ptr(mat), sizeof(Mat3));
 	return *this;
 }
 
 template<>
-BinaryWriter& BinaryWriter::WriteObject(const Mat4& mat) {
+BytesWriter& BytesWriter::WriteObject(const Mat4& mat) {
 	WriteData(glm::value_ptr(mat), sizeof(Vec4));
 	return *this;
 }
 
 template<>
-BinaryWriter& BinaryWriter::WriteObject(const UUID& uuid) {
+BytesWriter& BytesWriter::WriteObject(const UUID& uuid) {
 	Write((u64)uuid);
 	return *this;
 }

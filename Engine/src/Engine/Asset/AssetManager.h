@@ -8,6 +8,8 @@
 #include <Engine/Audio/Sound.h>
 #include <Engine/Script/ScriptModule.h>
 
+#include <VolcaniCore/Utils/BinaryReader.h>
+
 using namespace VolcaniCore;
 using namespace VolcanicEngine::Audio;
 using namespace VolcanicEngine::Graphics;
@@ -19,11 +21,11 @@ template<typename T>
 static Ref<T> LoadFromBytes(Bytes&& bytes);
 
 template<>
-inline Ref<Texture> LoadFromBytes<Texture>(Bytes&& bytes) {
+inline Ref<Mesh> LoadFromBytes<Mesh>(Bytes&& bytes) {
 	return nullptr;
 }
 template<>
-inline Ref<Mesh> LoadFromBytes<Mesh>(Bytes&& bytes) {
+inline Ref<Texture> LoadFromBytes<Texture>(Bytes&& bytes) {
 	return nullptr;
 }
 template<>

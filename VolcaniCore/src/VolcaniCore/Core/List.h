@@ -6,7 +6,7 @@ namespace VolcaniCore {
 
 struct SearchResult {
 	bool Found;
-	uint64_t Index;
+	u64 Index;
 
 	operator bool() const { return Found; }
 };
@@ -15,7 +15,7 @@ template<typename T>
 class List {
 public:
 	List() = default;
-	List(uint64_t size)
+	List(u64 size)
 		: m_Buffer(size) { }
 	List(const std::initializer_list<T>& list)
 		: m_Buffer(list.size())
@@ -80,13 +80,13 @@ public:
 
 	operator bool() const { return Count(); }
 
-	uint64_t Count() const { return m_Back - m_Front; }
+	u64 Count() const { return m_Back - m_Front; }
 
-	T& operator[](int64_t idx) { return *At(idx); }
-	const T& operator[](int64_t idx) const { return *At(idx); }
+	T& operator[](i64 idx) { return *At(idx); }
+	const T& operator[](i64 idx) const { return *At(idx); }
 
-	T* At(int64_t idx) const {
-		VOLCANICORE_ASSERT(idx >= -(int64_t)m_Back || idx < (int64_t)Count());
+	T* At(i64 idx) const {
+		VOLCANICORE_ASSERT(idx >= -(i64)m_Back || idx < (i64)Count());
 		auto abs = Absolute(idx);
 		return m_Buffer.Get(abs);
 	}
@@ -97,7 +97,7 @@ public:
 	}
 
 	template<typename ...Args>
-	T& EmplaceAt(int64_t idx, Args&&... args) {
+	T& EmplaceAt(i64 idx, Args&&... args) {
 		Free(idx);
 		if constexpr(std::is_aggregate<T>())
 			new (At(idx)) T{ std::forward<Args>(args)... };
@@ -131,7 +131,7 @@ public:
 		return Pop(0);
 	}
 
-	T Pop(int64_t idx) {
+	T Pop(i64 idx) {
 		VOLCANICORE_ASSERT(Count());
 		T val = *At(idx);
 		Remove(idx);
@@ -150,12 +150,12 @@ public:
 		return val;
 	}
 
-	void Inplace(int64_t idx, T&& element) {
+	void Inplace(i64 idx, T&& element) {
 		Free(idx);
 		new (At(idx)) T(std::move(element));
 	}
 
-	void Insert(int64_t idx, const T& element) {
+	void Insert(i64 idx, const T& element) {
 		Free(idx);
 		new (At(idx)) T(element);
 	}
@@ -175,36 +175,36 @@ public:
 	}
 
 	SearchResult Find(const T& target) {
-		for(uint64_t i = 0; i < Count(); i++)
+		for(u64 i = 0; i < Count(); i++)
 			if(target == *At(i))
 				return { true, i };
 		return { false, 0 };
 	}
 
 	SearchResult Find(const Func<bool, const T&>& func) const {
-		for(uint64_t i = 0; i < Count(); i++)
+		for(u64 i = 0; i < Count(); i++)
 			if(func(*At(i)))
 				return { true, i };
 		return { false, 0 };
 	}
 
 	SearchResult FindLast(const Func<bool, const T&>& func) const {
-		for(uint64_t i = Count() - 1; i <= 0; i--)
+		for(u64 i = Count() - 1; i <= 0; i--)
 			if(func(*At(i)))
 				return { true, i };
 		return { false, 0 };
 	}
 
-	void Reallocate(uint64_t additional) {
+	void Reallocate(u64 additional) {
 		Allocate(m_Buffer.GetMaxCount() + additional);
 	}
 
-	void Allocate(uint64_t maxCount) {
+	void Allocate(u64 maxCount) {
 		if(maxCount <= m_Buffer.GetMaxCount())
 			return;
 
 		T* newData = (T*)malloc(maxCount * sizeof(T));
-		for(uint64_t i = 0; i < Count(); i++) {
+		for(u64 i = 0; i < Count(); i++) {
 			Place(At(i), newData + i);
 			Remove(i);
 		}
@@ -216,7 +216,7 @@ public:
 	}
 
 	void Clear() {
-		for(uint64_t i = 0; i < Count(); i++)
+		for(u64 i = 0; i < Count(); i++)
 			Remove(i);
 
 		m_Front = 0;
@@ -234,57 +234,18 @@ public:
 	const_iterator begin()	const { return cbegin(); }
 	const_iterator end()	const { return cend(); }
 
-	template<typename TIteratorType>
-	class reverse_iterator {
-	public:
-		reverse_iterator(TIteratorType* data, uint64_t front, uint64_t back)
-			: m_Data(data), m_Front(front), m_Back(back)
-		{
-		}
-
-		TIteratorType* begin() { return m_Data + (int)m_Back - 1; }
-		TIteratorType* end() { return m_Data + m_Front; }
-		const TIteratorType* cbegin() const { return m_Data + (int)m_Back - 1; }
-		const TIteratorType* cend()	const { return m_Data + m_Front; }
-		const TIteratorType* begin() const { return cbegin(); }
-		const TIteratorType* end() const { return cend(); }
-
-		TIteratorType& operator *() { return *m_Data; }
-		const TIteratorType& operator *() const { return *m_Data; }
-
-		reverse_iterator& operator ++(int) { // int parameter identifies as post-increment
-			m_Data--;
-			return *this;
-		}
-
-		bool operator==(const reverse_iterator& rhs) {
-			return m_Data == rhs.m_Data;
-		}
-		bool operator!=(const reverse_iterator& rhs) {
-			return m_Data != rhs.m_Data;
-		}
-
-	private:
-		TIteratorType* m_Data;
-		uint64_t m_Front, m_Back;
-	};
-
-	reverse_iterator<T> Reverse() {
-		return reverse_iterator(m_Buffer.Get(), m_Front, m_Back);
-	}
-
 private:
 	Buffer<T> m_Buffer;
-	uint64_t m_Front = 0, m_Back = 0;
+	u64 m_Front = 0, m_Back = 0;
 
 private:
-	uint64_t Absolute(int64_t idx) const {
+	u64 Absolute(i64 idx) const {
 		if(idx < 0)
-			return (uint64_t)((int64_t)m_Back + idx);
-		return m_Front + (uint64_t)idx;
+			return (u64)((i64)m_Back + idx);
+		return m_Front + (u64)idx;
 	}
 
-	void Remove(int64_t idx) {
+	void Remove(i64 idx) {
 		m_Buffer.Remove();
 		At(idx)->~T();
 	}
@@ -296,21 +257,21 @@ private:
 			new (dst) T(std::move(*src));
 	}
 
-	void ShiftLeft(uint64_t beg, uint64_t end, uint64_t dx) {
-		for(int64_t i = (int64_t)beg; i <= (int64_t)end; i++) {
-			Place(m_Buffer.Get((uint64_t)i), m_Buffer.Get((uint64_t)i - dx));
-			m_Buffer.Get((uint64_t)i)->~T();
+	void ShiftLeft(u64 beg, u64 end, u64 dx) {
+		for(i64 i = (i64)beg; i <= (i64)end; i++) {
+			Place(m_Buffer.Get((u64)i), m_Buffer.Get((u64)i - dx));
+			m_Buffer.Get((u64)i)->~T();
 		}
 	}
 
-	void ShiftRight(uint64_t beg, uint64_t end, uint64_t dx) {
-		for(int64_t i = (int64_t)end; i >= (int64_t)beg; i--) {
-			Place(m_Buffer.Get((uint64_t)i), m_Buffer.Get((uint64_t)i + dx));
-			m_Buffer.Get((uint64_t)i)->~T();
+	void ShiftRight(u64 beg, u64 end, u64 dx) {
+		for(i64 i = (i64)end; i >= (i64)beg; i--) {
+			Place(m_Buffer.Get((u64)i), m_Buffer.Get((u64)i + dx));
+			m_Buffer.Get((u64)i)->~T();
 		}
 	}
 
-	void Free(int64_t idx) {
+	void Free(i64 idx) {
 		if(!m_Buffer.GetMaxCount()) {
 			m_Buffer = Buffer<T>(5);
 			m_Buffer.Add();
@@ -323,14 +284,14 @@ private:
 			auto newMax = m_Buffer.GetMaxCount() + 11;
 			T* newData = (T*)malloc(newMax * sizeof(T));
 
-			uint64_t pos;
+			u64 pos;
 			if(idx < 0)
-				pos = (uint64_t)((int64_t)m_Back + 1 + idx);
+				pos = (u64)((i64)m_Back + 1 + idx);
 			else
-				pos = (uint64_t)idx;
+				pos = (u64)idx;
 
-			uint64_t delta = 0;
-			for(uint64_t i = 0; i < Count(); i++) {
+			u64 delta = 0;
+			for(u64 i = 0; i < Count(); i++) {
 				if(i == pos)
 					delta = 1;
 

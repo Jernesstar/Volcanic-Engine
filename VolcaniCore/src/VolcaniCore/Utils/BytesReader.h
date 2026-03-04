@@ -2,37 +2,35 @@
 
 #include <VolcaniCore/Core/Defines.h>
 #include <VolcaniCore/Core/List.h>
-#include <VolcaniCore/Core/FileUtils.h>
-
-#include "FileStream.h"
 
 namespace VolcaniCore {
 
-class BinaryReader : public FileStream {
+class BytesReader {
 public:
-	BinaryReader(const std::string& path) {
-		VOLCANICORE_ASSERT(FileUtils::PathExists(path));
-		m_Stream.open(path, std::ios::in | std::ios::binary);
-	}
+	Buffer<u8> Bytes;
 
-	~BinaryReader() = default;
+public:
+	BytesReader(Buffer<u8>&& bytes)
+		: Bytes(bytes) { }
+	~BytesReader() = default;
 
-	BinaryReader& ReadData(void* data, u64 size) {
-		m_Stream.read((char*)data, size);
+	BytesReader& ReadData(void* data, u64 size) {
+		memcpy(data, Bytes.Get(m_Position), size);
+		m_Position += size;
 		return *this;
 	}
 
 	template<typename TPrimitive>
-	BinaryReader& ReadRaw(TPrimitive& value) {
+	BytesReader& ReadRaw(TPrimitive& value) {
 		ReadData((void*)&value, sizeof(TPrimitive));
 		return *this;
 	}
 
 	template<typename TData>
-	BinaryReader& ReadObject(TData& value);
+	BytesReader& ReadObject(TData& value);
 
 	template<typename TData>
-	BinaryReader& Read(TData& value) {
+	BytesReader& Read(TData& value) {
 		if constexpr(std::is_trivial<TData>())
 			ReadRaw<TData>(value);
 		else
@@ -41,7 +39,7 @@ public:
 	}
 
 	template<typename T>
-	BinaryReader& Read(Buffer<T>& buffer) {
+	BytesReader& Read(Buffer<T>& buffer) {
 		u64 count;
 		Read(count);
 		buffer.Allocate(count);
@@ -50,7 +48,7 @@ public:
 	}
 
 	template<typename TData, typename... Args>
-	BinaryReader& Read(List<TData>& values, Args&&... args) {
+	BytesReader& Read(List<TData>& values, Args&&... args) {
 		u64 size;
 		ReadRaw<u64>(size);
 		values.Allocate(size);
@@ -61,7 +59,7 @@ public:
 	}
 
 	template<typename TKey, typename TValue>
-	BinaryReader& Read(Map<TKey, TValue>& map) {
+	BytesReader& Read(Map<TKey, TValue>& map) {
 		u64 size;
 		ReadRaw<u64>(size);
 		map.reserve(size);
@@ -75,7 +73,7 @@ public:
 	}
 
 	template<typename TKey, typename TValue>
-	BinaryReader& Read(OMap<TKey, TValue>& map) {
+	BytesReader& Read(OMap<TKey, TValue>& map) {
 		u64 size;
 		ReadRaw<u64>(size);
 
@@ -87,10 +85,13 @@ public:
 
 		return *this;
 	}
+
+private:
+	u64 m_Position = 0;
 };
 
 template<>
-inline BinaryReader& BinaryReader::ReadObject(std::string& str) {
+inline BytesReader& BytesReader::ReadObject(std::string& str) {
 	u64 size;
 	ReadRaw<u64>(size);
 	if(size) {

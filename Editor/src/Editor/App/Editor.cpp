@@ -116,8 +116,10 @@ void Editor::Render() {
 void Editor::OpenProject(const std::string& path) {
 	Application::PushDir(path);
 	s_AssetManager->LoadRegistry();
-	auto refs = s_AssetManager->GetRegistry()->HasRefs({ 17930437727414257517ULL, AssetType::Script });
-	Log::Info("Refs: {}", refs);
+	auto name =
+		s_AssetManager->GetRegistry()
+			->GetAssetName({ 15673016010349369343ULL, AssetType::Texture });
+	Log::Info("Name: {}", name);
 }
 
 void Editor::NewProject(const std::string& path) {

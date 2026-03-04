@@ -403,6 +403,8 @@ void RuntimeSceneRenderer::SubmitParticles(const Entity& entity) {
 
 	Renderer::StartPass(ParticlePass);
 	{
+		// TODO: Use material asset
+
 		auto* command = Renderer::GetCommand();
 		command->Uniforms
 		.Set("u_View",
@@ -449,66 +451,21 @@ void RuntimeSceneRenderer::SubmitMesh(const Entity& entity) {
 		return;
 	}
 
-	// if(!assetManager->IsValid(mc.MaterialAsset))
-	// 	return;
+	if(mc.MaterialAsset)
+		return;
 
-	// VolcaniCore::Material mat;
-	// auto material = assetManager->Get<VolcanicEngine::Material>(mc.MaterialAsset);
+	auto material = assetManager->Get<Material>(mc.MaterialAsset);
 
-	// if(material->TextureUniforms.count("u_Diffuse")) {
-	// 	UUID id = material->TextureUniforms["u_Diffuse"];
-	// 	Asset textureAsset = { id, AssetType::Texture };
-	// 	assetManager->Get(textureAsset);
-	// 	mat.Diffuse = assetManager->Get<Texture>(textureAsset);
-	// }
+	DrawCommand* command;
+	if(!s_MaterialMeshes.count(mc.MaterialAsset.ID)) {
+		command = s_MaterialMeshes[mc.MaterialAsset.ID] =
+			RendererAPI::Get()->NewCommand(LightingPass->Get());
+		command->Uniforms = material->UniformData;
+	}
 
-	// if(material->TextureUniforms.count("u_Specular")) {
-	// 	UUID id = material->TextureUniforms["u_Specular"];
-	// 	Asset textureAsset = { id, AssetType::Texture };
-	// 	assetManager->Get(textureAsset);
-	// 	mat.Specular = assetManager->Get<Texture>(textureAsset);
-	// }
+	command = s_MaterialMeshes[mc.MaterialAsset.ID];
 
-	// if(material->TextureUniforms.count("u_Emissive")) {
-	// 	UUID id = material->TextureUniforms["u_Emissive"];
-	// 	Asset textureAsset = { id, AssetType::Texture };
-	// 	assetManager->Get(textureAsset);
-	// 	mat.Emissive = assetManager->Get<Texture>(textureAsset);
-	// }
-
-	// if(material->Vec4Uniforms.count("u_DiffuseColor"))
-	// 	mat.DiffuseColor = material->Vec4Uniforms["u_DiffuseColor"];
-	// if(material->Vec4Uniforms.count("u_SpecularColor"))
-	// 	mat.SpecularColor = material->Vec4Uniforms["u_SpecularColor"];
-	// if(material->Vec4Uniforms.count("u_EmissiveColor"))
-	// 	mat.EmissiveColor = material->Vec4Uniforms["u_EmissiveColor"];
-
-
-	// DrawCommand* command;
-	// if(!s_MaterialMeshes.count(mc.MaterialAsset.ID)) {
-	// 	command = s_MaterialMeshes[mc.MaterialAsset.ID] =
-	// 		RendererAPI::Get()->NewCommand(LightingPass->Get());
-
-	// 	command->Uniforms
-	// 	.Set("u_Material.IsTextured", (bool)mat.Diffuse);
-	// 	command->Uniforms
-	// 	.Set("u_Material.Diffuse", TextureSlot{ mat.Diffuse, 0 });
-	// 	command->Uniforms
-	// 	.Set("u_Material.Specular", TextureSlot{ mat.Specular, 1 });
-	// 	command->Uniforms
-	// 	.Set("u_Material.Emissive", TextureSlot{ mat.Emissive, 2 });
-
-	// 	command->Uniforms
-	// 	.Set("u_Material.DiffuseColor", mat.DiffuseColor);
-	// 	command->Uniforms
-	// 	.Set("u_Material.SpecularColor", mat.SpecularColor);
-	// 	command->Uniforms
-	// 	.Set("u_Material.EmissiveColor", mat.EmissiveColor);
-	// }
-
-	// command = s_MaterialMeshes[mc.MaterialAsset.ID];
-
-	// Renderer3D::DrawMesh(mesh, tc, command);
+	Renderer3D::DrawMesh(mesh, tc, command);
 }
 
 void RuntimeSceneRenderer::Render() {

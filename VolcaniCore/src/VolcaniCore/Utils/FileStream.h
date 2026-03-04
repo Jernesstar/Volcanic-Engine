@@ -15,11 +15,11 @@ public:
 		return m_Stream.tellg();
 	}
 
-	void SetPosition(uint64_t pos) {
+	void SetPosition(u64 pos) {
 		m_Stream.seekg(pos, std::ios::beg);
 	}
 
-	void Advance(uint64_t size) {
+	void Advance(u64 size) {
 		SetPosition(GetPosition() + size);
 	}
 
