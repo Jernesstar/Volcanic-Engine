@@ -39,6 +39,7 @@ public:
 	// static Ref<Graphics::Cubemap> GetCubemap(const std::string& path);
 
 	static VolcaniCore::Buffer<u32> GetShaderData(const std::string& path);
+	static Graphics::ShaderFile GetShaderFileData(const std::string& path);
 	static Ref<Graphics::Shader> GetShader(const List<std::string>& path);
 
 	static VolcaniCore::Buffer<f32> GetAudioData(const std::string& path);

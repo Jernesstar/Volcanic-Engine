@@ -80,7 +80,6 @@ asIScriptModule* ScriptManager::LoadScript(const List<std::string>& paths,
 		return nullptr;
 	}
 
-
 	asIScriptModule* handle = builder.GetModule();
 
 	if(error)
@@ -127,30 +126,11 @@ asIScriptModule* ScriptManager::LoadScript(const std::string& path,
 	bool metadata, bool* error, std::string name,
 	const List<std::string>& includePaths)
 {
-	return LoadScript({ path }, metadata, error, name, includePaths);
+	return LoadScript(List<Str>{ path }, metadata, error, name, includePaths);
 }
-class ByteCodeWriter : public asIBinaryStream {
-public:
-	ByteCodeWriter(BinaryWriter* writer)
-		: m_Writer(writer) { }
-	~ByteCodeWriter() = default;
-
-	int Read(void* data, u32 size) override {
-		return 1;
-	}
-
-	int Write(const void* data, u32 size) override {
-		m_Writer->WriteData(data, (uint64_t)size);
-		return 0;
-	}
-
-private:
-	BinaryWriter* m_Writer = nullptr;
-};
 
 void ScriptManager::SaveScript(asIScriptModule* mod, BinaryWriter& writer) {
-	ByteCodeWriter stream(&writer);
-	mod->SaveByteCode(&stream, true);
+
 }
 
 void ScriptManager::RunCodeAnalysis() {

@@ -47,6 +47,8 @@ constexpr Ref<T> CreateRef(Args&&... args) {
 	return std::make_shared<T>(std::forward<Args>(args)...);
 }
 
+using Str = std::string;
+
 template<typename TKey, typename TValue>
 using Map = std::unordered_map<TKey, TValue>;
 

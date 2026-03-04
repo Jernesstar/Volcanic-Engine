@@ -286,14 +286,16 @@ Ref<Shader> AssetImporter::GetShader(const List<std::string>& paths) {
 	for(auto path : paths) {
 		auto file = TryGetShader(path);
 		auto str = FileUtils::ReadFile(file.Path);
-		// Buffer<u32> code = AssetImporter::GetShaderData(path);
-
 		list.Emplace(file.Type, str);
 	}
 
 	auto shader = RendererAPI::Get()->CreateShader({});
 	shader->SetShaderData(std::move(list));
 	return shader;
+}
+
+Graphics::ShaderFile AssetImporter::GetShaderFileData(const std::string& path) {
+	return { TryGetShader(path).Type, GetShaderData(path) };
 }
 
 Buffer<u32> AssetImporter::GetShaderData(const std::string& path) {

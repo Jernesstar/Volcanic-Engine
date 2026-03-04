@@ -17,6 +17,25 @@ using namespace VolcanicEngine::Script;
 
 namespace VolcanicEngine {
 
+class ByteCodeReader : public asIBinaryStream {
+public:
+	ByteCodeReader(BytesReader* reader)
+		: m_Reader(reader) { }
+	~ByteCodeReader() = default;
+
+	int Read(void* data, u32 size) override {
+		m_Reader->ReadData(data, (u64)size);
+		return 0;
+	}
+
+	int Write(const void* data, u32 size) override {
+		return 0;
+	}
+
+private:
+	BytesReader* m_Reader = nullptr;
+};
+
 template<typename T>
 static Ref<T> LoadFromBytes(Bytes&& bytes);
 
@@ -48,23 +67,50 @@ inline Ref<Cubemap> LoadFromBytes<Cubemap>(Bytes&& bytes) {
 template<>
 inline Ref<Shader> LoadFromBytes<Shader>(Bytes&& bytes) {
 	BytesReader reader(std::move(bytes));
+	List<Graphics::ShaderFile> files;
+	u32 count;
+	reader.Read(count);
+	for(u32 i = 0; i < count; i++) {
+		u32 type;
+		reader.Read(type);
+		Buffer<u32> data;
+		reader.Read(data);
 
+		files.AddMove({ (ShaderFileType)type, std::move(data) });
+	}
+
+	auto shader = RendererAPI::Get()->CreateShader({ });
+	shader->SetShaderData(std::move(files));
+	return shader;
 }
 template<>
 inline Ref<Sound> LoadFromBytes<Sound>(Bytes&& bytes) {
 	BytesReader reader(std::move(bytes));
+	Buffer<f32> data;
+	reader.Read(data);
 
+	Ref<Sound> sound = CreateRef<Sound>();
+	bool success =
+		sound->GetInternal().loadRawWave(data.Get(), data.GetCount(),
+										 44100.0f, 1, true, false);
+
+	return sound;
 }
 template<>
 inline Ref<ScriptModule> LoadFromBytes<ScriptModule>(Bytes&& bytes) {
 	BytesReader reader(std::move(bytes));
 
+	std::string name;
+	reader.Read(name);
+	auto* mod =
+		ScriptEngine::Get()->GetModule(name.c_str(), asGM_ALWAYS_CREATE);
+	ByteCodeReader byteCodeReader(&reader);
+	mod->LoadByteCode(&byteCodeReader);
 }
 
 template<>
 inline Ref<Material> LoadFromBytes<Material>(Bytes&& bytes) {
 	BytesReader reader(std::move(bytes));
-
 }
 
 class AssetManager : public Derivable<AssetManager> {

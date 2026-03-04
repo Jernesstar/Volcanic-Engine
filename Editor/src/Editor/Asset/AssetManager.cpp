@@ -19,8 +19,26 @@
 namespace fs = std::filesystem;
 
 namespace VolcanicEditor {
+class ByteCodeWriter : public asIBinaryStream {
+public:
+	ByteCodeWriter(BytesWriter* writer)
+		: m_Writer(writer) { }
+	~ByteCodeWriter() = default;
 
-std::string AssetTypeToString(AssetType type) {
+	int Read(void* data, u32 size) override {
+		return 1;
+	}
+
+	int Write(const void* data, u32 size) override {
+		m_Writer->WriteData(data, (u64)size);
+		return 0;
+	}
+
+private:
+	BytesWriter* m_Writer = nullptr;
+};
+
+Str AssetTypeToString(AssetType type) {
 	switch(type) {
 		case AssetType::Mesh:
 			return "Mesh";
@@ -43,7 +61,7 @@ std::string AssetTypeToString(AssetType type) {
 	return "None";
 }
 
-AssetType AssetTypeFromString(const std::string& str) {
+AssetType AssetTypeFromString(const Str& str) {
 	if(str == "Mesh")
 		return AssetType::Mesh;
 	else if(str == "Texture")
@@ -69,15 +87,15 @@ public:
 	FileWatcher(EditorAssetManager* assetManager);
 	~FileWatcher() = default;
 
-	void handleFileAction(efsw::WatchID id, const std::string& dir,
-		const std::string& file, efsw::Action action, std::string old) override;
+	void handleFileAction(efsw::WatchID id, const Str& dir,
+		const Str& file, efsw::Action action, Str old) override;
 
 	u32 AddCallback(const Func<void, Asset, bool>& callback);
 	void RemoveCallback(u32 id);
 
-	void Add(AssetType type, const std::string& path);
-	void Remove(AssetType type, const std::string& path);
-	void Reload(AssetType type, const std::string& path);
+	void Add(AssetType type, const Str& path);
+	void Remove(AssetType type, const Str& path);
+	void Reload(AssetType type, const Str& path);
 
 private:
 	EditorAssetManager* m_AssetManager;
@@ -88,8 +106,8 @@ FileWatcher::FileWatcher(EditorAssetManager* assetManager)
 	: m_AssetManager(assetManager) { }
 
 void FileWatcher::handleFileAction(
-	efsw::WatchID id, const std::string& dir,
-	const std::string& file, efsw::Action action, std::string oldFilename)
+	efsw::WatchID id, const Str& dir,
+	const Str& file, efsw::Action action, Str oldFilename)
 {
 	auto fullPath = (fs::path(dir) / file).string();
 	auto assetDir = fs::path(dir).parent_path().filename().string();
@@ -127,20 +145,20 @@ void FileWatcher::RemoveCallback(u32 id) {
 	m_Callbacks.Pop(id);
 }
 
-void FileWatcher::Add(AssetType type, const std::string& path) {
+void FileWatcher::Add(AssetType type, const Str& path) {
 	Log::Info("Adding AssetType::{} at path '{}'",
 				AssetTypeToString(type).c_str(), path);
 	m_AssetManager->Add(type, 0, true, path);
 }
 
-void FileWatcher::Remove(AssetType type, const std::string& path) {
+void FileWatcher::Remove(AssetType type, const Str& path) {
 	Log::Info("Removing AssetType::{} at path '{}'",
 				AssetTypeToString(type), path);
 	UUID id = m_AssetManager->GetFromPath(path);
 	m_AssetManager->Remove({ id, type });
 }
 
-void FileWatcher::Reload(AssetType type, const std::string& path) {
+void FileWatcher::Reload(AssetType type, const Str& path) {
 	Log::Info("Reloading AssetType::{} at path '{}'",
 				AssetTypeToString(type), path);
 	UUID id = m_AssetManager->GetFromPath(path);
@@ -226,18 +244,34 @@ void EditorAssetManager::Build(Asset asset) {
 		m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
 	}
 	else if(asset.Type == AssetType::Cubemap) {
-		const auto& refs = m_AssetRegistry->GetRefs(asset);
-		for(auto& ref : refs)
+		for(auto& ref : m_AssetRegistry->GetRefs(asset))
 			Build(ref);
 	}
 	else if(asset.Type == AssetType::Shader) {
-		Buffer<u32> data = AssetImporter::GetShaderData(path);
+		for(auto& ref : m_AssetRegistry->GetRefs(asset)) {
+			auto shaderPath = GetPath(ref.ID);
+			ShaderFile file = AssetImporter::GetShaderFileData(path);
+			BytesWriter wr(sizeof(u32) + file.Data.GetSize());
+			wr.Write((u32)file.FileType);
+			wr.Write(file.Data);
+			m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
+		}
 	}
 	else if(asset.Type == AssetType::Audio) {
 		Buffer<f32> soundData = AssetImporter::GetAudioData(path);
+		BytesWriter wr(soundData.GetSize());
+		wr.Write(soundData);
+		m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
 	}
 	else if(asset.Type == AssetType::Script) {
 		auto* mod = ScriptManager::LoadScript(path, false);
+		Str name = mod->GetName();
+
+		BytesWriter wr(name.size() + std::numeric_limits<u16>::max());
+		ByteCodeWriter stream(&wr);
+		mod->SaveByteCode(&stream, true);
+
+		m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
 	}
 	else if(asset.Type == AssetType::Material) {
 
@@ -255,7 +289,7 @@ void EditorAssetManager::RemoveReloadCallback(u32 id) {
 }
 
 Asset EditorAssetManager::Add(AssetType type, UUID id, bool primary,
-							  const std::string& path)
+							  const Str& path)
 {
 	Asset newAsset{ id ? id : UUID(), type, primary };
 	if(path != "")
@@ -272,7 +306,7 @@ void EditorAssetManager::Remove(Asset asset) {
 	m_Paths.erase(asset.ID);
 }
 
-UUID EditorAssetManager::GetFromPath(const std::string& path) const {
+UUID EditorAssetManager::GetFromPath(const Str& path) const {
 	for(auto& [id, assetPath] : m_Paths)
 		if(fs::path(path) == fs::path(assetPath))
 			return id;
@@ -280,7 +314,7 @@ UUID EditorAssetManager::GetFromPath(const std::string& path) const {
 	return 0;
 }
 
-std::string EditorAssetManager::GetPath(UUID id) const {
+Str EditorAssetManager::GetPath(UUID id) const {
 	if(!m_Paths.count(id))
 		return "";
 	return m_Paths.at(id);
@@ -338,11 +372,11 @@ void EditorAssetManager::LoadRegistry() {
 
 	for(auto assetNode : assetPackNode["Assets"]) {
 		auto node = assetNode["Asset"];
-		AssetType type = AssetTypeFromString(node["Type"].as<std::string>());
+		AssetType type = AssetTypeFromString(node["Type"].as<Str>());
 		UUID id = node["ID"].as<u64>();
-		std::string path;
+		Str path;
 		if(node["Path"]) {
-			path = (paths[(u32)type - 1] / node["Path"].as<std::string>()).generic_string();
+			path = (paths[(u32)type - 1] / node["Path"].as<Str>()).generic_string();
 			if(!fs::exists(path)) {
 				Log::Warning("Asset path '{}' does not exist", path);
 				continue;
@@ -351,7 +385,7 @@ void EditorAssetManager::LoadRegistry() {
 
 		Asset asset = Add(type, id, true, path);
 		if(node["Name"])
-			m_AssetRegistry->NameAsset(asset, node["Name"].as<std::string>());
+			m_AssetRegistry->NameAsset(asset, node["Name"].as<Str>());
 	}
 
 	u32 i = 1;
@@ -394,7 +428,7 @@ void EditorAssetManager::Save() {
 			if(name != "")
 				serializer.WriteKey("Name").Write(name);
 
-			std::string path = GetPath(asset.ID);
+			Str path = GetPath(asset.ID);
 			if(path != "")
 				serializer.WriteKey("Path")
 					.Write(fs::relative(path, rootPath).generic_string());
@@ -411,7 +445,7 @@ void EditorAssetManager::Save() {
 	serializer.Finalize(m_Path);
 }
 
-void EditorAssetManager::Export(const std::string& exportPath) {
+void EditorAssetManager::Export(const Str& exportPath) {
 
 }
 
