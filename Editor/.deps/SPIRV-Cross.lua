@@ -4,8 +4,8 @@ project "SPIRV-Cross"
     cppdialect "C++17"
     staticruntime "Off"
 
-    objdir ("%{RootPath}/build/Engine/obj")
-    targetdir ("%{RootPath}/build/Engine/lib")
+    objdir ("%{RootPath}/build/Editor/obj")
+    targetdir ("%{RootPath}/build/Editor/lib")
 
     files {
         "%{VendorPaths.SPIRV_Cross}/*.cpp",

@@ -39,6 +39,11 @@ project "VolcaniCore"
 
         defines {
             "GLM_FORCE_PLATFORM_WIN32",
+            "GLM_FORCE_SILENT_WARNINGS"
+        }
+
+        buildoptions {
+            "-Wno-error=template-body",
         }
 
         links {

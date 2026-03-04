@@ -6,6 +6,9 @@
 #include <VolcaniCore/Core/Math.h>
 #include <VolcaniCore/Core/Template.h>
 
+#undef near
+#undef far
+
 using namespace VolcaniCore;
 
 namespace VolcanicEngine::Graphics {

@@ -1,10 +1,10 @@
 #pragma once
 
-#include <glm/gtc/matrix_access.hpp>
+#include <yaml-cpp/yaml.h>
+
+#include <VolcaniCore/Core/Math.h>
 
 #include "Serializer.h"
-
-#include <yaml-cpp/yaml.h>
 
 namespace VolcanicEditor {
 

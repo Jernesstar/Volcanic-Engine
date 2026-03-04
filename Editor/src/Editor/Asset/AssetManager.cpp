@@ -3,8 +3,6 @@
 #include <iostream>
 #include <bitset>
 
-#include <glm/gtc/matrix_access.hpp>
-
 #include <efsw/efsw.hpp>
 
 #include <VolcaniCore/Core/Application.h>
@@ -198,13 +196,34 @@ void EditorAssetManager::Build(Asset asset) {
 			wr.Write(mesh.MaterialIndex);
 		}
 
-		// for(auto matPath : materials) {
+		// for(auto mat : materials) {
+		// 	auto ref = Add(AssetType::Material, 0, false, "");
+		// 	m_AssetRegistry->AddRef(asset, ref);
+		// 	if(mat.Diffuse != "") {
+		// 		auto tex = Add(AssetType::Texture, 0, false, mat.Diffuse);
+		// 		m_AssetRegistry->NameAsset(ref, "u_Diffuse");
+		// 		m_AssetRegistry->AddRef(ref, tex);
+		// 	}
+		// 	if(mat.Emissive != "") {
+
+		// 	}
+		// 	if(mat.Specular != "") {
+
+		// 	}
 		// }
+
+		m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
 	}
 	else if(asset.Type == AssetType::Texture) {
 		ImageData image = AssetImporter::GetImageData(path, false);
 
+		BytesWriter wr(image.Width * image.Height * image.BPP);
+		wr.Write(image.Width);
+		wr.Write(image.Height);
+		wr.Write(image.BPP);
+		wr.Write(image.Data);
 
+		m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
 	}
 	else if(asset.Type == AssetType::Cubemap) {
 		const auto& refs = m_AssetRegistry->GetRefs(asset);

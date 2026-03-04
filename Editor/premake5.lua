@@ -70,7 +70,7 @@ project "Editor"
         "glslang",
         "SPIRV-Cross",
 
-        "z"
+        "z",
     }
 
     defines {
@@ -92,10 +92,10 @@ project "Editor"
     filter "system:windows"
         systemversion "latest"
         links {
+            "dbghelp",
             "gdi32",
             "kernel32",
             "psapi",
-            "z",
             "Ws2_32",
             "advapi32",
             "rpcrt4",

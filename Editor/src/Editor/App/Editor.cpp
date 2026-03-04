@@ -118,7 +118,7 @@ void Editor::OpenProject(const std::string& path) {
 	s_AssetManager->LoadRegistry();
 	auto name =
 		s_AssetManager->GetRegistry()
-			->GetAssetName({ 15673016010349369343ULL, AssetType::Texture });
+			->GetAssetName({ 16730603527850583685ULL, AssetType::Texture });
 	Log::Info("Name: {}", name);
 }
 

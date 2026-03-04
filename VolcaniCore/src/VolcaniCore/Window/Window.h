@@ -26,7 +26,7 @@ struct WindowSpecification {
 struct Icon {
 	u32 Width;
 	u32 Height;
-	Buffer<uint8_t> Data;
+	Buffer<u8> Data;
 };
 
 class Window {

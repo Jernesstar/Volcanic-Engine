@@ -4,8 +4,8 @@ project "assimp"
     cppdialect "C++11"
     staticruntime "Off"
 
-    objdir ("%{RootPath}/build/Engine/obj")
-    targetdir ("%{RootPath}/build/Engine/lib")
+    objdir ("%{RootPath}/build/Editor/obj")
+    targetdir ("%{RootPath}/build/Editor/lib")
 
     files {
         -- "%{VendorPaths.assimp}/code/CApi/*.cpp",

@@ -6,6 +6,8 @@
 #include "Application.h"
 #include "Events.h"
 
+#undef CreateWindow
+
 namespace VolcaniCore {
 
 static GLFWwindow* CreateWindow(WindowSpecification& spec) {

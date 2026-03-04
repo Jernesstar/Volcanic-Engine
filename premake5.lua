@@ -12,7 +12,11 @@ workspace "VolcanicEngine"
         }
 
     filter "system:linux"
-        defines "VOLCANIC_LINUX"
+        defines {
+            "VOLCANIC_LINUX",
+            -- "VOLCANIC_X11",
+            "VOLCANIC_WAYLAND",
+        }
 
     filter "system:apple"
         defines "VOLCANIC_APPLE"
@@ -69,14 +73,13 @@ Includes["angelscript"]           = "%{VendorPaths.angelscript}/angelscript/incl
 Includes["soloud"]                = "%{VendorPaths.soloud}/include"
 Includes["glad"]                  = "%{VendorPaths.glad}/include"
 Includes["flecs"]                 = "%{VendorPaths.flecs}/include"
-Includes["lmdb"]                  = "%{VendorPaths.lmdb}/lmdb/libraries/liblmdb"
+Includes["lmdb"]                  = "%{VendorPaths.lmdb}/libraries/liblmdb"
 -- Editor libraries
 Includes["assimp"]                = "%{VendorPaths.assimp}/include"
 Includes["SPIRV_Cross"]           = "%{VendorPaths.SPIRV_Cross}/include"
-Includes["glslang"]               = "%{VendorPaths.glslang}/include"
+Includes["glslang"]               = "%{VendorPaths.glslang}"
 Includes["yaml_cpp"]              = "%{VendorPaths.yaml_cpp}/include"
 Includes["rapidjson"]             = "%{VendorPaths.rapidjson}/include"
-Includes["json"]                  = "%{VendorPaths.json}/include"
 Includes["stb_image"]             = "%{VendorPaths.stb_image}/include"
 Includes["efsw"]                  = "%{VendorPaths.efsw}/include"
 Includes["freetype"]              = "%{VendorPaths.freetype}/include"

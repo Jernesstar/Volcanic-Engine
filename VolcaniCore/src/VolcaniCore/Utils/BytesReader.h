@@ -11,7 +11,7 @@ public:
 
 public:
 	BytesReader(Buffer<u8>&& bytes)
-		: Bytes(bytes) { }
+		: Bytes(std::move(bytes)) { }
 	~BytesReader() = default;
 
 	BytesReader& ReadData(void* data, u64 size) {

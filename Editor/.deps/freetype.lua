@@ -3,8 +3,8 @@ project "freetype"
     language "C"
     staticruntime "Off"
 
-    objdir ("%{RootPath}/build/Engine/obj")
-    targetdir ("%{RootPath}/build/Engine/lib")
+    objdir ("%{RootPath}/build/Editor/obj")
+    targetdir ("%{RootPath}/build/Editor/lib")
 
     files {
         "%{VendorPaths.freetype}/src/base/ftinit.c",

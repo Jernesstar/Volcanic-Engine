@@ -1,7 +1,5 @@
 #pragma once
 
-#include <glm/vec3.hpp>
-
 #include <VolcaniCore/Core/Math.h>
 
 #include "Graphics/Camera.h"

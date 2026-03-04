@@ -1,12 +1,14 @@
 #pragma once
 
-#include "Serializer.h"
-
+#define assert(x) ((void)0)
 #define RAPIDJSON_HAS_STDSTRING 1
 #include <rapidjson/rapidjson.h>
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/stringbuffer.h>
+#undef assert
+
+#include "Serializer.h"
 
 using namespace rapidjson;
 

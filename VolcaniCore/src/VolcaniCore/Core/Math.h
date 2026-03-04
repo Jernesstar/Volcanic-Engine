@@ -1,6 +1,7 @@
 #pragma once
 
 #define GLM_ENABLE_EXPERIMENTAL
+#define assert(x) (void)0
 
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
@@ -11,10 +12,13 @@
 #include <glm/mat4x4.hpp>
 
 #include <glm/geometric.hpp>
-#include <glm/gtc/type_ptr.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/matrix_access.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#undef assert
 
 #include "Defines.h"
 

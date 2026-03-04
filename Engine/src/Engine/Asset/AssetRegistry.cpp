@@ -50,7 +50,7 @@ bool AssetRegistry::HasRefs(Asset asset) const {
 }
 
 void AssetRegistry::AddRef(Asset base, Asset ref) {
-	auto refID = (u64)ref.ID;
+	u64 refID = (u64)ref.ID;
 	Bytes bytes = { (u8*)&refID, sizeof(Asset), 0, false };
 	Log::Info("Adding ref {0} to {1}", (u64)refID, (u64)base.ID);
 	m_AssetRefs->Insert((u64)base.ID, std::move(bytes));

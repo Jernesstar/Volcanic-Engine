@@ -8,7 +8,7 @@
 #include <Engine/Audio/Sound.h>
 #include <Engine/Script/ScriptModule.h>
 
-#include <VolcaniCore/Utils/BinaryReader.h>
+#include <VolcaniCore/Utils/BytesReader.h>
 
 using namespace VolcaniCore;
 using namespace VolcanicEngine::Audio;
@@ -22,32 +22,49 @@ static Ref<T> LoadFromBytes(Bytes&& bytes);
 
 template<>
 inline Ref<Mesh> LoadFromBytes<Mesh>(Bytes&& bytes) {
-	return nullptr;
+	BytesReader reader(std::move(bytes));
+
 }
 template<>
 inline Ref<Texture> LoadFromBytes<Texture>(Bytes&& bytes) {
-	return nullptr;
+	BytesReader reader(std::move(bytes));
+	u32 width, height, bpp;
+	reader.Read(width);
+	reader.Read(height);
+	reader.Read(bpp);
+
+	Buffer<u8> data;
+	reader.Read(data);
+
+	auto tex = RendererAPI::Get()->CreateTexture({ width, height });
+	tex->SetData(data);
+	return tex;
 }
 template<>
 inline Ref<Cubemap> LoadFromBytes<Cubemap>(Bytes&& bytes) {
-	return nullptr;
+	BytesReader reader(std::move(bytes));
+
 }
 template<>
 inline Ref<Shader> LoadFromBytes<Shader>(Bytes&& bytes) {
-	return nullptr;
+	BytesReader reader(std::move(bytes));
+
 }
 template<>
 inline Ref<Sound> LoadFromBytes<Sound>(Bytes&& bytes) {
-	return nullptr;
+	BytesReader reader(std::move(bytes));
+
 }
 template<>
 inline Ref<ScriptModule> LoadFromBytes<ScriptModule>(Bytes&& bytes) {
-	return nullptr;
+	BytesReader reader(std::move(bytes));
+
 }
 
 template<>
 inline Ref<Material> LoadFromBytes<Material>(Bytes&& bytes) {
-	return nullptr;
+	BytesReader reader(std::move(bytes));
+
 }
 
 class AssetManager : public Derivable<AssetManager> {

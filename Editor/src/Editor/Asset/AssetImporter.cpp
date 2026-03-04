@@ -41,13 +41,14 @@ ImageData AssetImporter::GetImageData(const std::string& path, bool flip) {
 	i32 width, height, bpp;
 	u8* pixels = stbi_load(path.c_str(), &width, &height, &bpp, 4);
 	if(!pixels) {
-		Log::Warning("Could not load image '%s'", path.c_str());
+		Log::Warning("Could not load image '{}'", path.c_str());
 		return { };
 	}
 
 	image.Width = (u32)width;
 	image.Height = (u32)height;
-	image.Data = Buffer(pixels, image.Width * image.Height * 4);
+	image.BPP = (u32)bpp;
+	image.Data = Buffer(pixels, image.Width * image.Height * bpp);
 	return image;
 }
 

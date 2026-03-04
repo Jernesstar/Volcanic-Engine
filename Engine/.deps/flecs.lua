@@ -19,8 +19,7 @@ project "flecs"
     defines {
         -- "flecs_EXPORTS",
         "FLECS_STATIC",
-        "FLECS_DEBUG",
-        -- "FLECS_NDEBUG",
+        "FLECS_NDEBUG",
         -- "FLECS_CPP_NO_AUTO_REGISTRATION",
 
         -- "FLECS_CUSTOM_BUILD",
