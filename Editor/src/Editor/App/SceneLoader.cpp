@@ -554,12 +554,10 @@ Ref<ScriptObject> LoadScript(Entity entity, Asset asset,
 
 void DeserializeEntity(YAML::Node entityNode, Scene& scene) {
 	u64 entityID = entityNode["ID"].as<u64>();
-	Entity entity = scene.EntityWorld.AddEntity();
+	Entity entity = scene.EntityWorld.AddEntity(entityID);
 	auto nameNode = entityNode["Name"];
-	if(nameNode) {
+	if(nameNode)
 		entity.SetName(nameNode.as<std::string>());
-		Log::Info("Entity: {}", nameNode.as<std::string>());
-	}
 
 	auto components = entityNode["Components"];
 	if(!components)

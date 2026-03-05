@@ -18,7 +18,6 @@ AssetRegistry::~AssetRegistry() {
 
 void AssetRegistry::Add(Asset asset) {
 	Bytes bytes = { (u8*)&asset, sizeof(Asset), 0, false };
-	Log::Info("Adding ID {}", (u64)asset.ID);
 	m_AssetMetadata->Insert((u64)asset.ID, std::move(bytes));
 }
 

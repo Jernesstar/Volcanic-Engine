@@ -26,7 +26,8 @@ void Renderer2D::Init() {
 	};
 
 	s_ScreenBuffer =
-		RendererAPI::Get()->NewBuffer({
+		RendererAPI::Get()->NewBuffer(
+		{
 			.VertexCount = 6,
 			.DynamicVertices = false,
 			.InstanceCount = 100,

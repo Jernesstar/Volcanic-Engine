@@ -28,7 +28,8 @@ void Database::Insert(DatabaseKey&& key, Bytes&& value) {
 	int rc = mdb_put(txn, m_Handle, &mdbKey, &mdbValue, MDB_NODUPDATA & MultiValue);
 	if(rc != 0) {
 		mdb_txn_abort(txn);
-		throw std::runtime_error("Failed to insert data!");
+		Log::Info("Failed to insert data!");
+		return;
 	}
 
 	mdb_txn_commit(txn);
@@ -55,6 +56,7 @@ DatabaseValueCount Database::Count(DatabaseKey&& key) {
 		mdb_cursor_count(cursor, &count);
 	else if (rc == MDB_NOTFOUND) {
 		mdb_txn_abort(txn);
+		Log::Error("Not found");
 		return { false };
 	}
 
@@ -79,11 +81,11 @@ DatabaseResult Database::Query(DatabaseKey&& query) {
 	}
 	else if(rc != 0) {
 		mdb_txn_abort(txn);
-		throw std::runtime_error("Failed to read bytes!");
+		Log::Error("Failed to read bytes!");
 	}
 
 	DatabaseResult val = {
-		true, Bytes((uint8_t*)value.mv_data, value.mv_size, 0, false)
+		true, Bytes((u8*)value.mv_data, value.mv_size, 0, false)
 	};
 
 	mdb_txn_commit(txn);
@@ -102,7 +104,7 @@ void Database::Remove(DatabaseKey&& key) {
 	int rc = mdb_del(txn, m_Handle, &mdbKey, nullptr);
 	if(rc != 0) {
 		mdb_txn_abort(txn);
-		throw std::runtime_error("Failed to remove bytes!");
+		Log::Error("Failed to remove bytes!");
 	}
 
 	mdb_txn_commit(txn);

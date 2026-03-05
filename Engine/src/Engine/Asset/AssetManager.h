@@ -43,6 +43,24 @@ template<>
 inline Ref<Mesh> LoadFromBytes<Mesh>(Bytes&& bytes) {
 	BytesReader reader(std::move(bytes));
 
+	auto mesh = CreateRef<Mesh>(MeshType::Model);
+
+	u64 count;
+	reader.Read(count);
+
+	for(u64 i = 0; i < count; i++) {
+		Buffer<Vertex> vertices;
+		Buffer<u32> indices;
+		u32 matIndex;
+		reader.Read(vertices);
+		reader.Read(indices);
+		reader.Read(matIndex);
+
+		mesh->SubMeshes.Emplace(std::move(vertices), std::move(indices),
+								matIndex);
+	}
+
+	return mesh;
 }
 template<>
 inline Ref<Texture> LoadFromBytes<Texture>(Bytes&& bytes) {
@@ -63,12 +81,13 @@ template<>
 inline Ref<Cubemap> LoadFromBytes<Cubemap>(Bytes&& bytes) {
 	BytesReader reader(std::move(bytes));
 
+	return nullptr;
 }
 template<>
 inline Ref<Shader> LoadFromBytes<Shader>(Bytes&& bytes) {
 	BytesReader reader(std::move(bytes));
 	List<Graphics::ShaderFile> files;
-	u32 count;
+	u64 count;
 	reader.Read(count);
 	for(u32 i = 0; i < count; i++) {
 		u32 type;
@@ -106,11 +125,15 @@ inline Ref<ScriptModule> LoadFromBytes<ScriptModule>(Bytes&& bytes) {
 		ScriptEngine::Get()->GetModule(name.c_str(), asGM_ALWAYS_CREATE);
 	ByteCodeReader byteCodeReader(&reader);
 	mod->LoadByteCode(&byteCodeReader);
+
+	return CreateRef<ScriptModule>(mod);
 }
 
 template<>
 inline Ref<Material> LoadFromBytes<Material>(Bytes&& bytes) {
 	BytesReader reader(std::move(bytes));
+
+	return nullptr;
 }
 
 class AssetManager : public Derivable<AssetManager> {

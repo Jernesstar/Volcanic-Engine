@@ -137,7 +137,7 @@ void EditorSceneRenderer::Update(TimeStep ts) {
 // 	Renderer3D::GetLineBuffer()->Clear();
 // }
 
-void EditorSceneRenderer::AddBillboard(const glm::vec3& pos, uint32_t type) {
+void EditorSceneRenderer::AddBillboard(const glm::vec3& pos, u32 type) {
 	glm::vec3 cameraPos = m_Controller.GetCamera()->GetPosition();
 	Billboards.Add({ pos, type });
 
@@ -146,7 +146,7 @@ void EditorSceneRenderer::AddBillboard(const glm::vec3& pos, uint32_t type) {
 	// // Put them in the list farthest to closest
 	// auto [found, i] =
 	// 	Billboards.FindLast( // The minimal distance pair with greater distance
-	// 		[=](const std::pair<glm::vec3, uint32_t>& pair) -> bool
+	// 		[=](const std::pair<glm::vec3, u32>& pair) -> bool
 	// 		{
 	// 			return distance < glm::distance(pair.first, cameraPos);
 	// 		});
@@ -223,8 +223,8 @@ void EditorSceneRenderer::SubmitCamera(const Entity& entity) {
 		{ camera->GetPosition(), glm::vec3(1.0f) }
 	};
 
-	constexpr uint32_t indexCount = 24;
-	uint32_t indices[indexCount] =
+	constexpr u32 indexCount = 24;
+	u32 indices[indexCount] =
 	{
 		8, 7, // Left Top
 		8, 6, // Right Top
@@ -288,33 +288,33 @@ void EditorSceneRenderer::SubmitParticles(const Entity& entity) {
 }
 
 void EditorSceneRenderer::SubmitMesh(const Entity& entity) {
-	auto* assetManager = AssetManager::Get();
-	auto& tc = entity.Get<TransformComponent>();
-	auto& mc = entity.Get<MeshComponent>();
+	// auto* assetManager = AssetManager::Get();
+	// auto& tc = entity.Get<TransformComponent>();
+	// auto& mc = entity.Get<MeshComponent>();
 
-	if(!mc.MeshSourceAsset)
-		return;
+	// if(!mc.MeshSourceAsset)
+	// 	return;
 
-	auto mesh = assetManager->Get<Mesh>(mc.MeshSourceAsset);
+	// auto mesh = assetManager->Get<Mesh>(mc.MeshSourceAsset);
 
-	if(!mc.MaterialAsset.ID) {
-		Renderer::StartPass(MeshPass);
-		{
-			Renderer3D::DrawMesh(mesh, tc);
-		}
-		Renderer::EndPass();
-		return;
-	}
+	// if(!mc.MaterialAsset.ID) {
+	// 	Renderer::StartPass(MeshPass);
+	// 	{
+	// 		Renderer3D::DrawMesh(mesh, tc);
+	// 	}
+	// 	Renderer::EndPass();
+	// 	return;
+	// }
 
-	if(!mc.MaterialAsset)
-		return;
+	// if(!mc.MaterialAsset)
+	// 	return;
 
-	auto material = assetManager->Get<DrawUniforms>(mc.MaterialAsset);
+	// auto material = assetManager->Get<Material>(mc.MaterialAsset);
 
-	DrawCommand* command = RendererAPI::Get()->NewCommand(MeshPass->Get());
-	command->Uniforms = *material;
+	// DrawCommand* command = RendererAPI::Get()->NewCommand(MeshPass->Get());
+	// command->Uniforms = *material->UniformData;
 
-	Renderer3D::DrawMesh(mesh, tc, command);
+	// Renderer3D::DrawMesh(mesh, tc, command);
 }
 
 void EditorSceneRenderer::Render() {
@@ -418,9 +418,9 @@ void EditorSceneRenderer::Render() {
 	const PxRenderBuffer& rb = scene->getRenderBuffer();
 	if(rb.getNbLines()) {
 		List<Point> points(rb.getNbLines() * 2);
-		List<uint32_t> indices(rb.getNbLines() * 2);
+		List<u32> indices(rb.getNbLines() * 2);
 	
-		for(uint32_t i = 0; i < rb.getNbLines(); i++) {
+		for(u32 i = 0; i < rb.getNbLines(); i++) {
 			const PxDebugLine& l = rb.getLines()[i];
 			Point p0 = { { l.pos0.x, l.pos0.y, l.pos0.z }, glm::vec3(1.0f) };
 			Point p1 = { { l.pos1.x, l.pos1.y, l.pos1.z }, glm::vec3(1.0f) };

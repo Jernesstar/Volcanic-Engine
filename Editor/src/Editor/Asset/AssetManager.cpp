@@ -233,22 +233,24 @@ void EditorAssetManager::Build(Asset asset) {
 		m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
 	}
 	else if(asset.Type == AssetType::Texture) {
-		ImageData image = AssetImporter::GetImageData(path, false);
+		// ImageData image = AssetImporter::GetImageData(path, false);
 
-		BytesWriter wr(image.Width * image.Height * image.BPP);
-		wr.Write(image.Width);
-		wr.Write(image.Height);
-		wr.Write(image.BPP);
-		wr.Write(image.Data);
+		// BytesWriter wr(image.Width * image.Height * image.BPP);
+		// wr.Write(image.Width);
+		// wr.Write(image.Height);
+		// wr.Write(image.BPP);
+		// wr.Write(image.Data);
 
-		m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
+		// m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
 	}
 	else if(asset.Type == AssetType::Cubemap) {
 		for(auto& ref : m_AssetRegistry->GetRefs(asset))
 			Build(ref);
 	}
 	else if(asset.Type == AssetType::Shader) {
-		for(auto& ref : m_AssetRegistry->GetRefs(asset)) {
+		auto refs = m_AssetRegistry->GetRefs(asset);
+
+		for(auto& ref : refs) {
 			auto shaderPath = GetPath(ref.ID);
 			ShaderFile file = AssetImporter::GetShaderFileData(path);
 			BytesWriter wr(sizeof(u32) + file.Data.GetSize());
@@ -276,8 +278,6 @@ void EditorAssetManager::Build(Asset asset) {
 	else if(asset.Type == AssetType::Material) {
 
 	}
-
-	Application::PopDir();
 }
 
 u32 EditorAssetManager::AddReloadCallback(const Func<void, Asset, bool>& cb) {
@@ -296,6 +296,7 @@ Asset EditorAssetManager::Add(AssetType type, UUID id, bool primary,
 		m_Paths[newAsset.ID] = path;
 
 	m_AssetRegistry->Add(newAsset);
+	Build(newAsset);
 	return newAsset;
 }
 
@@ -364,8 +365,6 @@ void EditorAssetManager::LoadRegistry() {
 								m_Path, e.what());
 	}
 
-	Log::Info("Loading Asset Registry at path '{}'", m_Path);
-
 	auto assetPackNode = file["AssetPack"];
 	if(!assetPackNode)
 		return;
@@ -393,10 +392,8 @@ void EditorAssetManager::LoadRegistry() {
 		for(auto path : FileUtils::GetFiles(folder.string())) {
 			if(i == 1)
 				path = FileUtils::GetFiles(path, { ".obj" })[0];
-			if(!GetFromPath(path)) {
-				Log::Info("Loading Asset at path '{}'", path);
+			if(!GetFromPath(path))
 				Add((AssetType)i, 0, true, path);
-			}
 		}
 		i++;
 	}

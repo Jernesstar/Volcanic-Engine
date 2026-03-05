@@ -28,7 +28,7 @@ public:
 	static void Begin(Ref<Camera> camera);
 	static void End();
 
-	static void DrawSkybox(Ref<Texture> cubemap);
+	static void DrawSkybox(Ref<Cubemap> cubemap);
 
 	static void DrawMesh(Ref<Mesh> mesh, const glm::mat4& tr,
 						 DrawCommand* command = nullptr);

@@ -179,12 +179,11 @@ RuntimeSceneRenderer::RuntimeSceneRenderer() {
 	LightingPass->SetData(Renderer3D::GetMeshBuffer());
 
 	BaseLayer =
-		RendererAPI::Get()->CreateFramebuffer(
+		RendererAPI::Get()->CreateFramebuffer({
 			{
-				{
-					{ AttachmentTarget::Color, window->GetWidth(), window->GetHeight() }
-				}
-			});
+				{ AttachmentTarget::Color, window->GetWidth(), window->GetHeight() }
+			}
+		});
 
 	LightPass =
 		RenderPass::Create("Light",
@@ -472,11 +471,11 @@ void RuntimeSceneRenderer::Render() {
 	Renderer3D::End();
 
 	LightingCommand->Uniforms
-	.Set("u_DirectionalLightCount", (int32_t)HasDirectionalLight);
+	.Set("u_DirectionalLightCount", (i32)HasDirectionalLight);
 	LightingCommand->Uniforms
-	.Set("u_PointLightCount", (int32_t)PointLightCount);
+	.Set("u_PointLightCount", (i32)PointLightCount);
 	LightingCommand->Uniforms
-	.Set("u_SpotlightCount", (int32_t)SpotlightCount);
+	.Set("u_SpotlightCount", (i32)SpotlightCount);
 
 	LightingCommand->Uniforms
 	.Set(UniformSlot{ DirectionalLightBuffer, "", 0 });
