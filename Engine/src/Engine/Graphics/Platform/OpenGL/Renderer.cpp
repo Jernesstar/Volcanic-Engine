@@ -230,7 +230,7 @@ static void SetOptions(DrawCommand& cmd) {
 	if(cmd.Viewport)
 		glViewport(cmd.ViewportX, cmd.ViewportY, cmd.ViewportW, cmd.ViewportH);
 	if(cmd.Clear) {
-		glClearColor(cmd.ClearColor.r, cmd.ClearColor.g, cmd.ClearColor.b, cmd.ClearColor.a);
+		// glClearColor(cmd.ClearColor.r, cmd.ClearColor.g, cmd.ClearColor.b, cmd.ClearColor.a);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
 

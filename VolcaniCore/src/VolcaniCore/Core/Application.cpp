@@ -45,7 +45,6 @@ void Application::Run() {
 		Events::PollEvents();
 
 		s_Instance->OnUpdate(ts);
-
 		s_Window->Update();
 
 		if(!s_Spec.TickRate)

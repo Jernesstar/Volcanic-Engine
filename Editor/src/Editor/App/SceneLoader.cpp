@@ -646,7 +646,7 @@ void DeserializeEntity(YAML::Node entityNode, Scene& scene) {
 		if(!asset)
 			entity.Add<ScriptComponent>();
 		else {
-			// auto obj = LoadScript(entity, asset, scriptComponentNode);
+			auto obj = LoadScript(entity, asset, scriptComponentNode);
 			// entity.Add<ScriptComponent>(asset, obj);
 		}
 	}

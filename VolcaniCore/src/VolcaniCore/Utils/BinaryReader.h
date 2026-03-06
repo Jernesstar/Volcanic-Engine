@@ -11,7 +11,8 @@ namespace VolcaniCore {
 class BinaryReader : public FileStream {
 public:
 	BinaryReader(const std::string& path) {
-		VOLCANICORE_ASSERT(FileUtils::PathExists(path));
+		if(!FileUtils::PathExists(path))
+			Log::Error("File does not exist: {}", path);
 		m_Stream.open(path, std::ios::in | std::ios::binary);
 	}
 

@@ -5,7 +5,7 @@
 namespace VolcanicEditor {
 
 EditorApp::EditorApp(const CommandLineArgs& args)
-	: Application({ "Editor", 60 })
+	: Application({ "Editor" })
 {
 	Editor::Init(args);
 }

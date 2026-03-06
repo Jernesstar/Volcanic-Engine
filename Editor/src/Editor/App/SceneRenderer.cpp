@@ -40,7 +40,7 @@ EditorSceneRenderer::EditorSceneRenderer() {
 			AssetImporter::GetShader({
 				"Editor/assets/Shaders/Grid.glsl.vert",
 				"Editor/assets/Shaders/Grid.glsl.frag"
-			}), m_Output);
+			}));
 	GridPass->SetData(Renderer2D::GetScreenBuffer());
 
 	BufferLayout instanceLayout =
@@ -64,7 +64,7 @@ EditorSceneRenderer::EditorSceneRenderer() {
 			AssetImporter::GetShader({
 				"Editor/assets/Shaders/Billboard.glsl.vert",
 				"Editor/assets/Shaders/Billboard.glsl.frag"
-			}), m_Output);
+			}));
 	BillboardPass->SetData(BillboardBuffer);
 
 	CameraIcon =
@@ -83,7 +83,7 @@ EditorSceneRenderer::EditorSceneRenderer() {
 			AssetImporter::GetShader({
 				"Editor/assets/Shaders/Mesh.glsl.vert",
 				"Editor/assets/Shaders/Mesh.glsl.frag"
-			}), m_Output);
+			}));
 	MeshPass->SetData(Renderer3D::GetMeshBuffer());
 
 	MaskPass =
@@ -105,7 +105,7 @@ EditorSceneRenderer::EditorSceneRenderer() {
 			AssetImporter::GetShader({
 				"Editor/assets/Shaders/Outline.glsl.vert",
 				"Editor/assets/Shaders/Outline.glsl.frag"
-			}), m_Output);
+			}));
 	OutlinePass->SetData(Renderer2D::GetScreenBuffer());
 
 	LinePass =
@@ -113,7 +113,7 @@ EditorSceneRenderer::EditorSceneRenderer() {
 			AssetImporter::GetShader({
 				"Editor/assets/Shaders/Line.glsl.vert",
 				"Editor/assets/Shaders/Line.glsl.frag"
-			}), m_Output);
+			}));
 	LinePass->SetData(Renderer3D::GetLineBuffer());
 
 	Application::PopDir();
@@ -288,12 +288,12 @@ void EditorSceneRenderer::SubmitParticles(const Entity& entity) {
 }
 
 void EditorSceneRenderer::SubmitMesh(const Entity& entity) {
-	// auto* assetManager = AssetManager::Get();
-	// auto& tc = entity.Get<TransformComponent>();
-	// auto& mc = entity.Get<MeshComponent>();
+	auto* assetManager = AssetManager::Get();
+	auto& tc = entity.Get<TransformComponent>();
+	auto& mc = entity.Get<MeshComponent>();
 
-	// if(!mc.MeshSourceAsset)
-	// 	return;
+	if(!mc.MeshSourceAsset)
+		return;
 
 	// auto mesh = assetManager->Get<Mesh>(mc.MeshSourceAsset);
 

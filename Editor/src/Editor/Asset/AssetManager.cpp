@@ -276,6 +276,8 @@ void EditorAssetManager::Build(Asset asset) {
 		Str name = mod->GetName();
 
 		BytesWriter wr(name.size() + std::numeric_limits<u16>::max());
+		wr.Write(name);
+
 		ByteCodeWriter stream(&wr);
 		mod->SaveByteCode(&stream, true);
 

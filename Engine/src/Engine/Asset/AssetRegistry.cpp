@@ -27,8 +27,8 @@ void AssetRegistry::Remove(Asset asset) {
 	m_AssetRefs->Remove((u64)asset.ID);
 	m_AssetNames->Remove((u64)asset.ID);
 
-	FileUtils::DeleteFile(
-		"Asset/.bin/" + std::to_string((u64)asset.ID) + ".asset");
+	auto path = "Asset/.bin/" + std::to_string((u64)asset.ID) + ".asset";
+	FileUtils::DeleteFile(path);
 }
 
 void AssetRegistry::SetData(Asset asset, Bytes&& data) {
@@ -36,12 +36,11 @@ void AssetRegistry::SetData(Asset asset, Bytes&& data) {
 	FileUtils::CreateFile(path);
 	BinaryWriter writer(path);
 	writer.Write(data);
-
 }
 
 Bytes AssetRegistry::GetData(Asset asset) {
-	BinaryReader reader(
-		"Asset/.bin/" + std::to_string((u64)asset.ID) + ".asset");
+	auto path = "Asset/.bin/" + std::to_string((u64)asset.ID) + ".asset";
+	BinaryReader reader(path);
 
 	Bytes res;
 	reader.Read(res);

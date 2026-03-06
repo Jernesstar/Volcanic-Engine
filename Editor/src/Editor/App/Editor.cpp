@@ -69,14 +69,22 @@ void Editor::Init(const CommandLineArgs& args) {
 }
 
 void Editor::Close() {
-	s_AssetManager.reset();
+	s_CurrentScene.reset();
+	s_CurrentCanvas.reset();
+
 	s_App.reset();
+	s_AssetManager.reset();
+
 	Renderer::Close();
+	ScriptEngine::Shutdown();
 }
 
 void Editor::Update(TimeStep ts) {
 	if(s_TabType == TabType::Scene)
-		s_CurrentScene->OnUpdate(ts);
+		if(s_EditorMode == EditorMode::Edit) {
+			s_EditorSceneRenderer->Update(ts);
+			s_CurrentScene->OnUpdate(ts);
+		}
 }
 
 void Editor::Render() {
