@@ -7,7 +7,7 @@
 
 [submodule "Engine/.vendor/angelscript"]
 	path = Engine/.vendor/angelscript
-	url = https://github.com/LavaFlow-Technologies/angelscript.git
+	url = https://github.com/anjo76/angelscript.git
 [submodule "Engine/.vendor/soloud"]
 	path = Engine/.vendor/soloud
 	url = https://github.com/jarikomppa/soloud.git

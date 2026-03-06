@@ -69,7 +69,7 @@ Includes["glm"]                   = "%{VendorPaths.glm}"
 Includes["glfw"]                  = "%{VendorPaths.glfw}/include"
 Includes["spdlog"]                = "%{VendorPaths.spdlog}/include"
 -- Engine libraries
-Includes["angelscript"]           = "%{VendorPaths.angelscript}/angelscript/include"
+Includes["angelscript"]           = "%{VendorPaths.angelscript}/sdk/angelscript/include"
 Includes["soloud"]                = "%{VendorPaths.soloud}/include"
 Includes["glad"]                  = "%{VendorPaths.glad}/include"
 Includes["flecs"]                 = "%{VendorPaths.flecs}/include"

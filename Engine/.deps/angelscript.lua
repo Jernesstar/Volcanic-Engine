@@ -19,12 +19,12 @@ project "angelscript"
     rules { "ASM" }
 
     files {
-        "%{VendorPaths.angelscript}/angelscript/source/*.cpp",
-        "%{VendorPaths.angelscript}/add_on/**.cpp",
+        "%{VendorPaths.angelscript}/sdk/angelscript/source/*.cpp",
+        "%{VendorPaths.angelscript}/sdk/add_on/**.cpp",
     }
 
     removefiles {
-        "%{VendorPaths.angelscript}/add_on/autowrapper/**.cpp",
+        "%{VendorPaths.angelscript}/sdk/add_on/autowrapper/**.cpp",
     }
 
     includedirs {
@@ -38,7 +38,7 @@ project "angelscript"
 
     filter { "action:vs*", "system:windows" }
         files {
-            "%{VendorPaths.angelscript}/angelscript/source/as_callfunc_x64_msvc_asm.asm"
+            "%{VendorPaths.angelscript}/sdk/angelscript/source/as_callfunc_x64_msvc_asm.asm"
         }
 
         buildoptions {

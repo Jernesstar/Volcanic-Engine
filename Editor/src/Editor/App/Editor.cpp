@@ -11,6 +11,7 @@
 
 #include <Engine/App/App.h>
 #include <Engine/Graphics/Renderer.h>
+#include <Engine/Script/ScriptGlue.h>
 #include <Engine/Scene/Scene.h>
 #include <Engine/Scene/SceneRenderer.h>
 #include <Engine/Canvas/Canvas.h>
@@ -23,6 +24,7 @@
 using namespace VolcaniCore;
 using namespace VolcanicEngine;
 using namespace VolcanicEngine::Graphics;
+using namespace VolcanicEngine::Script;
 
 namespace VolcanicEditor {
 
@@ -43,10 +45,14 @@ static TabType s_TabType = TabType::None;
 void Editor::Init(const CommandLineArgs& args) {
 	Log::Init();
 	Renderer::Init();
+	ScriptEngine::Init();
+	ScriptGlue::RegisterInterface();
 
 	s_AssetManager = CreateRef<EditorAssetManager>();
 	s_EditorSceneRenderer = CreateRef<EditorSceneRenderer>();
 	// s_RuntimeSceneRenderer = CreateRef<RuntimeSceneRenderer>();
+
+	s_App = CreateRef<App>();
 
 	if(args["--open_project"]) {
 		std::string path = args["--open_project"];

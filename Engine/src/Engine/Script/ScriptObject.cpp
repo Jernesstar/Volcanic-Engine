@@ -1,7 +1,5 @@
 #include "ScriptObject.h"
 
-#include <angelscript/add_on/scriptarray/scriptarray.h>
-
 #include <VolcaniCore/Core/Assert.h>
 #include <VolcaniCore/Core/Math.h>
 

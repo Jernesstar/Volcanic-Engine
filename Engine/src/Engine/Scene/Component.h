@@ -12,7 +12,7 @@ using namespace VolcanicEngine::Graphics;
 // using namespace VolcanicEngine::Physics;
 using namespace VolcanicEngine::Script;
 
-namespace VolcanicEngine::ECS {
+namespace VolcanicEngine {
 
 struct Component {
 	u8 _;

@@ -1,6 +1,6 @@
 #include "ScriptManager.h"
 
-#include <angelscript/add_on/scriptbuilder/scriptbuilder.h>
+#include <angelscript/sdk/add_on/scriptbuilder/scriptbuilder.h>
 
 #include <VolcaniCore/Core/Application.h>
 #include <VolcaniCore/Core/FileUtils.h>

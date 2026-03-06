@@ -37,7 +37,7 @@ struct Asset {
 	AssetType Type = AssetType::None;
 	bool Primary = true;
 
-	operator uint64_t() const { return ID; }
+	operator u64() const { return ID; }
 	operator bool() const { return ID != 0 && Type != AssetType::None; }
 };
 
@@ -48,7 +48,7 @@ namespace std {
 template<>
 struct hash<VolcanicEngine::Asset> {
 	std::size_t operator()(const VolcanicEngine::Asset& asset) const {
-		return (uint64_t)asset;
+		return (u64)asset;
 	}
 };
 
@@ -80,7 +80,7 @@ public:
 
 private:
 	Registry* m_Registry;
-	Database* m_AssetMetadata;	// ID: ID, Type, Primary
+	Database* m_AssetMetadata;	// ID: Asset{ ID, Type, Primary }
 	Database* m_AssetRefs;		// ID: Refs
 	Database* m_AssetNames;		// ID: Name
 	Database* m_AssetData;		// ID: Data

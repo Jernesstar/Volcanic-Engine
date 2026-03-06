@@ -2,7 +2,7 @@
 
 #include <bitset>
 
-#include <angelscript/add_on/scriptarray/scriptarray.h>
+#include <angelscript/sdk/add_on/scriptarray/scriptarray.h>
 
 #include <VolcaniCore/Core/Assert.h>
 #include <VolcaniCore/Core/FileUtils.h>
