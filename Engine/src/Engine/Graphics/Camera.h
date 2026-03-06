@@ -1,7 +1,5 @@
 #pragma once
 
-#include <glm/gtc/matrix_transform.hpp>
-
 #include <VolcaniCore/Core/Assert.h>
 #include <VolcaniCore/Core/Math.h>
 #include <VolcaniCore/Core/Template.h>

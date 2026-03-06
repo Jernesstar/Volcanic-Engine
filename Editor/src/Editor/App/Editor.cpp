@@ -38,8 +38,10 @@ static Ref<EditorAssetManager> s_AssetManager;
 static Ref<EditorSceneRenderer> s_EditorSceneRenderer;
 
 enum class TabType { None, Scene, Canvas };
+enum class EditorMode { Edit, Play, Pause };
 
 static TabType s_TabType = TabType::None;
+static EditorMode s_EditorMode = EditorMode::Edit;
 
 void Editor::Init(const CommandLineArgs& args) {
 	Log::Init();
@@ -78,8 +80,14 @@ void Editor::Update(TimeStep ts) {
 }
 
 void Editor::Render() {
-	if(s_TabType == TabType::Scene)
-		s_CurrentScene->OnRender(*s_EditorSceneRenderer);
+	Renderer::BeginFrame();
+
+	if(s_TabType == TabType::Scene) {
+		if(s_EditorMode == EditorMode::Edit)
+			s_CurrentScene->OnRender(*s_EditorSceneRenderer);
+	}
+
+	Renderer::EndFrame();
 }
 
 void Editor::OpenProject(const std::string& path) {
@@ -101,7 +109,7 @@ void Editor::NewScene(const std::string& path) {
 
 void Editor::OpenScene(const std::string& name) {
 	s_CurrentScene = CreateRef<Scene>(name);
-	SceneLoader::EditorLoad(*s_CurrentScene, "Object/Scene/" + name + ".scene");
+	SceneLoader::EditorLoad(*s_CurrentScene, "App/Scene/" + name + ".scene");
 	s_TabType = TabType::Scene;
 }
 

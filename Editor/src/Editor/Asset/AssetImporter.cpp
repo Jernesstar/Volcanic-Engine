@@ -31,8 +31,6 @@ using namespace VolcanicEngine::Audio;
 using namespace VolcanicEngine::Graphics;
 using namespace VolcanicEngine::Script;
 
-namespace fs = std::filesystem;
-
 namespace VolcanicEditor {
 
 ImageData AssetImporter::GetImageData(const std::string& path, bool flip) {

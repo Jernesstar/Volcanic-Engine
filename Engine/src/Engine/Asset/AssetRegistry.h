@@ -83,7 +83,6 @@ private:
 	Database* m_AssetMetadata;	// ID: Asset{ ID, Type, Primary }
 	Database* m_AssetRefs;		// ID: Refs
 	Database* m_AssetNames;		// ID: Name
-	Database* m_AssetData;		// ID: Data
 };
 
 }

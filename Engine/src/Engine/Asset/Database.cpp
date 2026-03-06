@@ -25,7 +25,7 @@ void Database::Insert(DatabaseKey&& key, Bytes&& value) {
 	mdbValue.mv_size = value.GetSize();
 	mdbValue.mv_data = (void*)value.Get();
 
-	int rc = mdb_put(txn, m_Handle, &mdbKey, &mdbValue, MDB_NODUPDATA & MultiValue);
+	int rc = mdb_put(txn, m_Handle, &mdbKey, &mdbValue, MultiValue);
 	if(rc != 0) {
 		mdb_txn_abort(txn);
 		Log::Info("Failed to insert data!");
@@ -114,6 +114,15 @@ Registry::Registry(const std::string& path, u32 maxDatabases) {
 	fs::create_directories(path);
 	mdb_env_create(&m_Handle);
 	mdb_env_set_maxdbs(m_Handle, maxDatabases);
+
+	// Set map size to 10 GB (10 * 1024 * 1024 * 1024 bytes)
+	size_t map_size = 10ULL * 1024ULL * 1024ULL * 1024ULL;
+	int rc = mdb_env_set_mapsize(m_Handle, map_size);
+	if (rc != 0) {
+		Log::Error("mdb_env_set_mapsize failed: {}", mdb_strerror(rc));
+		mdb_env_close(m_Handle);
+	}
+
 	mdb_env_open(m_Handle, path.c_str(), 0, 0664);
 }
 

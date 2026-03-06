@@ -36,6 +36,8 @@ public:
 
 	static void CreateFile(const fs::path& path);
 
+	static void DeleteFile(const fs::path& path);
+
 	static std::string ReadFile(const fs::path& path);
 
 	static void WriteToFile(const fs::path& path, const std::string& info);

@@ -34,6 +34,10 @@ void FileUtils::CreateFile(const fs::path& path) {
 	std::ofstream file{ path.c_str() };
 }
 
+void FileUtils::DeleteFile(const fs::path& path) {
+	fs::remove(path.c_str());
+}
+
 std::string FileUtils::ReadFile(const fs::path& filePath) {
 	std::ifstream in(filePath, std::ios::in);
 	VOLCANICORE_ASSERT_ARGS(in, "Could not open file: {}", filePath.string());

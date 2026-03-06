@@ -1,10 +1,5 @@
 #include "CameraController.h"
 
-#define GLM_ENABLE_EXPERIMENTAL
-
-#include <glm/gtc/quaternion.hpp>
-#include <glm/gtx/quaternion.hpp>
-
 #include <VolcaniCore/Core/Log.h>
 #include <VolcaniCore/Window/Input.h>
 

@@ -124,7 +124,7 @@ EditorSceneRenderer::~EditorSceneRenderer() {
 }
 
 void EditorSceneRenderer::Update(TimeStep ts) {
-	if(Hovered)
+	// if(Hovered)
 		m_Controller.OnUpdate(ts);
 }
 
@@ -137,8 +137,8 @@ void EditorSceneRenderer::Update(TimeStep ts) {
 // 	Renderer3D::GetLineBuffer()->Clear();
 // }
 
-void EditorSceneRenderer::AddBillboard(const glm::vec3& pos, u32 type) {
-	glm::vec3 cameraPos = m_Controller.GetCamera()->GetPosition();
+void EditorSceneRenderer::AddBillboard(const Vec3& pos, u32 type) {
+	Vec3 cameraPos = m_Controller.GetCamera()->GetPosition();
 	Billboards.Add({ pos, type });
 
 	// float distance = glm::distance(cameraPos, pos);
@@ -146,7 +146,7 @@ void EditorSceneRenderer::AddBillboard(const glm::vec3& pos, u32 type) {
 	// // Put them in the list farthest to closest
 	// auto [found, i] =
 	// 	Billboards.FindLast( // The minimal distance pair with greater distance
-	// 		[=](const std::pair<glm::vec3, u32>& pair) -> bool
+	// 		[=](const std::pair<Vec3, u32>& pair) -> bool
 	// 		{
 	// 			return distance < glm::distance(pair.first, cameraPos);
 	// 		});
@@ -171,14 +171,14 @@ void EditorSceneRenderer::Begin() {
 	BillboardBuffer->Clear();
 	Billboards.Clear();
 
-	glm::vec3 pos = camera->GetPosition();
-	glm::vec3 dir = camera->GetDirection();
-	glm::vec3 planePos = glm::vec3(0.0f);
-	glm::vec3 planeNormal = glm::vec3(0.0f, 1.0f, 0.0f);
+	Vec3 pos = camera->GetPosition();
+	Vec3 dir = camera->GetDirection();
+	Vec3 planePos = Vec3(0.0f);
+	Vec3 planeNormal = Vec3(0.0f, 1.0f, 0.0f);
 	// float t;
 	// if(glm::intersectRayPlane(pos, dir, planePos, planeNormal, t))
 	// 	AddBillboard(pos + t * dir, 0);
-		AddBillboard(glm::vec3(0.0f), 0);
+		AddBillboard(Vec3(0.0f), 0);
 
 	LineCommand = RendererAPI::Get()->NewCommand(LinePass->Get());
 	LineCommand->DepthTesting = DepthTestingMode::On;
@@ -199,28 +199,28 @@ void EditorSceneRenderer::SubmitCamera(const Entity& entity) {
 	if(Selected != entity)
 		return;
 
-	glm::mat4 inverse = glm::inverse(camera->GetViewProjection());
+	Mat4 inverse = glm::inverse(camera->GetViewProjection());
 
-	glm::vec4 p0 = inverse * glm::vec4(-1, -1, -1, 1); // Front bottom left
-	glm::vec4 p1 = inverse * glm::vec4( 1, -1, -1, 1); // Front bottom right
-	glm::vec4 p2 = inverse * glm::vec4( 1,  1, -1, 1); // Front top right
-	glm::vec4 p3 = inverse * glm::vec4(-1,  1, -1, 1); // Front top left
-	glm::vec4 p4 = inverse * glm::vec4(-1, -1,  1, 1); // Back bottom left
-	glm::vec4 p5 = inverse * glm::vec4( 1, -1,  1, 1); // Back bottom right
-	glm::vec4 p6 = inverse * glm::vec4( 1,  1,  1, 1); // Back top right
-	glm::vec4 p7 = inverse * glm::vec4(-1,  1,  1, 1); // Back top left
+	Vec4 p0 = inverse * Vec4(-1, -1, -1, 1); // Front bottom left
+	Vec4 p1 = inverse * Vec4( 1, -1, -1, 1); // Front bottom right
+	Vec4 p2 = inverse * Vec4( 1,  1, -1, 1); // Front top right
+	Vec4 p3 = inverse * Vec4(-1,  1, -1, 1); // Front top left
+	Vec4 p4 = inverse * Vec4(-1, -1,  1, 1); // Back bottom left
+	Vec4 p5 = inverse * Vec4( 1, -1,  1, 1); // Back bottom right
+	Vec4 p6 = inverse * Vec4( 1,  1,  1, 1); // Back top right
+	Vec4 p7 = inverse * Vec4(-1,  1,  1, 1); // Back top left
 
 	Point points[] =
 	{
-		{ p0 / p0.w, glm::vec3(1.0f) },
-		{ p1 / p1.w, glm::vec3(1.0f) },
-		{ p2 / p2.w, glm::vec3(1.0f) },
-		{ p3 / p3.w, glm::vec3(1.0f) },
-		{ p4 / p4.w, glm::vec3(1.0f) },
-		{ p5 / p5.w, glm::vec3(1.0f) },
-		{ p6 / p6.w, glm::vec3(1.0f) },
-		{ p7 / p7.w, glm::vec3(1.0f) },
-		{ camera->GetPosition(), glm::vec3(1.0f) }
+		{ p0 / p0.w, Vec3(1.0f) },
+		{ p1 / p1.w, Vec3(1.0f) },
+		{ p2 / p2.w, Vec3(1.0f) },
+		{ p3 / p3.w, Vec3(1.0f) },
+		{ p4 / p4.w, Vec3(1.0f) },
+		{ p5 / p5.w, Vec3(1.0f) },
+		{ p6 / p6.w, Vec3(1.0f) },
+		{ p7 / p7.w, Vec3(1.0f) },
+		{ camera->GetPosition(), Vec3(1.0f) }
 	};
 
 	constexpr u32 indexCount = 24;
@@ -263,7 +263,7 @@ void EditorSceneRenderer::SubmitSkybox(const Entity& entity) {
 }
 
 void EditorSceneRenderer::SubmitLight(const Entity& entity) {
-	glm::vec3 position;
+	Vec3 position;
 
 	if(entity.Has<DirectionalLightComponent>()) {
 		position = entity.Get<DirectionalLightComponent>().Position;
@@ -283,7 +283,7 @@ void EditorSceneRenderer::SubmitLight(const Entity& entity) {
 }
 
 void EditorSceneRenderer::SubmitParticles(const Entity& entity) {
-	glm::vec3 position = entity.Get<ParticleEmitterComponent>().Position;
+	Vec3 position = entity.Get<ParticleEmitterComponent>().Position;
 	AddBillboard(position, 5);
 }
 
@@ -337,7 +337,7 @@ void EditorSceneRenderer::Render() {
 			.Set("u_ViewProj",
 				MeshCommand->Uniforms.Mat4Uniforms["u_ViewProj"]);
 			command->Uniforms
-			.Set("u_Color", glm::vec4(1.0f));
+			.Set("u_Color", Vec4(1.0f));
 
 			Renderer3D::DrawMesh(mesh, tc, command);
 		}
@@ -352,7 +352,7 @@ void EditorSceneRenderer::Render() {
 			command->Uniforms
 			.Set("u_PixelSize", 1.0f / glm::vec2(width, height));
 			command->Uniforms
-			.Set("u_Color", glm::vec3(0.0f, 0.0f, 1.0f));
+			.Set("u_Color", Vec3(0.0f, 0.0f, 1.0f));
 
 			auto mask = MaskPass->GetOutput();
 			Renderer2D::DrawFullscreenQuad(mask, AttachmentTarget::Color);
@@ -422,8 +422,8 @@ void EditorSceneRenderer::Render() {
 	
 		for(u32 i = 0; i < rb.getNbLines(); i++) {
 			const PxDebugLine& l = rb.getLines()[i];
-			Point p0 = { { l.pos0.x, l.pos0.y, l.pos0.z }, glm::vec3(1.0f) };
-			Point p1 = { { l.pos1.x, l.pos1.y, l.pos1.z }, glm::vec3(1.0f) };
+			Point p0 = { { l.pos0.x, l.pos0.y, l.pos0.z }, Vec3(1.0f) };
+			Point p1 = { { l.pos1.x, l.pos1.y, l.pos1.z }, Vec3(1.0f) };
 			points.Add(p0);
 			points.Add(p1);
 			indices.Add(2*i);

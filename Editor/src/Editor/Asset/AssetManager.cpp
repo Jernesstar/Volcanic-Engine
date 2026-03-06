@@ -197,56 +197,57 @@ void EditorAssetManager::Build(Asset asset) {
 	if(!asset || IsLoaded(asset))
 		return;
 
-	auto path = GetPath(asset.ID);
+	auto relativePath = GetPath(asset.ID);
+	auto path = fs::canonical(relativePath).string();
 	Log::Info("Building {} : {} : {}",
 			  (u64)asset.ID,
 			  AssetTypeToString(asset.Type),
-			  path);
+			  relativePath);
 
 	if(asset.Type == AssetType::Mesh) {
-		List<SubMesh> meshes;
-		List<MaterialPaths> materials;
-		AssetImporter::GetMeshData(path, meshes, materials);
+		// List<SubMesh> meshes;
+		// List<MaterialPaths> materials;
+		// AssetImporter::GetMeshData(path, meshes, materials);
 
-		BytesWriter wr(
-			meshes.GetBuffer().GetSize() +
-			materials.GetBuffer().GetSize());
+		// BytesWriter wr(
+		// 	meshes.GetBuffer().GetSize() +
+		// 	materials.GetBuffer().GetSize());
 
-		wr.Write(meshes.Count());
-		for(auto& mesh : meshes) {
-			wr.Write(mesh.Vertices);
-			wr.Write(mesh.Indices);
-			wr.Write(mesh.MaterialIndex);
-		}
-
-		// for(auto mat : materials) {
-		// 	auto ref = Add(AssetType::Material, 0, false, "");
-		// 	m_AssetRegistry->AddRef(asset, ref);
-		// 	if(mat.Diffuse != "") {
-		// 		auto tex = Add(AssetType::Texture, 0, false, mat.Diffuse);
-		// 		m_AssetRegistry->NameAsset(ref, "u_Diffuse");
-		// 		m_AssetRegistry->AddRef(ref, tex);
-		// 	}
-		// 	if(mat.Emissive != "") {
-
-		// 	}
-		// 	if(mat.Specular != "") {
-
-		// 	}
+		// wr.Write(meshes.Count());
+		// for(auto& mesh : meshes) {
+		// 	wr.Write(mesh.Vertices);
+		// 	wr.Write(mesh.Indices);
+		// 	wr.Write(mesh.MaterialIndex);
 		// }
 
-		m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
+		// // for(auto mat : materials) {
+		// // 	auto ref = Add(AssetType::Material, 0, false, "");
+		// // 	m_AssetRegistry->AddRef(asset, ref);
+		// // 	if(mat.Diffuse != "") {
+		// // 		auto tex = Add(AssetType::Texture, 0, false, mat.Diffuse);
+		// // 		m_AssetRegistry->NameAsset(ref, "u_Diffuse");
+		// // 		m_AssetRegistry->AddRef(ref, tex);
+		// // 	}
+		// // 	if(mat.Emissive != "") {
+
+		// // 	}
+		// // 	if(mat.Specular != "") {
+
+		// // 	}
+		// // }
+
+		// m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
 	}
 	else if(asset.Type == AssetType::Texture) {
 		ImageData image = AssetImporter::GetImageData(path, false);
 
-		BytesWriter wr(sizeof(u32) * 3 + image.Data.GetSize());
+		BytesWriter wr((sizeof(u32) * 4) + image.Data.GetSize());
 		wr.Write(image.Width);
 		wr.Write(image.Height);
 		wr.Write(image.BPP);
 		wr.Write(image.Data);
 
-		m_AssetRegistry->SetData(asset, wr.Bytes.Copy());
+		m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
 	}
 	else if(asset.Type == AssetType::Cubemap) {
 		for(auto& ref : m_AssetRegistry->GetRefs(asset))

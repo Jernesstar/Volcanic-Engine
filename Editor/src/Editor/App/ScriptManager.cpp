@@ -52,7 +52,7 @@ asIScriptModule* ScriptManager::LoadScript(const List<std::string>& paths,
 	int r;
 	r = builder.StartNewModule(engine, name.c_str());
 	if(r < 0) {
-		Log::Error("StartNewModule failed for module name '{}'", name.c_str());
+		Log::Error("StartNewModule failed for module name '{}'", name);
 		if(error)
 			*error = true;
 		return nullptr;
@@ -66,7 +66,7 @@ asIScriptModule* ScriptManager::LoadScript(const List<std::string>& paths,
 	for(auto& path : paths) {
 		r = builder.AddSectionFromFile(path.c_str());
 		if(r < 0) {
-			Log::Error("AddSectionFromFile failed for file '{}'", path.c_str());
+			Log::Error("AddSectionFromFile failed for file '{}'", path);
 			if(error)
 				*error = true;
 			return nullptr;
@@ -75,7 +75,7 @@ asIScriptModule* ScriptManager::LoadScript(const List<std::string>& paths,
 
 	r = builder.BuildModule();
 	if(r < 0) {
-		Log::Error("BuildModule failed for module name '{}'", name.c_str());
+		Log::Error("BuildModule failed for module name '{}'", name);
 		if(error) *error = true;
 		return nullptr;
 	}
@@ -127,10 +127,6 @@ asIScriptModule* ScriptManager::LoadScript(const std::string& path,
 	const List<std::string>& includePaths)
 {
 	return LoadScript(List<Str>{ path }, metadata, error, name, includePaths);
-}
-
-void ScriptManager::SaveScript(asIScriptModule* mod, BinaryWriter& writer) {
-
 }
 
 void ScriptManager::RunCodeAnalysis() {

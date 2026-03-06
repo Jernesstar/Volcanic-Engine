@@ -36,6 +36,7 @@ void Renderer::Close() {
 }
 
 void Renderer::BeginFrame() {
+	RendererAPI::Get()->BeginFrame();
 	Renderer2D::StartFrame();
 	Renderer3D::StartFrame();
 }
@@ -43,6 +44,7 @@ void Renderer::BeginFrame() {
 void Renderer::EndFrame() {
 	Renderer3D::EndFrame();
 	Renderer2D::EndFrame();
+	RendererAPI::Get()->EndFrame();
 }
 
 void Renderer::StartPass(Ref<RenderPass> pass, bool pushCommand) {
