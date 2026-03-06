@@ -53,7 +53,7 @@ struct RuntimeScreen {
 		ScriptObj.reset();
 		Script.reset();
 
-		App::Get()->GetSceneRenderer().OnSceneClose();
+		App::Get()->GetSceneRenderer()->OnSceneClose();
 		World->UnregisterSystems();
 		World.reset();
 		// UI.Clear();
@@ -85,7 +85,7 @@ static void ScriptLoadScene(const std::string& name, App* app) {
 	s_Screen->World->EntityWorld.Reset();
 	s_Screen->World->UnregisterSystems();
 	s_Screen->World->RegisterSystems();
-	app->GetSceneRenderer().OnSceneLoad();
+	app->GetSceneRenderer()->OnSceneLoad();
 	app->SceneLoad(*s_Screen->World);
 
 	List<Entity> list;
@@ -158,6 +158,8 @@ App::App() {
 }
 
 void App::OnLoad() {
+	m_SceneRenderer = CreateRef<RuntimeSceneRenderer>();
+
 	s_AppModule = CreateRef<ScriptModule>();
 	AppLoad(s_AppModule);
 
@@ -175,6 +177,7 @@ void App::OnClose() {
 
 	s_AppObject.reset();
 	s_AppModule.reset();
+	m_SceneRenderer.reset();
 }
 
 void App::OnUpdate(TimeStep ts) {
@@ -196,11 +199,11 @@ void App::OnUpdate(TimeStep ts) {
 	s_Screen->ScriptObj->Call("OnUpdate", (f32)ts);
 
 	s_Screen->World->OnUpdate(ts);
-	m_SceneRenderer.Update(ts);
-	s_Screen->World->OnRender(m_SceneRenderer);
+	m_SceneRenderer->Update(ts);
+	s_Screen->World->OnRender(*m_SceneRenderer);
 
 	if(RenderScene) {
-		auto output = m_SceneRenderer.GetOutput();
+		auto output = m_SceneRenderer->GetOutput();
 		Renderer2D::DrawFullscreenQuad(output, AttachmentTarget::Color);
 		Renderer::Flush();
 	}
@@ -321,7 +324,7 @@ void App::ScreenSet(const std::string& name) {
 	s_Screen->ScriptObj = scriptClass->Instantiate();
 
 	if(s_ShouldLoadScene) {
-		m_SceneRenderer.OnSceneLoad();
+		m_SceneRenderer->OnSceneLoad();
 		s_Screen->World->RegisterSystems();
 		*s_Screen->World = *s_ShouldLoadScene;
 		s_ShouldLoadScene = nullptr;

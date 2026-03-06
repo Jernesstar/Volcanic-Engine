@@ -68,7 +68,7 @@ List<Asset> AssetRegistry::GetRefs(Asset asset) const {
 }
 
 void AssetRegistry::NameAsset(Asset asset, const std::string& name) {
-	Bytes bytes = { (u8*)name.c_str(), name.size() * sizeof(char), 0, false };
+	Bytes bytes = { (u8*)name.c_str(), name.size(), 0, false };
 	m_AssetNames->Insert((u64)asset.ID, std::move(bytes));
 }
 

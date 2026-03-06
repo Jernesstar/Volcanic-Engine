@@ -36,7 +36,6 @@ static Ref<Canvas> s_CurrentCanvas;
 static Ref<EditorAssetManager> s_AssetManager;
 
 static Ref<EditorSceneRenderer> s_EditorSceneRenderer;
-static Ref<RuntimeSceneRenderer> s_RuntimeSceneRenderer;
 
 enum class TabType { None, Scene, Canvas };
 
@@ -50,7 +49,6 @@ void Editor::Init(const CommandLineArgs& args) {
 
 	s_AssetManager = CreateRef<EditorAssetManager>();
 	s_EditorSceneRenderer = CreateRef<EditorSceneRenderer>();
-	// s_RuntimeSceneRenderer = CreateRef<RuntimeSceneRenderer>();
 
 	s_App = CreateRef<App>();
 
@@ -70,6 +68,7 @@ void Editor::Init(const CommandLineArgs& args) {
 
 void Editor::Close() {
 	s_AssetManager.reset();
+	s_App.reset();
 	Renderer::Close();
 }
 
@@ -86,8 +85,6 @@ void Editor::Render() {
 void Editor::OpenProject(const std::string& path) {
 	Application::PushDir(path);
 	s_AssetManager->LoadRegistry();
-	Asset asset = { 1116263781428243600ULL, AssetType::Texture };
-	s_AssetManager->Build(asset);
 }
 
 void Editor::NewProject(const std::string& path) {

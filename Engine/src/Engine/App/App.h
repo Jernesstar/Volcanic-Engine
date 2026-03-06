@@ -58,11 +58,11 @@ public:
 	void SetProject(const Project& project) { m_Project = project; }
 	Project& GetProject() { return m_Project; }
 
-	RuntimeSceneRenderer& GetSceneRenderer() { return m_SceneRenderer; }
+	Ref<RuntimeSceneRenderer> GetSceneRenderer() { return m_SceneRenderer; }
 
 private:
 	Project m_Project;
-	RuntimeSceneRenderer m_SceneRenderer;
+	Ref<RuntimeSceneRenderer> m_SceneRenderer;
 
 private:
 	inline static App* s_Instance;

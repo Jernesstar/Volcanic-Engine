@@ -66,11 +66,7 @@ void ScriptGlue::RegisterInterface() {
 	RegisterScriptArray(engine, true);
 	RegisterScriptDictionary(engine);
 
-	ScriptEngine::RegisterInterface("IApp")
-		.AddMethod("void OnLoad()")
-		.AddMethod("void OnClose()")
-		.AddMethod("void OnUpdate(float ts)");
-
+	RegisterEvents();
 	ScriptEngine::RegisterInterface("IScreen")
 		.AddMethod("void OnLoad()")
 		.AddMethod("void OnClose()")
@@ -79,13 +75,15 @@ void ScriptGlue::RegisterInterface() {
 	ScriptEngine::RegisterInterface("IEntityController")
 		.AddMethod("void OnStart()")
 		.AddMethod("void OnUpdate(float ts)")
-		// .AddMethod("void OnKeyEvent(KeyEvent@)")
-		// .AddMethod("void OnMouseEvent(MouseEvent@)")
-		// .AddMethod("void OnPhysicsEvent(PhysicsEvent@)")
-		// .AddMethod("void OnGameEvent(GameEvent@)")
-		;
+		.AddMethod("void OnKeyEvent(KeyEvent@)")
+		.AddMethod("void OnMouseEvent(MouseEvent@)");
 
-	RegisterEvents();
+	ScriptEngine::RegisterInterface("IUIController")
+		.AddMethod("void OnClick()")
+		.AddMethod("void OnHover()")
+		.AddMethod("void OnMouseUp()")
+		.AddMethod("void OnMouseDown()");
+
 	RegisterGlobalFunctions();
 	RegisterTypes();
 	RegisterAssetManager();
@@ -93,11 +91,17 @@ void ScriptGlue::RegisterInterface() {
 	RegisterScene();
 	RegisterUI();
 
-	ScriptEngine::RegisterInterface("IUIController")
-		.AddMethod("void OnClick()")
-		.AddMethod("void OnHover()")
-		.AddMethod("void OnMouseUp()")
-		.AddMethod("void OnMouseDown()");
+	// ScriptEngine::Get()
+	// 	->RegisterInterfaceMethod("IEntityController",
+	// 							  "void OnPhysicsEvent(PhysicsEvent@)");
+	// ScriptEngine::Get()
+	// 	->RegisterInterfaceMethod("IEntityController",
+	// 							  "void OnGameEvent(GameEvent@)");
+
+	ScriptEngine::RegisterInterface("IApp")
+		.AddMethod("void OnLoad()")
+		.AddMethod("void OnClose()")
+		.AddMethod("void OnUpdate(float ts)");
 
 	GridSet::RegisterInterface();
 	GridSet3D::RegisterInterface();
@@ -412,12 +416,12 @@ static void AssetDefaultCtor(Asset* ptr) {
 	new (ptr) Asset{ };
 }
 
-static void AssetInitCtor(uint64_t id, AssetType type, Asset* ptr) {
+static void AssetInitCtor(u64 id, AssetType type, Asset* ptr) {
 	new (ptr) Asset{ id, type };
 }
 
-static uint64_t GetAssetID(Asset* asset) {
-	return (uint64_t)asset->ID;
+static u64 GetAssetID(Asset* asset) {
+	return (u64)asset->ID;
 }
 
 static bool AssetIsValid(Asset* asset) {
@@ -439,6 +443,10 @@ static Sound* GetSound(Asset asset, AssetManager* manager) {
 
 static void PlaySound(Sound* sound) {
 	sound->Play();
+}
+
+static Asset GetAsset(const std::string& name, AssetManager* manager) {
+	return manager->GetRegistry()->FindAsset(name);
 }
 
 void RegisterAssetManager() {
@@ -484,12 +492,9 @@ void RegisterAssetManager() {
 		asMETHOD(AssetManager, Load), asCALL_THISCALL);
 	engine->RegisterObjectMethod("AssetManagerClass", "bool Unload(Asset)",
 		asMETHOD(AssetManager, Unload), asCALL_THISCALL);
-	// engine->RegisterObjectMethod("AssetManagerClass",
-	// 	"Asset GetAsset(const string &in)",
-	// 	asMETHOD(AssetManager, GetAsset), asCALL_THISCALL);
-	// engine->RegisterObjectMethod("AssetManagerClass",
-	// 	"Asset GetNativeAsset(const string &in)",
-	// 	asMETHOD(AssetManager, GetNativeAsset), asCALL_THISCALL);
+	engine->RegisterObjectMethod("AssetManagerClass",
+		"Asset GetAsset(const string &in)",
+		asFUNCTION(GetAsset), asCALL_CDECL_OBJLAST);
 
 	engine->RegisterObjectType("Sound", 0, asOBJ_REF | asOBJ_NOCOUNT);
 	engine->RegisterObjectMethod("Sound", "void Play(float volume)",
@@ -714,6 +719,34 @@ static void SetParticleEmitterMaxParticles(uint32_t maxCount,
 void RegisterECS() {
 	auto* engine = ScriptEngine::Get();
 
+	engine->RegisterObjectType("Entity", sizeof(Entity),
+		asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_ALLINTS |
+		asGetTypeTraits<Entity>());
+	engine->RegisterObjectMethod("Entity", "string get_Name() const property",
+		asMETHOD(Entity, GetName), asCALL_THISCALL);
+	engine->RegisterObjectMethod("Entity", "void set_Name(const string &in) property",
+		asMETHOD(Entity, SetName), asCALL_THISCALL);
+	engine->RegisterObjectMethod("Entity", "bool get_IsAlive() const property",
+		asMETHOD(Entity, IsAlive), asCALL_THISCALL);
+	engine->RegisterObjectMethod("Entity", "bool get_IsValid() const property",
+		asMETHOD(Entity, IsValid), asCALL_THISCALL);
+	engine->RegisterObjectMethod("Entity", "void Kill()",
+		asMETHOD(Entity, Kill), asCALL_THISCALL);
+}
+
+// static HitInfo PhysicsRaycastScreen(uint32_t x, uint32_t y, PhysicsSystem* sys) {
+
+// 	return HitInfo();
+// }
+
+// static HitInfo PhysicsRaycast(const Vec3& start, const Vec3& dir, PhysicsSystem* sys) {
+
+// 	return HitInfo();
+// }
+
+void RegisterScene() {
+	auto* engine = ScriptEngine::Get();
+
 	engine->RegisterObjectType("CameraComponent", 0, asOBJ_REF | asOBJ_NOCOUNT);
 	engine->RegisterObjectMethod("CameraComponent",
 		"Vec3 get_Position() const property", asFUNCTION(GetCameraPosition),
@@ -823,20 +856,6 @@ void RegisterECS() {
 		asFUNCTION(SetParticleEmitterMaxParticles), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectProperty("ParticleEmitterComponent", "Vec3 Position",
 		asOFFSET(ParticleEmitterComponent, Position));
-
-	engine->RegisterObjectType("Entity", sizeof(Entity),
-		asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_ALLINTS |
-		asGetTypeTraits<Entity>());
-	engine->RegisterObjectMethod("Entity", "string get_Name() const property",
-		asMETHOD(Entity, GetName), asCALL_THISCALL);
-	engine->RegisterObjectMethod("Entity", "void set_Name(const string &in) property",
-		asMETHOD(Entity, SetName), asCALL_THISCALL);
-	engine->RegisterObjectMethod("Entity", "bool get_IsAlive() const property",
-		asMETHOD(Entity, IsAlive), asCALL_THISCALL);
-	engine->RegisterObjectMethod("Entity", "bool get_IsValid() const property",
-		asMETHOD(Entity, IsValid), asCALL_THISCALL);
-	engine->RegisterObjectMethod("Entity", "void Kill()",
-		asMETHOD(Entity, Kill), asCALL_THISCALL);
 
 	engine->RegisterObjectMethod("Entity", "bool HasCameraComponent() const",
 		asMETHODPR(Entity, Has<CameraComponent>, () const, bool),
@@ -985,20 +1004,6 @@ void RegisterECS() {
 	engine->RegisterObjectMethod("Entity",
 		"ParticleEmitterComponent@ SetParticleEmitterComponent()",
 		asFUNCTION(SetParticleEmitterComponent), asCALL_CDECL_OBJLAST);
-}
-
-// static HitInfo PhysicsRaycastScreen(uint32_t x, uint32_t y, PhysicsSystem* sys) {
-
-// 	return HitInfo();
-// }
-
-// static HitInfo PhysicsRaycast(const Vec3& start, const Vec3& dir, PhysicsSystem* sys) {
-
-// 	return HitInfo();
-// }
-
-void RegisterScene() {
-	auto* engine = ScriptEngine::Get();
 
 	// engine->RegisterObjectType("HitInfo", sizeof(Physics::HitInfo),
 	// 	asOBJ_VALUE | asGetTypeTraits<Physics::HitInfo>());
@@ -1045,7 +1050,7 @@ void RegisterScene() {
 void RegisterUI() {
 	auto* engine = ScriptEngine::Get();
 
-	engine->RegisterObjectType("UIElement", 0, asOBJ_REF | asOBJ_NOCOUNT);
+	engine->RegisterObjectType("CanvasClass", 0, asOBJ_REF | asOBJ_NOCOUNT);
 
 }
 

@@ -198,6 +198,11 @@ void EditorAssetManager::Build(Asset asset) {
 		return;
 
 	auto path = GetPath(asset.ID);
+	Log::Info("Building {} : {} : {}",
+			  (u64)asset.ID,
+			  AssetTypeToString(asset.Type),
+			  path);
+
 	if(asset.Type == AssetType::Mesh) {
 		List<SubMesh> meshes;
 		List<MaterialPaths> materials;
@@ -233,15 +238,15 @@ void EditorAssetManager::Build(Asset asset) {
 		m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
 	}
 	else if(asset.Type == AssetType::Texture) {
-		// ImageData image = AssetImporter::GetImageData(path, false);
+		ImageData image = AssetImporter::GetImageData(path, false);
 
-		// BytesWriter wr(image.Width * image.Height * image.BPP);
-		// wr.Write(image.Width);
-		// wr.Write(image.Height);
-		// wr.Write(image.BPP);
-		// wr.Write(image.Data);
+		BytesWriter wr(sizeof(u32) * 3 + image.Data.GetSize());
+		wr.Write(image.Width);
+		wr.Write(image.Height);
+		wr.Write(image.BPP);
+		wr.Write(image.Data);
 
-		// m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
+		m_AssetRegistry->SetData(asset, wr.Bytes.Copy());
 	}
 	else if(asset.Type == AssetType::Cubemap) {
 		for(auto& ref : m_AssetRegistry->GetRefs(asset))
