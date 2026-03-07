@@ -44,7 +44,14 @@ static TabType s_TabType = TabType::None;
 static EditorMode s_EditorMode = EditorMode::Edit;
 
 void Editor::Init(const CommandLineArgs& args) {
-	Log::Init();
+	if(args["--embed_window"]) {
+		Log::Init(true);
+		Str handle = args["--embed_window"];
+		EmbedWindow(handle.c_str());
+	}
+	else
+		Log::Init(false);
+
 	Renderer::Init();
 	ScriptEngine::Init();
 	ScriptGlue::RegisterInterface();
@@ -55,17 +62,19 @@ void Editor::Init(const CommandLineArgs& args) {
 	s_App = CreateRef<App>();
 
 	if(args["--open_project"]) {
-		std::string path = args["--open_project"];
+		Str path = args["--open_project"];
 		Editor::OpenProject(path);
 	}
 	if(args["--new_project"]) {
-		std::string path = args["--new_project"];
+		Str path = args["--new_project"];
 		Editor::NewProject(path);
 	}
 	if(args["--open_scene"]) {
-		std::string name = args["--open_scene"];
+		Str name = args["--open_scene"];
 		Editor::OpenScene(name);
 	}
+
+	// s_App->CreateSceneRenderer();
 }
 
 void Editor::Close() {
@@ -93,17 +102,19 @@ void Editor::Render() {
 	if(s_TabType == TabType::Scene) {
 		if(s_EditorMode == EditorMode::Edit)
 			s_CurrentScene->OnRender(*s_EditorSceneRenderer);
+		else if(s_EditorMode == EditorMode::Play)
+			s_CurrentScene->OnRender(*s_App->GetSceneRenderer());
 	}
 
 	Renderer::EndFrame();
 }
 
-void Editor::OpenProject(const std::string& path) {
+void Editor::OpenProject(const Str& path) {
 	Application::PushDir(path);
 	s_AssetManager->LoadRegistry();
 }
 
-void Editor::NewProject(const std::string& path) {
+void Editor::NewProject(const Str& path) {
 
 }
 
@@ -111,29 +122,29 @@ void Editor::SaveProject() {
 
 }
 
-void Editor::NewScene(const std::string& path) {
+void Editor::NewScene(const Str& path) {
 
 }
 
-void Editor::OpenScene(const std::string& name) {
+void Editor::OpenScene(const Str& name) {
 	s_CurrentScene = CreateRef<Scene>(name);
 	SceneLoader::EditorLoad(*s_CurrentScene, "App/Scene/" + name + ".scene");
 	s_TabType = TabType::Scene;
 }
 
-void Editor::SaveScene(const std::string& name) {
+void Editor::SaveScene(const Str& name) {
 
 }
 
-void Editor::NewCanvas(const std::string& name) {
+void Editor::NewCanvas(const Str& name) {
 
 }
 
-void Editor::OpenCanvas(const std::string& name) {
+void Editor::OpenCanvas(const Str& name) {
 
 }
 
-void Editor::SaveCanvas(const std::string& name) {
+void Editor::SaveCanvas(const Str& name) {
 
 }
 

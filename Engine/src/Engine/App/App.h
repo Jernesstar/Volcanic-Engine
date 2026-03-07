@@ -58,6 +58,7 @@ public:
 	void SetProject(const Project& project) { m_Project = project; }
 	Project& GetProject() { return m_Project; }
 
+	void CreateSceneRenderer();
 	Ref<RuntimeSceneRenderer> GetSceneRenderer() { return m_SceneRenderer; }
 
 private:

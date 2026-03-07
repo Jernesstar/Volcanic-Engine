@@ -106,6 +106,14 @@ bool EmbedWindow(const char* handleStr) {
 	s_Data = new WindowData();
 	s_Data->renderWindow = appWindow->GetNativeWindow();
 
+	if (!s_Data->renderWindow) {
+		VolcaniCore::Log::Info("Failed to get GLFW window handle");
+		return false;
+	}
+
+	VolcaniCore::Log::Info("Embedding window: {0}", windowID);
+	// return false;
+
 #if defined(VOLCANIC_X11)
 	s_Data->parentWindow = static_cast<Window>(windowID);
 	s_Data->x11Display = glfwGetX11Display();
@@ -149,6 +157,7 @@ bool EmbedWindow(const char* handleStr) {
 	};
 	wl_registry_add_listener(registry, &registry_listener, s_Data);
 	wl_display_roundtrip(s_Data->waylandDisplay);
+	VolcaniCore::Log::Info("Added registry listener");
 
 	if(!s_Data->compositor || !s_Data->subcompositor) {
 		VolcaniCore::Log::Info("Failed to get required Wayland protocols");

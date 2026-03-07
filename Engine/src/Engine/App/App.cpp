@@ -56,7 +56,7 @@ struct RuntimeScreen {
 		App::Get()->GetSceneRenderer()->OnSceneClose();
 		World->UnregisterSystems();
 		World.reset();
-		// UI.Clear();
+		UI.reset();
 	}
 };
 
@@ -157,9 +157,11 @@ App::App() {
 		asFUNCTION(GetAssetManagerInstance), asCALL_CDECL);
 }
 
-void App::OnLoad() {
+void App::CreateSceneRenderer() {
 	m_SceneRenderer = CreateRef<RuntimeSceneRenderer>();
+}
 
+void App::OnLoad() {
 	s_AppModule = CreateRef<ScriptModule>();
 	AppLoad(s_AppModule);
 
