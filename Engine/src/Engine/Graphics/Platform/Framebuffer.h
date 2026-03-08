@@ -27,6 +27,7 @@ public:
 
 struct FramebufferSpec {
 	List<AttachmentSpec> Attachments;
+	bool EnableRead = false;
 };
 
 class Framebuffer : public Derivable<Framebuffer> {
@@ -41,6 +42,7 @@ public:
 	virtual bool Has(AttachmentTarget target) const = 0;
 	virtual void Attach(AttachmentTarget target, u32 idx, u32 dst) = 0;
 	virtual Ref<Attachment> Get(AttachmentTarget target, u32 idx = 0) const = 0;
+	virtual Buffer<u8> GetPixels() = 0;
 };
 
 }

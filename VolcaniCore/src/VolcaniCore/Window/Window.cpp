@@ -39,6 +39,9 @@ static GLFWwindow* CreateWindow(WindowSpecification& spec) {
 		glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
 	}
 
+	if(spec.Hidden)
+		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+
 	GLFWwindow* window =
 		glfwCreateWindow(spec.Width, spec.Height, spec.Title.c_str(),
 						 monitor, nullptr);

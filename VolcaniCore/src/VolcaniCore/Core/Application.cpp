@@ -25,7 +25,7 @@ Application* Application::Get() {
 }
 
 Application::Application(const AppSpecification& spec,
-						const WindowSpecification& windowSpec)
+						 const WindowSpecification& windowSpec)
 {
 	s_Instance = this;
 	s_Spec = spec;

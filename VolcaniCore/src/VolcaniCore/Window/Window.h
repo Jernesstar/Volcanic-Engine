@@ -10,7 +10,7 @@
 namespace VolcaniCore {
 
 struct WindowSpecification {
-	std::string Title;
+	std::string Title = "";
 	u32 Width = 800;
 	u32 Height = 600;
 	u32 TickRate = 0;
@@ -21,6 +21,7 @@ struct WindowSpecification {
 	bool Maximized = false;
 	bool Minimized = false;
 	bool Embedded = false;
+	bool Hidden = false;
 };
 
 struct Icon {

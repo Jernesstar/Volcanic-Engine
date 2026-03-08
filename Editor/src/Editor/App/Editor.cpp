@@ -20,6 +20,7 @@
 #include "../Asset/AssetManager.h"
 
 #include "SceneLoader.h"
+#include "Embed.h"
 
 using namespace VolcaniCore;
 using namespace VolcanicEngine;
@@ -44,13 +45,8 @@ static TabType s_TabType = TabType::None;
 static EditorMode s_EditorMode = EditorMode::Edit;
 
 void Editor::Init(const CommandLineArgs& args) {
-	if(args["--embed_window"]) {
-		Log::Init(true);
-		Str handle = args["--embed_window"];
-		EmbedWindow(handle.c_str());
-	}
-	else
-		Log::Init(false);
+	Log::Init(bool(args["--embedded"]));
+	Log::Info("Testing");
 
 	Renderer::Init();
 	ScriptEngine::Init();
@@ -75,9 +71,14 @@ void Editor::Init(const CommandLineArgs& args) {
 	}
 
 	// s_App->CreateSceneRenderer();
+	if(args["--embedded"])
+		Embed::Init();
 }
 
 void Editor::Close() {
+	if(Embed::IsActive())
+		Embed::Close();
+	
 	s_CurrentScene.reset();
 	s_CurrentCanvas.reset();
 
@@ -99,14 +100,22 @@ void Editor::Update(TimeStep ts) {
 void Editor::Render() {
 	Renderer::BeginFrame();
 
+	Ref<SceneRenderer> renderer;
 	if(s_TabType == TabType::Scene) {
 		if(s_EditorMode == EditorMode::Edit)
-			s_CurrentScene->OnRender(*s_EditorSceneRenderer);
+			renderer = s_EditorSceneRenderer;
 		else if(s_EditorMode == EditorMode::Play)
-			s_CurrentScene->OnRender(*s_App->GetSceneRenderer());
+			renderer = s_App->GetSceneRenderer();
+
+		s_CurrentScene->OnRender(*renderer);
 	}
 
 	Renderer::EndFrame();
+
+	if(Embed::IsActive()) {
+		Buffer<u8> data = renderer->GetOutput()->GetPixels();
+		Embed::SendFrame(std::move(data));
+	}
 }
 
 void Editor::OpenProject(const Str& path) {

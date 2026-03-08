@@ -129,6 +129,18 @@ public:
 			glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE,
 			"[OpenGL]: Framebuffer is not complete!");
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		auto att = GetAttachment(Graphics::AttachmentTarget::Color, 0);
+		if(spec.EnableRead) {
+			glGenBuffers(2, m_PixelBuffers);
+			for(int i = 0; i < 2; i++) {
+				glBindBuffer(GL_PIXEL_PACK_BUFFER, m_PixelBuffers[i]);
+				glBufferData(GL_PIXEL_PACK_BUFFER,
+							 att->GetWidth() * att->GetHeight() * 4,
+							 nullptr, GL_STREAM_READ);
+			}
+			glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+		}
 	}
 
 	~Framebuffer() {
@@ -172,6 +184,36 @@ public:
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
+	Buffer<u8> GetPixels() override {
+		auto att = GetAttachment(Graphics::AttachmentTarget::Color, 0);
+		auto width = att->GetWidth();
+		auto height = att->GetHeight();
+		int size = width * height * 4;
+		int readIndex  =  m_PixelIndex;
+		int writeIndex = !m_PixelIndex;
+
+		// Kick off async readback into writeIndex PBO
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_BufferID);
+		glBindBuffer(GL_PIXEL_PACK_BUFFER, m_PixelBuffers[writeIndex]);
+		glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
+		// Map readIndex PBO — GPU finished this one last frame
+		glBindBuffer(GL_PIXEL_PACK_BUFFER, m_PixelBuffers[readIndex]);
+		auto* ptr = (u8*)glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+
+		Buffer<u8> buf;
+		if(ptr) {
+			buf.Add(ptr, size);
+			glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+		}
+
+		glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+		m_PixelIndex = writeIndex;
+
+		return buf;
+	}
+
 	Ref<Graphics::Attachment> Get(Graphics::AttachmentTarget t, u32 idx = 0) const override {
 		return GetAttachment(t, idx);
 	}
@@ -189,6 +231,8 @@ public:
 private:
 	List<Ref<Attachment>> m_Attachments;
 	u32 m_BufferID;
+	u32 m_PixelBuffers[2];
+	u32 m_PixelIndex = 0;
 };
 
 }
