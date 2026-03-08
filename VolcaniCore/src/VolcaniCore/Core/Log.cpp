@@ -11,6 +11,7 @@ void Log::Init(bool file) {
 	if(file) {
 		auto path = Application::GetLibraryDir() + "/logs/VolcanicEngine.txt";
 		auto logger = spdlog::basic_logger_mt("basic_logger", path);
+		logger->flush_on(spdlog::level::info); 
 		spdlog::set_default_logger(logger);
 	}
 	else {

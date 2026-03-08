@@ -45,9 +45,7 @@ static TabType s_TabType = TabType::None;
 static EditorMode s_EditorMode = EditorMode::Edit;
 
 void Editor::Init(const CommandLineArgs& args) {
-	Log::Init(bool(args["--embedded"]));
-	Log::Info("Testing");
-
+	Log::Init(args.Has("--embedded"));
 	Renderer::Init();
 	ScriptEngine::Init();
 	ScriptGlue::RegisterInterface();
@@ -71,14 +69,16 @@ void Editor::Init(const CommandLineArgs& args) {
 	}
 
 	// s_App->CreateSceneRenderer();
-	if(args["--embedded"])
+
+	if(args.Has("--embedded"))
 		Embed::Init();
+
 }
 
 void Editor::Close() {
 	if(Embed::IsActive())
 		Embed::Close();
-	
+
 	s_CurrentScene.reset();
 	s_CurrentCanvas.reset();
 
@@ -111,7 +111,6 @@ void Editor::Render() {
 	}
 
 	Renderer::EndFrame();
-
 	if(Embed::IsActive()) {
 		Buffer<u8> data = renderer->GetOutput()->GetPixels();
 		Embed::SendFrame(std::move(data));

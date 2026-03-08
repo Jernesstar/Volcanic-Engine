@@ -6,7 +6,7 @@ namespace VolcanicEditor {
 
 EditorApp::EditorApp(const CommandLineArgs& args)
 	: Application({ "Editor" },
-		{ .Width = 1280, .Height = 720, .Hidden = bool(args["--embedded"]) }
+		{ .Width = 1280, .Height = 720, .Hidden = args.Has("--embedded") }
 	)
 {
 	Editor::Init(args);

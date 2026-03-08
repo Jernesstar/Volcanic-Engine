@@ -4,13 +4,15 @@
 #include <string>
 
 #ifdef _WIN32
-#  define WIN32_LEAN_AND_MEAN
-#  include <windows.h>
+	#define WIN32_LEAN_AND_MEAN
+	#include <windows.h>
 #else
-#  include <fcntl.h>
-#  include <sys/stat.h>
-#  include <unistd.h>
+	#include <fcntl.h>
+	#include <sys/stat.h>
+	#include <unistd.h>
 #endif
+
+#include <VolcaniCore/Core/Log.h>
 
 #ifdef _WIN32
   static HANDLE s_FramePipe = INVALID_HANDLE_VALUE;
@@ -23,10 +25,12 @@
 static void WriteFrame(const u8* data, u32 size);
 static void InputLoop();
 
-static std::atomic<bool> s_Running = true;
+static std::atomic<bool> s_Running = false;
 static std::thread s_InputThread;
 
 void Embed::Init() {
+	VolcaniCore::Log::Info("Embedding...");
+
 #ifdef _WIN32
 	s_FramePipe = CreateNamedPipeA(
 		"\\\\.\\pipe\\volcanic_frames",
@@ -34,8 +38,10 @@ void Embed::Init() {
 		PIPE_TYPE_BYTE | PIPE_WAIT,
 		1, FRAME_W * FRAME_H * 4 + 4, 0, 0, nullptr
 	);
-	if(s_FramePipe == INVALID_HANDLE_VALUE)
-		throw std::runtime_error("CreateNamedPipe (frames) failed");
+	if(s_FramePipe == INVALID_HANDLE_VALUE) {
+		VolcaniCore::Log::Error("CreateNamedPipe (frames) failed");
+		return;
+	}
 
 	s_InputPipe = CreateNamedPipeA(
 		"\\\\.\\pipe\\volcanic_input",
@@ -43,26 +49,37 @@ void Embed::Init() {
 		PIPE_TYPE_BYTE | PIPE_WAIT,
 		1, 0, 4096, 0, nullptr
 	);
-	if(s_InputPipe == INVALID_HANDLE_VALUE)
-		throw std::runtime_error("CreateNamedPipe (input) failed");
+	if(s_InputPipe == INVALID_HANDLE_VALUE) {
+		VolcaniCore::Log::Error("CreateNamedPipe (input) failed");
+		return;
+	}
 
+	VolcaniCore::Log::Info("Waiting for connection...");
 	ConnectNamedPipe(s_FramePipe, nullptr);
 	ConnectNamedPipe(s_InputPipe, nullptr);
+
 #else
 	auto MakeFifo = [](const char* path) { mkfifo(path, 0666); };
 	MakeFifo("/tmp/volcanic_frames");
 	MakeFifo("/tmp/volcanic_input");
 
+	VolcaniCore::Log::Info("Waiting for connection...");
 	s_FrameFd = open("/tmp/volcanic_frames", O_WRONLY);
-	if(s_FrameFd < 0)
-		throw std::runtime_error("open volcanic_frames failed");
+	if(s_FrameFd < 0) {
+		VolcaniCore::Log::Error("open volcanic_frames failed");
+		return;
+	}
 
 	s_InputFd = open("/tmp/volcanic_input", O_RDONLY);
-	if(s_InputFd < 0)
-		throw std::runtime_error("open volcanic_input failed");
+	if(s_InputFd < 0) {
+		VolcaniCore::Log::Error("open volcanic_input failed");
+		return;
+	}
 #endif
 
+	s_Running = true;
 	s_InputThread = std::thread(InputLoop);
+	VolcaniCore::Log::Info("Pipes created successfully");
 }
 
 void Embed::Close() {
@@ -100,7 +117,7 @@ void WriteFrame(const u8* data, u32 size) {
 
 void InputLoop() {
 	while(s_Running) {
-		uint32_t len = 0;
+		u32 len = 0;
 
 #ifdef _WIN32
 		DWORD bytesRead;
@@ -123,6 +140,7 @@ void InputLoop() {
 			break;
 #endif
 
-		Embed::OnEvent(json);
+		// VolcaniCore::Log::Info("Input data {}", json);
+		// Embed::OnEvent(json);
 	}
 }
