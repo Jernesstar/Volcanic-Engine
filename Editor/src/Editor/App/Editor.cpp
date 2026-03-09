@@ -123,13 +123,13 @@ void Editor::Init(const CommandLineArgs& args) {
 			};
 
 		Embed::Init();
-	}
 
-	Events::RegisterListener<MouseMovedEvent>(
-		[](MouseMovedEvent& event)
-		{
-			Log::Info("{}, {}", event.x, event.y);
-		});
+		Events::RegisterListener<MouseMovedEvent>(
+			[](MouseMovedEvent& event)
+			{
+				Log::Info("{}, {}", event.x, event.y);
+			});
+	}
 }
 
 void Editor::Close() {
@@ -166,15 +166,15 @@ void Editor::Render() {
 
 		s_CurrentScene->OnRender(*renderer);
 	}
-
+	
 	if(Embed::IsActive() && renderer) {
 		Renderer::EndFrame();
 		Buffer<u8> data = renderer->GetOutput()->GetPixels();
 		Embed::SendFrame(std::move(data));
 		return;
 	}
-	else
-		Renderer2D::DrawFullscreenQuad(renderer->GetOutput());
+	// else
+	// 	Renderer2D::DrawFullscreenQuad(renderer->GetOutput());
 
 	Renderer::EndFrame();
 }

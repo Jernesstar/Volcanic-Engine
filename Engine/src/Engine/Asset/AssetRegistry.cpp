@@ -7,10 +7,11 @@
 namespace VolcanicEngine {
 
 AssetRegistry::AssetRegistry() {
-	m_Registry = new Registry(".volc/asset_registry", 5);
+	m_Registry = new Registry(".volc/asset_registry", 4);
 	m_AssetMetadata = m_Registry->NewDatabase("AssetMetadata");
 	m_AssetRefs = m_Registry->NewDatabase("AssetRefs", true);
 	m_AssetNames = m_Registry->NewDatabase("AssetNames");
+	m_AssetNamesReverse = m_Registry->NewDatabase("AssetNamesReverse");
 }
 
 AssetRegistry::~AssetRegistry() {
@@ -57,7 +58,7 @@ bool AssetRegistry::HasRefs(Asset asset) const {
 
 void AssetRegistry::AddRef(Asset base, Asset ref) {
 	u64 refID = (u64)ref.ID;
-	Bytes bytes = { (u8*)&refID, sizeof(Asset), 0, false };
+	Bytes bytes = { (u8*)&refID, sizeof(u64), 0, false };
 	Log::Info("Adding ref {0} to {1}", (u64)refID, (u64)base.ID);
 	m_AssetRefs->Insert((u64)base.ID, std::move(bytes));
 }
@@ -77,10 +78,14 @@ List<Asset> AssetRegistry::GetRefs(Asset asset) const {
 void AssetRegistry::NameAsset(Asset asset, const std::string& name) {
 	Bytes bytes = { (u8*)name.c_str(), name.size(), 0, false };
 	m_AssetNames->Insert((u64)asset.ID, std::move(bytes));
+	Bytes bytes2 = { (u8*)&asset.ID, sizeof(u64), 0, false };
+	m_AssetNamesReverse->Insert(name, std::move(bytes2));
 }
 
 void AssetRegistry::RemoveName(Asset asset) {
+	std::string name = GetAssetName(asset);
 	m_AssetNames->Remove((u64)asset.ID);
+	m_AssetNamesReverse->Remove(name);
 }
 
 std::string AssetRegistry::GetAssetName(Asset asset) const {

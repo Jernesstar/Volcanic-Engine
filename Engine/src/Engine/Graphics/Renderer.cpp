@@ -93,8 +93,10 @@ void Renderer::Clear() {
 		command->ClearColor = { 1.0f, 0.0f, 0.0f, 1.0f };
 		Renderer::Flush();
 	}
-	else
+	else {
 		GetCommand()->Clear = true;
+		GetCommand()->ClearColor = { 1.0f, 0.0f, 1.0f, 1.0f };
+	}
 }
 
 void Renderer::Resize(uint32_t width, uint32_t height) {

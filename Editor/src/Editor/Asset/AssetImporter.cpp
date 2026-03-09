@@ -237,8 +237,8 @@ VolcanicEditor::ShaderFile TryGetShader(const std::string& path) {
 	std::size_t dot = path.find_first_of('.');
 	if(dot == std::string::npos)
 		VOLCANICORE_ASSERT_ARGS(false,
-			"%s is an incorrectly formatted file name. Accepted formats: \
-			example.glsl.vert, example.vert.glsl, example.vert", path.c_str());
+			"{} is an incorrectly formatted file name. Accepted formats: \
+			example.glsl.vert, example.vert.glsl, example.vert", path);
 
 	std::string str = path.substr(dot);
 	if(StringContains(str, "vert") || StringContains(str, "vs"))
@@ -250,8 +250,7 @@ VolcanicEditor::ShaderFile TryGetShader(const std::string& path) {
 	if(StringContains(str, "comp") || StringContains(str, "compute"))
 		return ShaderFile{ path, ShaderFileType::Compute };
 
-	VOLCANICORE_ASSERT_ARGS(false, "File %s is of unknown shader type",
-							path.c_str());
+	VOLCANICORE_ASSERT_ARGS(false, "File {} is of unknown shader type", path);
 	return ShaderFile{ "", ShaderFileType::Unknown };
 }
 

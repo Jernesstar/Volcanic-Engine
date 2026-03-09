@@ -43,7 +43,7 @@ public:
 				glCompileShader(shaderID);
 			}
 			else if(shader.DataType == Graphics::ShaderDataType::Binary) {
-				// Expects u8, so here we use Count = GetMaxSize = GetMaxCount * 4
+				// Expects u8, so here we set Count == GetMaxSize = GetMaxCount * 4
 				glShaderBinary(1, &shaderID, GL_SHADER_BINARY_FORMAT_SPIR_V,
 					shader.Data.Get(), (GLsizei)shader.Data.GetMaxSize());
 				glSpecializeShader(shaderID, "main", 0, nullptr, nullptr);

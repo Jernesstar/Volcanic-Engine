@@ -25,7 +25,8 @@ void Database::Insert(DatabaseKey&& key, Bytes&& value) {
 	mdbValue.mv_size = value.GetSize();
 	mdbValue.mv_data = (void*)value.Get();
 
-	int rc = mdb_put(txn, m_Handle, &mdbKey, &mdbValue, MultiValue);
+	int rc = mdb_put(txn, m_Handle, &mdbKey, &mdbValue,
+					 MultiValue * MDB_NODUPDATA);
 	if(rc != 0) {
 		mdb_txn_abort(txn);
 		Log::Info("Failed to insert data!");

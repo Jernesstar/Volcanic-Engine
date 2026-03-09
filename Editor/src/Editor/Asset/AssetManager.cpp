@@ -263,7 +263,7 @@ void EditorAssetManager::Build(Asset asset) {
 
 		for(auto& ref : refs) {
 			auto shaderPath = GetPath(ref.ID);
-			ShaderFile file = AssetImporter::GetShaderFileData(path);
+			ShaderFile file = AssetImporter::GetShaderFileData(shaderPath);
 			BytesWriter wr(sizeof(u32) + file.Data.GetSize());
 			wr.Write((u32)file.FileType);
 			wr.Write(file.Data);
@@ -411,18 +411,19 @@ void EditorAssetManager::LoadRegistry() {
 		i++;
 	}
 
-	auto libPath = Application::GetLibraryDir();
-	Asset asset = Add(AssetType::Shader, 10, true);
-	Asset ref1 =
-		Add(AssetType::Shader, 11, false,
-			libPath + "/Editor/assets/Shaders/Framebuffer.glsl.vert");
-	Asset ref2 =
-		Add(AssetType::Shader, 12, false,
-			libPath + "/Editor/assets/Shaders/Framebuffer.glsl.frag");
+	// auto libPath = Application::GetLibraryDir();
+	// Asset asset = Add(AssetType::Shader, 10, true);
+	// m_AssetRegistry->NameAsset(asset, "FullscreenQuad");
+	// Asset ref1 =
+	// 	Add(AssetType::Shader, 11, false,
+	// 		libPath + "/Editor/assets/Shaders/Framebuffer.glsl.vert");
+	// Asset ref2 =
+	// 	Add(AssetType::Shader, 12, false,
+	// 		libPath + "/Editor/assets/Shaders/Framebuffer.glsl.frag");
 
-	m_AssetRegistry->AddRef(asset, ref1);
-	m_AssetRegistry->AddRef(asset, ref2);
-	Build(asset);
+	// m_AssetRegistry->AddRef(asset, ref1);
+	// m_AssetRegistry->AddRef(asset, ref2);
+	// Build(asset);
 }
 
 void EditorAssetManager::Save() {
