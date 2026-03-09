@@ -4,8 +4,9 @@
 #include <VolcaniCore/Core/Assert.h>
 
 #include "Platform/RendererAPI.h"
+#include "Renderer.h"
 
-#include "Graphics/Renderer.h"
+#include <Asset/AssetManager.h>
 
 using namespace VolcaniCore;
 
@@ -107,24 +108,24 @@ void Renderer2D::DrawFullscreenQuad(Ref<Framebuffer> buffer,
 	if(Renderer::GetPass())
 		command = Renderer::NewCommand(true);
 	else {
-		// auto pipeline = ShaderLibrary::Get("Framebuffer");
-		// auto* pass = RendererAPI::Get()->NewDrawPass(s_ScreenBuffer, pipeline);
-		// command = RendererAPI::Get()->NewDrawCommand(pass);
+		auto* pass = RendererAPI::Get()->NewPass(s_ScreenBuffer);
+		pass->Pipeline = AssetManager::Get()->Get<Shader>("FullscreenQuad");
+		command = RendererAPI::Get()->NewCommand(pass);
 	}
 
-	// auto window = Application::GetWindow();
-	// command->ViewportW = window->GetWidth();
-	// command->ViewportH = window->GetHeight();
-	// command->DepthTest = DepthTestingMode::Off;
-	// command->Culling = CullingMode::Off;
-	// command->Blending = BlendingMode::Greatest;
-	// command->UniformData
-	// .SetInput("u_ScreenTexture", TextureSlot{ buffer->Get(target), 0 });
+	auto window = Application::GetWindow();
+	command->ViewportW = window->GetWidth();
+	command->ViewportH = window->GetHeight();
+	command->DepthTesting = DepthTestingMode::Off;
+	command->Blending = BlendingMode::Greatest;
+	command->Culling = CullingMode::Off;
+	command->Uniforms
+	.Set("u_ScreenTexture", AttachmentSlot{ buffer->Get(target), 0 });
 
-	// auto& call = command->NewDrawCall();
-	// call.VertexCount = 6;
-	// call.Primitive = PrimitiveType::Triangle;
-	// call.Partition = PartitionType::Single;
+	auto* call = command->NewCall();
+	call->VertexCount = 6;
+	call->Primitive = DrawPrimitive::Triangle;
+	call->Partition = DrawPartition::Single;
 }
 
 }

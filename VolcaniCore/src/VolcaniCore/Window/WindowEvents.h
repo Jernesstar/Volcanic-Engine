@@ -11,17 +11,17 @@ protected:
 };
 
 struct WindowResizedEvent : public WindowEvent {
-	const int Width, Height;
+	const u32 Width, Height;
 
-	WindowResizedEvent(int width, int height)
+	WindowResizedEvent(u32 width, u32 height)
 		: WindowEvent(EventType::WindowResized),
 			Width(width), Height(height) { }
 };
 
 struct WindowMovedEvent : public WindowEvent {
-	const int x, y;
+	const u32 x, y;
 
-	WindowMovedEvent(int x, int y)
+	WindowMovedEvent(u32 x, u32 y)
 		: WindowEvent(EventType::WindowMoved), x(x), y(y) { }
 };
 

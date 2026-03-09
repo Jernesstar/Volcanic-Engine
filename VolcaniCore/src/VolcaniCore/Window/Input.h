@@ -20,11 +20,11 @@ public:
 
 	static bool MouseButtonPressed(Mouse mouse_button);
 
-	static void SetMousePosition(float x, float y);
+	static void SetMousePosition(f64 x, f64 y);
 
-	static glm::vec2 GetMousePosition();
-	static float GetMouseX();
-	static float GetMouseY();
+	static glm::dvec2 GetMousePosition();
+	static f64 GetMouseX();
+	static f64 GetMouseY();
 
 private:
 	Input() = delete;

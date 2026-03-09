@@ -41,12 +41,12 @@ void Events::Init() {
 	glfwSetWindowCloseCallback(window, WindowClosedCallback);
 }
 
-void Events::ErrorCallback(int error, const char* description) {
+void Events::ErrorCallback(i32 error, const char* description) {
 	// VOLCANICORE_ASSERT(false, description);
 }
 
-void Events::KeyCallback(GLFWwindow* window, int key, int scancode,
-						 int action, int mods)
+void Events::KeyCallback(GLFWwindow* window, i32 key, i32 scancode,
+						 i32 action, i32 mods)
 {
 	if(action == GLFW_PRESS) {
 		KeyPressedEvent event((KeyCode)key);
@@ -62,25 +62,25 @@ void Events::KeyCallback(GLFWwindow* window, int key, int scancode,
 	}
 }
 
-void Events::KeyCharCallback(GLFWwindow* window, uint32_t codepoint) {
+void Events::KeyCharCallback(GLFWwindow* window, u32 codepoint) {
 	KeyCharEvent event((KeyCode)codepoint, (char)codepoint);
 	Dispatch(event);
 }
 
-void Events::MouseMovedCallback(GLFWwindow* window, double x, double y) {
-	MouseMovedEvent event((float)x, (float)y);
+void Events::MouseMovedCallback(GLFWwindow* window, f64 x, f64 y) {
+	MouseMovedEvent event(x, y);
 	Dispatch(event);
 }
 
 void Events::MouseScrolledCallback(GLFWwindow* window,
-								   double scrollX, double scrollY)
+								   f64 scrollX, f64 scrollY)
 {
-	MouseScrolledEvent event((float)scrollX, (float)scrollY);
+	MouseScrolledEvent event(scrollX, scrollY);
 	Dispatch(event);
 }
 
-void Events::MouseButtonCallback(GLFWwindow* window, int button,
-								 int action, int mods)
+void Events::MouseButtonCallback(GLFWwindow* window, i32 button,
+								 i32 action, i32 mods)
 {
 	if(action == GLFW_PRESS) {
 		MouseButtonPressedEvent event((MouseCode)button,
@@ -94,13 +94,13 @@ void Events::MouseButtonCallback(GLFWwindow* window, int button,
 	}
 }
 
-void Events::WindowResizedCallback(GLFWwindow* window, int width, int height) {
-	WindowResizedEvent event(width, height);
+void Events::WindowResizedCallback(GLFWwindow* window, i32 width, i32 height) {
+	WindowResizedEvent event((u32)width, (u32)height);
 	Dispatch(event);
 }
 
-void Events::WindowMovedCallback(GLFWwindow* window, int x, int y) {
-	WindowMovedEvent event(x, y);
+void Events::WindowMovedCallback(GLFWwindow* window, i32 x, i32 y) {
+	WindowMovedEvent event((u32)x, (u32)y);
 	Dispatch(event);
 }
 

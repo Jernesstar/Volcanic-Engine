@@ -47,6 +47,18 @@ public:
 		GetCallbacks<TEvent>().erase(callbackID);
 	}
 
+	template<typename TEvent>
+	static void Dispatch(TEvent& event) {
+		Callbacks<TEvent>& callbackList = GetCallbacks<TEvent>();
+	
+		for(auto& [_, callback] : callbackList) {
+			if(event.Handled)
+				return;
+
+			callback(event);
+		}
+	}
+
 private:
 	inline static Callbacks<KeyPressedEvent>          KeyPressedEventCallbacks;
 	inline static Callbacks<KeyReleasedEvent>         KeyReleasedEventCallbacks;
@@ -62,29 +74,17 @@ private:
 
 private:
 	template<typename TEvent>
-	static void Dispatch(TEvent& event) {
-		Callbacks<TEvent>& callbackList = GetCallbacks<TEvent>();
-	
-		for(auto& [_, callback] : callbackList) {
-			if(event.Handled)
-				return;
-
-			callback(event);
-		}
-	}
-
-	template<typename TEvent>
 	static Callbacks<TEvent>& GetCallbacks();
 
-	static void ErrorCallback(int error, const char* description);
+	static void ErrorCallback(i32 error, const char* description);
 
-	static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-	static void KeyCharCallback(GLFWwindow* window, uint32_t codepoint);
-	static void MouseMovedCallback(GLFWwindow* window, double x, double y);
-	static void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
-	static void MouseScrolledCallback(GLFWwindow* window, double x_scroll, double y_scroll);
-	static void WindowResizedCallback(GLFWwindow* window, int width, int height);
-	static void WindowMovedCallback(GLFWwindow* window, int x, int y);
+	static void KeyCallback(GLFWwindow* window, i32 key, i32 scancode, i32 action, i32 mods);
+	static void KeyCharCallback(GLFWwindow* window, u32 codepoint);
+	static void MouseMovedCallback(GLFWwindow* window, f64 x, f64 y);
+	static void MouseButtonCallback(GLFWwindow* window, i32 button, i32 action, i32 mods);
+	static void MouseScrolledCallback(GLFWwindow* window, f64 x_scroll, f64 y_scroll);
+	static void WindowResizedCallback(GLFWwindow* window, i32 width, i32 height);
+	static void WindowMovedCallback(GLFWwindow* window, i32 x, i32 y);
 	static void WindowClosedCallback(GLFWwindow* window);
 };
 

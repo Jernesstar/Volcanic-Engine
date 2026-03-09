@@ -125,13 +125,8 @@ public:
 			delete[] atts;
 		}
 
-		VOLCANICORE_ASSERT(
-			glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE,
-			"[OpenGL]: Framebuffer is not complete!");
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-		auto att = GetAttachment(Graphics::AttachmentTarget::Color, 0);
 		if(spec.EnableRead) {
+			auto att = GetAttachment(Graphics::AttachmentTarget::Color, 0);
 			glGenBuffers(2, m_PixelBuffers);
 			for(int i = 0; i < 2; i++) {
 				glBindBuffer(GL_PIXEL_PACK_BUFFER, m_PixelBuffers[i]);
@@ -141,6 +136,11 @@ public:
 			}
 			glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 		}
+
+		VOLCANICORE_ASSERT(
+			glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE,
+			"[OpenGL]: Framebuffer is not complete!");
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	~Framebuffer() {
@@ -201,11 +201,13 @@ public:
 		glBindBuffer(GL_PIXEL_PACK_BUFFER, m_PixelBuffers[readIndex]);
 		auto* ptr = (u8*)glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
 
-		Buffer<u8> buf;
-		if(ptr) {
+		Buffer<u8> buf(size);
+		if(ptr)
 			buf.Add(ptr, size);
-			glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
-		}
+		else
+			Log::Error("Could not retrieve pixel data!");
+
+		glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
 
 		glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);

@@ -6,11 +6,15 @@
 #include <sstream>
 #include <iterator>
 
+#define RAPIDJSON_HAS_STDSTRING 1
+#include <rapidjson/document.h>
+
 #include <VolcaniCore/Core/Application.h>
 #include <VolcaniCore/Window/Events.h>
 
 #include <Engine/App/App.h>
 #include <Engine/Graphics/Renderer.h>
+#include <Engine/Graphics/Renderer2D.h>
 #include <Engine/Script/ScriptGlue.h>
 #include <Engine/Scene/Scene.h>
 #include <Engine/Scene/SceneRenderer.h>
@@ -45,7 +49,8 @@ static TabType s_TabType = TabType::None;
 static EditorMode s_EditorMode = EditorMode::Edit;
 
 void Editor::Init(const CommandLineArgs& args) {
-	Log::Init(args.Has("--embedded"));
+	// Log::Init(args.Has("--embedded"));
+	Log::Init();
 	Renderer::Init();
 	ScriptEngine::Init();
 	ScriptGlue::RegisterInterface();
@@ -70,9 +75,61 @@ void Editor::Init(const CommandLineArgs& args) {
 
 	// s_App->CreateSceneRenderer();
 
-	if(args.Has("--embedded"))
-		Embed::Init();
+	if(args.Has("--embedded")) {
+		Embed::OnEvent =
+			[](const Str& str)
+			{
+				rapidjson::Document document;
+				rapidjson::ParseResult ok = document.Parse(str.c_str());
+				if (!ok) {
+					Log::Error("Parsing error for input data: {}", str);
+					return;
+				}
 
+				Str type = document["type"].Get<Str>();
+				if(type == "mouse_move") {
+					f64 x = document["x"].Get<f64>();
+					f64 y = document["y"].Get<f64>();
+					MouseMovedEvent event(x, y);
+					Events::Dispatch(event);
+				}
+				else if(type == "mouse_click") {
+					f64 x = document["x"].Get<f64>();
+					f64 y = document["y"].Get<f64>();
+					u32 button = document["button"].Get<u32>();
+					MouseButtonPressedEvent event((MouseCode)button, x, y);
+					Events::Dispatch(event);
+				}
+				else if(type == "mouse_up") {
+					f64 x = document["x"].Get<f64>();
+					f64 y = document["y"].Get<f64>();
+					u32 button = document["button"].Get<u32>();
+					MouseButtonPressedEvent event((MouseCode)button, x, y);
+					Events::Dispatch(event);
+				}
+				else if(type == "mouse_down") {
+					f64 x = document["x"].Get<f64>();
+					f64 y = document["y"].Get<f64>();
+					u32 button = document["button"].Get<u32>();
+					MouseButtonReleasedEvent event((MouseCode)button, x, y);
+					Events::Dispatch(event);
+				}
+				else if(type == "mouse_scroll") {
+					f64 dx = document["dx"].Get<f64>();
+					f64 dy = document["dy"].Get<f64>();
+					MouseMovedEvent event(dx, dy);
+					Events::Dispatch(event);
+				}
+			};
+
+		Embed::Init();
+	}
+
+	Events::RegisterListener<MouseMovedEvent>(
+		[](MouseMovedEvent& event)
+		{
+			Log::Info("{}, {}", event.x, event.y);
+		});
 }
 
 void Editor::Close() {
@@ -110,11 +167,16 @@ void Editor::Render() {
 		s_CurrentScene->OnRender(*renderer);
 	}
 
-	Renderer::EndFrame();
-	if(Embed::IsActive()) {
+	if(Embed::IsActive() && renderer) {
+		Renderer::EndFrame();
 		Buffer<u8> data = renderer->GetOutput()->GetPixels();
 		Embed::SendFrame(std::move(data));
+		return;
 	}
+	else
+		Renderer2D::DrawFullscreenQuad(renderer->GetOutput());
+
+	Renderer::EndFrame();
 }
 
 void Editor::OpenProject(const Str& path) {

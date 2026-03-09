@@ -197,12 +197,14 @@ void EditorAssetManager::Build(Asset asset) {
 	if(!asset || IsLoaded(asset))
 		return;
 
-	auto relativePath = GetPath(asset.ID);
-	auto path = fs::canonical(relativePath).string();
+	std::string path = GetPath(asset.ID);
+	if(asset.ID > 100) // Not a native asset
+		path = fs::canonical(path).string();
+
 	Log::Info("Building {} : {} : {}",
 			  (u64)asset.ID,
 			  AssetTypeToString(asset.Type),
-			  relativePath);
+			  path);
 
 	if(asset.Type == AssetType::Mesh) {
 		// List<SubMesh> meshes;
@@ -254,6 +256,9 @@ void EditorAssetManager::Build(Asset asset) {
 			Build(ref);
 	}
 	else if(asset.Type == AssetType::Shader) {
+		if(!asset.Primary)
+			return;
+
 		auto refs = m_AssetRegistry->GetRefs(asset);
 
 		for(auto& ref : refs) {
@@ -405,6 +410,19 @@ void EditorAssetManager::LoadRegistry() {
 		}
 		i++;
 	}
+
+	auto libPath = Application::GetLibraryDir();
+	Asset asset = Add(AssetType::Shader, 10, true);
+	Asset ref1 =
+		Add(AssetType::Shader, 11, false,
+			libPath + "/Editor/assets/Shaders/Framebuffer.glsl.vert");
+	Asset ref2 =
+		Add(AssetType::Shader, 12, false,
+			libPath + "/Editor/assets/Shaders/Framebuffer.glsl.frag");
+
+	m_AssetRegistry->AddRef(asset, ref1);
+	m_AssetRegistry->AddRef(asset, ref2);
+	Build(asset);
 }
 
 void EditorAssetManager::Save() {

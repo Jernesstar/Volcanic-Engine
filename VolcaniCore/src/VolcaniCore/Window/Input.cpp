@@ -42,23 +42,23 @@ bool Input::MouseButtonPressed(Mouse mouse_button) {
 	return state == GLFW_PRESS;
 }
 
-void Input::SetMousePosition(float x, float y) {
+void Input::SetMousePosition(f64 x, f64 y) {
 	auto window =
 		Application::GetWindow()->GetNativeWindow();
 	glfwSetCursorPos(window, x, y);
 }
 
-glm::vec2 Input::GetMousePosition() {
+glm::dvec2 Input::GetMousePosition() {
 	auto window =
 		Application::GetWindow()->GetNativeWindow();
 	double x, y;
 	glfwGetCursorPos(window, &x, &y);
 
-	return { (float)x, (float)y };
+	return { (f64)x, (f64)y };
 }
 
-float Input::GetMouseX() { return GetMousePosition().x; }
-float Input::GetMouseY() { return GetMousePosition().y; }
+f64 Input::GetMouseX() { return GetMousePosition().x; }
+f64 Input::GetMouseY() { return GetMousePosition().y; }
 
 bool Input::KeysPressed(Key key1, Key key2) {
 	return KeyPressed(key1) && KeyPressed(key2);

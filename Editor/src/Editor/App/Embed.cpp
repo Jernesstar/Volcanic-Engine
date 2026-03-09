@@ -122,25 +122,25 @@ void InputLoop() {
 #ifdef _WIN32
 		DWORD bytesRead;
 		if(!ReadFile(s_InputPipe, &len, sizeof(len), &bytesRead, nullptr) || bytesRead != sizeof(len))
-			break;
+			continue;
 #else
 		if(read(s_InputFd, &len, sizeof(len)) != sizeof(len))
-			break;
+			continue;
 #endif
 
 		if(len == 0 || len > 65536)
 			continue;
+
 		std::string json(len, '\0');
 
 #ifdef _WIN32
 		if(!ReadFile(s_InputPipe, json.data(), len, &bytesRead, nullptr))
-			break;
+			continue;
 #else
 		if(read(s_InputFd, json.data(), len) != (ssize_t)len)
-			break;
+			continue;
 #endif
 
-		// VolcaniCore::Log::Info("Input data {}", json);
-		// Embed::OnEvent(json);
+		Embed::OnEvent(json);
 	}
 }

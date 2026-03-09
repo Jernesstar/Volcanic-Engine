@@ -371,3 +371,141 @@
 [2026-03-08 00:49:06.028] [basic_logger] [info] Embedding...
 [2026-03-08 00:49:06.028] [basic_logger] [info] Waiting for connection...
 [2026-03-08 00:52:30.298] [basic_logger] [info] Pipes created successfully
+[2026-03-08 11:34:35.782] [basic_logger] [info] Building 1116263781428243600 : Texture : Asset/Texture/icon.png
+[2026-03-08 11:34:35.809] [basic_logger] [info] Building 1503689015673725745 : Script : Asset/Script/Player.as
+[2026-03-08 11:34:35.816] [basic_logger] [info] Building 1857530080466215936 : Material : Asset/Material/Wall.mat
+[2026-03-08 11:34:35.832] [basic_logger] [info] Building 3853931722673808928 : Mesh : Asset/Mesh/obelisk/obelisk.obj
+[2026-03-08 11:34:35.848] [basic_logger] [info] Building 4784818156094493288 : Script : Asset/Script/Spider.as
+[2026-03-08 11:34:35.860] [basic_logger] [info] Building 4975861332934482515 : Texture : Asset/Texture/gold.png
+[2026-03-08 11:34:35.967] [basic_logger] [info] Building 5530177294566290275 : Audio : Asset/Audio/Main.mp3
+[2026-03-08 11:34:36.153] [basic_logger] [info] Building 5571663067799453258 : Audio : Asset/Audio/MovingLava.mp3
+[2026-03-08 11:34:36.192] [basic_logger] [info] Building 7030241800714550060 : Material : Asset/Material/Path.mat
+[2026-03-08 11:34:36.205] [basic_logger] [info] Building 7126091231916161915 : Material : Asset/Material/Lava.mat
+[2026-03-08 11:34:36.222] [basic_logger] [info] Building 8808176318344075065 : Mesh : Asset/Mesh/torch/torch.obj
+[2026-03-08 11:34:36.235] [basic_logger] [info] Building 9135859329569859042 : Mesh : Asset/Mesh/player/Knight_Golden_Male.obj
+[2026-03-08 11:34:36.252] [basic_logger] [info] Building 9379610506206156467 : Mesh : Asset/Mesh/rocks/rocks.obj
+[2026-03-08 11:34:36.258] [basic_logger] [info] Building 9523074220259771248 : Material : Asset/Material/Start.mat
+[2026-03-08 11:34:36.276] [basic_logger] [info] Building 10492020050375028496 : Material : Asset/Material/Door.mat
+[2026-03-08 11:34:36.294] [basic_logger] [info] Building 10652487024113119011 : Mesh : Asset/Mesh/stairs/stairs.obj
+[2026-03-08 11:34:36.310] [basic_logger] [info] Building 10843416707759182410 : Audio : Asset/Audio/Death.mp3
+[2026-03-08 11:34:36.321] [basic_logger] [info] Building 11133238322135416622 : Texture : Asset/Texture/stone.png
+[2026-03-08 11:34:36.355] [basic_logger] [info] Building 12792039908774318852 : Script : Asset/Script/LevelButton.as
+[2026-03-08 11:34:36.365] [basic_logger] [info] Building 15673016010349369343 : Texture : Asset/Texture/lava.png
+[2026-03-08 11:34:36.409] [basic_logger] [info] Building 15765867760871931416 : Texture : Asset/Texture/border.png
+[2026-03-08 11:34:36.473] [basic_logger] [info] Building 16730603527850583685 : Texture : Asset/Texture/dirt.jpeg
+[2026-03-08 11:34:36.493] [basic_logger] [info] Building 17930437727414257517 : Script : Asset/Script/Level.as
+[2026-03-08 11:34:36.502] [basic_logger] [info] Loaded script class Level
+[2026-03-08 11:34:36.814] [basic_logger] [info] Loaded script class Player
+[2026-03-08 11:34:36.814] [basic_logger] [info] Embedding...
+[2026-03-08 11:34:36.814] [basic_logger] [info] Waiting for connection...
+[2026-03-08 11:34:36.816] [basic_logger] [info] Pipes created successfully
+[2026-03-08 11:38:22.289] [basic_logger] [info] Building 1116263781428243600 : Texture : Asset/Texture/icon.png
+[2026-03-08 11:38:22.301] [basic_logger] [info] Building 1503689015673725745 : Script : Asset/Script/Player.as
+[2026-03-08 11:38:22.307] [basic_logger] [info] Building 1857530080466215936 : Material : Asset/Material/Wall.mat
+[2026-03-08 11:38:22.318] [basic_logger] [info] Building 3853931722673808928 : Mesh : Asset/Mesh/obelisk/obelisk.obj
+[2026-03-08 11:38:22.329] [basic_logger] [info] Building 4784818156094493288 : Script : Asset/Script/Spider.as
+[2026-03-08 11:38:22.334] [basic_logger] [info] Building 4975861332934482515 : Texture : Asset/Texture/gold.png
+[2026-03-08 11:38:22.395] [basic_logger] [info] Building 5530177294566290275 : Audio : Asset/Audio/Main.mp3
+[2026-03-08 11:38:22.543] [basic_logger] [info] Building 5571663067799453258 : Audio : Asset/Audio/MovingLava.mp3
+[2026-03-08 11:38:22.604] [basic_logger] [info] Building 7030241800714550060 : Material : Asset/Material/Path.mat
+[2026-03-08 11:38:22.625] [basic_logger] [info] Building 7126091231916161915 : Material : Asset/Material/Lava.mat
+[2026-03-08 11:38:22.640] [basic_logger] [info] Building 8808176318344075065 : Mesh : Asset/Mesh/torch/torch.obj
+[2026-03-08 11:38:22.656] [basic_logger] [info] Building 9135859329569859042 : Mesh : Asset/Mesh/player/Knight_Golden_Male.obj
+[2026-03-08 11:38:22.673] [basic_logger] [info] Building 9379610506206156467 : Mesh : Asset/Mesh/rocks/rocks.obj
+[2026-03-08 11:38:22.681] [basic_logger] [info] Building 9523074220259771248 : Material : Asset/Material/Start.mat
+[2026-03-08 11:38:22.703] [basic_logger] [info] Building 10492020050375028496 : Material : Asset/Material/Door.mat
+[2026-03-08 11:38:22.717] [basic_logger] [info] Building 10652487024113119011 : Mesh : Asset/Mesh/stairs/stairs.obj
+[2026-03-08 11:38:22.733] [basic_logger] [info] Building 10843416707759182410 : Audio : Asset/Audio/Death.mp3
+[2026-03-08 11:38:22.749] [basic_logger] [info] Building 11133238322135416622 : Texture : Asset/Texture/stone.png
+[2026-03-08 11:38:22.784] [basic_logger] [info] Building 12792039908774318852 : Script : Asset/Script/LevelButton.as
+[2026-03-08 11:38:22.799] [basic_logger] [info] Building 15673016010349369343 : Texture : Asset/Texture/lava.png
+[2026-03-08 11:38:22.853] [basic_logger] [info] Building 15765867760871931416 : Texture : Asset/Texture/border.png
+[2026-03-08 11:38:22.901] [basic_logger] [info] Building 16730603527850583685 : Texture : Asset/Texture/dirt.jpeg
+[2026-03-08 11:38:22.930] [basic_logger] [info] Building 17930437727414257517 : Script : Asset/Script/Level.as
+[2026-03-08 11:38:22.940] [basic_logger] [info] Loaded script class Level
+[2026-03-08 11:38:23.181] [basic_logger] [info] Loaded script class Player
+[2026-03-08 11:38:23.181] [basic_logger] [info] Embedding...
+[2026-03-08 11:38:23.181] [basic_logger] [info] Waiting for connection...
+[2026-03-08 11:39:08.496] [basic_logger] [info] Pipes created successfully
+[2026-03-08 11:45:42.619] [basic_logger] [info] Building 1116263781428243600 : Texture : Asset/Texture/icon.png
+[2026-03-08 11:45:42.631] [basic_logger] [info] Building 1503689015673725745 : Script : Asset/Script/Player.as
+[2026-03-08 11:45:42.634] [basic_logger] [info] Building 1857530080466215936 : Material : Asset/Material/Wall.mat
+[2026-03-08 11:45:42.640] [basic_logger] [info] Building 3853931722673808928 : Mesh : Asset/Mesh/obelisk/obelisk.obj
+[2026-03-08 11:45:42.647] [basic_logger] [info] Building 4784818156094493288 : Script : Asset/Script/Spider.as
+[2026-03-08 11:45:42.651] [basic_logger] [info] Building 4975861332934482515 : Texture : Asset/Texture/gold.png
+[2026-03-08 11:45:42.726] [basic_logger] [info] Building 5530177294566290275 : Audio : Asset/Audio/Main.mp3
+[2026-03-08 11:45:42.866] [basic_logger] [info] Building 5571663067799453258 : Audio : Asset/Audio/MovingLava.mp3
+[2026-03-08 11:45:42.893] [basic_logger] [info] Building 7030241800714550060 : Material : Asset/Material/Path.mat
+[2026-03-08 11:45:42.912] [basic_logger] [info] Building 7126091231916161915 : Material : Asset/Material/Lava.mat
+[2026-03-08 11:45:42.920] [basic_logger] [info] Building 8808176318344075065 : Mesh : Asset/Mesh/torch/torch.obj
+[2026-03-08 11:45:42.929] [basic_logger] [info] Building 9135859329569859042 : Mesh : Asset/Mesh/player/Knight_Golden_Male.obj
+[2026-03-08 11:45:42.938] [basic_logger] [info] Building 9379610506206156467 : Mesh : Asset/Mesh/rocks/rocks.obj
+[2026-03-08 11:45:42.942] [basic_logger] [info] Building 9523074220259771248 : Material : Asset/Material/Start.mat
+[2026-03-08 11:45:42.948] [basic_logger] [info] Building 10492020050375028496 : Material : Asset/Material/Door.mat
+[2026-03-08 11:45:42.954] [basic_logger] [info] Building 10652487024113119011 : Mesh : Asset/Mesh/stairs/stairs.obj
+[2026-03-08 11:45:42.960] [basic_logger] [info] Building 10843416707759182410 : Audio : Asset/Audio/Death.mp3
+[2026-03-08 11:45:42.967] [basic_logger] [info] Building 11133238322135416622 : Texture : Asset/Texture/stone.png
+[2026-03-08 11:45:42.991] [basic_logger] [info] Building 12792039908774318852 : Script : Asset/Script/LevelButton.as
+[2026-03-08 11:45:42.996] [basic_logger] [info] Building 15673016010349369343 : Texture : Asset/Texture/lava.png
+[2026-03-08 11:45:43.027] [basic_logger] [info] Building 15765867760871931416 : Texture : Asset/Texture/border.png
+[2026-03-08 11:45:43.076] [basic_logger] [info] Building 16730603527850583685 : Texture : Asset/Texture/dirt.jpeg
+[2026-03-08 11:45:43.092] [basic_logger] [info] Building 17930437727414257517 : Script : Asset/Script/Level.as
+[2026-03-08 11:45:43.102] [basic_logger] [info] Loaded script class Level
+[2026-03-08 11:45:43.372] [basic_logger] [info] Loaded script class Player
+[2026-03-08 11:45:43.372] [basic_logger] [info] Embedding...
+[2026-03-08 11:45:43.372] [basic_logger] [info] Waiting for connection...
+[2026-03-08 11:45:43.374] [basic_logger] [info] Pipes created successfully
+[2026-03-08 11:46:56.670] [basic_logger] [info] Building 1116263781428243600 : Texture : Asset/Texture/icon.png
+[2026-03-08 11:46:56.681] [basic_logger] [info] Building 1503689015673725745 : Script : Asset/Script/Player.as
+[2026-03-08 11:46:56.685] [basic_logger] [info] Building 1857530080466215936 : Material : Asset/Material/Wall.mat
+[2026-03-08 11:46:56.692] [basic_logger] [info] Building 3853931722673808928 : Mesh : Asset/Mesh/obelisk/obelisk.obj
+[2026-03-08 11:46:56.699] [basic_logger] [info] Building 4784818156094493288 : Script : Asset/Script/Spider.as
+[2026-03-08 11:46:56.703] [basic_logger] [info] Building 4975861332934482515 : Texture : Asset/Texture/gold.png
+[2026-03-08 11:46:56.768] [basic_logger] [info] Building 5530177294566290275 : Audio : Asset/Audio/Main.mp3
+[2026-03-08 11:46:56.902] [basic_logger] [info] Building 5571663067799453258 : Audio : Asset/Audio/MovingLava.mp3
+[2026-03-08 11:46:56.931] [basic_logger] [info] Building 7030241800714550060 : Material : Asset/Material/Path.mat
+[2026-03-08 11:46:56.937] [basic_logger] [info] Building 7126091231916161915 : Material : Asset/Material/Lava.mat
+[2026-03-08 11:46:56.945] [basic_logger] [info] Building 8808176318344075065 : Mesh : Asset/Mesh/torch/torch.obj
+[2026-03-08 11:46:56.951] [basic_logger] [info] Building 9135859329569859042 : Mesh : Asset/Mesh/player/Knight_Golden_Male.obj
+[2026-03-08 11:46:56.959] [basic_logger] [info] Building 9379610506206156467 : Mesh : Asset/Mesh/rocks/rocks.obj
+[2026-03-08 11:46:56.963] [basic_logger] [info] Building 9523074220259771248 : Material : Asset/Material/Start.mat
+[2026-03-08 11:46:56.969] [basic_logger] [info] Building 10492020050375028496 : Material : Asset/Material/Door.mat
+[2026-03-08 11:46:56.975] [basic_logger] [info] Building 10652487024113119011 : Mesh : Asset/Mesh/stairs/stairs.obj
+[2026-03-08 11:46:56.982] [basic_logger] [info] Building 10843416707759182410 : Audio : Asset/Audio/Death.mp3
+[2026-03-08 11:46:56.988] [basic_logger] [info] Building 11133238322135416622 : Texture : Asset/Texture/stone.png
+[2026-03-08 11:46:57.012] [basic_logger] [info] Building 12792039908774318852 : Script : Asset/Script/LevelButton.as
+[2026-03-08 11:46:57.015] [basic_logger] [info] Building 15673016010349369343 : Texture : Asset/Texture/lava.png
+[2026-03-08 11:46:57.046] [basic_logger] [info] Building 15765867760871931416 : Texture : Asset/Texture/border.png
+[2026-03-08 11:46:57.097] [basic_logger] [info] Building 16730603527850583685 : Texture : Asset/Texture/dirt.jpeg
+[2026-03-08 11:46:57.127] [basic_logger] [info] Building 17930437727414257517 : Script : Asset/Script/Level.as
+[2026-03-08 11:46:57.136] [basic_logger] [info] Loaded script class Level
+[2026-03-08 11:46:57.303] [basic_logger] [info] Loaded script class Player
+[2026-03-08 11:46:57.303] [basic_logger] [info] Embedding...
+[2026-03-08 11:46:57.303] [basic_logger] [info] Waiting for connection...
+[2026-03-08 11:49:51.109] [basic_logger] [info] Building 1116263781428243600 : Texture : Asset/Texture/icon.png
+[2026-03-08 11:49:51.124] [basic_logger] [info] Building 1503689015673725745 : Script : Asset/Script/Player.as
+[2026-03-08 11:49:51.130] [basic_logger] [info] Building 1857530080466215936 : Material : Asset/Material/Wall.mat
+[2026-03-08 11:49:51.144] [basic_logger] [info] Building 3853931722673808928 : Mesh : Asset/Mesh/obelisk/obelisk.obj
+[2026-03-08 11:49:51.158] [basic_logger] [info] Building 4784818156094493288 : Script : Asset/Script/Spider.as
+[2026-03-08 11:49:51.167] [basic_logger] [info] Building 4975861332934482515 : Texture : Asset/Texture/gold.png
+[2026-03-08 11:49:51.253] [basic_logger] [info] Building 5530177294566290275 : Audio : Asset/Audio/Main.mp3
+[2026-03-08 11:49:51.402] [basic_logger] [info] Building 5571663067799453258 : Audio : Asset/Audio/MovingLava.mp3
+[2026-03-08 11:49:51.448] [basic_logger] [info] Building 7030241800714550060 : Material : Asset/Material/Path.mat
+[2026-03-08 11:49:51.472] [basic_logger] [info] Building 7126091231916161915 : Material : Asset/Material/Lava.mat
+[2026-03-08 11:49:51.488] [basic_logger] [info] Building 8808176318344075065 : Mesh : Asset/Mesh/torch/torch.obj
+[2026-03-08 11:49:51.507] [basic_logger] [info] Building 9135859329569859042 : Mesh : Asset/Mesh/player/Knight_Golden_Male.obj
+[2026-03-08 11:49:51.523] [basic_logger] [info] Building 9379610506206156467 : Mesh : Asset/Mesh/rocks/rocks.obj
+[2026-03-08 11:49:51.533] [basic_logger] [info] Building 9523074220259771248 : Material : Asset/Material/Start.mat
+[2026-03-08 11:49:51.559] [basic_logger] [info] Building 10492020050375028496 : Material : Asset/Material/Door.mat
+[2026-03-08 11:49:51.588] [basic_logger] [info] Building 10652487024113119011 : Mesh : Asset/Mesh/stairs/stairs.obj
+[2026-03-08 11:49:51.619] [basic_logger] [info] Building 10843416707759182410 : Audio : Asset/Audio/Death.mp3
+[2026-03-08 11:49:51.637] [basic_logger] [info] Building 11133238322135416622 : Texture : Asset/Texture/stone.png
+[2026-03-08 11:49:51.672] [basic_logger] [info] Building 12792039908774318852 : Script : Asset/Script/LevelButton.as
+[2026-03-08 11:49:51.678] [basic_logger] [info] Building 15673016010349369343 : Texture : Asset/Texture/lava.png
+[2026-03-08 11:49:51.723] [basic_logger] [info] Building 15765867760871931416 : Texture : Asset/Texture/border.png
+[2026-03-08 11:49:51.776] [basic_logger] [info] Building 16730603527850583685 : Texture : Asset/Texture/dirt.jpeg
+[2026-03-08 11:49:51.805] [basic_logger] [info] Building 17930437727414257517 : Script : Asset/Script/Level.as
+[2026-03-08 11:49:51.814] [basic_logger] [info] Loaded script class Level
+[2026-03-08 11:49:52.045] [basic_logger] [info] Loaded script class Player
+[2026-03-08 11:49:52.045] [basic_logger] [info] Embedding...
+[2026-03-08 11:49:52.045] [basic_logger] [info] Waiting for connection...

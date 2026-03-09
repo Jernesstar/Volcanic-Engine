@@ -12,37 +12,37 @@ protected:
 };
 
 struct MouseMovedEvent : public MouseEvent {
-	const float x, y;
+	const f64 x, y;
 
-	MouseMovedEvent(float x, float y)
+	MouseMovedEvent(f64 x, f64 y)
 		: MouseEvent(EventType::MouseMoved), x(x), y(y) { }
 };
 
 struct MouseScrolledEvent : public MouseEvent {
-	const float ScrollX;
-	const float ScrollY;
+	const f64 ScrollX;
+	const f64 ScrollY;
 
-	MouseScrolledEvent(float scrollX, float scrollY)
+	MouseScrolledEvent(f64 scrollX, f64 scrollY)
 		: MouseEvent(EventType::MouseScrolled),
 			ScrollX(scrollX), ScrollY(scrollY) { }
 };
 
 struct MouseButtonEvent : public MouseEvent {
 	const MouseCode Button;
-	const float x, y;
+	const f64 x, y;
 
 protected:
-	MouseButtonEvent(EventType type, MouseCode button, float x, float y)
+	MouseButtonEvent(EventType type, MouseCode button, f64 x, f64 y)
 		: MouseEvent(type), Button(button), x(x), y(y) { }
 };
 
 struct MouseButtonPressedEvent : public MouseButtonEvent {
-	MouseButtonPressedEvent(MouseCode button, float x, float y)
+	MouseButtonPressedEvent(MouseCode button, f64 x, f64 y)
 		: MouseButtonEvent(EventType::MouseButtonPressed, button, x, y) { }
 };
 
 struct MouseButtonReleasedEvent : public MouseButtonEvent {
-	MouseButtonReleasedEvent(MouseCode button, float x, float y)
+	MouseButtonReleasedEvent(MouseCode button, f64 x, f64 y)
 		: MouseButtonEvent(EventType::MouseButtonReleased, button, x, y) { }
 };
 

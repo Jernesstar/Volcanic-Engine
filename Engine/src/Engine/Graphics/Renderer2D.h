@@ -30,7 +30,7 @@ public:
 	static void DrawText(Ref<Text> text, const Transform& t = { });
 
 	static void DrawFullscreenQuad(Ref<Framebuffer> buffer,
-								   AttachmentTarget target);
+		AttachmentTarget target = AttachmentTarget::Color);
 
 private:
 	static void Init();
