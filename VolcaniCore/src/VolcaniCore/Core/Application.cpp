@@ -37,26 +37,25 @@ Application::Application(const AppSpecification& spec,
 }
 
 void Application::Run() {
-	while(s_Window->IsOpen()) {
-		TimePoint time = Time::GetTime();
-		TimeStep ts = time - m_LastFrame;
-		m_LastFrame = time;
+    f32 targetDelta = (1.0f / (f32)s_Spec.TickRate) * 1000.0f;
+    f32 accumulator = 0.0f;
 
-		Events::PollEvents();
+    while(s_Window->IsOpen()) {
+        TimePoint time = Time::GetTime();
+        TimeStep ts = time - m_LastFrame;
+        m_LastFrame = time;
+        accumulator += ts;
 
-		s_Instance->OnUpdate(ts);
-		s_Window->Update();
+        Events::PollEvents();
 
-		if(!s_Spec.TickRate)
-			continue;
+        // Fixed update catch-up
+        while(accumulator >= targetDelta) {
+            s_Instance->OnUpdate(targetDelta); // Logic uses fixed step
+            accumulator -= targetDelta;
+        }
 
-		f32 targetDelta = (1.0f / float(s_Spec.TickRate)) * 1000.0f;
-		if (ts < targetDelta) {
-			f32 sleep = targetDelta - ts;
-			auto timeMS = std::chrono::milliseconds(static_cast<u32>(sleep));
-			std::this_thread::sleep_for(timeMS);
-		}
-	}
+        s_Window->Update(); // Render as fast as possible or sync to VSync
+    }
 }
 
 static std::string s_OldPath;

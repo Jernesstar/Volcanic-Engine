@@ -9,7 +9,7 @@ namespace VolcanicEngine {
 AssetRegistry::AssetRegistry() {
 	m_Registry = new Registry(".volc/asset_registry", 4);
 	m_AssetMetadata = m_Registry->NewDatabase("AssetMetadata");
-	m_AssetRefs = m_Registry->NewDatabase("AssetRefs", true);
+	// m_AssetRefs = m_Registry->NewDatabase("AssetRefs", true);
 	m_AssetNames = m_Registry->NewDatabase("AssetNames");
 	m_AssetNamesReverse = m_Registry->NewDatabase("AssetNamesReverse");
 }
@@ -49,30 +49,35 @@ Bytes AssetRegistry::GetData(Asset asset) {
 }
 
 bool AssetRegistry::HasRefs(Asset asset) const {
-	auto res = m_AssetRefs->Count((u64)asset.ID);
-	if(!res.Success)
-		return false;
+	// auto res = m_AssetRefs->Count((u64)asset.ID);
+	// if(!res.Success)
+	// 	return false;
 
-	return res.Count > 0;
+	// return res.Count > 0;
+	return m_Refs.count(asset.ID) && m_Refs.at(asset.ID).Count();
 }
 
 void AssetRegistry::AddRef(Asset base, Asset ref) {
-	u64 refID = (u64)ref.ID;
-	Bytes bytes = { (u8*)&refID, sizeof(u64), 0, false };
-	Log::Info("Adding ref {0} to {1}", (u64)refID, (u64)base.ID);
-	m_AssetRefs->Insert((u64)base.ID, std::move(bytes));
+	// Bytes bytes = { (u8*)&ref, sizeof(Asset), 0, false };
+	// Log::Info("Adding ref {0} to {1}", (u64)ref.ID, (u64)base.ID);
+	// m_AssetRefs->Insert((u64)base.ID, std::move(bytes));
+	m_Refs[base.ID].Add(ref);
 }
 
 List<Asset> AssetRegistry::GetRefs(Asset asset) const {
-	auto res = m_AssetRefs->Query((u64)asset.ID);
-	if(!res.Success)
+	// auto res = m_AssetRefs->Query((u64)asset.ID);
+	// if(!res.Success)
+	// 	return { };
+
+	// List<Asset> refs;
+	// for(u64 i = 0; i < res.Data.GetCount(); i++)
+	// 	refs.Add(*(Asset*)res.Data.Get(i));
+
+	// return refs;
+	if(!m_Refs.count(asset.ID))
 		return { };
 
-	List<Asset> refs;
-	for(u64 i = 0; i < res.Data.GetCount(); i++)
-		refs.Add(*(Asset*)res.Data.Get(i));
-
-	return refs;
+	return m_Refs.at(asset.ID);
 }
 
 void AssetRegistry::NameAsset(Asset asset, const std::string& name) {
@@ -97,11 +102,19 @@ std::string AssetRegistry::GetAssetName(Asset asset) const {
 }
 
 Asset AssetRegistry::FindAsset(const std::string& lookup) const {
-	return { };
+	auto res = m_AssetNamesReverse->Query(lookup);
+	if(!res.Success)
+		return { };
+
+	return *(Asset*)res.Data.Get();
 }
 
 void AssetRegistry::For(const Func<void, Asset>& cb) {
-
+	auto it = m_AssetMetadata->Iterate();
+	while(it.Next()) {
+		auto asset = it.Get<Asset>();
+		cb(asset);
+	}
 }
 
 void AssetRegistry::Clear() {

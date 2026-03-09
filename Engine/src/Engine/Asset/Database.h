@@ -42,6 +42,22 @@ struct DatabaseValueCount {
 	operator bool() const { return Success; }
 };
 
+class DatabaseIterator {
+public:
+	DatabaseIterator(MDB_dbi handle);
+	~DatabaseIterator();
+
+	bool Next();
+
+	template<typename T>
+	T Get() { return *(T*)m_DataVal.mv_data; }
+
+private:
+	bool m_Started = false;
+	MDB_cursor* m_Cursor = nullptr;
+	MDB_val m_DataVal;
+};
+
 class Registry;
 
 class Database {
@@ -58,6 +74,7 @@ public:
 	DatabaseResult Query(DatabaseKey&& key);
 	DatabaseValueCount Count(DatabaseKey&& key);
 	void Remove(DatabaseKey&& key);
+	DatabaseIterator Iterate();
 
 private:
 	MDB_env* m_Registry;

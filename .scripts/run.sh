@@ -1,0 +1,1 @@
+build/Editor/bin/Editor --open_project ~/Code/Work/TheMazeIsLava --open_scene Level1 $@

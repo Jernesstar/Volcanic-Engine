@@ -84,6 +84,7 @@ private:
 	Database* m_AssetRefs;		// ID: Refs
 	Database* m_AssetNames;		// ID: Name
 	Database* m_AssetNamesReverse; // Reverse name lookup
+	Map<UUID, List<Asset>> m_Refs;
 };
 
 }

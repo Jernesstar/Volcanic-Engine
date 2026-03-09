@@ -207,36 +207,36 @@ void EditorAssetManager::Build(Asset asset) {
 			  path);
 
 	if(asset.Type == AssetType::Mesh) {
-		// List<SubMesh> meshes;
-		// List<MaterialPaths> materials;
-		// AssetImporter::GetMeshData(path, meshes, materials);
+// 		List<SubMesh> meshes;
+// 		List<MaterialPaths> materials;
+// 		AssetImporter::GetMeshData(path, meshes, materials);
+// 
+// 		BytesWriter wr(
+// 			meshes.GetBuffer().GetSize() +
+// 			materials.GetBuffer().GetSize());
+// 
+// 		wr.Write(meshes.Count());
+// 		for(auto& mesh : meshes) {
+// 			wr.Write(mesh.Vertices);
+// 			wr.Write(mesh.Indices);
+// 			wr.Write(mesh.MaterialIndex);
+// 		}
 
-		// BytesWriter wr(
-		// 	meshes.GetBuffer().GetSize() +
-		// 	materials.GetBuffer().GetSize());
+		// for(auto mat : materials) {
+		// 	auto ref = Add(AssetType::Material, 0, false, "");
+		// 	m_AssetRegistry->AddRef(asset, ref);
+		// 	if(mat.Diffuse != "") {
+		// 		auto tex = Add(AssetType::Texture, 0, false, mat.Diffuse);
+		// 		m_AssetRegistry->NameAsset(ref, "u_Diffuse");
+		// 		m_AssetRegistry->AddRef(ref, tex);
+		// 	}
+		// 	if(mat.Emissive != "") {
 
-		// wr.Write(meshes.Count());
-		// for(auto& mesh : meshes) {
-		// 	wr.Write(mesh.Vertices);
-		// 	wr.Write(mesh.Indices);
-		// 	wr.Write(mesh.MaterialIndex);
+		// 	}
+		// 	if(mat.Specular != "") {
+
+		// 	}
 		// }
-
-		// // for(auto mat : materials) {
-		// // 	auto ref = Add(AssetType::Material, 0, false, "");
-		// // 	m_AssetRegistry->AddRef(asset, ref);
-		// // 	if(mat.Diffuse != "") {
-		// // 		auto tex = Add(AssetType::Texture, 0, false, mat.Diffuse);
-		// // 		m_AssetRegistry->NameAsset(ref, "u_Diffuse");
-		// // 		m_AssetRegistry->AddRef(ref, tex);
-		// // 	}
-		// // 	if(mat.Emissive != "") {
-
-		// // 	}
-		// // 	if(mat.Specular != "") {
-
-		// // 	}
-		// // }
 
 		// m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
 	}
@@ -261,14 +261,24 @@ void EditorAssetManager::Build(Asset asset) {
 
 		auto refs = m_AssetRegistry->GetRefs(asset);
 
+        List<ShaderFile> files;
+        u64 size = sizeof(u64);
 		for(auto& ref : refs) {
 			auto shaderPath = GetPath(ref.ID);
+			Log::Info("Shader path {} for {}", shaderPath, (u64)ref.ID);
 			ShaderFile file = AssetImporter::GetShaderFileData(shaderPath);
-			BytesWriter wr(sizeof(u32) + file.Data.GetSize());
-			wr.Write((u32)file.FileType);
-			wr.Write(file.Data);
-			m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
+            size += sizeof(u32) + file.Data.GetSize();
+            files.AddMove(std::move(file));
 		}
+
+        BytesWriter wr(size);
+        wr.Write((u64)files.Count());
+
+        for(auto& file : files) {
+    		wr.Write((u32)file.FileType);
+    		wr.Write(file.Data);
+    		m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
+        }
 	}
 	else if(asset.Type == AssetType::Audio) {
 		Buffer<f32> soundData = AssetImporter::GetAudioData(path);
@@ -411,19 +421,24 @@ void EditorAssetManager::LoadRegistry() {
 		i++;
 	}
 
-	// auto libPath = Application::GetLibraryDir();
-	// Asset asset = Add(AssetType::Shader, 10, true);
-	// m_AssetRegistry->NameAsset(asset, "FullscreenQuad");
-	// Asset ref1 =
-	// 	Add(AssetType::Shader, 11, false,
-	// 		libPath + "/Editor/assets/Shaders/Framebuffer.glsl.vert");
-	// Asset ref2 =
-	// 	Add(AssetType::Shader, 12, false,
-	// 		libPath + "/Editor/assets/Shaders/Framebuffer.glsl.frag");
+	auto libPath = Application::GetLibraryDir();
+	Asset ref1 =
+		Add(AssetType::Shader, 11, false,
+			libPath + "/Editor/assets/Shaders/Framebuffer.glsl.vert");
+	Asset ref2 =
+		Add(AssetType::Shader, 12, false,
+			libPath + "/Editor/assets/Shaders/Framebuffer.glsl.frag");
+	Asset asset = Add(AssetType::Shader, 10, true);
+	m_AssetRegistry->NameAsset(asset, "FullscreenQuad");
 
-	// m_AssetRegistry->AddRef(asset, ref1);
-	// m_AssetRegistry->AddRef(asset, ref2);
-	// Build(asset);
+	m_AssetRegistry->AddRef(asset, ref1);
+	m_AssetRegistry->AddRef(asset, ref2);
+
+	// m_AssetRegistry->For(
+	// 	[&](Asset asset)
+	// 	{
+	// 		Build(asset);
+	// 	});
 }
 
 void EditorAssetManager::Save() {

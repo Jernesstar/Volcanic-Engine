@@ -25,8 +25,7 @@ void Database::Insert(DatabaseKey&& key, Bytes&& value) {
 	mdbValue.mv_size = value.GetSize();
 	mdbValue.mv_data = (void*)value.Get();
 
-	int rc = mdb_put(txn, m_Handle, &mdbKey, &mdbValue,
-					 MultiValue * MDB_NODUPDATA);
+	int rc = mdb_put(txn, m_Handle, &mdbKey, &mdbValue, 0);
 	if(rc != 0) {
 		mdb_txn_abort(txn);
 		Log::Info("Failed to insert data!");
@@ -84,6 +83,11 @@ DatabaseResult Database::Query(DatabaseKey&& query) {
 		mdb_txn_abort(txn);
 		Log::Error("Failed to read bytes!");
 	}
+	else if(MultiValue) {
+		// while ((rc = mdb_cursor_get(cursor, &key, &data, MDB_NEXT_DUP)) == MDB_SUCCESS) {
+		// 	printf("  %s\n", (char *)data.mv_data);
+		// }
+	}
 
 	DatabaseResult val = {
 		true, Bytes((u8*)value.mv_data, value.mv_size, 0, false)
@@ -109,6 +113,27 @@ void Database::Remove(DatabaseKey&& key) {
 	}
 
 	mdb_txn_commit(txn);
+}
+
+DatabaseIterator Database::Iterate() {
+	return { m_Handle };
+}
+
+DatabaseIterator::DatabaseIterator(MDB_dbi handle) {
+	MDB_txn* txn;
+	mdb_cursor_open(txn, handle, &m_Cursor);
+}
+
+DatabaseIterator::~DatabaseIterator() {
+	mdb_cursor_close(m_Cursor);
+}
+
+bool DatabaseIterator::Next() {
+	MDB_val key;
+	int rc = mdb_cursor_get(m_Cursor, &key, &m_DataVal,
+							!m_Started ? MDB_FIRST : MDB_NEXT);
+	m_Started = true;
+	return rc == MDB_SUCCESS;
 }
 
 Registry::Registry(const std::string& path, u32 maxDatabases) {
@@ -137,7 +162,7 @@ Database* Registry::NewDatabase(const std::string& name, bool multiValue) {
 	MDB_dbi dbi;
 
 	mdb_txn_begin(m_Handle, nullptr, 0, &txn);
-	mdb_dbi_open(txn, name.c_str(), MDB_CREATE | (multiValue ? 0 : MDB_DUPSORT), &dbi);
+	mdb_dbi_open(txn, name.c_str(), MDB_CREATE | (multiValue ? MDB_DUPSORT : 0), &dbi);
 	mdb_txn_commit(txn);
 
 	return &m_Databases.Emplace(name, m_Handle, dbi, multiValue);

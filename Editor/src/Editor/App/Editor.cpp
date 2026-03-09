@@ -51,29 +51,6 @@ static EditorMode s_EditorMode = EditorMode::Edit;
 void Editor::Init(const CommandLineArgs& args) {
 	// Log::Init(args.Has("--embedded"));
 	Log::Init();
-	Renderer::Init();
-	ScriptEngine::Init();
-	ScriptGlue::RegisterInterface();
-
-	s_AssetManager = CreateRef<EditorAssetManager>();
-	s_EditorSceneRenderer = CreateRef<EditorSceneRenderer>();
-
-	s_App = CreateRef<App>();
-
-	if(args["--open_project"]) {
-		Str path = args["--open_project"];
-		Editor::OpenProject(path);
-	}
-	if(args["--new_project"]) {
-		Str path = args["--new_project"];
-		Editor::NewProject(path);
-	}
-	if(args["--open_scene"]) {
-		Str name = args["--open_scene"];
-		Editor::OpenScene(name);
-	}
-
-	// s_App->CreateSceneRenderer();
 
 	if(args.Has("--embedded")) {
 		Embed::OnEvent =
@@ -130,6 +107,30 @@ void Editor::Init(const CommandLineArgs& args) {
 				Log::Info("{}, {}", event.x, event.y);
 			});
 	}
+
+	Renderer::Init();
+	ScriptEngine::Init();
+	ScriptGlue::RegisterInterface();
+
+	s_AssetManager = CreateRef<EditorAssetManager>();
+	s_EditorSceneRenderer = CreateRef<EditorSceneRenderer>();
+
+	s_App = CreateRef<App>();
+
+	if(args["--open_project"]) {
+		Str path = args["--open_project"];
+		Editor::OpenProject(path);
+	}
+	if(args["--new_project"]) {
+		Str path = args["--new_project"];
+		Editor::NewProject(path);
+	}
+	if(args["--open_scene"]) {
+		Str name = args["--open_scene"];
+		Editor::OpenScene(name);
+	}
+
+	// s_App->CreateSceneRenderer();
 }
 
 void Editor::Close() {
@@ -167,16 +168,15 @@ void Editor::Render() {
 		s_CurrentScene->OnRender(*renderer);
 	}
 	
-	if(Embed::IsActive() && renderer) {
-		Renderer::EndFrame();
-		Buffer<u8> data = renderer->GetOutput()->GetPixels();
-		Embed::SendFrame(std::move(data));
-		return;
-	}
-	// else
+	// if(!Embed::IsActive() && renderer)
 	// 	Renderer2D::DrawFullscreenQuad(renderer->GetOutput());
 
 	Renderer::EndFrame();
+
+	if(Embed::IsActive() && renderer) {
+		Buffer<u8> data = renderer->GetOutput()->GetPixels();
+		Embed::SendFrame(std::move(data));
+	}
 }
 
 void Editor::OpenProject(const Str& path) {
