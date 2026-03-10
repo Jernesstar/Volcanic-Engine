@@ -290,29 +290,21 @@ void EditorSceneRenderer::SubmitMesh(const Entity& entity) {
 	auto& tc = entity.Get<TransformComponent>();
 	auto& mc = entity.Get<MeshComponent>();
 
-	if(!mc.MeshSourceAsset)
+	if(!mc.MeshSourceAsset || !mc.MaterialAsset)
 		return;
 
 	// auto mesh = assetManager->Get<Mesh>(mc.MeshSourceAsset);
-
-	// if(!mc.MaterialAsset.ID) {
-	// 	Renderer::StartPass(MeshPass);
-	// 	{
-	// 		Renderer3D::DrawMesh(mesh, tc);
+	// Renderer::StartPass(MeshPass);
+	// {
+	// 	List<Material> mats;
+	// 	for(auto ref : assetManager->GetRegistry()->GetRefs(mc.MaterialAsset)) {
+	// 		auto material = assetManager->Get<Material>(ref);
+	// 		mats.Add(material);
 	// 	}
-	// 	Renderer::EndPass();
-	// 	return;
+
+	// 	Renderer3D::DrawMesh(mesh, tc, mats);
 	// }
-
-	// if(!mc.MaterialAsset)
-	// 	return;
-
-	// auto material = assetManager->Get<Material>(mc.MaterialAsset);
-
-	// DrawCommand* command = RendererAPI::Get()->NewCommand(MeshPass->Get());
-	// command->Uniforms = *material->UniformData;
-
-	// Renderer3D::DrawMesh(mesh, tc, command);
+	// Renderer::EndPass();
 }
 
 void EditorSceneRenderer::Render() {
@@ -337,7 +329,7 @@ void EditorSceneRenderer::Render() {
 			command->Uniforms
 			.Set("u_Color", Vec4(1.0f));
 
-			Renderer3D::DrawMesh(mesh, tc, command);
+			// Renderer3D::DrawMesh(mesh, tc, command);
 		}
 
 		Renderer::StartPass(OutlinePass);

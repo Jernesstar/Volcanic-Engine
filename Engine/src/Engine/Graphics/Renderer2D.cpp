@@ -31,22 +31,12 @@ void Renderer2D::Init() {
 		{
 			.VertexCount = 6,
 			.DynamicVertices = false,
-			.InstanceCount = 100,
-			.DynamicInstances = true,
 			.VertexLayout =
 			{
 				{
-					{ "Color", BufferDataType::Vec4 }
+					{ "Position", BufferDataType::Vec2 }
 				},
 				false
-			},
-			.InstanceLayout =
-			{
-				{
-					{ "PositionDimension", BufferDataType::Vec4 },
-					{ "Color", BufferDataType::Vec4 }
-				},
-				true // Instanced
 			}
 		});
 
@@ -54,6 +44,7 @@ void Renderer2D::Init() {
 }
 
 void Renderer2D::Close() {
+
 }
 
 void Renderer2D::StartFrame() {
@@ -110,8 +101,6 @@ void Renderer2D::DrawFullscreenQuad(Ref<Framebuffer> buffer,
 	else {
 		auto* pass = RendererAPI::Get()->NewPass(s_ScreenBuffer);
 		pass->Pipeline = AssetManager::Get()->Get<Shader>("FullscreenQuad");
-		if(!pass->Pipeline)
-			Log::Info("No pipeline");
 		command = RendererAPI::Get()->NewCommand(pass);
 	}
 

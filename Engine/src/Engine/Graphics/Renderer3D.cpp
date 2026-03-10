@@ -178,73 +178,53 @@ void Renderer3D::DrawSkybox(Ref<Cubemap> cubemap) {
 }
 
 static void DrawSubMesh(Ref<Mesh> root, SubMesh& mesh, const glm::mat4& tr,
-						DrawCommand* cmd)
+						const Material& mat)
 {
-	// DrawCommand* command;
-	// if(s_Meshes.count(&mesh))
-	// 	command = s_Meshes[&mesh];
-	// else {
-	// 	if(Renderer::GetPass()) {
-	// 		command = Renderer::NewCommand();
-	// 		s_Meshes[&mesh] = command;
-	// 	}
-	// 	else {
-	// 		command = RendererAPI::Get()->NewCommand(cmd->Pass);
-	// 		command->Uniforms = cmd->Uniforms;
-	// 	}
-	// }
+	DrawCommand* command;
+	if(s_Meshes.count(&mesh))
+		command = s_Meshes[&mesh];
+	else {
+		if(Renderer::GetPass()) {
+			command = Renderer::NewCommand();
+			s_Meshes[&mesh] = command;
+		}
+		else
+			return;
+	}
 
-	// if(!command->VerticesCount) {
-	// 	if(cmd) {
-	// 		command->IndicesIndex = s_MeshBuffer->GetIndexCount();
-	// 		command->VerticesIndex = s_MeshBuffer->GetVertexCount();
-	// 	}
+	auto* buffer = command->Pass->Buffer;
 
-	// 	if(!command->Uniforms && root->Materials) {
-	// 		Material& mat = root->Materials[mesh.MaterialIndex];
-	// 		command->Uniforms
-	// 		.SetInput("u_Material.IsTextured", (bool)mat.Diffuse);
-	// 		command->Uniforms
-	// 		.SetInput("u_Material.Diffuse", TextureSlot{ mat.Diffuse, 0 });
-	// 		command->Uniforms
-	// 		.SetInput("u_Material.Specular", TextureSlot{ mat.Specular, 1 });
-	// 		command->Uniforms
-	// 		.SetInput("u_Material.Emissive", TextureSlot{ mat.Emissive, 2 });
+	if(!command->VerticesIndex) { // First time seeing this mesh this frame
+		command->DepthTesting = DepthTestingMode::On;
+		command->Blending = BlendingMode::Off;
+		command->Culling = CullingMode::Back;
 
-	// 		command->Uniforms
-	// 		.SetInput("u_Material.DiffuseColor", mat.DiffuseColor);
-	// 		command->Uniforms
-	// 		.SetInput("u_Material.SpecularColor", mat.SpecularColor);
-	// 		command->Uniforms
-	// 		.SetInput("u_Material.EmissiveColor", mat.EmissiveColor);
-	// 	}
+		command->IndicesIndex = s_MeshBuffer->GetIndexCount();
+		command->VerticesIndex = s_MeshBuffer->GetVertexCount();
+		buffer->Add(DrawBufferIndex::E_Index, mesh.Indices.Get(), mesh.Indices.GetCount());
+		buffer->Add(DrawBufferIndex::E_Vertex, mesh.Vertices.Get(), mesh.Vertices.GetCount());
+	}
 
-	// 	command->DepthTest = DepthTestingMode::On;
-	// 	command->Blending = BlendingMode::Off;
-	// 	command->Culling = CullingMode::Back;
-	// 	command->AddIndices(mesh.Indices);
-	// 	command->AddVertices(mesh.Vertices);
-	// }
+	if(!command->DrawCalls || command->DrawCalls[-1].InstanceCount >= 10'000) {
+		auto* call = command->NewCall();
+		call->Partition = DrawPartition::Instanced;
+		call->Primitive = DrawPrimitive::Triangle;
+		call->InstanceOffset = s_InstancesIndex;
+		s_InstancesIndex += 10'000;
+	}
 
-	// if(!command->Calls || command->Calls[-1].InstanceCount >= 10'000) {
-	// 	auto* call = command->NewCall();
-	// 	call->Partition = DrawPartition::Instanced;
-	// 	call->Primitive = DrawPrimitive::Triangle;
-	// 	call->InstanceStart = s_InstancesIndex;
-	// 	s_InstancesIndex += 10'000;
-	// }
-
-	// auto* buffer = command->Pass->BufferData;
-	// auto& call = command->Calls[-1];
-	// buffer->Add(DrawBufferIndex::Instances, glm::value_ptr(tr),
-	// 			1, call.InstanceStart + call.InstanceCount++);
+	auto& call = command->DrawCalls[-1];
+	call.InstanceCount++;
+	buffer->Add(DrawBufferIndex::E_Instance, glm::value_ptr(tr), 1);
 }
 
+
+
 void Renderer3D::DrawMesh(Ref<Mesh> mesh, const glm::mat4& tr,
-						  DrawCommand* command)
+						  const List<Material>& mats)
 {
 	for(auto& subMesh : mesh->SubMeshes)
-		DrawSubMesh(mesh, subMesh, tr, command);
+		DrawSubMesh(mesh, subMesh, tr, mats[subMesh.MaterialIndex]);
 }
 
 void Renderer3D::DrawQuad(Ref<Quad> quad, const glm::mat4& tr,

@@ -24,13 +24,13 @@ public:
 public:
 	bool ChangeScreen;
 	bool RenderScene;
-	bool RenderUI;
+	bool RenderCanvas;
 	bool Running;
 
 	Func<void, Ref<ScriptModule>&> AppLoad;
 	Func<void, Ref<ScriptModule>&, const std::string&> ScreenLoad;
 	Func<void, Scene&> SceneLoad;
-	Func<void, Canvas&> UILoad;
+	Func<void, Canvas&> CanvasLoad;
 	Func<void, const std::string&> Log;
 
 public:

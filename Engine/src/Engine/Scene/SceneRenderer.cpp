@@ -125,27 +125,27 @@ RuntimeSceneRenderer::RuntimeSceneRenderer() {
 	m_Output =
 		RendererAPI::Get()->CreateFramebuffer(
 			{
-				{
+				.Attachments = {
 					{ AttachmentTarget::Color, window->GetWidth(), window->GetHeight() }
-				}
+				},
+				.EnableRead = true
 			});
 
 	DirectionalLightBuffer =
 		RendererAPI::Get()->CreateUniformBuffer({
-			BufferLayout
-			{
+			.Layout = {
 				{ "Position",  BufferDataType::Vec4 },
 				{ "Ambient",   BufferDataType::Vec4 },
 				{ "Diffuse",   BufferDataType::Vec4 },
 				{ "Specular",  BufferDataType::Vec4 },
 				{ "Direction", BufferDataType::Vec4 },
-			}, 1
+			},
+			.Count = 1
 		});
 
 	PointLightBuffer =
 		RendererAPI::Get()->CreateUniformBuffer({
-			BufferLayout
-			{
+			.Layout = {
 				{ "Position",  BufferDataType::Vec4 },
 				{ "Ambient",   BufferDataType::Vec4 },
 				{ "Diffuse",   BufferDataType::Vec4 },
@@ -154,13 +154,13 @@ RuntimeSceneRenderer::RuntimeSceneRenderer() {
 				{ "Linear",	   BufferDataType::Float },
 				{ "Quadratic", BufferDataType::Float },
 				{ "BloomStrength", BufferDataType::Float },
-			}, 50
+			},
+			.Count = 50
 		});
 
 	SpotlightBuffer =
 		RendererAPI::Get()->CreateUniformBuffer({
-			BufferLayout
-			{
+			.Layout = {
 				{ "Position",  BufferDataType::Vec4 },
 				{ "Ambient",   BufferDataType::Vec4 },
 				{ "Diffuse",   BufferDataType::Vec4 },
@@ -170,7 +170,8 @@ RuntimeSceneRenderer::RuntimeSceneRenderer() {
 				{ "OuterCutoffAngle", BufferDataType::Float },
 				{ "_padding1", BufferDataType::Float },
 				{ "_padding2", BufferDataType::Float },
-			}, 50
+			},
+			.Count = 50
 		});
 
 	LightingPass =
@@ -436,35 +437,23 @@ void RuntimeSceneRenderer::SubmitMesh(const Entity& entity) {
 	auto& mc = entity.Get<MeshComponent>();
 	auto* assetManager = AssetManager::Get();
 
-	// if(!assetManager->IsValid(mc.MeshSourceAsset))
-	// 	return;
+	if(!mc.MeshSourceAsset)
+		return;
 
 	auto mesh = assetManager->Get<Mesh>(mc.MeshSourceAsset);
 
-	if(!mc.MaterialAsset.ID) {
-		Renderer::StartPass(LightingPass);
-		{
-			Renderer3D::DrawMesh(mesh, tc);
-		}
-		Renderer::EndPass();
-		return;
-	}
+	// auto mesh = assetManager->Get<Mesh>(mc.MeshSourceAsset);
+	// Renderer::StartPass(MeshPass);
+	// {
+	// 	List<Material> mats;
+	// 	for(auto ref : assetManager->GetRegistry()->GetRefs(mc.MaterialAsset)) {
+	// 		auto material = assetManager->Get<Material>(ref);
+	// 		mats.Add(material);
+	// 	}
 
-	if(mc.MaterialAsset)
-		return;
-
-	auto material = assetManager->Get<Material>(mc.MaterialAsset);
-
-	DrawCommand* command;
-	if(!s_MaterialMeshes.count(mc.MaterialAsset.ID)) {
-		command = s_MaterialMeshes[mc.MaterialAsset.ID] =
-			RendererAPI::Get()->NewCommand(LightingPass->Get());
-		command->Uniforms = material->UniformData;
-	}
-
-	command = s_MaterialMeshes[mc.MaterialAsset.ID];
-
-	Renderer3D::DrawMesh(mesh, tc, command);
+	// 	Renderer3D::DrawMesh(mesh, tc, mats);
+	// }
+	// Renderer::EndPass();
 }
 
 void RuntimeSceneRenderer::Render() {

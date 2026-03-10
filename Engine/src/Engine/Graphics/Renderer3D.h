@@ -8,6 +8,7 @@
 #include "Camera.h"
 #include "RenderPass.h"
 #include "Mesh.h"
+#include "Material.h"
 #include "Point.h"
 #include "Line.h"
 #include "Quad.h"
@@ -30,13 +31,10 @@ public:
 
 	static void DrawSkybox(Ref<Cubemap> cubemap);
 
+	// static void DrawMesh(Ref<Mesh> mesh, const glm::mat4& tr = glm::mat4(1.0f),
+	// 					 DrawCommand* command = nullptr);
 	static void DrawMesh(Ref<Mesh> mesh, const glm::mat4& tr,
-						 DrawCommand* command = nullptr);
-	static void DrawMesh(Ref<Mesh> mesh, const Transform& t = { },
-						 DrawCommand* command = nullptr)
-	{
-		DrawMesh(mesh, t.GetTransform(), command);
-	}
+						 const List<Material>& mats);
 
 	static void DrawQuad(Ref<Quad> quad, const glm::mat4& tr,
 						 DrawCommand* command = nullptr);

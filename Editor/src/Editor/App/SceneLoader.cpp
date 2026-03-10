@@ -645,12 +645,12 @@ void DeserializeEntity(YAML::Node entityNode, Scene& scene) {
 		auto id = scriptComponentNode["ModuleID"].as<u64>();
 		Asset asset = { id, AssetType::Script };
 
-// 		if(!asset)
-// 			// entity.Add<ScriptComponent>();
-// 		else {
-// 			// auto obj = LoadScript(entity, asset, scriptComponentNode);
-// 			// entity.Add<ScriptComponent>(asset, obj);
-// 		}
+		if(!asset)
+			entity.Add<ScriptComponent>();
+		else {
+			auto obj = LoadScript(entity, asset, scriptComponentNode);
+			entity.Add<ScriptComponent>(asset, obj);
+		}
 	}
 
 	auto rigidBodyComponentNode = components["RigidBodyComponent"];

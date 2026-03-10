@@ -1,6 +1,7 @@
 #include "Renderer.h"
 
 #include <VolcaniCore/Core/Assert.h>
+#include <VolcaniCore/Core/Application.h>
 
 #include <glad/glad.h>
 
@@ -11,6 +12,7 @@
 #include "UniformBuffer.h"
 #include "StorageBuffer.h"
 
+using namespace VolcaniCore;
 using namespace VolcanicEngine::Graphics;
 
 namespace OpenGL {
@@ -133,6 +135,14 @@ public:
 	u32 GetVertexCount() const override { return VerticesCount; }
 	u32 GetInstanceCount() const override { return InstancesCount; }
 };
+
+void Resize(u32 width, u32 height) {
+	glViewport(0, 0, (i32)width, (i32)height);
+}
+
+void Clear() {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
 
 Renderer::Renderer() {
 	int success = gladLoadGL();
@@ -326,6 +336,21 @@ void Renderer::EndFrame() {
 	for(auto& cmd : s_Commands) {
 		SetOptions(cmd);
 
+		if(cmd.ViewportW && cmd.ViewportH)
+			Resize(cmd.ViewportW, cmd.ViewportH);
+		else if(cmd.Pass && cmd.Pass->Output) {
+			auto att = cmd.Pass->Output->Get(AttachmentTarget::Color, 0);
+			Resize(att->Spec.Width, att->Spec.Height);
+		}
+
+		if(cmd.Pass && cmd.Pass->Output)
+			cmd.Pass->Output->As<OpenGL::Framebuffer>()->Bind();
+		else
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		if(cmd.Clear)
+			Clear();
+
 		if(cmd.Pass && cmd.Pass->Pipeline) {
 			cmd.Pass->Pipeline->As<OpenGL::Shader>()->Bind();
 			SetUniforms(cmd);
@@ -333,10 +358,11 @@ void Renderer::EndFrame() {
 		else
 			glUseProgram(0);
 
-		if(cmd.Pass && cmd.Pass->Output)
-			cmd.Pass->Output->As<OpenGL::Framebuffer>()->Bind();
-		else
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		if(cmd.Pass && cmd.ComputeX && cmd.ComputeY && cmd.ComputeZ) {
+			cmd.Pass->Pipeline->As<OpenGL::Shader>()->Lock();
+			cmd.Pass->Pipeline->As<OpenGL::Shader>()
+				->Compute(cmd.ComputeX, cmd.ComputeY, cmd.ComputeZ);
+		}
 
 		if(cmd.Pass && cmd.Pass->Output) {
 			u32 i = 0;
@@ -349,12 +375,11 @@ void Renderer::EndFrame() {
 		else
 			s_EmptyVAO->Bind();
 
-		if(cmd.Pass && cmd.ComputeX && cmd.ComputeY && cmd.ComputeZ)
-			cmd.Pass->Pipeline->As<OpenGL::Shader>()
-				->Compute(cmd.ComputeX, cmd.ComputeY, cmd.ComputeZ);
-
 		for(auto& call : cmd.DrawCalls)
 			SubmitDrawCall(cmd, call);
+
+		Resize(Application::GetWindow()->GetWidth(),
+				Application::GetWindow()->GetHeight());
 	}
 
 	s_Commands.Clear();

@@ -207,22 +207,27 @@ void EditorAssetManager::Build(Asset asset) {
 			  path);
 
 	if(asset.Type == AssetType::Mesh) {
-// 		List<SubMesh> meshes;
-// 		List<MaterialPaths> materials;
-// 		AssetImporter::GetMeshData(path, meshes, materials);
-//
-// 		BytesWriter wr(
-// 			meshes.GetBuffer().GetSize() +
-// 			materials.GetBuffer().GetSize());
-//
-// 		wr.Write(meshes.Count());
-// 		for(auto& mesh : meshes) {
-// 			wr.Write(mesh.Vertices);
-// 			wr.Write(mesh.Indices);
-// 			wr.Write(mesh.MaterialIndex);
-// 		}
+		List<SubMesh> meshes;
+		List<MaterialPaths> materials;
+		AssetImporter::GetMeshData(path, meshes, materials);
+
+		u64 size = sizeof(u64);
+		for(auto& mesh : meshes) {
+			size += mesh.Vertices.GetSize();
+			size += mesh.Indices.GetSize();
+			size += sizeof(u32);
+		}
+
+		BytesWriter wr(size);
+		wr.Write(meshes.Count());
+		for(auto& mesh : meshes) {
+			wr.Write(mesh.Vertices);
+			wr.Write(mesh.Indices);
+			wr.Write(mesh.MaterialIndex);
+		}
 
 		// for(auto mat : materials) {
+		// 	BytesWriter matWr(sizeof(u64) * 2);
 		// 	auto ref = Add(AssetType::Material, 0, false, "");
 		// 	m_AssetRegistry->AddRef(asset, ref);
 		// 	if(mat.Diffuse != "") {
@@ -238,7 +243,7 @@ void EditorAssetManager::Build(Asset asset) {
 		// 	}
 		// }
 
-		// m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
+		m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
 	}
 	else if(asset.Type == AssetType::Texture) {
 		ImageData image = AssetImporter::GetImageData(path, false);
@@ -422,18 +427,110 @@ void EditorAssetManager::LoadRegistry() {
 	}
 
 	auto libPath = Application::GetLibraryDir();
-	Asset shader = { 100, AssetType::Shader };
-	m_ShaderAssets[shader.ID] =
-		AssetImporter::GetShader({
-			libPath + "/Editor/assets/Shaders/Framebuffer.glsl.vert",
-			libPath + "/Editor/assets/Shaders/Framebuffer.glsl.frag"
-		});
-	m_LoadedAssets[shader.ID] = true;
-	m_AssetRegistry->NameAsset(shader, "FullscreenQuad");
+	Asset asset;
+	{
+		asset = { 100, AssetType::Shader };
+		m_ShaderAssets[asset.ID] =
+			AssetImporter::GetShader({
+				libPath + "/Editor/assets/Shaders/Framebuffer.glsl.vert",
+				libPath + "/Editor/assets/Shaders/Framebuffer.glsl.frag"
+			});
+		m_LoadedAssets[asset.ID] = true;
+		m_AssetRegistry->NameAsset(asset, "FullscreenQuad");
+	}
 
-	auto asset = m_AssetRegistry->FindAsset("FullscreenQuad");
-	std::string name = m_AssetRegistry->GetAssetName(asset);
-	Log::Info("Asset: {} - {} - {}", (u64)asset.ID, (u64)asset.Type, name);
+	{
+		asset = { 101, AssetType::Shader };
+		m_ShaderAssets[asset.ID] =
+			AssetImporter::GetShader({
+				libPath + "/Editor/assets/Shaders/Light.glsl.vert",
+				libPath + "/Editor/assets/Shaders/Light.glsl.frag"
+			});
+		m_LoadedAssets[asset.ID] = true;
+		m_AssetRegistry->NameAsset(asset, "Light");
+	}
+
+	{
+		asset = { 102, AssetType::Shader };
+		m_ShaderAssets[asset.ID] =
+			AssetImporter::GetShader({
+				libPath + "/Editor/assets/Shaders/Lighting.glsl.vert",
+				libPath + "/Editor/assets/Shaders/Lighting.glsl.frag"
+			});
+		m_LoadedAssets[asset.ID] = true;
+		m_AssetRegistry->NameAsset(asset, "Lighting");
+	}
+
+	{
+		asset = { 103, AssetType::Shader };
+		m_ShaderAssets[asset.ID] =
+			AssetImporter::GetShader({
+				libPath + "/Editor/assets/Shaders/Framebuffer.glsl.vert",
+				libPath + "/Editor/assets/Shaders/Bloom.glsl.frag"
+			});
+		m_LoadedAssets[asset.ID] = true;
+		m_AssetRegistry->NameAsset(asset, "Bloom");
+	}
+
+	{
+		asset = { 104, AssetType::Shader };
+		m_ShaderAssets[asset.ID] =
+			AssetImporter::GetShader({
+				libPath + "/Editor/assets/Shaders/Framebuffer.glsl.vert",
+				libPath + "/Editor/assets/Shaders/Downsample.glsl.frag"
+			});
+		m_LoadedAssets[asset.ID] = true;
+		m_AssetRegistry->NameAsset(asset, "Bloom-Downsample");
+	}
+
+	{
+		asset = { 105, AssetType::Shader };
+		m_ShaderAssets[asset.ID] =
+			AssetImporter::GetShader({
+				libPath + "/Editor/assets/Shaders/Framebuffer.glsl.vert",
+				libPath + "/Editor/assets/Shaders/Upsample.glsl.frag"
+			});
+		m_LoadedAssets[asset.ID] = true;
+		m_AssetRegistry->NameAsset(asset, "Bloom-Upsample");
+	}
+
+	{
+		asset = { 106, AssetType::Shader };
+		m_ShaderAssets[asset.ID] =
+			AssetImporter::GetShader({
+				libPath + "/Editor/assets/Shaders/Particle.glsl.vert",
+				libPath + "/Editor/assets/Shaders/Particle.glsl.frag"
+			});
+		m_LoadedAssets[asset.ID] = true;
+		m_AssetRegistry->NameAsset(asset, "Particle-DefaultDraw");
+	}
+
+	{
+		asset = { 107, AssetType::Shader };
+		m_ShaderAssets[asset.ID] =
+			AssetImporter::GetShader({
+				libPath + "/Editor/assets/Shaders/ParticleEmitter.glsl.comp",
+			});
+		m_LoadedAssets[asset.ID] = true;
+		m_AssetRegistry->NameAsset(asset, "Particle-Emit");
+	}
+
+	{
+		asset = { 108, AssetType::Shader };
+		m_ShaderAssets[asset.ID] =
+			AssetImporter::GetShader({
+				libPath + "/Editor/assets/Shaders/ParticleUpdate.glsl.comp",
+			});
+		m_LoadedAssets[asset.ID] = true;
+		m_AssetRegistry->NameAsset(asset, "Particle-Update");
+	}
+
+	{
+		asset = { 109, AssetType::Mesh };
+		m_MeshAssets[asset.ID] = Mesh::Create(MeshType::Cube);
+		m_LoadedAssets[asset.ID] = true;
+		m_AssetRegistry->NameAsset(asset, "Cube");
+	}
 
 	// m_AssetRegistry->For(
 	// 	[&](Asset asset)

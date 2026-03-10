@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iterator>
 
+#define RAPIDJSON_ASSERT(x) ((void)0)
 #define RAPIDJSON_HAS_STDSTRING 1
 #include <rapidjson/document.h>
 
@@ -22,6 +23,7 @@
 
 #include "./SceneRenderer.h"
 #include "../Asset/AssetManager.h"
+#include "../Asset/AssetImporter.h"
 
 #include "SceneLoader.h"
 #include "Embed.h"
@@ -43,10 +45,10 @@ static Ref<EditorAssetManager> s_AssetManager;
 static Ref<EditorSceneRenderer> s_EditorSceneRenderer;
 
 enum class TabType { None, Scene, Canvas };
-enum class EditorMode { Edit, Play, Pause };
+enum class EditorMode { Edit, Preview, Play, Pause };
 
 static TabType s_TabType = TabType::None;
-static EditorMode s_EditorMode = EditorMode::Edit;
+static EditorMode s_EditorMode = EditorMode::Preview;
 
 void Editor::Init(const CommandLineArgs& args) {
 	// Log::Init(args.Has("--embedded"));
@@ -116,6 +118,31 @@ void Editor::Init(const CommandLineArgs& args) {
 	s_EditorSceneRenderer = CreateRef<EditorSceneRenderer>();
 
 	s_App = CreateRef<App>();
+	s_App->AppLoad =
+		[](Ref<ScriptModule>& script)
+		{
+			script = AssetImporter::GetScript("App/Main.as");
+		};
+	s_App->ScreenLoad =
+		[](Ref<ScriptModule>& script, const std::string& name)
+		{
+			script = AssetImporter::GetScript("App/Screen/" + name + ".as");
+		};
+	s_App->SceneLoad =
+		[](Scene& scene)
+		{
+			Str scenePath = "App/Scene/" + scene.Name + ".scene";
+			SceneLoader::EditorLoad(scene, scenePath);
+		};
+	s_App->CanvasLoad =
+		[](Canvas& page)
+		{
+		};
+
+	s_App->ChangeScreen = false;
+	s_App->RenderScene = false;
+	s_App->RenderCanvas = false;
+	s_App->Running = false;
 
 	if(args["--open_project"]) {
 		Str path = args["--open_project"];
@@ -129,8 +156,6 @@ void Editor::Init(const CommandLineArgs& args) {
 		Str name = args["--open_scene"];
 		Editor::OpenScene(name);
 	}
-
-	// s_App->CreateSceneRenderer();
 }
 
 void Editor::Close() {
@@ -148,28 +173,40 @@ void Editor::Close() {
 }
 
 void Editor::Update(TimeStep ts) {
-	if(s_TabType == TabType::Scene)
-		if(s_EditorMode == EditorMode::Edit) {
+	Renderer::BeginFrame();
+
+	if(s_EditorMode == EditorMode::Edit) {
+		if(s_TabType == TabType::Scene) {
 			s_EditorSceneRenderer->Update(ts);
 			s_CurrentScene->OnUpdate(ts);
 		}
+	}
+	else if(s_EditorMode == EditorMode::Preview) {
+		if(s_TabType == TabType::Scene) {
+			s_App->GetSceneRenderer()->Update(ts);
+			s_CurrentScene->OnUpdate(ts);
+		}
+	}
+	else if(s_EditorMode == EditorMode::Play)
+		s_App->OnUpdate(ts);
 }
 
 void Editor::Render() {
-	Renderer::BeginFrame();
-
 	Ref<SceneRenderer> renderer;
 	if(s_TabType == TabType::Scene && s_CurrentScene) {
-		if(s_EditorMode == EditorMode::Edit)
+		if(s_EditorMode == EditorMode::Edit) {
 			renderer = s_EditorSceneRenderer;
-		else if(s_EditorMode == EditorMode::Play)
+			s_CurrentScene->OnRender(*renderer);
+		}
+		else if(s_EditorMode == EditorMode::Preview
+			 || s_EditorMode == EditorMode::Play)
+		{
 			renderer = s_App->GetSceneRenderer();
-
-		s_CurrentScene->OnRender(*renderer);
+		}
 	}
 
-	// if(!Embed::IsActive() && renderer)
-	// 	Renderer2D::DrawFullscreenQuad(renderer->GetOutput());
+	if(!Embed::IsActive() && renderer)
+		Renderer2D::DrawFullscreenQuad(renderer->GetOutput());
 
 	Renderer::EndFrame();
 
@@ -182,6 +219,8 @@ void Editor::Render() {
 void Editor::OpenProject(const Str& path) {
 	Application::PushDir(path);
 	s_AssetManager->LoadRegistry();
+	if(!s_App->GetSceneRenderer())
+		s_App->CreateSceneRenderer();
 }
 
 void Editor::NewProject(const Str& path) {

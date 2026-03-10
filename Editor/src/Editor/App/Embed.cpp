@@ -28,6 +28,8 @@ static void InputLoop();
 static std::atomic<bool> s_Running = false;
 static std::thread s_InputThread;
 
+extern u32 FRAME_W, FRAME_H;
+
 void Embed::Init() {
 	VolcaniCore::Log::Info("Embedding...");
 

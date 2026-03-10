@@ -1,3 +1,5 @@
+#pragma once
+
 #include "Platform/RendererAPI.h"
 
 namespace VolcanicEngine::Graphics {

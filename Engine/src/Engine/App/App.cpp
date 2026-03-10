@@ -16,6 +16,7 @@
 #include <Engine/Physics/Physics.h>
 
 #include <Engine/Asset/AssetManager.h>
+#include <Engine/Scene/Component.h>
 
 #include "ScriptGlue.h"
 
@@ -89,32 +90,32 @@ static void ScriptLoadScene(const std::string& name, App* app) {
 	app->SceneLoad(*s_Screen->World);
 
 	List<Entity> list;
-	// s_Screen->World->EntityWorld
-	// .ForEach<ScriptComponent>(
-	// 	[&](Entity entity)
-	// 	{
-	// 		auto& sc = entity.Set<ScriptComponent>();
-	// 		if(sc.Instance)
-	// 			list.Add(entity);
-	// 	});
+	s_Screen->World->EntityWorld
+	.ForEach<ScriptComponent>(
+		[&](Entity entity)
+		{
+			auto& sc = entity.Set<ScriptComponent>();
+			if(sc.Instance)
+				list.Add(entity);
+		});
 
-	// list.ForEach(
-	// 	[](Entity& entity)
-	// 	{
-	// 		auto& sc = entity.Set<ScriptComponent>();
-	// 		auto old = sc.Instance;
-	// 		if(!old->IsInitialized()) { // i.e Editor
-	// 			sc.Instance = old->GetClass()->Instantiate(entity);
-	// 			ScriptGlue::Copy(old, sc.Instance);
-	// 		}
+	list.ForEach(
+		[](Entity& entity)
+		{
+			auto& sc = entity.Set<ScriptComponent>();
+			auto old = sc.Instance;
+			if(!old->IsInitialized()) { // i.e Editor
+				sc.Instance = old->GetClass()->Instantiate(entity);
+				ScriptGlue::Copy(old, sc.Instance);
+			}
 
-	// 		sc.Instance->Call("OnStart");
-	// 	});
+			sc.Instance->Call("OnStart");
+		});
 }
 
 static void ScriptLoadUI(const std::string& name, App* app) {
 	s_Screen->UI->Name = name;
-	app->UILoad(*s_Screen->UI);
+	app->CanvasLoad(*s_Screen->UI);
 }
 
 static void AppLog(const std::string& msg, App* app) {
@@ -210,7 +211,7 @@ void App::OnUpdate(TimeStep ts) {
 		Renderer::Flush();
 	}
 
-	if(!RenderUI)
+	if(!RenderCanvas)
 		return;
 
 	// s_Screen->UI->Traverse(
@@ -332,24 +333,24 @@ void App::ScreenSet(const std::string& name) {
 		s_ShouldLoadScene = nullptr;
 
 		List<Entity> list;
-		// s_Screen->World->EntityWorld
-		// .ForEach<ScriptComponent>(
-		// 	[&](Entity entity)
-		// 	{
-		// 		const auto& sc = entity.Get<ScriptComponent>();
-		// 		if(sc.Instance)
-		// 			list.Add(entity);
-		// 	});
+		s_Screen->World->EntityWorld
+		.ForEach<ScriptComponent>(
+			[&](Entity entity)
+			{
+				const auto& sc = entity.Get<ScriptComponent>();
+				if(sc.Instance)
+					list.Add(entity);
+			});
 
-		// list.ForEach(
-		// 	[](Entity& entity)
-		// 	{
-		// 		auto& sc = entity.Set<ScriptComponent>();
-		// 		auto old = sc.Instance;
-		// 		sc.Instance = old->GetClass()->Instantiate(entity);
-		// 		ScriptGlue::Copy(old, sc.Instance);
-		// 		sc.Instance->Call("OnStart");
-		// 	});
+		list.ForEach(
+			[](Entity& entity)
+			{
+				auto& sc = entity.Set<ScriptComponent>();
+				auto old = sc.Instance;
+				sc.Instance = old->GetClass()->Instantiate(entity);
+				ScriptGlue::Copy(old, sc.Instance);
+				sc.Instance->Call("OnStart");
+			});
 	}
 	else if(screen.Scene != "")
 		ScriptLoadScene(screen.Scene, this);
@@ -359,7 +360,7 @@ void App::ScreenSet(const std::string& name) {
 		s_ShouldLoadCanvas = nullptr;
 	}
 	else if(screen.Canvas != "")
-		UILoad(*s_Screen->UI);
+		CanvasLoad(*s_Screen->UI);
 
 	s_Screen->ScriptObj->Call("OnLoad");
 }
