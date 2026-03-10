@@ -159,7 +159,7 @@ void Editor::Render() {
 	Renderer::BeginFrame();
 
 	Ref<SceneRenderer> renderer;
-	if(s_TabType == TabType::Scene) {
+	if(s_TabType == TabType::Scene && s_CurrentScene) {
 		if(s_EditorMode == EditorMode::Edit)
 			renderer = s_EditorSceneRenderer;
 		else if(s_EditorMode == EditorMode::Play)
@@ -168,8 +168,8 @@ void Editor::Render() {
 		s_CurrentScene->OnRender(*renderer);
 	}
 	
-	// if(!Embed::IsActive() && renderer)
-	// 	Renderer2D::DrawFullscreenQuad(renderer->GetOutput());
+	if(!Embed::IsActive() && renderer)
+		Renderer2D::DrawFullscreenQuad(renderer->GetOutput());
 
 	Renderer::EndFrame();
 

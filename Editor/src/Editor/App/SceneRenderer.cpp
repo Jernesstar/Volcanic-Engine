@@ -160,18 +160,15 @@ void EditorSceneRenderer::AddBillboard(const Vec3& pos, u32 type) {
 
 void EditorSceneRenderer::Begin() {
 	auto camera = m_Controller.GetCamera();
-
-	{
-		MeshCommand = RendererAPI::Get()->NewCommand(MeshPass->Get());
-		MeshCommand->Clear = true;
-		MeshCommand->Uniforms
-		.Set("u_ViewProj", camera->GetViewProjection())
-		.Set("u_CameraPosition", camera->GetPosition());
-	}
-
+	MeshCommand = RendererAPI::Get()->NewCommand(MeshPass->Get());
+	MeshCommand->Clear = true;
+	MeshCommand->Uniforms
+	.Set("u_ViewProj", camera->GetViewProjection())
+	.Set("u_CameraPosition", camera->GetPosition());
+	
 	BillboardBuffer->Clear();
 	Billboards.Clear();
-
+	
 	Vec3 pos = camera->GetPosition();
 	Vec3 dir = camera->GetDirection();
 	Vec3 planePos = Vec3(0.0f);
@@ -186,7 +183,7 @@ void EditorSceneRenderer::Begin() {
 	LineCommand->Blending = BlendingMode::Greatest;
 	LineCommand->Culling = CullingMode::Off;
 	LineCommand->Uniforms
-	.Set("u_ViewProj", m_Controller.GetCamera()->GetViewProjection());
+	.Set("u_ViewProj", camera->GetViewProjection());
 }
 
 void EditorSceneRenderer::SubmitCamera(const Entity& entity) {
@@ -448,8 +445,6 @@ void EditorSceneRenderer::Render() {
 		call.Primitive = PrimitiveType::Line;
 	}
 #endif
-
-	Renderer::Flush();
 
 	HasCamera = false;
 	HasDirectionalLight = false;

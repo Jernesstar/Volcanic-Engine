@@ -422,17 +422,13 @@ void EditorAssetManager::LoadRegistry() {
 	}
 
 	auto libPath = Application::GetLibraryDir();
-	Asset ref1 =
-		Add(AssetType::Shader, 11, false,
-			libPath + "/Editor/assets/Shaders/Framebuffer.glsl.vert");
-	Asset ref2 =
-		Add(AssetType::Shader, 12, false,
-			libPath + "/Editor/assets/Shaders/Framebuffer.glsl.frag");
-	Asset asset = Add(AssetType::Shader, 10, true);
-	m_AssetRegistry->NameAsset(asset, "FullscreenQuad");
-
-	m_AssetRegistry->AddRef(asset, ref1);
-	m_AssetRegistry->AddRef(asset, ref2);
+	m_ShaderAssets[10] =
+		AssetImporter::GetShader({
+			libPath + "/Editor/assets/Shaders/Framebuffer.glsl.vert",
+			libPath + "/Editor/assets/Shaders/Framebuffer.glsl.frag"
+		});
+	m_LoadedAssets[10] = true;
+	m_AssetRegistry->NameAsset({ 10, AssetType::Shader, true }, "FullscreenQuad");
 
 	// m_AssetRegistry->For(
 	// 	[&](Asset asset)

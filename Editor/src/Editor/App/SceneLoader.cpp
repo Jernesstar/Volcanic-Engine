@@ -69,6 +69,8 @@ void SceneLoader::EditorLoad(Scene& scene, const std::string& path) {
 
 	for(auto node : sceneNode["Entities"])
 		DeserializeEntity(node["Entity"], scene);
+
+	Log::Info("Loaded scene {} from path {}", scene.Name, path);
 }
 
 void SceneLoader::EditorSave(const Scene& scene, const std::string& path) {
