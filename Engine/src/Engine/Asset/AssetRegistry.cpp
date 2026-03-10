@@ -24,9 +24,9 @@ void AssetRegistry::Add(Asset asset) {
 }
 
 void AssetRegistry::Remove(Asset asset) {
+	// RemoveName(asset);
 	m_AssetMetadata->Remove((u64)asset.ID);
-	m_AssetRefs->Remove((u64)asset.ID);
-	m_AssetNames->Remove((u64)asset.ID);
+	// m_AssetRefs->Remove((u64)asset.ID);
 
 	auto path = "Asset/.bin/" + std::to_string((u64)asset.ID) + ".asset";
 	FileUtils::DeleteFile(path);
@@ -81,32 +81,42 @@ List<Asset> AssetRegistry::GetRefs(Asset asset) const {
 }
 
 void AssetRegistry::NameAsset(Asset asset, const std::string& name) {
-	Bytes bytes = { (u8*)name.c_str(), name.size(), 0, false };
-	m_AssetNames->Insert((u64)asset.ID, std::move(bytes));
-	Bytes bytes2 = { (u8*)&asset.ID, sizeof(u64), 0, false };
-	m_AssetNamesReverse->Insert(name, std::move(bytes2));
+	// Bytes bytes = { (u8*)name.c_str(), name.size(), 0, false };
+	// m_AssetNames->Insert((u64)asset.ID, std::move(bytes));
+	// Bytes bytes2 = { (u8*)&asset, sizeof(Asset), 0, false };
+	// m_AssetNamesReverse->Insert(name, std::move(bytes2));
+	m_Names[name] = asset;
 }
 
 void AssetRegistry::RemoveName(Asset asset) {
-	std::string name = GetAssetName(asset);
-	m_AssetNames->Remove((u64)asset.ID);
-	m_AssetNamesReverse->Remove(name);
+	// std::string name = GetAssetName(asset);
+	// m_AssetNames->Remove((u64)asset.ID);
+	// m_AssetNamesReverse->Remove(name);
 }
 
 std::string AssetRegistry::GetAssetName(Asset asset) const {
-	auto res = m_AssetNames->Query((u64)asset.ID);
-	if(res.Success)
-		return std::string((char*)res.Data.Get(), res.Data.GetCount());
+	// auto res = m_AssetNames->Query((u64)asset.ID);
+	// if(res.Success)
+	// 	return std::string((char*)res.Data.Get(), res.Data.GetCount());
+
+	// return "";
+	for(auto& [name, a] : m_Names) {
+		if(a.ID == asset.ID)
+			return name;
+	}
 
 	return "";
 }
 
 Asset AssetRegistry::FindAsset(const std::string& lookup) const {
-	auto res = m_AssetNamesReverse->Query(lookup);
-	if(!res.Success)
-		return { };
+	// auto res = m_AssetNamesReverse->Query(lookup);
+	// if(!res.Success) {
+	// 	Log::Info("Could not find asset by name '{}'", lookup);
+	// 	return { };
+	// }
 
-	return *(Asset*)res.Data.Get();
+	// return *(Asset*)res.Data.Get();
+	return m_Names.at(lookup);
 }
 
 void AssetRegistry::For(const Func<void, Asset>& cb) {

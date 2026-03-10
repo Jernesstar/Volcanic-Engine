@@ -210,11 +210,11 @@ void EditorAssetManager::Build(Asset asset) {
 // 		List<SubMesh> meshes;
 // 		List<MaterialPaths> materials;
 // 		AssetImporter::GetMeshData(path, meshes, materials);
-// 
+//
 // 		BytesWriter wr(
 // 			meshes.GetBuffer().GetSize() +
 // 			materials.GetBuffer().GetSize());
-// 
+//
 // 		wr.Write(meshes.Count());
 // 		for(auto& mesh : meshes) {
 // 			wr.Write(mesh.Vertices);
@@ -261,24 +261,24 @@ void EditorAssetManager::Build(Asset asset) {
 
 		auto refs = m_AssetRegistry->GetRefs(asset);
 
-        List<ShaderFile> files;
-        u64 size = sizeof(u64);
+		List<ShaderFile> files;
+		u64 size = sizeof(u64);
 		for(auto& ref : refs) {
 			auto shaderPath = GetPath(ref.ID);
 			Log::Info("Shader path {} for {}", shaderPath, (u64)ref.ID);
 			ShaderFile file = AssetImporter::GetShaderFileData(shaderPath);
-            size += sizeof(u32) + file.Data.GetSize();
-            files.AddMove(std::move(file));
+			size += sizeof(u32) + file.Data.GetSize();
+			files.AddMove(std::move(file));
 		}
 
-        BytesWriter wr(size);
-        wr.Write((u64)files.Count());
+		BytesWriter wr(size);
+		wr.Write((u64)files.Count());
 
-        for(auto& file : files) {
-    		wr.Write((u32)file.FileType);
-    		wr.Write(file.Data);
-    		m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
-        }
+		for(auto& file : files) {
+			wr.Write((u32)file.FileType);
+			wr.Write(file.Data);
+			m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
+		}
 	}
 	else if(asset.Type == AssetType::Audio) {
 		Buffer<f32> soundData = AssetImporter::GetAudioData(path);
@@ -355,7 +355,7 @@ void EditorAssetManager::Clear() {
 
 void EditorAssetManager::LoadRegistry() {
 	m_AssetRegistry = CreateRef<AssetRegistry>();
-	
+
 	auto rootPath = fs::path("Asset");
 	m_Path = (rootPath / ".magma.assetpk").string();
 
@@ -422,13 +422,18 @@ void EditorAssetManager::LoadRegistry() {
 	}
 
 	auto libPath = Application::GetLibraryDir();
-	m_ShaderAssets[10] =
+	Asset shader = { 100, AssetType::Shader };
+	m_ShaderAssets[shader.ID] =
 		AssetImporter::GetShader({
 			libPath + "/Editor/assets/Shaders/Framebuffer.glsl.vert",
 			libPath + "/Editor/assets/Shaders/Framebuffer.glsl.frag"
 		});
-	m_LoadedAssets[10] = true;
-	m_AssetRegistry->NameAsset({ 10, AssetType::Shader, true }, "FullscreenQuad");
+	m_LoadedAssets[shader.ID] = true;
+	m_AssetRegistry->NameAsset(shader, "FullscreenQuad");
+
+	auto asset = m_AssetRegistry->FindAsset("FullscreenQuad");
+	std::string name = m_AssetRegistry->GetAssetName(asset);
+	Log::Info("Asset: {} - {} - {}", (u64)asset.ID, (u64)asset.Type, name);
 
 	// m_AssetRegistry->For(
 	// 	[&](Asset asset)

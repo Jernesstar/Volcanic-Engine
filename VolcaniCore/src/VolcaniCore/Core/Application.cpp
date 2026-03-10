@@ -50,7 +50,6 @@ void Application::Run() {
 			continue;
 
 		f32 targetDelta = (1.0f / f32(s_Spec.TickRate)) * 1000.0f;
-		Log::Info("{} : {}", (f32)ts, targetDelta);
 		if(ts < targetDelta) {
 			f32 sleep = targetDelta - ts;
 			auto timeMS = std::chrono::milliseconds(static_cast<u32>(sleep));

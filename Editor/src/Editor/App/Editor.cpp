@@ -167,9 +167,9 @@ void Editor::Render() {
 
 		s_CurrentScene->OnRender(*renderer);
 	}
-	
-	if(!Embed::IsActive() && renderer)
-		Renderer2D::DrawFullscreenQuad(renderer->GetOutput());
+
+	// if(!Embed::IsActive() && renderer)
+	// 	Renderer2D::DrawFullscreenQuad(renderer->GetOutput());
 
 	Renderer::EndFrame();
 

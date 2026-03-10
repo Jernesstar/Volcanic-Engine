@@ -144,6 +144,8 @@ public:
 	AssetManager() { s_Instance = this; }
 
 	void Load(Asset asset) {
+		if(!asset)
+			return;
 		if(IsLoaded(asset))
 			return;
 
@@ -168,6 +170,8 @@ public:
 	}
 
 	void Unload(Asset asset) {
+		if(!asset)
+			return;
 		if(!IsLoaded(asset))
 			return;
 
@@ -191,6 +195,9 @@ public:
 
 	template<typename T>
 	Ref<T> Get(Asset asset) {
+		if(!asset)
+			return nullptr;
+
 		Load(asset);
 
 		if(asset.Type == AssetType::Mesh)

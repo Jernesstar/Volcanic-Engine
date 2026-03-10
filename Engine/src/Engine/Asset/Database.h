@@ -17,7 +17,7 @@ struct DatabaseKey {
 	DatabaseKey(Bytes&& key)
 		: Key(std::move(key)) { }
 	DatabaseKey(const std::string& key)
-		: Key((u8*)key.data(), key.size(), 0, false) { }
+		: Key((u8*)key.c_str(), key.size(), 0, false) { }
 	DatabaseKey(const char* key)
 		: Key((u8*)key, strlen(key), 0, false) { }
 	DatabaseKey(u64 key)

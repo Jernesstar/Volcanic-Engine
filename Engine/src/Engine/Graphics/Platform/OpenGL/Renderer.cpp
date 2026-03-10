@@ -210,13 +210,6 @@ static void SetUniforms(DrawCommand& cmd) {
 			shader->SetStorageBuffer(name, binding);
 		buffer->As<OpenGL::StorageBuffer>()->Bind(binding);
 	}
-	for(auto& [buffer, name, binding] : uniforms.StorageBuffers) {
-		if(!buffer)
-			continue;
-		if(name != "")
-			shader->SetStorageBuffer(name, binding);
-		buffer->As<OpenGL::StorageBuffer>()->Bind(binding);
-	}
 }
 
 static void SetOptions(DrawCommand& cmd) {
@@ -346,7 +339,7 @@ void Renderer::EndFrame() {
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		if(cmd.Pass && cmd.Pass->Output) {
-			uint32_t i = 0;
+			u32 i = 0;
 			for(auto& [target, idx] : cmd.Outputs)
 				cmd.Pass->Output->Attach(target, idx, i++);
 		}
