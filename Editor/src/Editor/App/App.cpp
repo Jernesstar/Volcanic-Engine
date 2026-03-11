@@ -7,7 +7,7 @@ u32 FRAME_W = 1280, FRAME_H = 720;
 namespace VolcanicEditor {
 
 EditorApp::EditorApp(const CommandLineArgs& args)
-	: Application({ .Name = "Editor", .TickRate = 60 },
+	: Application({ .Name = "Editor", .TickRate = 120 },
 		{
 			.Title = "Editor", .Width = 1280, .Height = 720,
 			.Hidden = args.Has("--embedded")

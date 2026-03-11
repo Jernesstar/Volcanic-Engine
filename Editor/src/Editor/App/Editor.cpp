@@ -48,7 +48,7 @@ enum class TabType { None, Scene, Canvas };
 enum class EditorMode { Edit, Preview, Play, Pause };
 
 static TabType s_TabType = TabType::None;
-static EditorMode s_EditorMode = EditorMode::Preview;
+static EditorMode s_EditorMode = EditorMode::Edit;
 
 void Editor::Init(const CommandLineArgs& args) {
 	// Log::Init(args.Has("--embedded"));
