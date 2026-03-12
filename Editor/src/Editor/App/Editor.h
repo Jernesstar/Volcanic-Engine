@@ -16,6 +16,11 @@ public:
 	static void Update(TimeStep ts);
 	static void Render();
 
+	static void OnPlay(bool debug = false);
+	static void OnPause();
+	static void OnResume();
+	static void OnStop();
+
 	static void OpenProject(const Str& path);
 	static void NewProject(const Str& path);
 	static void SaveProject();
