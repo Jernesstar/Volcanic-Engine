@@ -82,38 +82,38 @@ static AssetManager& GetAssetManagerInstance() {
 }
 
 static void ScriptLoadScene(const std::string& name, App* app) {
-	s_Screen->World->Name = name;
-	s_Screen->World->EntityWorld.Reset();
-	s_Screen->World->UnregisterSystems();
-	s_Screen->World->RegisterSystems();
-	app->GetSceneRenderer()->OnSceneLoad();
-	app->SceneLoad(*s_Screen->World);
+	// s_Screen->World->Name = name;
+	// s_Screen->World->EntityWorld.Reset();
+	// s_Screen->World->UnregisterSystems();
+	// s_Screen->World->RegisterSystems();
+	// app->GetSceneRenderer()->OnSceneLoad();
+	// app->SceneLoad(*s_Screen->World);
 
-	List<Entity> list;
-	s_Screen->World->EntityWorld
-	.ForEach<ScriptComponent>(
-		[&](Entity entity)
-		{
-			auto& sc = entity.Set<ScriptComponent>();
-			if(sc.Instance)
-				list.Add(entity);
-		});
+	// List<Entity> list;
+	// s_Screen->World->EntityWorld
+	// .ForEach<ScriptComponent>(
+	// 	[&](Entity entity)
+	// 	{
+	// 		auto& sc = entity.Set<ScriptComponent>();
+	// 		if(sc.Instance)
+	// 			list.Add(entity);
+	// 	});
 
-	list.ForEach(
-		[](Entity& entity)
-		{
-			auto& sc = entity.Set<ScriptComponent>();
-			auto old = sc.Instance;
-			if(!old->IsInitialized()) { // i.e Editor
-				sc.Instance = old->GetClass()->Instantiate(entity);
-				ScriptGlue::Copy(old, sc.Instance);
-			}
+	// list.ForEach(
+	// 	[](Entity& entity)
+	// 	{
+	// 		auto& sc = entity.Set<ScriptComponent>();
+	// 		auto old = sc.Instance;
+	// 		if(!old->IsInitialized()) { // i.e Editor
+	// 			sc.Instance = old->GetClass()->Instantiate(entity);
+	// 			ScriptGlue::Copy(old, sc.Instance);
+	// 		}
 
-			sc.Instance->Call("OnStart");
-		});
+	// 		sc.Instance->Call("OnStart");
+	// 	});
 }
 
-static void ScriptLoadUI(const std::string& name, App* app) {
+static void ScriptLoadCanvas(const std::string& name, App* app) {
 	s_Screen->UI->Name = name;
 	app->CanvasLoad(*s_Screen->UI);
 }
@@ -140,8 +140,8 @@ App::App() {
 		"AppClass", "void LoadScene(const string &in)",
 		asFUNCTION(ScriptLoadScene), asCALL_CDECL_OBJLAST);
 	ScriptEngine::Get()->RegisterObjectMethod(
-		"AppClass", "void LoadUI(const string &in)",
-		asFUNCTION(ScriptLoadUI), asCALL_CDECL_OBJLAST);
+		"AppClass", "void LoadCanvas(const string &in)",
+		asFUNCTION(ScriptLoadCanvas), asCALL_CDECL_OBJLAST);
 
 	ScriptEngine::Get()->RegisterGlobalFunction(
 		"SceneClass& get_Scene() property",
@@ -165,8 +165,7 @@ void App::CreateSceneRenderer() {
 void App::OnLoad() {
 	s_AppModule = CreateRef<ScriptModule>();
 	AppLoad(s_AppModule);
-
-	s_AppObject = s_AppModule->GetClass(m_Project.App)->Instantiate();
+	s_AppObject = s_AppModule->GetClass("Game")->Instantiate();
 	s_AppObject->Call("OnLoad");
 }
 
@@ -302,27 +301,12 @@ void App::ScreenSet(const std::string& name) {
 	if(name == "")
 		return;
 
-	auto [found, idx] =
-		m_Project.Screens.Find(
-			[name](const Screen& screen) { return screen.Name == name; });
-
-	if(!found) {
-		Log::Info("Screen '%s' was not found", name.c_str());
-		return;
-	}
-	else
-		Log::Info("Found screen '%s'", name.c_str());
-
-	auto& screen = m_Project.Screens[idx];
 	if(!s_ScreenPrepared)
 		PrepareScreen();
 
 	s_ScreenPrepared = false;
 
-	s_Screen->World->Name = screen.Scene;
-	s_Screen->UI->Name = screen.Canvas;
-
-	ScreenLoad(s_Screen->Script, screen.Name);
+	ScreenLoad(s_Screen->Script, name);
 	auto scriptClass = s_Screen->Script->GetClass(name);
 	s_Screen->ScriptObj = scriptClass->Instantiate();
 
@@ -352,15 +336,15 @@ void App::ScreenSet(const std::string& name) {
 				sc.Instance->Call("OnStart");
 			});
 	}
-	else if(screen.Scene != "")
-		ScriptLoadScene(screen.Scene, this);
+	// else if(screen.Scene != "")
+	// 	ScriptLoadScene(screen.Scene, this);
 
 	if(s_ShouldLoadCanvas) {
 		*s_Screen->UI = *s_ShouldLoadCanvas;
 		s_ShouldLoadCanvas = nullptr;
 	}
-	else if(screen.Canvas != "")
-		CanvasLoad(*s_Screen->UI);
+	// else if(screen.Canvas != "")
+	// 	CanvasLoad(*s_Screen->UI);
 
 	s_Screen->ScriptObj->Call("OnLoad");
 }

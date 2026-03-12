@@ -54,8 +54,9 @@ static EditorMode s_EditorMode = EditorMode::Edit;
 static Ref<std::thread> s_AppThread;
 static std::mutex s_Mutex;
 static std::condition_variable s_Condition;
+static EditorMode s_State = EditorMode::Edit;
 static bool s_Updated = false;
-static bool s_Debugging = true;
+static bool s_Debugging = false;
 
 static TimeStep s_TimeStep;
 
@@ -130,7 +131,7 @@ void Editor::Init(const CommandLineArgs& args) {
 	s_App->AppLoad =
 		[](Ref<ScriptModule>& script)
 		{
-			script = AssetImporter::GetScript("App/Main.as");
+			script = AssetImporter::GetScript("App/Game.as");
 		};
 	s_App->ScreenLoad =
 		[](Ref<ScriptModule>& script, const std::string& name)
@@ -144,8 +145,9 @@ void Editor::Init(const CommandLineArgs& args) {
 			SceneLoader::EditorLoad(scene, scenePath);
 		};
 	s_App->CanvasLoad =
-		[](Canvas& page)
+		[](Canvas& canvas)
 		{
+			Str canvasPath = "App/Scene/" + canvas.Name + ".canvas";
 		};
 
 	s_App->ChangeScreen = false;
@@ -164,6 +166,7 @@ void Editor::Init(const CommandLineArgs& args) {
 	if(args["--open_scene"]) {
 		Str name = args["--open_scene"];
 		Editor::OpenScene(name);
+		OnPlay();
 	}
 }
 
@@ -199,7 +202,7 @@ void Editor::Update(TimeStep ts) {
 	else if(s_Debugging) {
 		std::lock_guard<std::mutex> lock(s_Mutex);
 		s_TimeStep = ts;
-		s_State = m_ScreenState;
+		s_State = s_EditorMode;
 		s_Updated = true;
 		s_Condition.notify_one();
 	}
@@ -274,107 +277,108 @@ void Editor::SaveCanvas(const Str& name) {
 }
 
 void Editor::OnPlay(bool debug) {
-	// if(s_EditorMode == EditorMode::Edit) {
-	// 	Str screen = s_CurrentScene->Screen;
-	// 	s_EditorMode = EditorMode::Play;
-	// 	SaveScene();
+	if(s_EditorMode == EditorMode::Edit) {
+		Str screen = s_CurrentScene->Screen;
+		s_EditorMode = EditorMode::Play;
+		// SaveScene();
 
-	// 	App::Get()->PrepareScreen();
+		App::Get()->PrepareScreen();
 
-	// 	s_Debugging = debug;
-	// 	if(s_Debugging) {
-	// 		ScriptManager::StartDebug();
+		s_Debugging = debug;
+		if(s_Debugging) {
+			ScriptManager::StartDebug();
 
-	// 		s_Updated = false;
-	// 		s_AppThread = CreateRef<std::thread>(
-	// 			[tab, scene, screen, this]()
-	// 			{
-	// 				App::Get()->Running = true;
-	// 				App::Get()->OnLoad();
-	// 				App::Get()->LoadScene(scene);
-	// 				App::Get()->ScreenSet(screen);
+			s_Updated = false;
+			s_AppThread = CreateRef<std::thread>(
+				[screen]()
+				{
+					App::Get()->Running = true;
+					App::Get()->OnLoad();
+					App::Get()->LoadScene(s_CurrentScene.get());
+					App::Get()->ScreenSet(screen);
 
-	// 				while(true) {
-	// 					std::unique_lock<std::mutex> lock(s_Mutex);
-	// 					s_Condition.wait(lock, []() { return s_Updated; });
-	// 					s_Updated = false;
+					while(true) {
+						std::unique_lock<std::mutex> lock(s_Mutex);
+						s_Condition.wait(lock, []() { return s_Updated; });
+						s_Updated = false;
 
-	// 					if(s_State == EditorMode::Play)
-	// 						App::Get()->OnUpdate(s_TimeStep);
-	// 					else if(s_State == EditorMode::Pause)
-	// 						continue;
-	// 					else if(s_State == EditorMode::Edit)
-	// 						break;
-	// 				}
+						if(s_State == EditorMode::Play)
+							App::Get()->OnUpdate(s_TimeStep);
+						else if(s_State == EditorMode::Pause)
+							continue;
+						else if(s_State == EditorMode::Edit)
+							break;
+					}
 
-	// 				App::Get()->OnClose();
-	// 				App::Get()->Running = false;
+					App::Get()->OnClose();
+					App::Get()->Running = false;
 
-	// 				asThreadCleanup();
-	// 			});
+					asThreadCleanup();
+				});
 
-	// 		s_AppThread->detach();
-	// 	}
-	// 	else {
-	// 		App::Get()->Running = true;
-	// 		App::Get()->OnLoad();
-	// 		App::Get()->LoadScene(scene);
-	// 		App::Get()->ScreenSet(screen);
-	// 	}
-	// }
+			s_AppThread->detach();
+		}
+		else {
+			App::Get()->Running = true;
+			App::Get()->OnLoad();
+			App::Get()->LoadScene(s_CurrentScene.get());
+			App::Get()->ScreenSet(screen);
+			Log::Info("Loading...");
+		}
+	}
 }
 
 void Editor::OnPause() {
-	// s_EditorMode = EditorMode::Pause;
-	// if(s_Debugging) {
-	// 	std::lock_guard<std::mutex> lock(s_Mutex);
-	// 	s_State = s_EditorMode;
-	// 	s_Updated = true;
-	// 	s_Condition.notify_one();
-	// }
-	// else
-	// 	App::Get()->Running = false;
+	s_EditorMode = EditorMode::Pause;
+	if(s_Debugging) {
+		std::lock_guard<std::mutex> lock(s_Mutex);
+		s_State = s_EditorMode;
+		s_Updated = true;
+		s_Condition.notify_one();
+	}
+	else
+		App::Get()->Running = false;
 }
 
 void Editor::OnResume() {
-	// s_EditorMode = EditorMode::Play;
-	// if(s_Debugging) {
-	// 	std::lock_guard<std::mutex> lock(s_Mutex);
-	// 	s_State = s_EditorMode;
-	// 	s_Updated = true;
-	// 	s_Condition.notify_one();
-	// }
-	// else
-	// 	App::Get()->Running = true;
+	s_EditorMode = EditorMode::Play;
+	if(s_Debugging) {
+		std::lock_guard<std::mutex> lock(s_Mutex);
+		s_State = s_EditorMode;
+		s_Updated = true;
+		s_Condition.notify_one();
+	}
+	else
+		App::Get()->Running = true;
 }
 
 void Editor::OnStop() {
-	// if(s_EditorMode == EditorMode::Edit)
-	// 	return;
+	if(s_EditorMode == EditorMode::Edit)
+		return;
 
-	// s_EditorMode = EditorMode::Edit;
-	// if(s_Debugging) {
-	// 	{
-	// 		std::lock_guard<std::mutex> lock(s_Mutex);
-	// 		s_State = s_EditorMode;
-	// 		s_Updated = true;
-	// 		s_Condition.notify_one();
-	// 	}
+	s_EditorMode = EditorMode::Edit;
+	if(s_Debugging) {
+		{
+			std::lock_guard<std::mutex> lock(s_Mutex);
+			s_State = s_EditorMode;
+			s_Updated = true;
+			s_Condition.notify_one();
+		}
 
-	// 	s_AppThread.reset();
-	// 	ScriptManager::EndDebug();
-	// 	s_Debugging = false;
+		s_AppThread.reset();
+		ScriptManager::EndDebug();
+		s_Debugging = false;
+	}
+	else {
+		App::Get()->OnClose();
+		App::Get()->Running = false;
+	}
+
+	// Ref<Tab> current = Editor::GetCurrentTab();
+	// if(current->Type == TabType::Scene) {
+	// 	auto tab = current->As<SceneTab>();
+	// 	tab->Reset();
 	// }
-	// else {
-	// 	App::Get()->OnClose();
-	// 	App::Get()->Running = false;
-	// }
-
-	// // Ref<Tab> current = Editor::GetCurrentTab();
-	// // if(current->Type == TabType::Scene) {
-	// // 	auto tab = current->As<SceneTab>();
-	// // 	tab->Reset();
-	// // }
 }
 
 }

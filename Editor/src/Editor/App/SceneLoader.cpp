@@ -66,6 +66,7 @@ void SceneLoader::EditorLoad(Scene& scene, const std::string& path) {
 	VOLCANICORE_ASSERT(sceneNode);
 
 	scene.Name = sceneNode["Name"].as<std::string>();
+	scene.Screen = sceneNode["Screen"].as<std::string>();
 
 	for(auto node : sceneNode["Entities"])
 		DeserializeEntity(node["Entity"], scene);
