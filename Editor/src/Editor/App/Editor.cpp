@@ -26,6 +26,7 @@
 #include "../Asset/AssetImporter.h"
 
 #include "SceneLoader.h"
+#include "ScriptManager.h"
 #include "Embed.h"
 
 using namespace VolcaniCore;
@@ -54,9 +55,9 @@ static Ref<std::thread> s_AppThread;
 static std::mutex s_Mutex;
 static std::condition_variable s_Condition;
 static bool s_Updated = false;
+static bool s_Debugging = true;
 
 static TimeStep s_TimeStep;
-// static ScreenState s_State;
 
 void Editor::Init(const CommandLineArgs& args) {
 	// Log::Init(args.Has("--embedded"));
@@ -195,6 +196,13 @@ void Editor::Update(TimeStep ts) {
 			s_CurrentScene->OnUpdate(ts);
 		}
 	}
+	else if(s_Debugging) {
+		std::lock_guard<std::mutex> lock(s_Mutex);
+		s_TimeStep = ts;
+		s_State = m_ScreenState;
+		s_Updated = true;
+		s_Condition.notify_one();
+	}
 	else if(s_EditorMode == EditorMode::Play)
 		s_App->OnUpdate(ts);
 }
@@ -266,121 +274,107 @@ void Editor::SaveCanvas(const Str& name) {
 }
 
 void Editor::OnPlay(bool debug) {
-	if(s_EditorMode == EditorMode::Edit) {
-		
-		auto [found, idx] = m_Configs.SceneConfigs.Find(
-			[&](auto& element) -> bool
-			{
-				return element.Name == scene->Name;
-			});
+	// if(s_EditorMode == EditorMode::Edit) {
+	// 	Str screen = s_CurrentScene->Screen;
+	// 	s_EditorMode = EditorMode::Play;
+	// 	SaveScene();
 
-		if(!found) {
-			VOLCANICORE_LOG_WARNING("Cound not find screen for scene '%s'",
-				scene->Name.c_str());
-			return;
-		}
+	// 	App::Get()->PrepareScreen();
 
-		auto screen = m_Configs.SceneConfigs[idx].Screen;
-		s_EditorMode = EditorMode::Play;
-		tab->SaveScene();
+	// 	s_Debugging = debug;
+	// 	if(s_Debugging) {
+	// 		ScriptManager::StartDebug();
 
-		App::Get()->PrepareScreen();
-		tab->Test(App::Get()->GetScene());
+	// 		s_Updated = false;
+	// 		s_AppThread = CreateRef<std::thread>(
+	// 			[tab, scene, screen, this]()
+	// 			{
+	// 				App::Get()->Running = true;
+	// 				App::Get()->OnLoad();
+	// 				App::Get()->LoadScene(scene);
+	// 				App::Get()->ScreenSet(screen);
 
-		m_Debugging = debug;
-		if(m_Debugging) {
-			ScriptManager::StartDebug();
+	// 				while(true) {
+	// 					std::unique_lock<std::mutex> lock(s_Mutex);
+	// 					s_Condition.wait(lock, []() { return s_Updated; });
+	// 					s_Updated = false;
 
-			s_Updated = false;
-			s_AppThread = CreateRef<std::thread>(
-				[tab, scene, screen, this]()
-				{
-					App::Get()->Running = true;
-					App::Get()->OnLoad();
-					App::Get()->LoadScene(scene);
-					App::Get()->ScreenSet(screen);
+	// 					if(s_State == EditorMode::Play)
+	// 						App::Get()->OnUpdate(s_TimeStep);
+	// 					else if(s_State == EditorMode::Pause)
+	// 						continue;
+	// 					else if(s_State == EditorMode::Edit)
+	// 						break;
+	// 				}
 
-					while(true) {
-						std::unique_lock<std::mutex> lock(s_Mutex);
-						s_Condition.wait(lock, []() { return s_Updated; });
-						s_Updated = false;
+	// 				App::Get()->OnClose();
+	// 				App::Get()->Running = false;
 
-						if(s_State == ScreenState::Play)
-							App::Get()->OnUpdate(s_TimeStep);
-						else if(s_State == ScreenState::Pause)
-							continue;
-						else if(s_State == ScreenState::Edit)
-							break;
-					}
+	// 				asThreadCleanup();
+	// 			});
 
-					App::Get()->OnClose();
-					App::Get()->Running = false;
-
-					asThreadCleanup();
-				});
-
-			s_AppThread->detach();
-		}
-		else {
-			App::Get()->Running = true;
-			App::Get()->OnLoad();
-			App::Get()->LoadScene(scene);
-			App::Get()->ScreenSet(screen);
-		}
-	}
+	// 		s_AppThread->detach();
+	// 	}
+	// 	else {
+	// 		App::Get()->Running = true;
+	// 		App::Get()->OnLoad();
+	// 		App::Get()->LoadScene(scene);
+	// 		App::Get()->ScreenSet(screen);
+	// 	}
+	// }
 }
 
 void Editor::OnPause() {
-	m_ScreenState = ScreenState::Pause;
-	if(m_Debugging) {
-		std::lock_guard<std::mutex> lock(s_Mutex);
-		s_State = m_ScreenState;
-		s_Updated = true;
-		s_Condition.notify_one();
-	}
-	else
-		App::Get()->Running = false;
+	// s_EditorMode = EditorMode::Pause;
+	// if(s_Debugging) {
+	// 	std::lock_guard<std::mutex> lock(s_Mutex);
+	// 	s_State = s_EditorMode;
+	// 	s_Updated = true;
+	// 	s_Condition.notify_one();
+	// }
+	// else
+	// 	App::Get()->Running = false;
 }
 
 void Editor::OnResume() {
-	m_ScreenState = ScreenState::Play;
-	if(m_Debugging) {
-		std::lock_guard<std::mutex> lock(s_Mutex);
-		s_State = m_ScreenState;
-		s_Updated = true;
-		s_Condition.notify_one();
-	}
-	else
-		App::Get()->Running = true;
+	// s_EditorMode = EditorMode::Play;
+	// if(s_Debugging) {
+	// 	std::lock_guard<std::mutex> lock(s_Mutex);
+	// 	s_State = s_EditorMode;
+	// 	s_Updated = true;
+	// 	s_Condition.notify_one();
+	// }
+	// else
+	// 	App::Get()->Running = true;
 }
 
 void Editor::OnStop() {
-	if(m_ScreenState == ScreenState::Edit)
-		return;
+	// if(s_EditorMode == EditorMode::Edit)
+	// 	return;
 
-	m_ScreenState = ScreenState::Edit;
-	if(m_Debugging) {
-		{
-			std::lock_guard<std::mutex> lock(s_Mutex);
-			s_State = m_ScreenState;
-			s_Updated = true;
-			s_Condition.notify_one();
-		}
+	// s_EditorMode = EditorMode::Edit;
+	// if(s_Debugging) {
+	// 	{
+	// 		std::lock_guard<std::mutex> lock(s_Mutex);
+	// 		s_State = s_EditorMode;
+	// 		s_Updated = true;
+	// 		s_Condition.notify_one();
+	// 	}
 
-		s_AppThread.reset();
-		ScriptManager::EndDebug();
-		m_Debugging = false;
-	}
-	else {
-		App::Get()->OnClose();
-		App::Get()->Running = false;
-	}
+	// 	s_AppThread.reset();
+	// 	ScriptManager::EndDebug();
+	// 	s_Debugging = false;
+	// }
+	// else {
+	// 	App::Get()->OnClose();
+	// 	App::Get()->Running = false;
+	// }
 
-	Ref<Tab> current = Editor::GetCurrentTab();
-	if(current->Type == TabType::Scene) {
-		auto tab = current->As<SceneTab>();
-		tab->Reset();
-	}
+	// // Ref<Tab> current = Editor::GetCurrentTab();
+	// // if(current->Type == TabType::Scene) {
+	// // 	auto tab = current->As<SceneTab>();
+	// // 	tab->Reset();
+	// // }
 }
 
 }
