@@ -226,23 +226,6 @@ void EditorAssetManager::Build(Asset asset) {
 			wr.Write(mesh.MaterialIndex);
 		}
 
-		// for(auto mat : materials) {
-		// 	BytesWriter matWr(sizeof(u64) * 2);
-		// 	auto ref = Add(AssetType::Material, 0, false, "");
-		// 	m_AssetRegistry->AddRef(asset, ref);
-		// 	if(mat.Diffuse != "") {
-		// 		auto tex = Add(AssetType::Texture, 0, false, mat.Diffuse);
-		// 		m_AssetRegistry->NameAsset(ref, "u_Diffuse");
-		// 		m_AssetRegistry->AddRef(ref, tex);
-		// 	}
-		// 	if(mat.Emissive != "") {
-
-		// 	}
-		// 	if(mat.Specular != "") {
-
-		// 	}
-		// }
-
 		m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
 	}
 	else if(asset.Type == AssetType::Texture) {
@@ -304,7 +287,7 @@ void EditorAssetManager::Build(Asset asset) {
 		m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
 	}
 	else if(asset.Type == AssetType::Material) {
-
+		
 	}
 }
 

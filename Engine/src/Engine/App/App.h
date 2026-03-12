@@ -60,10 +60,16 @@ public:
 
 	void CreateSceneRenderer();
 	Ref<RuntimeSceneRenderer> GetSceneRenderer() { return m_SceneRenderer; }
+	void CreateCanvasRenderer();
+	Ref<RuntimeCanvasRenderer> GetCanvasRenderer() { return m_CanvasRenderer; }
+
+	void SetOutputPass(Ref<RenderPass> pass) { m_OutputPass = pass; }
 
 private:
 	Project m_Project;
+	Ref<RenderPass> m_OutputPass;
 	Ref<RuntimeSceneRenderer> m_SceneRenderer;
+	Ref<RuntimeCanvasRenderer> m_CanvasRenderer;
 
 private:
 	inline static App* s_Instance;

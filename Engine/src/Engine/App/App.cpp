@@ -82,35 +82,36 @@ static AssetManager& GetAssetManagerInstance() {
 }
 
 static void ScriptLoadScene(const std::string& name, App* app) {
-	// s_Screen->World->Name = name;
-	// s_Screen->World->EntityWorld.Reset();
-	// s_Screen->World->UnregisterSystems();
-	// s_Screen->World->RegisterSystems();
-	// app->GetSceneRenderer()->OnSceneLoad();
-	// app->SceneLoad(*s_Screen->World);
+	s_Screen->World->Name = name;
+	s_Screen->World->EntityWorld.Reset();
+	s_Screen->World->UnregisterSystems();
+	s_Screen->World->RegisterSystems();
+	app->GetSceneRenderer()->OnSceneLoad();
+	app->SceneLoad(*s_Screen->World);
 
-	// List<Entity> list;
-	// s_Screen->World->EntityWorld
-	// .ForEach<ScriptComponent>(
-	// 	[&](Entity entity)
-	// 	{
-	// 		auto& sc = entity.Set<ScriptComponent>();
-	// 		if(sc.Instance)
-	// 			list.Add(entity);
-	// 	});
+	List<Entity> list;
+	s_Screen->World->EntityWorld
+	.ForEach<ScriptComponent>(
+		[&](Entity entity)
+		{
+			auto& sc = entity.Set<ScriptComponent>();
+			if(sc.Instance)
+				list.Add(entity);
+		});
 
-	// list.ForEach(
-	// 	[](Entity& entity)
-	// 	{
-	// 		auto& sc = entity.Set<ScriptComponent>();
-	// 		auto old = sc.Instance;
-	// 		if(!old->IsInitialized()) { // i.e Editor
-	// 			sc.Instance = old->GetClass()->Instantiate(entity);
-	// 			ScriptGlue::Copy(old, sc.Instance);
-	// 		}
+	list.ForEach(
+		[](Entity& entity)
+		{
+			auto& sc = entity.Set<ScriptComponent>();
+			auto old = sc.Instance;
+			if(!old->IsInitialized()) { // i.e Editor
+				sc.Instance = old->GetClass()->Instantiate(entity);
+				ScriptGlue::Copy(old, sc.Instance);
+			}
+			Log::Info("Loaded script for entity {}", entity.GetName());
 
-	// 		sc.Instance->Call("OnStart");
-	// 	});
+			sc.Instance->Call("OnStart");
+		});
 }
 
 static void ScriptLoadCanvas(const std::string& name, App* app) {
@@ -162,6 +163,10 @@ void App::CreateSceneRenderer() {
 	m_SceneRenderer = CreateRef<RuntimeSceneRenderer>();
 }
 
+void App::CreateCanvasRenderer() {
+	m_CanvasRenderer = CreateRef<RuntimeCanvasRenderer>();
+}
+
 void App::OnLoad() {
 	s_AppModule = CreateRef<ScriptModule>();
 	AppLoad(s_AppModule);
@@ -206,40 +211,25 @@ void App::OnUpdate(TimeStep ts) {
 
 	if(RenderScene) {
 		auto output = m_SceneRenderer->GetOutput();
-		Renderer2D::DrawFullscreenQuad(output, AttachmentTarget::Color);
-		Renderer::Flush();
+		Renderer::StartPass(m_OutputPass);
+		{
+			Renderer2D::DrawFullscreenQuad(output);
+		}
+		Renderer::EndPass();
 	}
 
-	if(!RenderCanvas)
-		return;
+	s_Screen->UI->OnUpdate(ts);
+	m_CanvasRenderer->Update(ts);
+	s_Screen->UI->OnRender(*m_CanvasRenderer);
 
-	// s_Screen->UI->Traverse(
-	// 	[&](UIElement* element, TraversalStage state)
-	// 	{
-	// 		if(state == TraversalStage::Begin) {
-	// 			element->Draw();
-
-	// 			auto object = element->ScriptInstance;
-	// 			if(!object)
-	// 				return;
-
-	// 			object->Call("OnUpdate", (float)ts);
-
-	// 			UIState state = element->GetState();
-	// 			if(state.Clicked)
-	// 				object->Call("OnClick");
-	// 			if(state.Hovered)
-	// 				object->Call("OnHover");
-	// 			if(state.MouseUp)
-	// 				object->Call("OnMouseUp");
-	// 			if(state.MouseDown)
-	// 				object->Call("OnMouseDown");
-	// 		}
-	// 		else {
-	// 			if(element->GetType() == UIElementType::Window)
-	// 				UIRenderer::Pop(1);
-	// 		}
-	// 	});
+	if(RenderCanvas) {
+		auto output = m_CanvasRenderer->GetOutput();
+		Renderer::StartPass(m_OutputPass);
+		{
+			Renderer2D::DrawFullscreenQuad(output);
+		}
+		Renderer::EndPass();
+	}
 }
 
 void App::LoadScene(Scene* scene) {

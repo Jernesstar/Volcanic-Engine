@@ -48,7 +48,7 @@ void World::RemoveEntity(const std::string& name) {
 void World::ForEach(const Func<void, Entity&>& func) {
 	m_World.defer_begin();
 
-	m_AllEntitiesQuery.each(
+	m_World.query().each(
 		[&func](flecs::entity handle)
 		{
 			Entity entity{ handle };
@@ -61,7 +61,7 @@ void World::ForEach(const Func<void, Entity&>& func) {
 void World::ForEach(const Func<void, const Entity&>& func) const {
 	m_World.defer_begin();
 
-	m_AllEntitiesQuery.each(
+	m_World.query().each(
 		[&func](flecs::entity handle)
 		{
 			Entity entity{ handle };

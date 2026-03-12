@@ -351,6 +351,9 @@ void Renderer::EndFrame() {
 		if(cmd.Clear)
 			Clear();
 
+		if(cmd.Pass && cmd.ComputeX && cmd.ComputeY && cmd.ComputeZ)
+			cmd.Pass->Pipeline->As<OpenGL::Shader>()->Lock();
+
 		if(cmd.Pass && cmd.Pass->Pipeline) {
 			cmd.Pass->Pipeline->As<OpenGL::Shader>()->Bind();
 			SetUniforms(cmd);
@@ -358,11 +361,9 @@ void Renderer::EndFrame() {
 		else
 			glUseProgram(0);
 
-		if(cmd.Pass && cmd.ComputeX && cmd.ComputeY && cmd.ComputeZ) {
-			cmd.Pass->Pipeline->As<OpenGL::Shader>()->Lock();
+		if(cmd.Pass && cmd.ComputeX && cmd.ComputeY && cmd.ComputeZ)
 			cmd.Pass->Pipeline->As<OpenGL::Shader>()
 				->Compute(cmd.ComputeX, cmd.ComputeY, cmd.ComputeZ);
-		}
 
 		if(cmd.Pass && cmd.Pass->Output) {
 			u32 i = 0;

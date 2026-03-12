@@ -22,6 +22,16 @@ struct SubMesh {
 	u32 MaterialIndex;
 };
 
+struct SubMaterial {
+	Ref<Texture> Diffuse = nullptr;
+	Ref<Texture> Specular = nullptr;
+	Ref<Texture> Emissive = nullptr;
+
+	glm::vec4 DiffuseColor = glm::vec4(0.0f);
+	glm::vec4 SpecularColor = glm::vec4(0.0f);
+	glm::vec4 EmissiveColor = glm::vec4(0.0f);
+};
+
 enum class MeshType { Quad, Cube, Model };
 
 class Mesh {
@@ -34,6 +44,7 @@ public:
 public:
 	const MeshType Type;
 	List<SubMesh> SubMeshes;
+	List<SubMaterial> Materials;
 
 public:
 	Mesh(MeshType type)

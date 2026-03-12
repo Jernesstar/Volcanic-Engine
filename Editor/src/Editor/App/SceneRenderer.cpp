@@ -32,8 +32,7 @@ EditorSceneRenderer::EditorSceneRenderer() {
 		RendererAPI::Get()->CreateFramebuffer({
 			.Attachments = {
 				{ AttachmentTarget::Color, window->GetWidth(), window->GetHeight() }
-			},
-			.EnableRead = true
+			}
 		});
 
 	GridPass =

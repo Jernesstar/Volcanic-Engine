@@ -178,7 +178,7 @@ void Renderer3D::DrawSkybox(Ref<Cubemap> cubemap) {
 }
 
 static void DrawSubMesh(Ref<Mesh> root, SubMesh& mesh, const glm::mat4& tr,
-						const Material& mat)
+						DrawCommand* cmd)
 {
 	DrawCommand* command;
 	if(s_Meshes.count(&mesh))
@@ -188,16 +188,37 @@ static void DrawSubMesh(Ref<Mesh> root, SubMesh& mesh, const glm::mat4& tr,
 			command = Renderer::NewCommand();
 			s_Meshes[&mesh] = command;
 		}
-		else
-			return;
+		else{
+			command = RendererAPI::Get()->NewCommand(cmd->Pass);
+			command->Uniforms = cmd->Uniforms;
+		}
 	}
 
 	auto* buffer = command->Pass->Buffer;
 
 	if(!command->VerticesIndex) { // First time seeing this mesh this frame
+		if(cmd) {
+			command->IndicesIndex = s_MeshBuffer->GetIndexCount();
+			command->VerticesIndex = s_MeshBuffer->GetVertexCount();
+		}
+
 		command->DepthTesting = DepthTestingMode::On;
 		command->Blending = BlendingMode::Off;
 		command->Culling = CullingMode::Back;
+
+		if(!command->Uniforms && root->Materials) {
+			SubMaterial& mat = root->Materials[mesh.MaterialIndex];
+			command->Uniforms
+			.Set("u_Material.IsTextured", (bool)mat.Diffuse)
+			.Set("u_Material.Diffuse", TextureSlot{ mat.Diffuse, 0 })
+			.Set("u_Material.Specular", TextureSlot{ mat.Specular, 1 })
+			.Set("u_Material.Emissive", TextureSlot{ mat.Emissive, 2 });
+
+			command->Uniforms
+			.Set("u_Material.DiffuseColor", mat.DiffuseColor)
+			.Set("u_Material.SpecularColor", mat.SpecularColor)
+			.Set("u_Material.EmissiveColor", mat.EmissiveColor);
+		}
 
 		command->IndicesIndex = s_MeshBuffer->GetIndexCount();
 		command->VerticesIndex = s_MeshBuffer->GetVertexCount();
@@ -218,13 +239,11 @@ static void DrawSubMesh(Ref<Mesh> root, SubMesh& mesh, const glm::mat4& tr,
 	buffer->Add(DrawBufferIndex::E_Instance, glm::value_ptr(tr), 1);
 }
 
-
-
 void Renderer3D::DrawMesh(Ref<Mesh> mesh, const glm::mat4& tr,
-						  const List<Material>& mats)
+						  DrawCommand* command)
 {
 	for(auto& subMesh : mesh->SubMeshes)
-		DrawSubMesh(mesh, subMesh, tr, mats[subMesh.MaterialIndex]);
+		DrawSubMesh(mesh, subMesh, tr, command);
 }
 
 void Renderer3D::DrawQuad(Ref<Quad> quad, const glm::mat4& tr,

@@ -73,133 +73,133 @@ void Scene::OnRender(SceneRenderer& renderer) {
 }
 
 void Scene::RegisterSystems() {
-	// EntityWorld.Add<PhysicsSystem>();
-	// EntityWorld.Add<ScriptSystem>();
+	EntityWorld.Add<PhysicsSystem>();
+	EntityWorld.Add<ScriptSystem>();
 
-	// for(auto phase : { flecs::PreUpdate, flecs::OnUpdate, flecs::PostUpdate }) {
-	// 	Phase ourPhase;
-	// 	if(phase == flecs::PreUpdate)
-	// 		ourPhase = Phase::PreUpdate;
-	// 	if(phase == flecs::OnUpdate)
-	// 		ourPhase = Phase::OnUpdate;
-	// 	if(phase == flecs::PostUpdate)
-	// 		ourPhase = Phase::PostUpdate;
+	for(auto phase : { flecs::PreUpdate, flecs::OnUpdate, flecs::PostUpdate }) {
+		Phase ourPhase;
+		if(phase == flecs::PreUpdate)
+			ourPhase = Phase::PreUpdate;
+		if(phase == flecs::OnUpdate)
+			ourPhase = Phase::OnUpdate;
+		if(phase == flecs::PostUpdate)
+			ourPhase = Phase::PostUpdate;
 
-	// 	EntityWorld.GetNative()
-	// 	.system<RigidBodyComponent>()
-	// 	.kind(phase)
-	// 	.run(
-	// 		[=, this](flecs::iter& it)
-	// 		{
-	// 			while(it.next()) {
-	// 				auto sys = EntityWorld.Get<PhysicsSystem>();
-	// 				if(!sys)
-	// 					continue;
+		EntityWorld.GetNative()
+		.system<RigidBodyComponent>()
+		.kind(phase)
+		.run(
+			[=, this](flecs::iter& it)
+			{
+				while(it.next()) {
+					auto sys = EntityWorld.Get<PhysicsSystem>();
+					if(!sys)
+						continue;
 
-	// 				for(auto i : it) {
-	// 					Entity entity{ it.entity(i) };
-	// 					sys->Run(entity, it.delta_time(), ourPhase);
-	// 				}
-	// 			}
-	// 		});
-	// }
+					for(auto i : it) {
+						Entity entity{ it.entity(i) };
+						sys->Run(entity, it.delta_time(), ourPhase);
+					}
+				}
+			});
+	}
 
-	// for(auto phase : { flecs::PreUpdate }) {
-	// 	Phase ourPhase;
-	// 	if(phase == flecs::PreUpdate)
-	// 		ourPhase = Phase::PreUpdate;
-	// 	if(phase == flecs::OnUpdate)
-	// 		ourPhase = Phase::OnUpdate;
-	// 	if(phase == flecs::PostUpdate)
-	// 		ourPhase = Phase::PostUpdate;
+	for(auto phase : { flecs::PreUpdate }) {
+		Phase ourPhase;
+		if(phase == flecs::PreUpdate)
+			ourPhase = Phase::PreUpdate;
+		if(phase == flecs::OnUpdate)
+			ourPhase = Phase::OnUpdate;
+		if(phase == flecs::PostUpdate)
+			ourPhase = Phase::PostUpdate;
 
-	// 	EntityWorld.GetNative()
-	// 	.system<ScriptComponent>()
-	// 	.kind(phase)
-	// 	.run(
-	// 		[=, this](flecs::iter& it)
-	// 		{
-	// 			while(it.next()) {
-	// 				auto sys = EntityWorld.Get<ScriptSystem>();
-	// 				if(!sys)
-	// 					continue;
+		EntityWorld.GetNative()
+		.system<ScriptComponent>()
+		.kind(phase)
+		.run(
+			[=, this](flecs::iter& it)
+			{
+				while(it.next()) {
+					auto sys = EntityWorld.Get<ScriptSystem>();
+					if(!sys)
+						continue;
 
-	// 				for(auto i : it) {
-	// 					Entity entity{ it.entity(i) };
-	// 					sys->Run(entity, it.delta_time(), ourPhase);
-	// 				}
-	// 			}
-	// 		});
-	// }
+					for(auto i : it) {
+						Entity entity{ it.entity(i) };
+						sys->Run(entity, it.delta_time(), ourPhase);
+					}
+				}
+			});
+	}
 
-	// EntityWorld.GetNative()
-	// .system("ScriptUpdate")
-	// .kind(flecs::OnUpdate)
-	// .run(
-	// 	[=, this](flecs::iter& it)
-	// 	{
-	// 		auto sys = EntityWorld.Get<ScriptSystem>();
-	// 		if(!sys)
-	// 			return;
-	// 		sys->Update(it.delta_time());
-	// 	});
+	EntityWorld.GetNative()
+	.system("ScriptUpdate")
+	.kind(flecs::OnUpdate)
+	.run(
+		[=, this](flecs::iter& it)
+		{
+			auto sys = EntityWorld.Get<ScriptSystem>();
+			if(!sys)
+				return;
+			sys->Update(it.delta_time());
+		});
 
-	// EntityWorld.GetNative()
-	// .system("PhysicsUpdate")
-	// .kind(flecs::OnUpdate)
-	// .run(
-	// 	[=, this](flecs::iter& it)
-	// 	{
-	// 		auto sys = EntityWorld.Get<PhysicsSystem>();
-	// 		if(!sys)
-	// 			return;
-	// 		sys->Update(it.delta_time());
-	// 	});
+	EntityWorld.GetNative()
+	.system("PhysicsUpdate")
+	.kind(flecs::OnUpdate)
+	.run(
+		[=, this](flecs::iter& it)
+		{
+			auto sys = EntityWorld.Get<PhysicsSystem>();
+			if(!sys)
+				return;
+			sys->Update(it.delta_time());
+		});
 
-	// EntityWorld.GetNative()
-	// .observer()
-	// .with<RigidBodyComponent>()
-	// .event(flecs::Monitor)
-	// .each(
-	// 	[=, this](flecs::iter& it, size_t i)
-	// 	{
-	// 		auto sys = EntityWorld.Get<PhysicsSystem>();
-	// 		if(!sys)
-	// 			return;
+	EntityWorld.GetNative()
+	.observer()
+	.with<RigidBodyComponent>()
+	.event(flecs::Monitor)
+	.each(
+		[=, this](flecs::iter& it, size_t i)
+		{
+			auto sys = EntityWorld.Get<PhysicsSystem>();
+			if(!sys)
+				return;
 
-	// 		Entity entity{ it.entity(i) };
-	// 		if(it.event() == flecs::OnAdd)
-	// 			sys->OnComponentAdd(entity);
-	// 		else if(it.event() == flecs::OnSet)
-	// 			sys->OnComponentSet(entity);
-	// 		else if(it.event() == flecs::OnRemove)
-	// 			sys->OnComponentRemove(entity);
-	// 	});
+			Entity entity{ it.entity(i) };
+			if(it.event() == flecs::OnAdd)
+				sys->OnComponentAdd(entity);
+			else if(it.event() == flecs::OnSet)
+				sys->OnComponentSet(entity);
+			else if(it.event() == flecs::OnRemove)
+				sys->OnComponentRemove(entity);
+		});
 
-	// EntityWorld.GetNative()
-	// .observer()
-	// .with<ScriptComponent>()
-	// .event(flecs::Monitor)
-	// .each(
-	// 	[=, this](flecs::iter& it, size_t i)
-	// 	{
-	// 		auto sys = EntityWorld.Get<ScriptSystem>();
-	// 		if(!sys)
-	// 			return;
+	EntityWorld.GetNative()
+	.observer()
+	.with<ScriptComponent>()
+	.event(flecs::Monitor)
+	.each(
+		[=, this](flecs::iter& it, size_t i)
+		{
+			auto sys = EntityWorld.Get<ScriptSystem>();
+			if(!sys)
+				return;
 
-	// 		Entity entity{ it.entity(i) };
-	// 		if(it.event() == flecs::OnAdd)
-	// 			sys->OnComponentAdd(entity);
-	// 		else if(it.event() == flecs::OnSet)
-	// 			sys->OnComponentSet(entity);
-	// 		else if(it.event() == flecs::OnRemove)
-	// 			sys->OnComponentRemove(entity);
-	// 	});
+			Entity entity{ it.entity(i) };
+			if(it.event() == flecs::OnAdd)
+				sys->OnComponentAdd(entity);
+			else if(it.event() == flecs::OnSet)
+				sys->OnComponentSet(entity);
+			else if(it.event() == flecs::OnRemove)
+				sys->OnComponentRemove(entity);
+		});
 }
 
 void Scene::UnregisterSystems() {
-	// EntityWorld.Remove<ScriptSystem>();
-	// EntityWorld.Remove<PhysicsSystem>();
+	EntityWorld.Remove<ScriptSystem>();
+	EntityWorld.Remove<PhysicsSystem>();
 }
 
 }

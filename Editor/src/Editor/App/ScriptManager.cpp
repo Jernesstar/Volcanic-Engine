@@ -64,9 +64,10 @@ asIScriptModule* ScriptManager::LoadScript(const List<std::string>& paths,
 		builder.SetIncludeCallback(IncludeCallback, (void*)&includePaths);
 
 	for(auto& path : paths) {
-		r = builder.AddSectionFromFile(path.c_str());
+		auto fullPath = fs::canonical(path).generic_string();
+		r = builder.AddSectionFromFile(fullPath.c_str());
 		if(r < 0) {
-			Log::Error("AddSectionFromFile failed for file '{}'", path);
+			Log::Error("AddSectionFromFile failed for file '{}'", fullPath);
 			if(error)
 				*error = true;
 			return nullptr;

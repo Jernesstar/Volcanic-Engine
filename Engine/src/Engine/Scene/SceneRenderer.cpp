@@ -120,15 +120,17 @@ static Ref<UniformBuffer> SpotlightBuffer;
 static Ref<Framebuffer> BaseLayer;
 static Ref<Framebuffer> Mips;
 
+static u32 WIDTH = 640;
+static u32 HEIGHT = 360;
+
 RuntimeSceneRenderer::RuntimeSceneRenderer() {
 	auto window = Application::GetWindow();
 	m_Output =
 		RendererAPI::Get()->CreateFramebuffer(
 			{
 				.Attachments = {
-					{ AttachmentTarget::Color, window->GetWidth(), window->GetHeight() }
-				},
-				.EnableRead = true
+					{ AttachmentTarget::Color, WIDTH, HEIGHT }
+				}
 			});
 
 	DirectionalLightBuffer =
@@ -182,7 +184,7 @@ RuntimeSceneRenderer::RuntimeSceneRenderer() {
 	BaseLayer =
 		RendererAPI::Get()->CreateFramebuffer({
 			{
-				{ AttachmentTarget::Color, window->GetWidth(), window->GetHeight() }
+				{ AttachmentTarget::Color, WIDTH, HEIGHT }
 			}
 		});
 
@@ -418,8 +420,8 @@ void RuntimeSceneRenderer::SubmitParticles(const Entity& entity) {
 		.Set("u_BillboardHeight", 0.1f);
 
 		command->DepthTesting = DepthTestingMode::On;
-		command->Culling = CullingMode::Off;
 		command->Blending = BlendingMode::Greatest;
+		command->Culling = CullingMode::Off;
 		command->Uniforms
 		.Set("u_Texture", TextureSlot{ emitter.Material, 0 });
 
@@ -442,18 +444,63 @@ void RuntimeSceneRenderer::SubmitMesh(const Entity& entity) {
 
 	auto mesh = assetManager->Get<Mesh>(mc.MeshSourceAsset);
 
-	// auto mesh = assetManager->Get<Mesh>(mc.MeshSourceAsset);
-	// Renderer::StartPass(MeshPass);
-	// {
-	// 	List<Material> mats;
-	// 	for(auto ref : assetManager->GetRegistry()->GetRefs(mc.MaterialAsset)) {
-	// 		auto material = assetManager->Get<Material>(ref);
-	// 		mats.Add(material);
-	// 	}
+	if(!mc.MaterialAsset) {
+		Renderer::StartPass(LightingPass);
+		{
+			Renderer3D::DrawMesh(mesh, (Transform)tc);
+		}
+		Renderer::EndPass();
+		return;
+	}
 
-	// 	Renderer3D::DrawMesh(mesh, tc, mats);
-	// }
-	// Renderer::EndPass();
+	return;
+
+	DrawCommand* command;
+	if(!s_MaterialMeshes.count(mc.MaterialAsset.ID)) {
+		auto material = assetManager->Get<Material>(mc.MaterialAsset);
+		SubMaterial mat;
+
+		if(material->TextureUniforms.count("u_Diffuse")) {
+			UUID id = material->TextureUniforms["u_Diffuse"];
+			Asset textureAsset = { id, AssetType::Texture };
+			mat.Diffuse = assetManager->Get<Texture>(textureAsset);
+		}
+
+		if(material->TextureUniforms.count("u_Specular")) {
+			UUID id = material->TextureUniforms["u_Specular"];
+			Asset textureAsset = { id, AssetType::Texture };
+			mat.Specular = assetManager->Get<Texture>(textureAsset);
+		}
+
+		if(material->TextureUniforms.count("u_Emissive")) {
+			UUID id = material->TextureUniforms["u_Emissive"];
+			Asset textureAsset = { id, AssetType::Texture };
+			mat.Emissive = assetManager->Get<Texture>(textureAsset);
+		}
+
+		if(material->Vec4Uniforms.count("u_DiffuseColor"))
+			mat.DiffuseColor = material->Vec4Uniforms["u_DiffuseColor"];
+		if(material->Vec4Uniforms.count("u_SpecularColor"))
+			mat.SpecularColor = material->Vec4Uniforms["u_SpecularColor"];
+		if(material->Vec4Uniforms.count("u_EmissiveColor"))
+			mat.EmissiveColor = material->Vec4Uniforms["u_EmissiveColor"];
+
+		command = s_MaterialMeshes[mc.MaterialAsset.ID] =
+			RendererAPI::Get()->NewCommand(LightingPass->Get());
+
+		command->Uniforms
+		.Set("u_Material.IsTextured", (bool)mat.Diffuse)
+		.Set("u_Material.Diffuse", TextureSlot{ mat.Diffuse, 0 })
+		.Set("u_Material.Specular", TextureSlot{ mat.Specular, 1 })
+		.Set("u_Material.Emissive", TextureSlot{ mat.Emissive, 2 })
+		.Set("u_Material.DiffuseColor", mat.DiffuseColor)
+		.Set("u_Material.SpecularColor", mat.SpecularColor)
+		.Set("u_Material.EmissiveColor", mat.EmissiveColor);
+	}
+
+	command = s_MaterialMeshes[mc.MaterialAsset.ID];
+
+	Renderer3D::DrawMesh(mesh, (Transform)tc, command);
 }
 
 void RuntimeSceneRenderer::Render() {
@@ -511,7 +558,7 @@ void RuntimeSceneRenderer::InitMips() {
 	auto window = Application::GetWindow();
 
 	Vec2 mipSize((f32)window->GetWidth(), (f32)window->GetHeight());
-	Vec2i mipIntSize(window->GetWidth(), window->GetHeight());
+	Vec2i mipIntSize(WIDTH, HEIGHT);
 	List<AttachmentSpec> textures;
 	for(u32 i = 0; i < s_MipChainLength; i++) {
 		BloomMip mip;
@@ -594,8 +641,8 @@ void RuntimeSceneRenderer::Upsample() {
 void RuntimeSceneRenderer::Composite() {
 	auto* command = Renderer::NewCommand();
 	command->Clear = true;
-	command->ViewportW = Application::GetWindow()->GetWidth();
-	command->ViewportH = Application::GetWindow()->GetHeight();
+	command->ViewportW = 640;
+	command->ViewportH = 360;
 	command->DepthTesting = DepthTestingMode::Off;
 	command->Blending = BlendingMode::Greatest;
 	command->Culling = CullingMode::Off;

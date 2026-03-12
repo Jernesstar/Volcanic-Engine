@@ -18,6 +18,9 @@ public:
 public:
 	Canvas(const std::string& name = "Untitled Canvas");
 	~Canvas() = default;
+
+	void OnUpdate(TimeStep ts);
+	void OnRender(CanvasRenderer& renderer);
 };
 
 }

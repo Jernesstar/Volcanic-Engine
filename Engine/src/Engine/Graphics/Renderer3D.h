@@ -31,10 +31,8 @@ public:
 
 	static void DrawSkybox(Ref<Cubemap> cubemap);
 
-	// static void DrawMesh(Ref<Mesh> mesh, const glm::mat4& tr = glm::mat4(1.0f),
-	// 					 DrawCommand* command = nullptr);
-	static void DrawMesh(Ref<Mesh> mesh, const glm::mat4& tr,
-						 const List<Material>& mats);
+	static void DrawMesh(Ref<Mesh> mesh, const glm::mat4& tr = glm::mat4(1.0f),
+						 DrawCommand* command = nullptr);
 
 	static void DrawQuad(Ref<Quad> quad, const glm::mat4& tr,
 						 DrawCommand* command = nullptr);

@@ -42,8 +42,8 @@ static Ref<Scene> s_CurrentScene;
 static Ref<Canvas> s_CurrentCanvas;
 
 static Ref<EditorAssetManager> s_AssetManager;
-
 static Ref<EditorSceneRenderer> s_EditorSceneRenderer;
+static Ref<RenderPass> s_OutputPass;
 
 enum class TabType { None, Scene, Canvas };
 enum class EditorMode { Edit, Preview, Play, Pause };
@@ -127,6 +127,22 @@ void Editor::Init(const CommandLineArgs& args) {
 	s_AssetManager = CreateRef<EditorAssetManager>();
 	s_EditorSceneRenderer = CreateRef<EditorSceneRenderer>();
 
+	auto window = Application::GetWindow();
+	auto output =
+		RendererAPI::Get()->CreateFramebuffer({
+			.Attachments = {
+				{ AttachmentTarget::Color, window->GetWidth(), window->GetHeight() }
+			},
+			.EnableRead = true
+		});
+
+	s_OutputPass =
+		RenderPass::Create("Output",
+			AssetImporter::GetShader({
+				"Editor/assets/Shaders/Framebuffer.glsl.vert",
+				"Editor/assets/Shaders/Framebuffer.glsl.frag"
+			}), output);
+
 	s_App = CreateRef<App>();
 	s_App->AppLoad =
 		[](Ref<ScriptModule>& script)
@@ -154,6 +170,7 @@ void Editor::Init(const CommandLineArgs& args) {
 	s_App->RenderScene = false;
 	s_App->RenderCanvas = false;
 	s_App->Running = false;
+	s_App->SetOutputPass(s_OutputPass);
 
 	if(args["--open_project"]) {
 		Str path = args["--open_project"];
@@ -174,6 +191,8 @@ void Editor::Close() {
 	if(Embed::IsActive())
 		Embed::Close();
 
+	OnStop();
+
 	s_CurrentScene.reset();
 	s_CurrentCanvas.reset();
 
@@ -185,6 +204,20 @@ void Editor::Close() {
 }
 
 void Editor::Update(TimeStep ts) {
+	if(s_EditorMode == EditorMode::Play) {
+		if(s_Debugging) {
+			std::lock_guard<std::mutex> lock(s_Mutex);
+			s_TimeStep = ts;
+			s_State = s_EditorMode;
+			s_Updated = true;
+			s_Condition.notify_one();
+		}
+		else
+			s_App->OnUpdate(ts);
+
+		return;
+	}
+	
 	Renderer::BeginFrame();
 
 	if(s_EditorMode == EditorMode::Edit) {
@@ -199,38 +232,45 @@ void Editor::Update(TimeStep ts) {
 			s_CurrentScene->OnUpdate(ts);
 		}
 	}
-	else if(s_Debugging) {
-		std::lock_guard<std::mutex> lock(s_Mutex);
-		s_TimeStep = ts;
-		s_State = s_EditorMode;
-		s_Updated = true;
-		s_Condition.notify_one();
-	}
-	else if(s_EditorMode == EditorMode::Play)
-		s_App->OnUpdate(ts);
 }
 
 void Editor::Render() {
+	if(s_EditorMode == EditorMode::Play)
+		return;
+
 	Ref<SceneRenderer> renderer;
 	if(s_TabType == TabType::Scene && s_CurrentScene) {
 		if(s_EditorMode == EditorMode::Edit) {
 			renderer = s_EditorSceneRenderer;
 			s_CurrentScene->OnRender(*renderer);
 		}
-		else if(s_EditorMode == EditorMode::Preview
-			 || s_EditorMode == EditorMode::Play)
-		{
+		else if(s_EditorMode == EditorMode::Preview) {
 			renderer = s_App->GetSceneRenderer();
 		}
 	}
 
-	if(!Embed::IsActive() && renderer)
+	Ref<CanvasRenderer> renderer2;
+	if(s_TabType == TabType::Scene && s_CurrentScene) {
+		if(s_EditorMode == EditorMode::Edit) {
+			// renderer = s_EditorCanvasRenderer;
+			// s_CurrentScene->OnRender(*renderer);
+		}
+		else if(s_EditorMode == EditorMode::Preview) {
+			renderer2 = s_App->GetCanvasRenderer();
+		}
+	}
+
+	Renderer::StartPass(s_OutputPass);
+	{
 		Renderer2D::DrawFullscreenQuad(renderer->GetOutput());
+		Renderer2D::DrawFullscreenQuad(renderer2->GetOutput());
+	}
+	Renderer::EndPass();
 
 	Renderer::EndFrame();
 
-	if(Embed::IsActive() && renderer) {
-		Buffer<u8> data = renderer->GetOutput()->GetPixels();
+	if(Embed::IsActive()) {
+		Buffer<u8> data = s_OutputPass->GetOutput()->GetPixels();
 		Embed::SendFrame(std::move(data));
 	}
 }
@@ -323,7 +363,6 @@ void Editor::OnPlay(bool debug) {
 			App::Get()->OnLoad();
 			App::Get()->LoadScene(s_CurrentScene.get());
 			App::Get()->ScreenSet(screen);
-			Log::Info("Loading...");
 		}
 	}
 }
