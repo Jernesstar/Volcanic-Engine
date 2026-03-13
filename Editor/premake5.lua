@@ -38,7 +38,10 @@ project "Editor"
         "%{Includes.glad}",
         "%{Includes.lmdb}",
         "%{Includes.soloud}",
+        "%{VendorPaths.uWebSockets}",
+        "%{Includes.uSockets}",
         "%{VendorPaths.angelscript}",
+        "%{VendorPaths.libuv}",
 
         "%{Includes.assimp}",
         "%{Includes.glslang}",
@@ -61,6 +64,7 @@ project "Editor"
         "glad",
         "lmdb",
         "soloud",
+        "uSockets",
 
         "assimp",
         "efsw",
@@ -71,6 +75,9 @@ project "Editor"
         "SPIRV-Cross",
 
         "z",
+        "ssl",
+        "crypto",
+        "uv"
     }
 
     defines {

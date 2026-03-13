@@ -46,8 +46,12 @@ project "Engine"
         "glad",
         "lmdb",
         "soloud",
+        "uSockets",
 
-        "z"
+        "z",
+        "ssl",
+        "crypto",
+        "uv"
     }
 
     defines {
@@ -91,4 +95,5 @@ include "Engine/.deps/glad"
 include "Engine/.deps/soloud"
 include "Engine/.deps/lmdb"
 include "Engine/.deps/flecs"
+include "Engine/.deps/uWebSockets"
 -- include "Engine/.deps/Jolt"

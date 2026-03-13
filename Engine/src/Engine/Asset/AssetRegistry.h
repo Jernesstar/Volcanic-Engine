@@ -79,11 +79,12 @@ public:
 	void Clear();
 
 private:
-	Registry* m_Registry;
-	Database* m_AssetMetadata;	// ID: Asset{ ID, Type, Primary }
-	Database* m_AssetRefs;		// ID: Refs
-	Database* m_AssetNames;		// ID: Name
-	Database* m_AssetNamesReverse; // Reverse name lookup
+	// Registry* m_Registry;
+	// Database* m_AssetMetadata;	// ID: Asset{ ID, Type, Primary }
+	// Database* m_AssetRefs;		// ID: Refs
+	// Database* m_AssetNames;		// ID: Name
+	// Database* m_AssetNamesReverse; // Reverse name lookup
+	Map<UUID, Asset> m_Registry;
 	Map<UUID, List<Asset>> m_Refs;
 	Map<std::string, Asset> m_Names;
 };

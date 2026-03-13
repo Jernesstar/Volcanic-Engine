@@ -7,25 +7,26 @@
 namespace VolcanicEngine {
 
 AssetRegistry::AssetRegistry() {
-	m_Registry = new Registry(".volc/asset_registry", 4);
-	m_AssetMetadata = m_Registry->NewDatabase("AssetMetadata");
+	// m_Registry = new Registry(".volc/asset_registry", 4);
+	// m_AssetMetadata = m_Registry->NewDatabase("AssetMetadata");
 	// m_AssetRefs = m_Registry->NewDatabase("AssetRefs", true);
-	m_AssetNames = m_Registry->NewDatabase("AssetNames");
-	m_AssetNamesReverse = m_Registry->NewDatabase("AssetNamesReverse");
+	// m_AssetNames = m_Registry->NewDatabase("AssetNames");
+	// m_AssetNamesReverse = m_Registry->NewDatabase("AssetNamesReverse");
 }
 
 AssetRegistry::~AssetRegistry() {
-	delete m_Registry;
+	// delete m_Registry;
 }
 
 void AssetRegistry::Add(Asset asset) {
-	Bytes bytes = { (u8*)&asset, sizeof(Asset), 0, false };
-	m_AssetMetadata->Insert((u64)asset.ID, std::move(bytes));
+	// Bytes bytes = { (u8*)&asset, sizeof(Asset), 0, false };
+	// m_AssetMetadata->Insert((u64)asset.ID, std::move(bytes));
+	m_Registry[asset.ID] = asset;
 }
 
 void AssetRegistry::Remove(Asset asset) {
 	// RemoveName(asset);
-	m_AssetMetadata->Remove((u64)asset.ID);
+	// m_AssetMetadata->Remove((u64)asset.ID);
 	// m_AssetRefs->Remove((u64)asset.ID);
 
 	auto path = "Asset/.bin/" + std::to_string((u64)asset.ID) + ".asset";
@@ -120,11 +121,14 @@ Asset AssetRegistry::FindAsset(const std::string& lookup) const {
 }
 
 void AssetRegistry::For(const Func<void, Asset>& cb) {
-	auto it = m_AssetMetadata->Iterate();
-	while(it.Next()) {
-		auto asset = it.Get<Asset>();
+	// auto it = m_AssetMetadata->Iterate();
+	// while(it.Next()) {
+	// 	auto asset = it.Get<Asset>();
+	// 	cb(asset);
+	// }
+
+	for(auto& [id, asset] : m_Registry)
 		cb(asset);
-	}
 }
 
 void AssetRegistry::Clear() {

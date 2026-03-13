@@ -48,3 +48,12 @@
 [submodule "VolcaniCore/.vendor/spdlog"]
 	path = VolcaniCore/.vendor/spdlog
 	url = https://github.com/gabime/spdlog.git
+[submodule "Engine/.vendor/uSockets"]
+	path = Engine/.vendor/uSockets
+	url = https://github.com/uNetworking/uSockets.git
+[submodule "Engine/.vendor/uWebSockets"]
+	path = Engine/.vendor/uWebSockets
+	url = https://github.com/uNetworking/uWebSockets.git
+[submodule "Engine/.vendor/libuv"]
+	path = Engine/.vendor/libuv
+	url = https://github.com/libuv/libuv.git

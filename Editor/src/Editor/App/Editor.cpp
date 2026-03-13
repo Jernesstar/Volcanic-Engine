@@ -36,6 +36,7 @@ using namespace VolcanicEngine::Script;
 
 namespace VolcanicEditor {
 
+static Project s_Project;
 static Ref<App> s_App;
 static Ref<Project> s_CurrentProject;
 static Ref<Scene> s_CurrentScene;
@@ -183,7 +184,7 @@ void Editor::Init(const CommandLineArgs& args) {
 	if(args["--open_scene"]) {
 		Str name = args["--open_scene"];
 		Editor::OpenScene(name);
-		OnPlay();
+		// OnPlay();
 	}
 }
 
@@ -217,7 +218,7 @@ void Editor::Update(TimeStep ts) {
 
 		return;
 	}
-	
+
 	Renderer::BeginFrame();
 
 	if(s_EditorMode == EditorMode::Edit) {
@@ -249,23 +250,29 @@ void Editor::Render() {
 		}
 	}
 
-	Ref<CanvasRenderer> renderer2;
-	if(s_TabType == TabType::Scene && s_CurrentScene) {
+	// Ref<CanvasRenderer> renderer2;
+	if(s_TabType == TabType::Canvas && s_CurrentCanvas) {
 		if(s_EditorMode == EditorMode::Edit) {
 			// renderer = s_EditorCanvasRenderer;
-			// s_CurrentScene->OnRender(*renderer);
+			// s_CurrentCavas->OnRender(*renderer);
 		}
 		else if(s_EditorMode == EditorMode::Preview) {
-			renderer2 = s_App->GetCanvasRenderer();
+			// renderer2 = s_App->GetCanvasRenderer();
 		}
 	}
 
 	Renderer::StartPass(s_OutputPass);
 	{
-		Renderer2D::DrawFullscreenQuad(renderer->GetOutput());
-		Renderer2D::DrawFullscreenQuad(renderer2->GetOutput());
+		if(renderer)
+			Renderer2D::DrawFullscreenQuad(renderer->GetOutput());
+		// if(renderer2)
+		// 	Renderer2D::DrawFullscreenQuad(renderer2->GetOutput());
 	}
 	Renderer::EndPass();
+
+	if(!Embed::IsActive()) {
+		Renderer2D::DrawFullscreenQuad(s_OutputPass->GetOutput());
+	}
 
 	Renderer::EndFrame();
 
@@ -275,11 +282,15 @@ void Editor::Render() {
 	}
 }
 
+Project& Editor::GetProject() {
+	return s_Project;
+}
+
 void Editor::OpenProject(const Str& path) {
 	Application::PushDir(path);
 	s_AssetManager->LoadRegistry();
-	if(!s_App->GetSceneRenderer())
-		s_App->CreateSceneRenderer();
+	// if(!s_App->GetSceneRenderer())
+	// 	s_App->CreateSceneRenderer();
 }
 
 void Editor::NewProject(const Str& path) {

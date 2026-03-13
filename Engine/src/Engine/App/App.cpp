@@ -211,25 +211,25 @@ void App::OnUpdate(TimeStep ts) {
 
 	if(RenderScene) {
 		auto output = m_SceneRenderer->GetOutput();
-		Renderer::StartPass(m_OutputPass);
-		{
-			Renderer2D::DrawFullscreenQuad(output);
-		}
-		Renderer::EndPass();
+		// Renderer::StartPass(m_OutputPass);
+		// {
+		// 	Renderer2D::DrawFullscreenQuad(output);
+		// }
+		// Renderer::EndPass();
 	}
 
-	s_Screen->UI->OnUpdate(ts);
-	m_CanvasRenderer->Update(ts);
-	s_Screen->UI->OnRender(*m_CanvasRenderer);
+	// s_Screen->UI->OnUpdate(ts);
+	// m_CanvasRenderer->Update(ts);
+	// s_Screen->UI->OnRender(*m_CanvasRenderer);
 
-	if(RenderCanvas) {
-		auto output = m_CanvasRenderer->GetOutput();
-		Renderer::StartPass(m_OutputPass);
-		{
-			Renderer2D::DrawFullscreenQuad(output);
-		}
-		Renderer::EndPass();
-	}
+	// if(RenderCanvas) {
+	// 	auto output = m_CanvasRenderer->GetOutput();
+	// 	Renderer::StartPass(m_OutputPass);
+	// 	{
+	// 		Renderer2D::DrawFullscreenQuad(output);
+	// 	}
+	// 	Renderer::EndPass();
+	// }
 }
 
 void App::LoadScene(Scene* scene) {

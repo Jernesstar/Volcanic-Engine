@@ -4,7 +4,10 @@
 #include <VolcaniCore/Core/CommandLineArgs.h>
 #include <VolcaniCore/Core/TimeUtils.h>
 
+#include <Engine/App/Project.h>
+
 using namespace VolcaniCore;
+using namespace VolcanicEngine;
 
 namespace VolcanicEditor {
 
@@ -21,6 +24,7 @@ public:
 	static void OnResume();
 	static void OnStop();
 
+	static Project& GetProject();
 	static void OpenProject(const Str& path);
 	static void NewProject(const Str& path);
 	static void SaveProject();

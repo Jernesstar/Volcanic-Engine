@@ -58,7 +58,7 @@ public:
 				if(length) {
 					char* message = new char[length];
 					glGetShaderInfoLog(shaderID, length, &length, message);
-					Log::Error("A compile error was detected \n{}", message);
+					Log::Error("A compile error was detected: '{}' for shader:\n{}", message, (const char*)shader.Data.Get());
 				}
 			}
 

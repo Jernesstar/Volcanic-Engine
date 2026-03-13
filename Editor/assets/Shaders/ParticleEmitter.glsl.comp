@@ -79,5 +79,8 @@ void main() {
     }
 
     int particleIndex = FreeList.Indices[freeListIndex];
-    MakeParticle(Particles[particleIndex]);
+    Particle p;
+    MakeParticle(p);
+
+    Particles[particleIndex] = p;
 }

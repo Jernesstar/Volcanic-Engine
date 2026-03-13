@@ -51,10 +51,10 @@ void Input::SetMousePosition(f64 x, f64 y) {
 glm::dvec2 Input::GetMousePosition() {
 	auto window =
 		Application::GetWindow()->GetNativeWindow();
-	double x, y;
+	f64 x, y;
 	glfwGetCursorPos(window, &x, &y);
 
-	return { (f64)x, (f64)y };
+	return { x, y };
 }
 
 f64 Input::GetMouseX() { return GetMousePosition().x; }
