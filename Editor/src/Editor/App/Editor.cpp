@@ -113,12 +113,6 @@ void Editor::Init(const CommandLineArgs& args) {
 			};
 
 		Embed::Init();
-
-		Events::RegisterListener<MouseMovedEvent>(
-			[](MouseMovedEvent& event)
-			{
-				Log::Info("{}, {}", event.x, event.y);
-			});
 	}
 
 	Renderer::Init();
@@ -127,22 +121,6 @@ void Editor::Init(const CommandLineArgs& args) {
 
 	s_AssetManager = CreateRef<EditorAssetManager>();
 	s_EditorSceneRenderer = CreateRef<EditorSceneRenderer>();
-
-	auto window = Application::GetWindow();
-	auto output =
-		RendererAPI::Get()->CreateFramebuffer({
-			.Attachments = {
-				{ AttachmentTarget::Color, window->GetWidth(), window->GetHeight() }
-			},
-			.EnableRead = true
-		});
-
-	s_OutputPass =
-		RenderPass::Create("Output",
-			AssetImporter::GetShader({
-				"Editor/assets/Shaders/Framebuffer.glsl.vert",
-				"Editor/assets/Shaders/Framebuffer.glsl.frag"
-			}), output);
 
 	s_App = CreateRef<App>();
 	s_App->AppLoad =
@@ -166,6 +144,24 @@ void Editor::Init(const CommandLineArgs& args) {
 		{
 			Str canvasPath = "App/Scene/" + canvas.Name + ".canvas";
 		};
+
+	auto window = Application::GetWindow();
+	auto output =
+		RendererAPI::Get()->CreateFramebuffer({
+			.Attachments = {
+				{ AttachmentTarget::Color, 1920, 1080 }
+			},
+			.EnableRead = true
+		});
+
+	auto libPath = Application::GetLibraryDir();
+	s_OutputPass =
+		RenderPass::Create("Output",
+			AssetImporter::GetShader({
+				libPath + "/Editor/assets/Shaders/Framebuffer.glsl.vert",
+				libPath + "/Editor/assets/Shaders/Framebuffer.glsl.frag"
+			}), output);
+	s_OutputPass->SetData(Renderer2D::GetScreenBuffer());
 
 	s_App->ChangeScreen = false;
 	s_App->RenderScene = false;
@@ -263,8 +259,7 @@ void Editor::Render() {
 
 	Renderer::StartPass(s_OutputPass);
 	{
-		if(renderer)
-			Renderer2D::DrawFullscreenQuad(renderer->GetOutput());
+		Renderer2D::DrawFullscreenQuad(renderer->GetOutput());
 		// if(renderer2)
 		// 	Renderer2D::DrawFullscreenQuad(renderer2->GetOutput());
 	}
@@ -273,7 +268,6 @@ void Editor::Render() {
 	if(!Embed::IsActive()) {
 		Renderer2D::DrawFullscreenQuad(s_OutputPass->GetOutput());
 	}
-
 	Renderer::EndFrame();
 
 	if(Embed::IsActive()) {

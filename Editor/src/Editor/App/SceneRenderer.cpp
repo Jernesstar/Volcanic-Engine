@@ -31,7 +31,7 @@ EditorSceneRenderer::EditorSceneRenderer() {
 	m_Output =
 		RendererAPI::Get()->CreateFramebuffer({
 			.Attachments = {
-				{ AttachmentTarget::Color, window->GetWidth(), window->GetHeight() }
+				{ AttachmentTarget::Color, 1920, 1080 }
 			}
 		});
 
@@ -164,10 +164,10 @@ void EditorSceneRenderer::Begin() {
 	MeshCommand->Uniforms
 	.Set("u_ViewProj", camera->GetViewProjection())
 	.Set("u_CameraPosition", camera->GetPosition());
-	
+
 	BillboardBuffer->Clear();
 	Billboards.Clear();
-	
+
 	Vec3 pos = camera->GetPosition();
 	Vec3 dir = camera->GetDirection();
 	Vec3 planePos = Vec3(0.0f);
@@ -408,7 +408,7 @@ void EditorSceneRenderer::Render() {
 	if(rb.getNbLines()) {
 		List<Point> points(rb.getNbLines() * 2);
 		List<u32> indices(rb.getNbLines() * 2);
-	
+
 		for(u32 i = 0; i < rb.getNbLines(); i++) {
 			const PxDebugLine& l = rb.getLines()[i];
 			Point p0 = { { l.pos0.x, l.pos0.y, l.pos0.z }, Vec3(1.0f) };

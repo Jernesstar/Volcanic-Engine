@@ -16,7 +16,7 @@
 
 namespace fs = std::filesystem;
 
-u32 FRAME_W = 1280, FRAME_H = 720;
+u32 FRAME_W = 1920, FRAME_H = 1080;
 
 namespace VolcanicEditor {
 
@@ -294,6 +294,7 @@ void FrontendServer() {
 
 	// ── Playback ──────────────────────────────────────────────────────────
 	.post("/scene/play", [](auto* res, auto*) {
+        Log::Info("Play request");
 		ReadBody(res, [res](std::string body) {
 			rapidjson::Document doc;
 			doc.Parse(body.c_str());
@@ -319,10 +320,10 @@ void FrontendServer() {
 		std::string body = "[";
 		bool first = true;
 		mgr->GetRegistry()->For(
-			[](Asset asset)
+			[&](Asset asset)
 			{
 				if(!asset.Primary)
-					continue;
+					return;
 				if(!first)
 					body += ",";
 				body += SerializeAsset(mgr, asset);
