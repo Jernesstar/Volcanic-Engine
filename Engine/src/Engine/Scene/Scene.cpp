@@ -69,6 +69,42 @@ void Scene::OnRender(SceneRenderer& renderer) {
 			renderer.SubmitMesh(Entity{ id });
 		});
 
+	world.query_builder()
+	.with<LayoutComponent>()
+	.build()
+	.each(
+		[&](flecs::entity id)
+		{
+			renderer.SubmitLayout(Entity{ id });
+		});
+
+	world.query_builder()
+	.with<ImageComponent>()
+	.build()
+	.each(
+		[&](flecs::entity id)
+		{
+			renderer.SubmitImage(Entity{ id });
+		});
+
+	world.query_builder()
+	.with<TextComponent>()
+	.build()
+	.each(
+		[&](flecs::entity id)
+		{
+			renderer.SubmitText(Entity{ id });
+		});
+
+	world.query_builder()
+	.with<ButtonComponent>()
+	.build()
+	.each(
+		[&](flecs::entity id)
+		{
+			renderer.SubmitButton(Entity{ id });
+		});
+
 	renderer.Render();
 }
 

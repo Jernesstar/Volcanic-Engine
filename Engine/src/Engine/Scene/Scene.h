@@ -14,6 +14,7 @@ class Scene {
 public:
 	std::string Name;
 	std::string Screen;
+
 	ECS::World EntityWorld;
 
 public:

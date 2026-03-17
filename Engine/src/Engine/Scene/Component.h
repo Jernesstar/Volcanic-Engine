@@ -22,6 +22,8 @@ struct Component {
 	virtual ~Component() = default;
 };
 
+// --- 3D Components
+
 struct CameraComponent : public Component {
 	Ref<Camera> Cam;
 
@@ -168,6 +170,88 @@ struct ParticleEmitterComponent : public Component {
 		: Position(pos), MaxParticleCount(max), ParticleLifetime(lifetime),
 		SpawnInterval(spawnInterval), Offset(offset), MaterialAsset(asset) { }
 	ParticleEmitterComponent(const ParticleEmitterComponent& other) = default;
+};
+
+// --- 2D Components
+
+struct PointLight2DComponent : public Component {
+
+};
+
+// --- Canvas components ---
+
+struct CanvasScriptComponent : public Component {
+	UUID ScriptID;
+	Ref<ScriptObject> Instance;
+
+	CanvasScriptComponent() = default;
+	CanvasScriptComponent(UUID id, Ref<ScriptObject> obj)
+		: ScriptID(id), Instance(obj) { }
+	CanvasScriptComponent(const CanvasScriptComponent& other) = default;
+	CanvasScriptComponent(CanvasScriptComponent&& other) = default;
+};
+
+struct RectComponent : public Component {
+	Vec2 Position = { 0.0f, 0.0f };
+	Vec2 Size     = { 100.0f, 100.0f };
+	UIAnchor Anchor;
+	Vec4 Color    = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+	RectComponent() = default;
+	RectComponent(Vec2 pos, Vec2 size, Vec4 color = { 1.0f, 1.0f, 1.0f, 1.0f })
+		: Position(pos), Size(size), Color(color) { }
+	RectComponent(const RectComponent&) = default;
+};
+
+struct LayoutComponent : public Component {
+	UIAxisDirection Direction = UIAxisDirection::Vertical;
+	UIAlignment Alignment = UIAlignment::Start;
+	Vec2 Padding = { 0.0f, 0.0f };
+	f32 Gap = 0.0f;
+
+	LayoutComponent() = default;
+	LayoutComponent(UIAxisDirection dir, UIAlignment align,
+					  Vec2 padding = { }, f32 gap = 0.0f)
+		: Direction(dir), Alignment(align), Padding(padding), Gap(gap) { }
+	LayoutComponent(const LayoutComponent&) = default;
+};
+
+struct ImageComponent : public Component {
+	UUID ImageID;
+	Ref<Texture> Image;
+	bool PreserveAspect = false;
+
+	ImageComponent() = default;
+	ImageComponent(Ref<Texture> image, bool preserveAspect = false)
+		: Image(image), PreserveAspect(preserveAspect) { }
+	ImageComponent(const ImageComponent&) = default;
+};
+
+struct TextComponent : public Component {
+	std::string  Content;
+	f32 FontSize  = 16.0f;
+	Vec4 FontColor = { 1.0f, 1.0f, 1.0f, 1.0f };
+	UIAlignment HAlign = UIAlignment::Start;
+
+	TextComponent() = default;
+	TextComponent(const std::string& text, f32 size = 16.0f,
+					Vec4 color = { 1.0f, 1.0f, 1.0f, 1.0f },
+					UIAlignment hAlign = UIAlignment::Start)
+		: Content(text), FontSize(size), FontColor(color), HAlign(hAlign) { }
+	TextComponent(const TextComponent&) = default;
+};
+
+struct ButtonComponent : public Component {
+	Str Label;
+	Vec4 NormalColor   = { 0.2f, 0.2f, 0.2f, 1.0f };
+	Vec4 HoveredColor  = { 0.35f, 0.35f, 0.35f, 1.0f };
+	Vec4 PressedColor  = { 0.1f, 0.1f, 0.1f, 1.0f };
+
+	ButtonComponent() = default;
+	ButtonComponent(const std::string& label,
+					  Func<void> onClick = nullptr)
+		: Label(label), OnClick(onClick) { }
+	ButtonComponent(const ButtonComponent&) = default;
 };
 
 }
