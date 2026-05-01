@@ -15,8 +15,8 @@ PhysicsSystem::PhysicsSystem(ECS::World* world)
 	// m_World.AddContactCallback(
 	// 	[this](RigidBody* body1, RigidBody* body2)
 	// 	{
-	// 		Entity entity1 = m_EntityWorld->GetEntity((uint64_t)body1->Data);
-	// 		Entity entity2 = m_EntityWorld->GetEntity((uint64_t)body2->Data);
+	// 		Entity entity1 = m_World3D->GetEntity((uint64_t)body1->Data);
+	// 		Entity entity2 = m_World3D->GetEntity((uint64_t)body2->Data);
 	// 		if(entity1.Has<ScriptComponent>()) {
 	// 			auto obj = entity1.Get<ScriptComponent>().Instance;
 	// 			obj->Call("OnPhysicsEvent", CollisionEvent{ entity2 });

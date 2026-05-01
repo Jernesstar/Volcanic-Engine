@@ -28,11 +28,6 @@ public:
 	virtual void SubmitParticles(const Entity& entity) = 0;
 	virtual void SubmitMesh(const Entity& entity) = 0;
 
-	virtual void SubmitLayout(const Entity& entity) = 0;
-	virtual void SubmitImage(const Entity& entity) = 0;
-	virtual void SubmitText(const Entity& entity) = 0;
-	virtual void SubmitButton(const Entity& entity) = 0;
-
 	virtual void Render() = 0;
 
 	Ref<Framebuffer> GetOutput() const { return m_Output; }
@@ -54,11 +49,6 @@ public:
 	void SubmitLight(const Entity& entity) override;
 	void SubmitParticles(const Entity& entity) override;
 	void SubmitMesh(const Entity& entity) override;
-
-	void SubmitLayout(const Entity& entity)  override;
-	void SubmitImage(const Entity& entity)   override;
-	void SubmitText(const Entity& entity)    override;
-	void SubmitButton(const Entity& entity)  override;
 
 	void Render();
 

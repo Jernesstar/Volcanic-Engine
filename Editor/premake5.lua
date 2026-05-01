@@ -11,7 +11,7 @@ project "Editor"
         "src/Editor/App/**.cpp",
         "src/Editor/Asset/**.cpp",
         "src/Editor/Utils/**.cpp",
-        -- "src/**.cpp",
+        "src/**.cpp",
     }
 
     includedirs {
@@ -43,6 +43,8 @@ project "Editor"
         "%{VendorPaths.angelscript}",
         "%{VendorPaths.libuv}",
 
+        "%{Includes.imgui}",
+        "%{Includes.ImGuizmo}",
         "%{Includes.assimp}",
         "%{Includes.glslang}",
         "%{Includes.SPIRVCross}",
@@ -65,6 +67,9 @@ project "Editor"
         "lmdb",
         "soloud",
         "uSockets",
+
+        "imgui",
+        -- "ImGuizmo",
 
         "assimp",
         "efsw",
@@ -117,6 +122,8 @@ project "Editor"
             "-Wno-pointer-arith"
         }
 
+include "Editor/.deps/imgui"
+-- include "Editor/.deps/ImGuizmo"
 include "Editor/.deps/assimp"
 include "Editor/.deps/stb_image"
 include "Editor/.deps/efsw"

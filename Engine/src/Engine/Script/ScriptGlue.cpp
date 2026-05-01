@@ -36,8 +36,6 @@
 #include "Scene/Component.h"
 #include "Scene/ScriptSystem.h"
 #include "Scene/PhysicsSystem.h"
-#include "Canvas/Canvas.h"
-#include "Canvas/Component.h"
 
 #include "App.h"
 
@@ -54,7 +52,6 @@ static void RegisterEvents();
 static void RegisterAssetManager();
 static void RegisterECS();
 static void RegisterScene();
-static void RegisterUI();
 
 void ScriptGlue::RegisterInterface() {
 	auto* engine = ScriptEngine::Get();
@@ -89,7 +86,6 @@ void ScriptGlue::RegisterInterface() {
 	RegisterAssetManager();
 	RegisterECS();
 	RegisterScene();
-	RegisterUI();
 
 	// ScriptEngine::Get()
 	// 	->RegisterInterfaceMethod("IEntityController",
@@ -1028,30 +1024,23 @@ void RegisterScene() {
 	engine->RegisterObjectType("SceneClass", 0, asOBJ_REF | asOBJ_NOHANDLE);
 	engine->RegisterObjectMethod("SceneClass", "Entity NewEntity()",
 		asMETHODPR(ECS::World, AddEntity, (), Entity),
-		asCALL_THISCALL, 0, asOFFSET(Scene, EntityWorld));
+		asCALL_THISCALL, 0, asOFFSET(Scene, World3D));
 	engine->RegisterObjectMethod("SceneClass", "Entity NewEntity(const string &in)",
 		asMETHODPR(ECS::World, AddEntity, (const std::string&), Entity),
-		asCALL_THISCALL, 0, asOFFSET(Scene, EntityWorld));
+		asCALL_THISCALL, 0, asOFFSET(Scene, World3D));
 	engine->RegisterObjectMethod("SceneClass", "Entity FindEntity(const string &in)",
 		asMETHODPR(ECS::World, GetEntity, (const std::string&), Entity),
-		asCALL_THISCALL, 0, asOFFSET(Scene, EntityWorld));
+		asCALL_THISCALL, 0, asOFFSET(Scene, World3D));
 	engine->RegisterObjectMethod("SceneClass", "Entity GetEntity(uint64)",
 		asMETHODPR(ECS::World, GetEntity, (UUID), Entity), asCALL_THISCALL, 0,
-		asOFFSET(Scene, EntityWorld));
+		asOFFSET(Scene, World3D));
 
 	engine->RegisterObjectMethod("SceneClass", "PhysicsSystem@ GetPhysicsSystem()",
 		asMETHODPR(ECS::World, Get<PhysicsSystem>, (), PhysicsSystem*),
-		asCALL_THISCALL, 0, asOFFSET(Scene, EntityWorld));
+		asCALL_THISCALL, 0, asOFFSET(Scene, World3D));
 	engine->RegisterObjectMethod("SceneClass", "ScriptSystem@ GetScriptSystem()",
 		asMETHODPR(ECS::World, Get<ScriptSystem>, (), ScriptSystem*),
-		asCALL_THISCALL, 0, asOFFSET(Scene, EntityWorld));
-}
-
-void RegisterUI() {
-	auto* engine = ScriptEngine::Get();
-
-	engine->RegisterObjectType("CanvasClass", 0, asOBJ_REF | asOBJ_NOCOUNT);
-
+		asCALL_THISCALL, 0, asOFFSET(Scene, World3D));
 }
 
 }

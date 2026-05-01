@@ -14,11 +14,11 @@ Scene::Scene(const std::string& name)
 	: Name(name) { }
 
 void Scene::OnUpdate(TimeStep ts) {
-	EntityWorld.OnUpdate(ts);
+	World3D.OnUpdate(ts);
 }
 
 void Scene::OnRender(SceneRenderer& renderer) {
-	auto& world = EntityWorld.GetNative();
+	auto& world = World3D.GetNative();
 
 	renderer.Begin();
 
@@ -69,48 +69,48 @@ void Scene::OnRender(SceneRenderer& renderer) {
 			renderer.SubmitMesh(Entity{ id });
 		});
 
-	world.query_builder()
-	.with<LayoutComponent>()
-	.build()
-	.each(
-		[&](flecs::entity id)
-		{
-			renderer.SubmitLayout(Entity{ id });
-		});
+	// world.query_builder()
+	// .with<LayoutComponent>()
+	// .build()
+	// .each(
+	// 	[&](flecs::entity id)
+	// 	{
+	// 		renderer.SubmitLayout(Entity{ id });
+	// 	});
 
-	world.query_builder()
-	.with<ImageComponent>()
-	.build()
-	.each(
-		[&](flecs::entity id)
-		{
-			renderer.SubmitImage(Entity{ id });
-		});
+	// world.query_builder()
+	// .with<ImageComponent>()
+	// .build()
+	// .each(
+	// 	[&](flecs::entity id)
+	// 	{
+	// 		renderer.SubmitImage(Entity{ id });
+	// 	});
 
-	world.query_builder()
-	.with<TextComponent>()
-	.build()
-	.each(
-		[&](flecs::entity id)
-		{
-			renderer.SubmitText(Entity{ id });
-		});
+	// world.query_builder()
+	// .with<TextComponent>()
+	// .build()
+	// .each(
+	// 	[&](flecs::entity id)
+	// 	{
+	// 		renderer.SubmitText(Entity{ id });
+	// 	});
 
-	world.query_builder()
-	.with<ButtonComponent>()
-	.build()
-	.each(
-		[&](flecs::entity id)
-		{
-			renderer.SubmitButton(Entity{ id });
-		});
+	// world.query_builder()
+	// .with<ButtonComponent>()
+	// .build()
+	// .each(
+	// 	[&](flecs::entity id)
+	// 	{
+	// 		renderer.SubmitButton(Entity{ id });
+	// 	});
 
 	renderer.Render();
 }
 
 void Scene::RegisterSystems() {
-	EntityWorld.Add<PhysicsSystem>();
-	EntityWorld.Add<ScriptSystem>();
+	World3D.Add<PhysicsSystem>();
+	World3D.Add<ScriptSystem>();
 
 	for(auto phase : { flecs::PreUpdate, flecs::OnUpdate, flecs::PostUpdate }) {
 		Phase ourPhase;
@@ -121,14 +121,14 @@ void Scene::RegisterSystems() {
 		if(phase == flecs::PostUpdate)
 			ourPhase = Phase::PostUpdate;
 
-		EntityWorld.GetNative()
+		World3D.GetNative()
 		.system<RigidBodyComponent>()
 		.kind(phase)
 		.run(
 			[=, this](flecs::iter& it)
 			{
 				while(it.next()) {
-					auto sys = EntityWorld.Get<PhysicsSystem>();
+					auto sys = World3D.Get<PhysicsSystem>();
 					if(!sys)
 						continue;
 
@@ -149,14 +149,14 @@ void Scene::RegisterSystems() {
 		if(phase == flecs::PostUpdate)
 			ourPhase = Phase::PostUpdate;
 
-		EntityWorld.GetNative()
+		World3D.GetNative()
 		.system<ScriptComponent>()
 		.kind(phase)
 		.run(
 			[=, this](flecs::iter& it)
 			{
 				while(it.next()) {
-					auto sys = EntityWorld.Get<ScriptSystem>();
+					auto sys = World3D.Get<ScriptSystem>();
 					if(!sys)
 						continue;
 
@@ -168,38 +168,38 @@ void Scene::RegisterSystems() {
 			});
 	}
 
-	EntityWorld.GetNative()
+	World3D.GetNative()
 	.system("ScriptUpdate")
 	.kind(flecs::OnUpdate)
 	.run(
 		[=, this](flecs::iter& it)
 		{
-			auto sys = EntityWorld.Get<ScriptSystem>();
+			auto sys = World3D.Get<ScriptSystem>();
 			if(!sys)
 				return;
 			sys->Update(it.delta_time());
 		});
 
-	EntityWorld.GetNative()
+	World3D.GetNative()
 	.system("PhysicsUpdate")
 	.kind(flecs::OnUpdate)
 	.run(
 		[=, this](flecs::iter& it)
 		{
-			auto sys = EntityWorld.Get<PhysicsSystem>();
+			auto sys = World3D.Get<PhysicsSystem>();
 			if(!sys)
 				return;
 			sys->Update(it.delta_time());
 		});
 
-	EntityWorld.GetNative()
+	World3D.GetNative()
 	.observer()
 	.with<RigidBodyComponent>()
 	.event(flecs::Monitor)
 	.each(
 		[=, this](flecs::iter& it, size_t i)
 		{
-			auto sys = EntityWorld.Get<PhysicsSystem>();
+			auto sys = World3D.Get<PhysicsSystem>();
 			if(!sys)
 				return;
 
@@ -212,14 +212,14 @@ void Scene::RegisterSystems() {
 				sys->OnComponentRemove(entity);
 		});
 
-	EntityWorld.GetNative()
+	World3D.GetNative()
 	.observer()
 	.with<ScriptComponent>()
 	.event(flecs::Monitor)
 	.each(
 		[=, this](flecs::iter& it, size_t i)
 		{
-			auto sys = EntityWorld.Get<ScriptSystem>();
+			auto sys = World3D.Get<ScriptSystem>();
 			if(!sys)
 				return;
 
@@ -234,8 +234,8 @@ void Scene::RegisterSystems() {
 }
 
 void Scene::UnregisterSystems() {
-	EntityWorld.Remove<ScriptSystem>();
-	EntityWorld.Remove<PhysicsSystem>();
+	World3D.Remove<ScriptSystem>();
+	World3D.Remove<PhysicsSystem>();
 }
 
 }

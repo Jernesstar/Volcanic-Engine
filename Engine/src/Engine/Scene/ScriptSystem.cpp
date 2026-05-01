@@ -15,7 +15,7 @@ ScriptSystem::ScriptSystem(ECS::World* world)
 		Events::RegisterListener<KeyPressedEvent>(
 			[this](KeyPressedEvent& event)
 			{
-				m_EntityWorld->ForEach<ScriptComponent>(
+				m_World3D->ForEach<ScriptComponent>(
 					[=](Entity& entity)
 					{
 						auto obj = entity.Get<ScriptComponent>().Instance;
@@ -26,7 +26,7 @@ ScriptSystem::ScriptSystem(ECS::World* world)
 		Events::RegisterListener<KeyReleasedEvent>(
 			[this](KeyReleasedEvent& event)
 			{
-				m_EntityWorld->ForEach<ScriptComponent>(
+				m_World3D->ForEach<ScriptComponent>(
 					[=](Entity& entity)
 					{
 						auto obj = entity.Get<ScriptComponent>().Instance;
@@ -37,7 +37,7 @@ ScriptSystem::ScriptSystem(ECS::World* world)
 		Events::RegisterListener<KeyCharEvent>(
 			[this](KeyCharEvent& event)
 			{
-				m_EntityWorld->ForEach<ScriptComponent>(
+				m_World3D->ForEach<ScriptComponent>(
 					[=](Entity& entity)
 					{
 						auto obj = entity.Get<ScriptComponent>().Instance;
@@ -63,7 +63,7 @@ void ScriptSystem::Run(Entity& entity, TimeStep ts, Phase phase) {
 
 void ScriptSystem::Listen(Entity& entity, const std::string& id) {
 	// If already exists, returns existing
-	flecs::entity eventID = m_EntityWorld->GetNative().entity(id.c_str());
+	flecs::entity eventID = m_World3D->GetNative().entity(id.c_str());
 	entity.GetHandle().add<GameEventListener>(eventID);
 	Log::Info("Registered entity '{}' for '{}'", entity.GetName(), id);
 }
@@ -72,11 +72,11 @@ void ScriptSystem::Broadcast(Entity& entity, asIScriptObject* event) {
 	event->AddRef();
 
 	auto eventName = event->GetObjectType()->GetName();
-	m_EntityWorld->
+	m_World3D->
 	ForEach<ScriptComponent>(
 		[=, this](Entity& entity)
 		{
-			auto eventID = m_EntityWorld->GetNative().lookup(eventName);
+			auto eventID = m_World3D->GetNative().lookup(eventName);
 			if(!eventID)
 				return;
 			if(!entity.GetHandle().has<GameEventListener>(eventID))

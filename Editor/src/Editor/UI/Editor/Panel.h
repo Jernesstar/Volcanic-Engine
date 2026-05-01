@@ -1,0 +1,31 @@
+#pragma once
+
+#include <VolcaniCore/Core/Defines.h>
+#include <VolcaniCore/Core/Template.h>
+#include <VolcaniCore/Core/TimeUtils.h>
+
+namespace Magma {
+
+class Tab;
+
+class Panel : public VolcaniCore::Derivable<Panel> {
+public:
+	const std::string Name;
+	bool Open = false;
+
+public:
+	Panel(const std::string& name)
+		: Name(name) { }
+	~Panel() = default;
+
+	virtual void Update(VolcaniCore::TimeStep ts) { }
+	virtual void Draw() { }
+
+	void SetTab(Tab* tab) { m_Tab = tab; }
+	Tab* GetTab() { return m_Tab; }
+
+protected:
+	Tab* m_Tab = nullptr;
+};
+
+}

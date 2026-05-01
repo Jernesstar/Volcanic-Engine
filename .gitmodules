@@ -57,3 +57,10 @@
 [submodule "Engine/.vendor/libuv"]
 	path = Engine/.vendor/libuv
 	url = https://github.com/libuv/libuv.git
+[submodule "Editor/.vendor/imgui"]
+	path = Editor/.vendor/imgui
+	url = https://github.com/ocornut/imgui.git
+	branch = docking
+[submodule "Editor/.vendor/ImGuizmo"]
+	path = Editor/.vendor/ImGuizmo
+	url = https://github.com/CedricGuillemet/ImGuizmo.git

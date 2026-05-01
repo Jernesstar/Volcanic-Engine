@@ -32,7 +32,7 @@ public:
 
 public:
 	System(World* world)
-		: m_EntityWorld(world) { }
+		: m_World3D(world) { }
 	virtual ~System() = default;
 
 	virtual void Update(TimeStep ts) = 0;
@@ -47,7 +47,7 @@ public:
 	}
 
 protected:
-	World* m_EntityWorld;
+	World* m_World3D;
 };
 
 }

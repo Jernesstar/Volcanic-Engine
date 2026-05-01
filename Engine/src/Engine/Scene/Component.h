@@ -180,15 +180,19 @@ struct PointLight2DComponent : public Component {
 
 // --- Canvas components ---
 
-struct CanvasScriptComponent : public Component {
-	UUID ScriptID;
-	Ref<ScriptObject> Instance;
+struct UIAnchor {
+	
+};
 
-	CanvasScriptComponent() = default;
-	CanvasScriptComponent(UUID id, Ref<ScriptObject> obj)
-		: ScriptID(id), Instance(obj) { }
-	CanvasScriptComponent(const CanvasScriptComponent& other) = default;
-	CanvasScriptComponent(CanvasScriptComponent&& other) = default;
+enum class UIAlignment {
+	Start,
+	Center,
+	End
+};
+
+enum class UIAxisDirection {
+	Vertical,
+	Horizontal
 };
 
 struct RectComponent : public Component {
@@ -250,7 +254,7 @@ struct ButtonComponent : public Component {
 	ButtonComponent() = default;
 	ButtonComponent(const std::string& label,
 					  Func<void> onClick = nullptr)
-		: Label(label), OnClick(onClick) { }
+		: Label(label) { }
 	ButtonComponent(const ButtonComponent&) = default;
 };
 

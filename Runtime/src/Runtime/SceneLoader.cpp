@@ -337,7 +337,7 @@ void SceneLoader::Load(Scene& scene, const std::string& path) {
 	for(uint64_t i = 0; i < entityCount; i++) {
 		uint64_t id;
 		reader.Read(id);
-		Entity entity = scene.EntityWorld.AddEntity(id);
+		Entity entity = scene.World3D.AddEntity(id);
 		reader.Read(entity);
 	}
 }
@@ -349,7 +349,7 @@ void SceneLoader::Save(const Scene& scene, const std::string& path) {
 
 	writer.Write(scene.Name);
 
-	scene.EntityWorld
+	scene.World3D
 	.ForEach(
 		[&](const Entity& entity)
 		{

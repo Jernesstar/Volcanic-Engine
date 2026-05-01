@@ -19,7 +19,6 @@
 #include <Engine/Script/Types/GridSet3D.h>
 #include <Engine/Script/Types/Timer.h>
 #include <Engine/Scene/Component.h>
-#include <Engine/Canvas/Component.h>
 
 #include "../Asset/AssetManager.h"
 #include "ScriptManager.h"
@@ -83,7 +82,7 @@ void SceneLoader::EditorSave(const Scene& scene, const std::string& path) {
 		.WriteKey("Name").Write(scene.Name);
 
 		serializer.WriteKey("Entities").BeginSequence(); // Entities
-		scene.EntityWorld
+		scene.World3D
 		.ForEach(
 			[&](const Entity& entity)
 			{
@@ -557,7 +556,7 @@ Ref<ScriptObject> LoadScript(Entity entity, Asset asset,
 
 void DeserializeEntity(YAML::Node entityNode, Scene& scene) {
 	u64 entityID = entityNode["ID"].as<u64>();
-	Entity entity = scene.EntityWorld.AddEntity(entityID);
+	Entity entity = scene.World3D.AddEntity(entityID);
 	auto nameNode = entityNode["Name"];
 	if(nameNode)
 		entity.SetName(nameNode.as<std::string>());
@@ -1027,7 +1026,7 @@ void SceneLoader::RuntimeSave(const Scene& scene,
 	u64 idx = writer.GetPosition();
 	writer.Advance(sizeof(u64));
 
-	scene.EntityWorld
+	scene.World3D
 	.ForEach(
 		[&](const Entity& entity)
 		{

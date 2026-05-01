@@ -10,6 +10,14 @@
 #define RAPIDJSON_HAS_STDSTRING 1
 #include <rapidjson/document.h>
 
+#define IM_ASSERT(x) ((void)0)
+#define assert(x) ((void)0)
+#include <imgui/imgui.h>
+#include <imgui/imgui_internal.h>
+#include <imgui/misc/cpp/imgui_stdlib.h>
+
+#include <ImGuizmo/ImGuizmo.h>
+
 #include <VolcaniCore/Core/Application.h>
 #include <VolcaniCore/Window/Events.h>
 
@@ -19,15 +27,14 @@
 #include <Engine/Script/ScriptGlue.h>
 #include <Engine/Scene/Scene.h>
 #include <Engine/Scene/SceneRenderer.h>
-#include <Engine/Canvas/Canvas.h>
 
 #include "./SceneRenderer.h"
 #include "../Asset/AssetManager.h"
 #include "../Asset/AssetImporter.h"
+#include "../UI/Core/UIRenderer.h"
 
 #include "SceneLoader.h"
 #include "ScriptManager.h"
-#include "Embed.h"
 
 using namespace VolcaniCore;
 using namespace VolcanicEngine;
@@ -40,16 +47,15 @@ static Project s_Project;
 static Ref<App> s_App;
 static Ref<Project> s_CurrentProject;
 static Ref<Scene> s_CurrentScene;
-static Ref<Canvas> s_CurrentCanvas;
 
 static Ref<EditorAssetManager> s_AssetManager;
 static Ref<EditorSceneRenderer> s_EditorSceneRenderer;
 static Ref<RenderPass> s_OutputPass;
 
-enum class TabType { None, Scene, Canvas };
+enum class TabMode { None, World3D, World2D, Canvas };
 enum class EditorMode { Edit, Preview, Play, Pause };
 
-static TabType s_TabType = TabType::None;
+static TabMode s_TabMode = TabMode::None;
 static EditorMode s_EditorMode = EditorMode::Edit;
 
 static Ref<std::thread> s_AppThread;
@@ -60,62 +66,46 @@ static bool s_Updated = false;
 static bool s_Debugging = false;
 
 static TimeStep s_TimeStep;
+struct {
+	struct {
+		bool newProject    = false;
+		bool openProject   = false;
+		bool runProject    = false;
+		bool exportProject = false;
+		bool exportProjectTo = false;
+
+		bool addScreen     = false;
+	} project;
+
+	struct {
+		bool newTab      = false;
+		bool newScene    = false;
+		bool newUI       = false;
+		bool openTab     = false;
+		bool openScene   = false;
+		bool openUI      = false;
+		bool reopenTab   = false;
+		bool closeTab    = false;
+	} tab;
+} static menu;
 
 void Editor::Init(const CommandLineArgs& args) {
 	// Log::Init(args.Has("--embedded"));
 	Log::Init();
 
-	if(args.Has("--embedded")) {
-		Embed::OnEvent =
-			[](const Str& str)
-			{
-				rapidjson::Document document;
-				rapidjson::ParseResult ok = document.Parse(str.c_str());
-				if (!ok) {
-					Log::Error("Parsing error for input data: {}", str);
-					return;
-				}
-
-				Str type = document["type"].Get<Str>();
-				if(type == "mouse_move") {
-					f64 x = document["x"].Get<f64>();
-					f64 y = document["y"].Get<f64>();
-					MouseMovedEvent event(x, y);
-					Events::Dispatch(event);
-				}
-				else if(type == "mouse_click") {
-					f64 x = document["x"].Get<f64>();
-					f64 y = document["y"].Get<f64>();
-					u32 button = document["button"].Get<u32>();
-					MouseButtonPressedEvent event((MouseCode)button, x, y);
-					Events::Dispatch(event);
-				}
-				else if(type == "mouse_up") {
-					f64 x = document["x"].Get<f64>();
-					f64 y = document["y"].Get<f64>();
-					u32 button = document["button"].Get<u32>();
-					MouseButtonPressedEvent event((MouseCode)button, x, y);
-					Events::Dispatch(event);
-				}
-				else if(type == "mouse_down") {
-					f64 x = document["x"].Get<f64>();
-					f64 y = document["y"].Get<f64>();
-					u32 button = document["button"].Get<u32>();
-					MouseButtonReleasedEvent event((MouseCode)button, x, y);
-					Events::Dispatch(event);
-				}
-				else if(type == "mouse_scroll") {
-					f64 dx = document["dx"].Get<f64>();
-					f64 dy = document["dy"].Get<f64>();
-					MouseMovedEvent event(dx, dy);
-					Events::Dispatch(event);
-				}
-			};
-
-		Embed::Init();
-	}
-
 	Renderer::Init();
+
+	UIRenderer::Init();
+
+	float fontSize = 15.0f;
+	ImGuiIO& io = ImGui::GetIO();
+	io.Fonts->AddFontFromFileTTF(
+		"Magma/assets/fonts/JetBrainsMono-Bold.ttf", fontSize);
+	io.FontDefault =
+		io.Fonts->AddFontFromFileTTF(
+			"Magma/assets/fonts/JetBrainsMono-Regular.ttf", fontSize);
+	io.IniFilename = nullptr;
+
 	ScriptEngine::Init();
 	ScriptGlue::RegisterInterface();
 
@@ -139,11 +129,6 @@ void Editor::Init(const CommandLineArgs& args) {
 			Str scenePath = "App/Scene/" + scene.Name + ".scene";
 			SceneLoader::EditorLoad(scene, scenePath);
 		};
-	s_App->CanvasLoad =
-		[](Canvas& canvas)
-		{
-			Str canvasPath = "App/Scene/" + canvas.Name + ".canvas";
-		};
 
 	auto window = Application::GetWindow();
 	auto output =
@@ -165,7 +150,6 @@ void Editor::Init(const CommandLineArgs& args) {
 
 	s_App->ChangeScreen = false;
 	s_App->RenderScene = false;
-	s_App->RenderCanvas = false;
 	s_App->Running = false;
 	s_App->SetOutputPass(s_OutputPass);
 
@@ -185,17 +169,14 @@ void Editor::Init(const CommandLineArgs& args) {
 }
 
 void Editor::Close() {
-	if(Embed::IsActive())
-		Embed::Close();
-
 	OnStop();
 
 	s_CurrentScene.reset();
-	s_CurrentCanvas.reset();
 
 	s_App.reset();
 	s_AssetManager.reset();
 
+	UIRenderer::Close();
 	Renderer::Close();
 	ScriptEngine::Shutdown();
 }
@@ -218,25 +199,76 @@ void Editor::Update(TimeStep ts) {
 	Renderer::BeginFrame();
 
 	if(s_EditorMode == EditorMode::Edit) {
-		if(s_TabType == TabType::Scene) {
-			s_EditorSceneRenderer->Update(ts);
-			s_CurrentScene->OnUpdate(ts);
-		}
+		s_EditorSceneRenderer->Update(ts);
+		s_CurrentScene->OnUpdate(ts);
 	}
 	else if(s_EditorMode == EditorMode::Preview) {
-		if(s_TabType == TabType::Scene) {
-			s_App->GetSceneRenderer()->Update(ts);
-			s_CurrentScene->OnUpdate(ts);
-		}
+		s_App->GetSceneRenderer()->Update(ts);
+		s_CurrentScene->OnUpdate(ts);
 	}
 }
 
 void Editor::Render() {
+	bool dockspaceOpen = true;
+	ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags_PassthruCentralNode;
+	ImGuiWindowFlags windowFlags = ImGuiWindowFlags_MenuBar;
+
+	windowFlags |= ImGuiWindowFlags_NoDocking
+				 | ImGuiWindowFlags_NoCollapse
+				 | ImGuiWindowFlags_NoNavFocus
+				 | ImGuiWindowFlags_NoTitleBar
+				 | ImGuiWindowFlags_NoResize
+				 | ImGuiWindowFlags_NoMove
+				 | ImGuiWindowFlags_NoBackground
+				 | ImGuiWindowFlags_NoBringToFrontOnFocus;
+
+	ImGuiViewport* viewport = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(viewport->Pos);
+	ImGui::SetNextWindowSize(viewport->Size);
+	ImGui::SetNextWindowViewport(viewport->ID);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+
+	ImGui::Begin("DockSpaceWindow", &dockspaceOpen, windowFlags);
+	{
+		ImGui::PopStyleVar(3);
+
+		ImGui::BeginMainMenuBar();
+		{
+			if(ImGui::BeginMenu("Project")) {
+				if(ImGui::MenuItem("New", "Ctrl+N"))
+					menu.project.newProject = true;
+				if(ImGui::MenuItem("Open", "Ctrl+P"))
+					menu.project.openProject = true;
+				if(ImGui::MenuItem("Run", "Ctrl+R"))
+					menu.project.runProject = true;
+
+				ImGui::Separator();
+				if(ImGui::MenuItem("Export"))
+					menu.project.exportProject = true;
+				if(ImGui::MenuItem("Export To"))
+					menu.project.exportProjectTo = true;
+
+				ImGui::Separator();
+				if(ImGui::MenuItem("Add Screen"))
+					menu.project.addScreen = true;
+
+				ImGui::EndMenu();
+			}
+		}
+		ImGui::EndMainMenuBar();
+
+		ImGuiID dockspaceID = ImGui::GetID("DockSpace");
+		ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), dockspaceFlags);
+	}
+	ImGui::End();
+
 	if(s_EditorMode == EditorMode::Play)
 		return;
 
 	Ref<SceneRenderer> renderer;
-	if(s_TabType == TabType::Scene && s_CurrentScene) {
+	if(s_CurrentScene) {
 		if(s_EditorMode == EditorMode::Edit) {
 			renderer = s_EditorSceneRenderer;
 			s_CurrentScene->OnRender(*renderer);
@@ -246,34 +278,13 @@ void Editor::Render() {
 		}
 	}
 
-	// Ref<CanvasRenderer> renderer2;
-	if(s_TabType == TabType::Canvas && s_CurrentCanvas) {
-		if(s_EditorMode == EditorMode::Edit) {
-			// renderer = s_EditorCanvasRenderer;
-			// s_CurrentCavas->OnRender(*renderer);
-		}
-		else if(s_EditorMode == EditorMode::Preview) {
-			// renderer2 = s_App->GetCanvasRenderer();
-		}
-	}
-
 	Renderer::StartPass(s_OutputPass);
 	{
 		Renderer2D::DrawFullscreenQuad(renderer->GetOutput());
-		// if(renderer2)
-		// 	Renderer2D::DrawFullscreenQuad(renderer2->GetOutput());
 	}
 	Renderer::EndPass();
 
-	if(!Embed::IsActive()) {
-		Renderer2D::DrawFullscreenQuad(s_OutputPass->GetOutput());
-	}
 	Renderer::EndFrame();
-
-	if(Embed::IsActive()) {
-		Buffer<u8> data = s_OutputPass->GetOutput()->GetPixels();
-		Embed::SendFrame(std::move(data));
-	}
 }
 
 Project& Editor::GetProject() {
@@ -302,7 +313,7 @@ void Editor::NewScene(const Str& path) {
 void Editor::OpenScene(const Str& name) {
 	s_CurrentScene = CreateRef<Scene>(name);
 	SceneLoader::EditorLoad(*s_CurrentScene, "App/Scene/" + name + ".scene");
-	s_TabType = TabType::Scene;
+	s_TabMode = TabMode::World3D;
 }
 
 void Editor::SaveScene(const Str& name) {
@@ -419,7 +430,7 @@ void Editor::OnStop() {
 	}
 
 	// Ref<Tab> current = Editor::GetCurrentTab();
-	// if(current->Type == TabType::Scene) {
+	// if(current->Type == TabMode::Scene) {
 	// 	auto tab = current->As<SceneTab>();
 	// 	tab->Reset();
 	// }

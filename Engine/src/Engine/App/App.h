@@ -7,14 +7,10 @@
 #include "Script/ScriptModule.h"
 #include "Scene/Scene.h"
 #include "Scene/SceneRenderer.h"
-#include "Canvas/Canvas.h"
-#include "Canvas/CanvasRenderer.h"
 
 using namespace VolcaniCore;
 using namespace VolcanicEngine;
 using namespace VolcanicEngine::Script;
-// using namespace VolcanicEngine::UI;
-
 namespace VolcanicEngine {
 
 class App {
@@ -24,13 +20,11 @@ public:
 public:
 	bool ChangeScreen;
 	bool RenderScene;
-	bool RenderCanvas;
 	bool Running;
 
 	Func<void, Ref<ScriptModule>&> AppLoad;
 	Func<void, Ref<ScriptModule>&, const std::string&> ScreenLoad;
 	Func<void, Scene&> SceneLoad;
-	Func<void, Canvas&> CanvasLoad;
 	Func<void, const std::string&> Log;
 
 public:
@@ -43,9 +37,7 @@ public:
 	void OnUpdate(TimeStep ts);
 
 	void LoadScene(Scene* scene);
-	void LoadCanvas(Canvas* canvas);
 	Scene* GetScene();
-	Canvas* GetCanvas();
 
 	void SwitchScreen(const std::string& name);
 	void PushScreen(const std::string& name);
@@ -60,8 +52,6 @@ public:
 
 	void CreateSceneRenderer();
 	Ref<RuntimeSceneRenderer> GetSceneRenderer() { return m_SceneRenderer; }
-	void CreateCanvasRenderer();
-	Ref<RuntimeCanvasRenderer> GetCanvasRenderer() { return m_CanvasRenderer; }
 
 	void SetOutputPass(Ref<RenderPass> pass) { m_OutputPass = pass; }
 
@@ -69,7 +59,6 @@ private:
 	Project m_Project;
 	Ref<RenderPass> m_OutputPass;
 	Ref<RuntimeSceneRenderer> m_SceneRenderer;
-	Ref<RuntimeCanvasRenderer> m_CanvasRenderer;
 
 private:
 	inline static App* s_Instance;

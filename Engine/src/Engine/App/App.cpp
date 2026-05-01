@@ -38,16 +38,14 @@ static bool s_ShouldPopScreen = false;
 static std::string s_NewScreenName = "";
 
 static Scene* s_ShouldLoadScene = nullptr;
-static Canvas* s_ShouldLoadCanvas = nullptr;
 
 struct RuntimeScreen {
 	Ref<Scene> World;
-	Ref<Canvas> UI;
 	Ref<ScriptModule> Script;
 	Ref<ScriptObject> ScriptObj;
 
 	RuntimeScreen()
-		: World(CreateRef<Scene>("")), UI(CreateRef<Canvas>("")) { }
+		: World(CreateRef<Scene>("")) { }
 
 	~RuntimeScreen() {
 		ScriptObj->Call("OnClose");
@@ -57,7 +55,6 @@ struct RuntimeScreen {
 		App::Get()->GetSceneRenderer()->OnSceneClose();
 		World->UnregisterSystems();
 		World.reset();
-		UI.reset();
 	}
 };
 
@@ -65,10 +62,6 @@ static RuntimeScreen* s_Screen = nullptr;
 
 static Scene& ScriptGetScene() {
 	return *s_Screen->World;
-}
-
-static Canvas& ScriptGetUI() {
-	return *s_Screen->UI;
 }
 
 static asIScriptObject* GetScriptApp() {
@@ -83,14 +76,16 @@ static AssetManager& GetAssetManagerInstance() {
 
 static void ScriptLoadScene(const std::string& name, App* app) {
 	s_Screen->World->Name = name;
-	s_Screen->World->EntityWorld.Reset();
+	s_Screen->World->World3D.Reset();
+	s_Screen->World->World2D.Reset();
+	s_Screen->World->Canvas.Reset();
 	s_Screen->World->UnregisterSystems();
 	s_Screen->World->RegisterSystems();
 	app->GetSceneRenderer()->OnSceneLoad();
 	app->SceneLoad(*s_Screen->World);
 
 	List<Entity> list;
-	s_Screen->World->EntityWorld
+	s_Screen->World->World3D
 	.ForEach<ScriptComponent>(
 		[&](Entity entity)
 		{
@@ -114,11 +109,6 @@ static void ScriptLoadScene(const std::string& name, App* app) {
 		});
 }
 
-static void ScriptLoadCanvas(const std::string& name, App* app) {
-	s_Screen->UI->Name = name;
-	app->CanvasLoad(*s_Screen->UI);
-}
-
 static void AppLog(const std::string& msg, App* app) {
 	app->Log(msg);
 }
@@ -140,16 +130,10 @@ App::App() {
 	ScriptEngine::Get()->RegisterObjectMethod(
 		"AppClass", "void LoadScene(const string &in)",
 		asFUNCTION(ScriptLoadScene), asCALL_CDECL_OBJLAST);
-	ScriptEngine::Get()->RegisterObjectMethod(
-		"AppClass", "void LoadCanvas(const string &in)",
-		asFUNCTION(ScriptLoadCanvas), asCALL_CDECL_OBJLAST);
 
 	ScriptEngine::Get()->RegisterGlobalFunction(
 		"SceneClass& get_Scene() property",
 		asFUNCTION(ScriptGetScene), asCALL_CDECL);
-	ScriptEngine::Get()->RegisterGlobalFunction(
-		"CanvasClass& get_Canvas() property",
-		asFUNCTION(ScriptGetUI), asCALL_CDECL);
 
 	ScriptEngine::Get()->RegisterGlobalFunction(
 		"IApp@ get_ScriptApp() property",
@@ -161,10 +145,6 @@ App::App() {
 
 void App::CreateSceneRenderer() {
 	m_SceneRenderer = CreateRef<RuntimeSceneRenderer>();
-}
-
-void App::CreateCanvasRenderer() {
-	m_CanvasRenderer = CreateRef<RuntimeCanvasRenderer>();
 }
 
 void App::OnLoad() {
@@ -217,37 +197,15 @@ void App::OnUpdate(TimeStep ts) {
 		// }
 		// Renderer::EndPass();
 	}
-
-	// s_Screen->UI->OnUpdate(ts);
-	// m_CanvasRenderer->Update(ts);
-	// s_Screen->UI->OnRender(*m_CanvasRenderer);
-
-	// if(RenderCanvas) {
-	// 	auto output = m_CanvasRenderer->GetOutput();
-	// 	Renderer::StartPass(m_OutputPass);
-	// 	{
-	// 		Renderer2D::DrawFullscreenQuad(output);
-	// 	}
-	// 	Renderer::EndPass();
-	// }
 }
 
 void App::LoadScene(Scene* scene) {
 	s_ShouldLoadScene = scene;
 }
 
-void App::LoadCanvas(Canvas* canvas) {
-	s_ShouldLoadCanvas = canvas;
-}
-
 Scene* App::GetScene() {
 	VOLCANICORE_ASSERT(s_Screen);
 	return s_Screen->World.get();
-}
-
-Canvas* App::GetCanvas() {
-	VOLCANICORE_ASSERT(s_Screen);
-	return s_Screen->UI.get();
 }
 
 void App::PrepareScreen() {
@@ -307,7 +265,7 @@ void App::ScreenSet(const std::string& name) {
 		s_ShouldLoadScene = nullptr;
 
 		List<Entity> list;
-		s_Screen->World->EntityWorld
+		s_Screen->World->World3D
 		.ForEach<ScriptComponent>(
 			[&](Entity entity)
 			{
@@ -328,13 +286,6 @@ void App::ScreenSet(const std::string& name) {
 	}
 	// else if(screen.Scene != "")
 	// 	ScriptLoadScene(screen.Scene, this);
-
-	if(s_ShouldLoadCanvas) {
-		*s_Screen->UI = *s_ShouldLoadCanvas;
-		s_ShouldLoadCanvas = nullptr;
-	}
-	// else if(screen.Canvas != "")
-	// 	CanvasLoad(*s_Screen->UI);
 
 	s_Screen->ScriptObj->Call("OnLoad");
 }

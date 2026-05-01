@@ -15,7 +15,9 @@ public:
 	std::string Name;
 	std::string Screen;
 
-	ECS::World EntityWorld;
+	ECS::World World3D;
+	ECS::World World2D;
+	ECS::World Canvas;
 
 public:
 	Scene(const std::string& name = "Untitled Scene");

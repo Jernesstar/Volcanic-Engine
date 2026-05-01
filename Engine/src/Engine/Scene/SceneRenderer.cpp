@@ -238,7 +238,7 @@ void RuntimeSceneRenderer::OnSceneLoad() {
 		{ "Indices", BufferDataType::Int },
 	};
 
-	scene->EntityWorld.GetNative()
+	scene->World3D.GetNative()
 	.observer<ParticleEmitterComponent>()
 	.event(flecs::OnSet)
 	.each(
