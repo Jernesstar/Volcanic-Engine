@@ -1,8 +1,7 @@
 #pragma once
 
-#include <glm/vec4.hpp>
-
 #include <VolcaniCore/Core/Defines.h>
+#include <VolcaniCore/Core/Math.h>
 #include <VolcaniCore/Core/Template.h>
 #include <VolcaniCore/Core/List.h>
 #include <VolcaniCore/Core/UUID.h>
@@ -49,9 +48,9 @@ public:
 
 public:
 	UIElement(UIElementType type)
-		: m_Type(type), m_ID(""), m_Root(nullptr) { }
+		: m_Type(type), m_ID("") { }
 	UIElement(UIElementType type, const std::string& id, UIPage* root)
-		: m_Type(type), m_ID(id), m_Root(root) { }
+		: m_Type(type), m_ID(id) { }
 	virtual ~UIElement() = default;
 
 	virtual void Draw() = 0;
@@ -87,7 +86,6 @@ protected:
 	const UIElementType m_Type;
 	std::string m_ID;
 
-	UIPage* m_Root;
 	UINode m_Node;
 	UINode m_Parent;
 

@@ -12,8 +12,6 @@
 #include "Editor.h"
 #include "../Asset/AssetManager.h"
 
-namespace fs = std::filesystem;
-
 u32 FRAME_W = 1920, FRAME_H = 1080;
 
 namespace VolcanicEditor {

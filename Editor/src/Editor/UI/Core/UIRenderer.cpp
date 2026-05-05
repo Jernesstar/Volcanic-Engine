@@ -16,19 +16,18 @@
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 
+#define IM_ASSERT(x) ((void)0)
 #include <imgui/imgui.h>
 #include <imgui/imgui_internal.h>
 #include <imgui/backends/imgui_impl_glfw.h>
 #include <imgui/backends/imgui_impl_opengl3.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
 
-#include <OpenGL/Texture2D.h>
-
 #include <VolcaniCore/Core/Application.h>
 #include <VolcaniCore/Core/List.h>
-
-#include <VolcaniCore/Event/Events.h>
-#include <VolcaniCore/Graphics/RendererAPI.h>
+#include <VolcaniCore/Window/Events.h>
+#include <Engine/Graphics/Platform/RendererAPI.h>
+#include <Engine/Graphics/Platform/OpenGL/Texture.h>
 
 using namespace VolcaniCore;
 
@@ -86,7 +85,7 @@ static ImVec2 CalcPosition(UIElement* element) {
 	return ImVec2{ x + alignX + element->x, y + alignY + element->y };
 }
 
-UIState UIRenderer::DrawWindow(UI::Window& window) {
+UIState UIRenderer::DrawWindow(Window& window) {
 	if(window.Width == 0 || window.Height == 0) {
 		s_Stack.Add(UIType::DummyWindow);
 		return { };
@@ -98,7 +97,7 @@ UIState UIRenderer::DrawWindow(UI::Window& window) {
 	&& (s_Stack[-1] == UIType::Window || s_Stack[-1] == UIType::DummyWindow
 		|| s_Stack[-1] == UIType::ChildWindow))
 	{
-		auto childFlags = ImGuiChildFlags_Border
+		auto childFlags = ImGuiChildFlags_Borders
 						| ImGuiChildFlags_FrameStyle
 						| ImGuiChildFlags_ResizeX
 						| ImGuiChildFlags_ResizeY;
@@ -159,12 +158,12 @@ static void ButtonImage(Ref<UIElement> element, ImVec2 dim) {
 	if(!element->As<Image>()->Content)
 		return;
 
-	auto tex = element->As<Image>()->Content->As<OpenGL::Texture2D>();
+	auto tex = element->As<Image>()->Content->As<OpenGL::Texture>();
 	auto id = (ImTextureID)(intptr_t)tex->GetID();
-	ImGui::ImageButton(id, dim, ImVec2(0, 1), ImVec2(1, 0));
+	ImGui::ImageButton(element->GetID().c_str(), id, dim, ImVec2(0, 1), ImVec2(1, 0));
 }
 
-UIState UIRenderer::DrawButton(UI::Button& button) {
+UIState UIRenderer::DrawButton(Button& button) {
 	if(button.Display->GetType() == UIElementType::Image)
 		ButtonFunction = ButtonImage;
 	else {
@@ -189,8 +188,8 @@ UIState UIRenderer::DrawButton(UI::Button& button) {
 	};
 }
 
-UIState UIRenderer::DrawImage(UI::Image& image) {
-	auto texture = image.Content->As<OpenGL::Texture2D>();
+UIState UIRenderer::DrawImage(Image& image) {
+	auto texture = image.Content->As<OpenGL::Texture>();
 
 	ImVec2 dim = ImVec2(image.Width, image.Height);
 	if(image.UsePosition)
@@ -205,7 +204,7 @@ UIState UIRenderer::DrawImage(UI::Image& image) {
 	};
 }
 
-UIState UIRenderer::DrawText(UI::Text& text) {
+UIState UIRenderer::DrawText(Text& text) {
 	if(text.Content == "")
 		return { };
 
@@ -402,7 +401,7 @@ void UIRenderer::Init() {
 					| ImGuiConfigFlags_NavEnableSetMousePos;
 	io.DisplaySize = ImVec2(window->GetWidth(), window->GetHeight());
 
-	if(RendererAPI::Get()->GetBackend() == RendererAPI::Backend::OpenGL) {
+	if(Graphics::RendererAPI::GetBackend() == Graphics::RendererBackend::OpenGL){
 		ImGui_ImplGlfw_InitForOpenGL(window->GetNativeWindow(), true);
 		ImGui_ImplOpenGL3_Init("#version 460 core");
 	}

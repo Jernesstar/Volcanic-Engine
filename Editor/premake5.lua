@@ -11,7 +11,7 @@ project "Editor"
         "src/Editor/App/**.cpp",
         "src/Editor/Asset/**.cpp",
         "src/Editor/Utils/**.cpp",
-        "src/**.cpp",
+        "src/Editor/UI/Core/**.cpp",
     }
 
     includedirs {
@@ -44,6 +44,7 @@ project "Editor"
         "%{VendorPaths.libuv}",
 
         "%{Includes.imgui}",
+        "%{Includes.imgui}/imgui",
         "%{Includes.ImGuizmo}",
         "%{Includes.assimp}",
         "%{Includes.glslang}",

@@ -90,7 +90,6 @@ struct {
 } static menu;
 
 void Editor::Init(const CommandLineArgs& args) {
-	// Log::Init(args.Has("--embedded"));
 	Log::Init();
 
 	Renderer::Init();
@@ -100,10 +99,10 @@ void Editor::Init(const CommandLineArgs& args) {
 	float fontSize = 15.0f;
 	ImGuiIO& io = ImGui::GetIO();
 	io.Fonts->AddFontFromFileTTF(
-		"Magma/assets/fonts/JetBrainsMono-Bold.ttf", fontSize);
+		"Editor/assets/fonts/JetBrainsMono-Bold.ttf", fontSize);
 	io.FontDefault =
 		io.Fonts->AddFontFromFileTTF(
-			"Magma/assets/fonts/JetBrainsMono-Regular.ttf", fontSize);
+			"Editor/assets/fonts/JetBrainsMono-Regular.ttf", fontSize);
 	io.IniFilename = nullptr;
 
 	ScriptEngine::Init();
@@ -117,11 +116,6 @@ void Editor::Init(const CommandLineArgs& args) {
 		[](Ref<ScriptModule>& script)
 		{
 			script = AssetImporter::GetScript("App/Game.as");
-		};
-	s_App->ScreenLoad =
-		[](Ref<ScriptModule>& script, const std::string& name)
-		{
-			script = AssetImporter::GetScript("App/Screen/" + name + ".as");
 		};
 	s_App->SceneLoad =
 		[](Scene& scene)
