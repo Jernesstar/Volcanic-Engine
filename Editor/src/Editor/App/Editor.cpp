@@ -32,6 +32,7 @@
 #include "../Asset/AssetManager.h"
 #include "../Asset/AssetImporter.h"
 #include "../UI/Core/UIRenderer.h"
+#include "../UI/Editor/Panels.h"
 
 #include "SceneLoader.h"
 #include "ScriptManager.h"
@@ -65,6 +66,15 @@ static EditorMode s_State = EditorMode::Edit;
 static bool s_Updated = false;
 static bool s_Debugging = false;
 
+static SceneHierarchyPanel  s_Hierarchy;
+static SceneVisualizerPanel s_Visualizer;
+static ComponentEditorPanel s_ComponentEditor;
+static ContentBrowserPanel  s_ContentBrowser;
+static AssetEditorPanel     s_AssetEditor;
+static ConsolePanel         s_Console;
+
+static bool s_DockspaceBuilt = false;
+
 static TimeStep s_TimeStep;
 struct {
 	struct {
@@ -89,6 +99,84 @@ struct {
 	} tab;
 } static menu;
 
+// Layout ID constants (cached after first build)
+static ImGuiID s_DockMain   = 0;
+static ImGuiID s_DockLeft   = 0;
+static ImGuiID s_DockCenter = 0;
+static ImGuiID s_DockRight  = 0;
+static ImGuiID s_DockBottom = 0;
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+static void BuildDockLayout(ImGuiID dockspaceID) {
+	ImGui::DockBuilderRemoveNode(dockspaceID);
+	ImGui::DockBuilderAddNode(dockspaceID,
+		ImGuiDockNodeFlags_DockSpace | ImGuiDockNodeFlags_PassthruCentralNode);
+	ImGui::DockBuilderSetNodeSize(dockspaceID, ImGui::GetMainViewport()->Size);
+
+	s_DockMain = dockspaceID;
+
+	// Split off left (hierarchy) and bottom (console + content + asset)
+	ImGui::DockBuilderSplitNode(s_DockMain, ImGuiDir_Left,
+		0.20f, &s_DockLeft, &s_DockMain);
+	ImGui::DockBuilderSplitNode(s_DockMain, ImGuiDir_Down,
+		0.28f, &s_DockBottom, &s_DockCenter);
+
+	// Split off right (component editor) from center
+	ImGui::DockBuilderSplitNode(s_DockCenter, ImGuiDir_Right,
+		0.22f, &s_DockRight, &s_DockCenter);
+
+	// Assign panels
+	ImGui::DockBuilderDockWindow("Scene Hierarchy",  s_DockLeft);
+	ImGui::DockBuilderDockWindow("Scene Visualizer", s_DockCenter);
+	ImGui::DockBuilderDockWindow("Component Editor", s_DockRight);
+
+	// Bottom row — all three share the same node (tabbed)
+	ImGui::DockBuilderDockWindow("Content Browser",  s_DockBottom);
+	ImGui::DockBuilderDockWindow("Asset Editor",     s_DockBottom);
+	ImGui::DockBuilderDockWindow("Console",          s_DockBottom);
+
+	ImGui::DockBuilderFinish(dockspaceID);
+}
+
+static void DrawMainMenuBar() {
+	if(!ImGui::BeginMainMenuBar())
+		return;
+
+	if(ImGui::BeginMenu("Project")) {
+		if(ImGui::MenuItem("New",  "Ctrl+N")) { }
+		if(ImGui::MenuItem("Open", "Ctrl+P")) { }
+		if(ImGui::MenuItem("Save", "Ctrl+S")) { }
+		ImGui::Separator();
+		if(ImGui::MenuItem("Run", "Ctrl+R")) Editor::OnPlay();
+		ImGui::Separator();
+		if(ImGui::MenuItem("Export"))   { }
+		if(ImGui::MenuItem("Export To")){ }
+		ImGui::EndMenu();
+	}
+
+	if(ImGui::BeginMenu("Scene")) {
+		if(ImGui::MenuItem("New Scene")) { }
+		if(ImGui::MenuItem("Open Scene")) { }
+		if(ImGui::MenuItem("Save Scene")) { }
+		ImGui::EndMenu();
+	}
+
+	// Play / pause / stop toolbar in the menu bar
+	ImGui::Separator();
+	if(s_EditorMode == EditorMode::Edit || s_EditorMode == EditorMode::Pause) {
+		if(ImGui::MenuItem("▶ Play"))  Editor::OnPlay();
+	}
+	if(s_EditorMode == EditorMode::Play) {
+		if(ImGui::MenuItem("⏸ Pause")) Editor::OnPause();
+	}
+	if(s_EditorMode != EditorMode::Edit) {
+		if(ImGui::MenuItem("⏹ Stop"))  Editor::OnStop();
+	}
+
+	ImGui::EndMainMenuBar();
+}
+
 void Editor::Init(const CommandLineArgs& args) {
 	Log::Init();
 
@@ -96,14 +184,14 @@ void Editor::Init(const CommandLineArgs& args) {
 
 	UIRenderer::Init();
 
-	float fontSize = 15.0f;
-	ImGuiIO& io = ImGui::GetIO();
-	io.Fonts->AddFontFromFileTTF(
-		"Editor/assets/fonts/JetBrainsMono-Bold.ttf", fontSize);
-	io.FontDefault =
-		io.Fonts->AddFontFromFileTTF(
-			"Editor/assets/fonts/JetBrainsMono-Regular.ttf", fontSize);
-	io.IniFilename = nullptr;
+	// float fontSize = 15.0f;
+	// ImGuiIO& io = ImGui::GetIO();
+	// io.Fonts->AddFontFromFileTTF(
+	// 	"Editor/assets/fonts/JetBrainsMono-Bold.ttf", fontSize);
+	// io.FontDefault =
+	// 	io.Fonts->AddFontFromFileTTF(
+	// 		"Editor/assets/fonts/JetBrainsMono-Regular.ttf", fontSize);
+	// io.IniFilename = nullptr;
 
 	ScriptEngine::Init();
 	ScriptGlue::RegisterInterface();
@@ -158,7 +246,6 @@ void Editor::Init(const CommandLineArgs& args) {
 	if(args["--open_scene"]) {
 		Str name = args["--open_scene"];
 		Editor::OpenScene(name);
-		// OnPlay();
 	}
 }
 
@@ -176,6 +263,10 @@ void Editor::Close() {
 }
 
 void Editor::Update(TimeStep ts) {
+	Renderer::BeginFrame();
+	UIRenderer::BeginFrame();
+	// ImGuizmo::BeginFrame();
+
 	if(s_EditorMode == EditorMode::Play) {
 		if(s_Debugging) {
 			std::lock_guard<std::mutex> lock(s_Mutex);
@@ -190,94 +281,69 @@ void Editor::Update(TimeStep ts) {
 		return;
 	}
 
-	Renderer::BeginFrame();
+	if(!s_CurrentScene)
+		return;
 
-	if(s_EditorMode == EditorMode::Edit) {
+	s_CurrentScene->OnUpdate(ts);
+	if(s_EditorMode == EditorMode::Edit)
 		s_EditorSceneRenderer->Update(ts);
-		s_CurrentScene->OnUpdate(ts);
-	}
-	else if(s_EditorMode == EditorMode::Preview) {
+	else if(s_EditorMode == EditorMode::Preview)
 		s_App->GetSceneRenderer()->Update(ts);
-		s_CurrentScene->OnUpdate(ts);
-	}
+
+	s_Hierarchy.Update(ts);
+	s_Visualizer.Update(ts);
+	s_ComponentEditor.Update(ts);
+	s_ContentBrowser.Update(ts);
+	s_AssetEditor.Update(ts);
+	s_Console.Update(ts);
 }
 
 void Editor::Render() {
-	bool dockspaceOpen = true;
-	ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags_PassthruCentralNode;
-	ImGuiWindowFlags windowFlags = ImGuiWindowFlags_MenuBar;
+	// ── Full-screen dockspace window ──────────────────────────────────────
+	ImGuiViewport* vp = ImGui::GetMainViewport();
+	ImGui::SetNextWindowPos(vp->Pos);
+	ImGui::SetNextWindowSize(vp->Size);
+	ImGui::SetNextWindowViewport(vp->ID);
 
-	windowFlags |= ImGuiWindowFlags_NoDocking
-				 | ImGuiWindowFlags_NoCollapse
-				 | ImGuiWindowFlags_NoNavFocus
-				 | ImGuiWindowFlags_NoTitleBar
-				 | ImGuiWindowFlags_NoResize
-				 | ImGuiWindowFlags_NoMove
-				 | ImGuiWindowFlags_NoBackground
-				 | ImGuiWindowFlags_NoBringToFrontOnFocus;
+	ImGuiWindowFlags hostFlags =
+		ImGuiWindowFlags_NoDocking
+		| ImGuiWindowFlags_NoTitleBar
+		| ImGuiWindowFlags_NoCollapse
+		| ImGuiWindowFlags_NoResize
+		| ImGuiWindowFlags_NoMove
+		| ImGuiWindowFlags_NoBringToFrontOnFocus
+		| ImGuiWindowFlags_NoNavFocus
+		| ImGuiWindowFlags_NoBackground;
 
-	ImGuiViewport* viewport = ImGui::GetMainViewport();
-	ImGui::SetNextWindowPos(viewport->Pos);
-	ImGui::SetNextWindowSize(viewport->Size);
-	ImGui::SetNextWindowViewport(viewport->ID);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
+	ImGui::Begin("##DockHost", nullptr, hostFlags);
+	ImGui::PopStyleVar(3);
 
-	ImGui::Begin("DockSpaceWindow", &dockspaceOpen, windowFlags);
-	{
-		ImGui::PopStyleVar(3);
+	ImGuiID dockspaceID = ImGui::GetID("MainDockSpace");
+	ImGui::DockSpace(dockspaceID,
+		{ 0.0f, 0.0f }, ImGuiDockNodeFlags_PassthruCentralNode);
 
-		ImGui::BeginMainMenuBar();
-		{
-			if(ImGui::BeginMenu("Project")) {
-				if(ImGui::MenuItem("New", "Ctrl+N"))
-					menu.project.newProject = true;
-				if(ImGui::MenuItem("Open", "Ctrl+P"))
-					menu.project.openProject = true;
-				if(ImGui::MenuItem("Run", "Ctrl+R"))
-					menu.project.runProject = true;
-
-				ImGui::Separator();
-				if(ImGui::MenuItem("Export"))
-					menu.project.exportProject = true;
-				if(ImGui::MenuItem("Export To"))
-					menu.project.exportProjectTo = true;
-
-				ImGui::Separator();
-				if(ImGui::MenuItem("Add Screen"))
-					menu.project.addScreen = true;
-
-				ImGui::EndMenu();
-			}
-		}
-		ImGui::EndMainMenuBar();
-
-		ImGuiID dockspaceID = ImGui::GetID("DockSpace");
-		ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), dockspaceFlags);
+	if(!s_DockspaceBuilt) {
+		BuildDockLayout(dockspaceID);
+		s_DockspaceBuilt = true;
 	}
+
 	ImGui::End();
 
-	if(s_EditorMode == EditorMode::Play)
-		return;
+	// ── Menu bar (drawn on top of dockspace) ──────────────────────────────
+	DrawMainMenuBar();
 
-	Ref<SceneRenderer> renderer;
-	if(s_CurrentScene) {
-		if(s_EditorMode == EditorMode::Edit) {
-			renderer = s_EditorSceneRenderer;
-			s_CurrentScene->OnRender(*renderer);
-		}
-		else if(s_EditorMode == EditorMode::Preview) {
-			renderer = s_App->GetSceneRenderer();
-		}
-	}
+	// ── Panels ────────────────────────────────────────────────────────────
+	s_Hierarchy.Draw();
+	s_Visualizer.Draw();
+	s_ComponentEditor.Draw();
+	s_ContentBrowser.Draw();
+	s_AssetEditor.Draw();
+	s_Console.Draw();
 
-	Renderer::StartPass(s_OutputPass);
-	{
-		Renderer2D::DrawFullscreenQuad(renderer->GetOutput());
-	}
-	Renderer::EndPass();
-
+	UIRenderer::EndFrame();
 	Renderer::EndFrame();
 }
 
@@ -311,18 +377,6 @@ void Editor::OpenScene(const Str& name) {
 }
 
 void Editor::SaveScene(const Str& name) {
-
-}
-
-void Editor::NewCanvas(const Str& name) {
-
-}
-
-void Editor::OpenCanvas(const Str& name) {
-
-}
-
-void Editor::SaveCanvas(const Str& name) {
 
 }
 

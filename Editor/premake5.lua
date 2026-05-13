@@ -11,7 +11,7 @@ project "Editor"
         "src/Editor/App/**.cpp",
         "src/Editor/Asset/**.cpp",
         "src/Editor/Utils/**.cpp",
-        "src/Editor/UI/Core/**.cpp",
+        "src/Editor/UI/**.cpp",
     }
 
     includedirs {

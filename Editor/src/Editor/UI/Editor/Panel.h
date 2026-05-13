@@ -4,9 +4,7 @@
 #include <VolcaniCore/Core/Template.h>
 #include <VolcaniCore/Core/TimeUtils.h>
 
-namespace Magma {
-
-class Tab;
+namespace VolcanicEditor {
 
 class Panel : public VolcaniCore::Derivable<Panel> {
 public:
@@ -20,12 +18,6 @@ public:
 
 	virtual void Update(VolcaniCore::TimeStep ts) { }
 	virtual void Draw() { }
-
-	void SetTab(Tab* tab) { m_Tab = tab; }
-	Tab* GetTab() { return m_Tab; }
-
-protected:
-	Tab* m_Tab = nullptr;
 };
 
 }

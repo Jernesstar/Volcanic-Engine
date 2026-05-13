@@ -32,10 +32,6 @@ public:
 	static void NewScene(const Str& name);
 	static void OpenScene(const Str& name);
 	static void SaveScene(const Str& name);
-
-	static void NewCanvas(const Str& name);
-	static void OpenCanvas(const Str& name);
-	static void SaveCanvas(const Str& name);
 };
 
 }
