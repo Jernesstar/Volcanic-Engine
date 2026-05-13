@@ -12,15 +12,12 @@
 #include "Editor.h"
 #include "../Asset/AssetManager.h"
 
-u32 FRAME_W = 1920, FRAME_H = 1080;
-
 namespace VolcanicEditor {
 
 EditorApp::EditorApp(const CommandLineArgs& args)
-	: Application({ .Name = "Editor", .TickRate = 120 },
-		{
-			.Title = "Editor", .Width = FRAME_W, .Height = FRAME_H,
-		}
+	: Application(
+		{ .Name = "Editor", .TickRate = 60 },
+		{ .Title = "Editor" }
 	)
 {
 	Editor::Init(args);

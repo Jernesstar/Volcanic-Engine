@@ -11,7 +11,7 @@
 
 namespace VolcanicEngine::Graphics {
 
-const u64 Renderer::MaxTriangles = 100'000;
+const u64 Renderer::MaxTriangles = 10'000;
 const u64 Renderer::MaxIndices   = MaxTriangles * 6;
 const u64 Renderer::MaxVertices  = MaxTriangles * 3;
 const u64 Renderer::MaxInstances = MaxTriangles * 4;

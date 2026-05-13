@@ -98,7 +98,7 @@ static void DrawAddEntityPopup(ECS::World& world, AddEntityOptions& opts) {
 	ImGui::SameLine();
 	if(ImGui::Button("Cancel")) {
 		s_Name.clear();
-		opts.pending   = false;
+		opts.pending = false;
 		opts.nameError = false;
 		ImGui::CloseCurrentPopup();
 	}
@@ -107,8 +107,8 @@ static void DrawAddEntityPopup(ECS::World& world, AddEntityOptions& opts) {
 }
 
 static void DrawWorldSection(const char* label,
-							  ECS::World& world,
-							  ECS::Entity& selected)
+							 ECS::World& world,
+							 ECS::Entity& selected)
 {
 	static AddEntityOptions s_Opts3D, s_Opts2D, s_OtpsCanvas;
 	AddEntityOptions* opts =
@@ -131,10 +131,11 @@ static void DrawWorldSection(const char* label,
 	ImGui::PushID(label);
 
 	bool anyEntity = false;
-	world.ForEach([&](ECS::Entity& entity) {
-		anyEntity = true;
-		DrawEntityNode(entity, selected);
-	});
+	world.ForEach(
+		[&](ECS::Entity& entity) {
+			anyEntity = true;
+			DrawEntityNode(entity, selected);
+		});
 
 	if(!anyEntity) {
 		ImGui::Indent();

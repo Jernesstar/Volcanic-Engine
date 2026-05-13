@@ -48,7 +48,7 @@ Serializer& Serializer::Write(const Asset& value) {
 	return *this;
 }
 
-static void DeserializeEntity(YAML::Node entityNode, Scene& scene);
+static void DeserializeEntity(YAML::Node entityNode, World& scene);
 static void SerializeEntity(YAMLSerializer& out, const Entity& entity);
 
 void SceneLoader::EditorLoad(Scene& scene, const std::string& path) {
@@ -65,12 +65,17 @@ void SceneLoader::EditorLoad(Scene& scene, const std::string& path) {
 	VOLCANICORE_ASSERT(sceneNode);
 
 	scene.Name = sceneNode["Name"].as<std::string>();
-	scene.Screen = sceneNode["Screen"].as<std::string>();
 
-	for(auto node : sceneNode["Entities"])
-		DeserializeEntity(node["Entity"], scene);
+	for(auto node : sceneNode["World3D"])
+		DeserializeEntity(node["Entity"], scene.World3D);
+	for(auto node : sceneNode["World2D"])
+		DeserializeEntity(node["Entity"], scene.World2D);
+	for(auto node : sceneNode["Canvas"])
+		DeserializeEntity(node["Entity"], scene.Canvas);
 
 	Log::Info("Loaded scene {} from path {}", scene.Name, path);
+	scene.World3D.ForEach([](Entity& e) { Log::Info("N: {}", e.GetName()); });
+	Log::Info("Tag: {}", scene.World3D.GetEntity("Camera").Get<TagComponent>().Tag);
 }
 
 void SceneLoader::EditorSave(const Scene& scene, const std::string& path) {
@@ -81,16 +86,38 @@ void SceneLoader::EditorSave(const Scene& scene, const std::string& path) {
 	.WriteKey("Scene").BeginMapping()
 		.WriteKey("Name").Write(scene.Name);
 
-		serializer.WriteKey("Entities").BeginSequence(); // Entities
-		scene.World3D
-		.ForEach(
-			[&](const Entity& entity)
-			{
-				serializer.BeginMapping(); // Entity
-				SerializeEntity(serializer, entity);
-				serializer.EndMapping(); // Entity
-			});
-		serializer.EndSequence(); // Entities
+	serializer.WriteKey("World3D").BeginSequence(); // World3D
+	scene.World3D
+	.ForEach(
+		[&](const Entity& entity)
+		{
+			serializer.BeginMapping(); // Entity
+			SerializeEntity(serializer, entity);
+			serializer.EndMapping(); // Entity
+		});
+	serializer.EndSequence(); // World3D
+
+	serializer.WriteKey("World2D").BeginSequence(); // World2D
+	scene.World2D
+	.ForEach(
+		[&](const Entity& entity)
+		{
+			serializer.BeginMapping(); // Entity
+			SerializeEntity(serializer, entity);
+			serializer.EndMapping(); // Entity
+		});
+	serializer.EndSequence(); // World2D
+
+	serializer.WriteKey("Canvas").BeginSequence(); // Canvas
+	scene.Canvas
+	.ForEach(
+		[&](const Entity& entity)
+		{
+			serializer.BeginMapping(); // Entity
+			SerializeEntity(serializer, entity);
+			serializer.EndMapping(); // Entity
+		});
+	serializer.EndSequence(); // Canvas
 
 	serializer.EndMapping(); // Scene
 
@@ -554,9 +581,8 @@ Ref<ScriptObject> LoadScript(Entity entity, Asset asset,
 	return instance;
 }
 
-void DeserializeEntity(YAML::Node entityNode, Scene& scene) {
-	u64 entityID = entityNode["ID"].as<u64>();
-	Entity entity = scene.World3D.AddEntity(entityID);
+void DeserializeEntity(YAML::Node entityNode, World& world) {
+	Entity entity = world.AddEntity();
 	auto nameNode = entityNode["Name"];
 	if(nameNode)
 		entity.SetName(nameNode.as<std::string>());
@@ -1013,8 +1039,8 @@ void SceneLoader::RuntimeSave(const Scene& scene,
 	namespace fs = std::filesystem;
 
 	auto scenePath =
-		(fs::path(projectPath) / "Visual" / "Scene" / scene.Name
-		).string() + ".magma.scene";
+		(fs::path(projectPath) / "App" / "Scene" / scene.Name
+		).string() + ".scene";
 	auto binPath =
 		(fs::path(exportPath) / "Scene" / scene.Name).string() + ".bin";
 
@@ -1027,6 +1053,22 @@ void SceneLoader::RuntimeSave(const Scene& scene,
 	writer.Advance(sizeof(u64));
 
 	scene.World3D
+	.ForEach(
+		[&](const Entity& entity)
+		{
+			writer.Write(entity);
+			entityCount++;
+		});
+
+	scene.World2D
+	.ForEach(
+		[&](const Entity& entity)
+		{
+			writer.Write(entity);
+			entityCount++;
+		});
+
+	scene.Canvas
 	.ForEach(
 		[&](const Entity& entity)
 		{

@@ -201,11 +201,6 @@ void EditorAssetManager::Build(Asset asset) {
 	if(asset.ID > 100) // Not a native asset
 		path = fs::canonical(path).string();
 
-	Log::Info("Building {} : {} : {}",
-			  (u64)asset.ID,
-			  AssetTypeToString(asset.Type),
-			  path);
-
 	if(asset.Type == AssetType::Mesh) {
 		List<SubMesh> meshes;
 		List<MaterialPaths> materials;

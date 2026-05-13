@@ -29,10 +29,10 @@ public:
 	void OnUpdate(TimeStep ts);
 
 	Entity GetEntity(const std::string& name);
-	Entity GetEntity(VolcaniCore::UUID id);
+	Entity GetEntity(u64 id);
 
 	EntityBuilder BuildEntity() { return EntityBuilder{ *this }; }
-	EntityBuilder BuildEntity(VolcaniCore::UUID id) {
+	EntityBuilder BuildEntity(u64 id) {
 		return EntityBuilder{ *this, id };
 	}
 	EntityBuilder BuildEntity(const std::string& name) {
@@ -40,10 +40,10 @@ public:
 	}
 
 	Entity AddEntity();
-	Entity AddEntity(VolcaniCore::UUID id);
+	Entity AddEntity(u64 id);
 	Entity AddEntity(const std::string& name);
 
-	void RemoveEntity(VolcaniCore::UUID id);
+	void RemoveEntity(u64 id);
 	void RemoveEntity(const std::string& name);
 
 	void ForEach(const Func<void, Entity&>& func);
@@ -66,13 +66,13 @@ public:
 
 	template<class TSystem>
 	void Add() {
- 		uint64_t id = TypeIDGenerator<System<>>::GetID<TSystem>();
+ 		u64 id = TypeIDGenerator<System<>>::GetID<TSystem>();
 		m_Systems[id] = new TSystem(this);
 	}
 
 	template<typename TSystem>
 	TSystem* Get() {
-		uint64_t id = TypeIDGenerator<System<>>::GetID<TSystem>();
+		u64 id = TypeIDGenerator<System<>>::GetID<TSystem>();
 		if(!m_Systems.size() || !m_Systems.count(id))
 			return nullptr;
 
@@ -81,7 +81,7 @@ public:
 
 	template<class TSystem>
 	void Remove() {
- 		uint64_t id = TypeIDGenerator<System<>>::GetID<TSystem>();
+ 		u64 id = TypeIDGenerator<System<>>::GetID<TSystem>();
 		if(!m_Systems.size() || !m_Systems.count(id))
 			return;
 
@@ -94,7 +94,7 @@ public:
 private:
 	flecs::world m_World;
 	flecs::query<> m_AllEntitiesQuery;
-	Map<uint64_t, void*> m_Systems;
+	Map<u64, void*> m_Systems;
 };
 
 }

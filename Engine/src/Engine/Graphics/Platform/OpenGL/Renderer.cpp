@@ -158,8 +158,8 @@ void Renderer::Init() {
 	glEnable(GL_FRAMEBUFFER_SRGB);	// Gamma correction
 
 	s_EmptyVAO = CreateRef<VertexArray>();
-	s_Passes.Allocate(64);
-	s_Commands.Allocate(64);
+	s_Passes.Allocate(8);
+	s_Commands.Allocate(8);
 }
 
 void Renderer::Close() {

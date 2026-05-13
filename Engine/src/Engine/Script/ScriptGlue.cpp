@@ -1032,7 +1032,7 @@ void RegisterScene() {
 		asMETHODPR(ECS::World, GetEntity, (const std::string&), Entity),
 		asCALL_THISCALL, 0, asOFFSET(Scene, World3D));
 	engine->RegisterObjectMethod("SceneClass", "Entity GetEntity(uint64)",
-		asMETHODPR(ECS::World, GetEntity, (UUID), Entity), asCALL_THISCALL, 0,
+		asMETHODPR(ECS::World, GetEntity, (u64), Entity), asCALL_THISCALL, 0,
 		asOFFSET(Scene, World3D));
 
 	engine->RegisterObjectMethod("SceneClass", "PhysicsSystem@ GetPhysicsSystem()",

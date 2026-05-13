@@ -15,6 +15,8 @@ Scene::Scene(const std::string& name)
 
 void Scene::OnUpdate(TimeStep ts) {
 	World3D.OnUpdate(ts);
+	World2D.OnUpdate(ts);
+	Canvas.OnUpdate(ts);
 }
 
 void Scene::OnRender(SceneRenderer& renderer) {

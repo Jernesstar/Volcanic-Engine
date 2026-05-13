@@ -4,6 +4,8 @@
 
 namespace VolcanicEngine::ECS {
 
+struct RealEntity { };
+
 World::World() { }
 
 void World::Reset() {
@@ -21,23 +23,23 @@ Entity World::GetEntity(const std::string& name) {
 	return { m_World.lookup(name.c_str()) };
 }
 
-Entity World::GetEntity(VolcaniCore::UUID id) {
-	return { m_World.entity((uint64_t)id) };
+Entity World::GetEntity(u64 id) {
+	return { m_World.entity(id) };
 }
 
 Entity World::AddEntity() {
-	return { m_World.entity() };
+	return { m_World.entity().add<RealEntity>() };
 }
 
-Entity World::AddEntity(VolcaniCore::UUID id) {
-	return { m_World.make_alive((uint64_t)id) };
+Entity World::AddEntity(u64 id) {
+	return { m_World.entity(id).add<RealEntity>() };
 }
 
 Entity World::AddEntity(const std::string& name) {
-	return { m_World.entity(name.c_str()) };
+	return { m_World.entity(name.c_str()).add<RealEntity>() };
 }
 
-void World::RemoveEntity(VolcaniCore::UUID id) {
+void World::RemoveEntity(u64 id) {
 	GetEntity(id).Kill();
 }
 
@@ -46,29 +48,21 @@ void World::RemoveEntity(const std::string& name) {
 }
 
 void World::ForEach(const Func<void, Entity&>& func) {
-	m_World.defer_begin();
-
-	m_World.query().each(
-		[&func](flecs::entity handle)
+	m_World.query<RealEntity>().each(
+		[&](flecs::entity handle, RealEntity)
 		{
 			Entity entity{ handle };
 			func(entity);
 		});
-
-	m_World.defer_end();
 }
 
 void World::ForEach(const Func<void, const Entity&>& func) const {
-	m_World.defer_begin();
-
-	m_World.query().each(
-		[&func](flecs::entity handle)
+	m_World.query<RealEntity>().each(
+		[&](flecs::entity handle, RealEntity)
 		{
 			Entity entity{ handle };
 			func(entity);
 		});
-
-	m_World.defer_end();
 }
 
 }
