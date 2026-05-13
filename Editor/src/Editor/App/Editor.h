@@ -5,6 +5,7 @@
 #include <VolcaniCore/Core/TimeUtils.h>
 
 #include <Engine/App/Project.h>
+#include <Engine/ECS/World.h>
 
 using namespace VolcaniCore;
 using namespace VolcanicEngine;
@@ -32,6 +33,10 @@ public:
 	static void NewScene(const Str& name);
 	static void OpenScene(const Str& name);
 	static void SaveScene(const Str& name);
+
+	static ECS::Entity GetSelected();
+	static void SetSelected(ECS::Entity entity);
+	static void ClearSelected();
 };
 
 }

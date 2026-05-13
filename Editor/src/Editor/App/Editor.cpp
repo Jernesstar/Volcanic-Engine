@@ -48,15 +48,14 @@ static Project s_Project;
 static Ref<App> s_App;
 static Ref<Project> s_CurrentProject;
 static Ref<Scene> s_CurrentScene;
+static ECS::Entity s_Selected;
 
 static Ref<EditorAssetManager> s_AssetManager;
 static Ref<EditorSceneRenderer> s_EditorSceneRenderer;
 static Ref<RenderPass> s_OutputPass;
 
-enum class TabMode { None, World3D, World2D, Canvas };
 enum class EditorMode { Edit, Preview, Play, Pause };
 
-static TabMode s_TabMode = TabMode::None;
 static EditorMode s_EditorMode = EditorMode::Edit;
 
 static Ref<std::thread> s_AppThread;
@@ -108,6 +107,16 @@ static ImGuiID s_DockBottom = 0;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+ECS::Entity Editor::GetSelected() {
+	return s_Selected;
+}
+void Editor::SetSelected(ECS::Entity e) {
+	s_Selected = e;
+}
+void Editor::ClearSelected() {
+	s_Selected = ECS::Entity{ };
+}
+
 static void BuildDockLayout(ImGuiID dockspaceID) {
 	ImGui::DockBuilderRemoveNode(dockspaceID);
 	ImGui::DockBuilderAddNode(dockspaceID,
@@ -150,7 +159,7 @@ static void DrawMainMenuBar() {
 		ImGui::Separator();
 		if(ImGui::MenuItem("Run", "Ctrl+R")) Editor::OnPlay();
 		ImGui::Separator();
-		if(ImGui::MenuItem("Export"))   { }
+		if(ImGui::MenuItem("Export")) { }
 		if(ImGui::MenuItem("Export To")){ }
 		ImGui::EndMenu();
 	}
@@ -162,16 +171,15 @@ static void DrawMainMenuBar() {
 		ImGui::EndMenu();
 	}
 
-	// Play / pause / stop toolbar in the menu bar
 	ImGui::Separator();
 	if(s_EditorMode == EditorMode::Edit || s_EditorMode == EditorMode::Pause) {
-		if(ImGui::MenuItem("▶ Play"))  Editor::OnPlay();
+		if(ImGui::MenuItem("Play")) Editor::OnPlay();
 	}
 	if(s_EditorMode == EditorMode::Play) {
-		if(ImGui::MenuItem("⏸ Pause")) Editor::OnPause();
+		if(ImGui::MenuItem("Pause")) Editor::OnPause();
 	}
 	if(s_EditorMode != EditorMode::Edit) {
-		if(ImGui::MenuItem("⏹ Stop"))  Editor::OnStop();
+		if(ImGui::MenuItem("Stop")) Editor::OnStop();
 	}
 
 	ImGui::EndMainMenuBar();
@@ -299,7 +307,6 @@ void Editor::Update(TimeStep ts) {
 }
 
 void Editor::Render() {
-	// ── Full-screen dockspace window ──────────────────────────────────────
 	ImGuiViewport* vp = ImGui::GetMainViewport();
 	ImGui::SetNextWindowPos(vp->Pos);
 	ImGui::SetNextWindowSize(vp->Size);
@@ -332,10 +339,8 @@ void Editor::Render() {
 
 	ImGui::End();
 
-	// ── Menu bar (drawn on top of dockspace) ──────────────────────────────
 	DrawMainMenuBar();
 
-	// ── Panels ────────────────────────────────────────────────────────────
 	s_Hierarchy.Draw();
 	s_Visualizer.Draw();
 	s_ComponentEditor.Draw();
@@ -373,7 +378,8 @@ void Editor::NewScene(const Str& path) {
 void Editor::OpenScene(const Str& name) {
 	s_CurrentScene = CreateRef<Scene>(name);
 	SceneLoader::EditorLoad(*s_CurrentScene, "App/Scene/" + name + ".scene");
-	s_TabMode = TabMode::World3D;
+	s_Hierarchy.SetContext(s_CurrentScene.get());
+	s_Visualizer.SetContext(s_CurrentScene.get());
 }
 
 void Editor::SaveScene(const Str& name) {
@@ -476,12 +482,6 @@ void Editor::OnStop() {
 		App::Get()->OnClose();
 		App::Get()->Running = false;
 	}
-
-	// Ref<Tab> current = Editor::GetCurrentTab();
-	// if(current->Type == TabMode::Scene) {
-	// 	auto tab = current->As<SceneTab>();
-	// 	tab->Reset();
-	// }
 }
 
 }
