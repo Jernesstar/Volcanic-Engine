@@ -90,12 +90,11 @@ void Renderer::Clear() {
 	if(!s_Command) {
 		auto command = RendererAPI::Get()->NewCommand(nullptr);
 		command->Clear = true;
-		command->ClearColor = { 1.0f, 0.0f, 0.0f, 1.0f };
-		Renderer::Flush();
+		command->ClearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 	}
 	else {
 		GetCommand()->Clear = true;
-		GetCommand()->ClearColor = { 1.0f, 0.0f, 1.0f, 1.0f };
+		GetCommand()->ClearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 	}
 }
 

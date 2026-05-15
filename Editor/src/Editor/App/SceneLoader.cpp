@@ -74,8 +74,6 @@ void SceneLoader::EditorLoad(Scene& scene, const std::string& path) {
 		DeserializeEntity(node["Entity"], scene.Canvas);
 
 	Log::Info("Loaded scene {} from path {}", scene.Name, path);
-	scene.World3D.ForEach([](Entity& e) { Log::Info("N: {}", e.GetName()); });
-	Log::Info("Tag: {}", scene.World3D.GetEntity("Camera").Get<TagComponent>().Tag);
 }
 
 void SceneLoader::EditorSave(const Scene& scene, const std::string& path) {
@@ -577,7 +575,6 @@ Ref<ScriptObject> LoadScript(Entity entity, Asset asset,
 		}
 	}
 
-	Log::Info("Loaded script class {}", className);
 	return instance;
 }
 

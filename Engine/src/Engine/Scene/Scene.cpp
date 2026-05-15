@@ -3,8 +3,6 @@
 #include "PhysicsSystem.h"
 #include "ScriptSystem.h"
 
-#include "SceneRenderer.h"
-
 using namespace VolcanicEngine::ECS;
 // using namespace VolcanicEngine::Physics;
 
@@ -17,97 +15,6 @@ void Scene::OnUpdate(TimeStep ts) {
 	World3D.OnUpdate(ts);
 	World2D.OnUpdate(ts);
 	Canvas.OnUpdate(ts);
-}
-
-void Scene::OnRender(SceneRenderer& renderer) {
-	auto& world = World3D.GetNative();
-
-	renderer.Begin();
-
-	world.query_builder()
-	.with<CameraComponent>()
-	.build()
-	.each(
-		[&](flecs::entity id)
-		{
-			renderer.SubmitCamera(Entity{ id });
-		});
-
-	world.query_builder()
-	.with<SkyboxComponent>()
-	.build()
-	.each(
-		[&](flecs::entity id)
-		{
-			renderer.SubmitSkybox(Entity{ id });
-		});
-
-	world.query_builder()
-	.with<DirectionalLightComponent>().or_()
-	.with<PointLightComponent>().or_()
-	.with<SpotlightComponent>()
-	.build()
-	.each(
-		[&](flecs::entity id)
-		{
-			renderer.SubmitLight(Entity{ id });
-		});
-
-	world.query_builder()
-	.with<ParticleEmitterComponent>()
-	.build()
-	.each(
-		[&](flecs::entity id)
-		{
-			renderer.SubmitParticles(Entity{ id });
-		});
-
-	world.query_builder()
-	.with<MeshComponent>().and_().with<TransformComponent>()
-	.build()
-	.each(
-		[&](flecs::entity id)
-		{
-			renderer.SubmitMesh(Entity{ id });
-		});
-
-	// world.query_builder()
-	// .with<LayoutComponent>()
-	// .build()
-	// .each(
-	// 	[&](flecs::entity id)
-	// 	{
-	// 		renderer.SubmitLayout(Entity{ id });
-	// 	});
-
-	// world.query_builder()
-	// .with<ImageComponent>()
-	// .build()
-	// .each(
-	// 	[&](flecs::entity id)
-	// 	{
-	// 		renderer.SubmitImage(Entity{ id });
-	// 	});
-
-	// world.query_builder()
-	// .with<TextComponent>()
-	// .build()
-	// .each(
-	// 	[&](flecs::entity id)
-	// 	{
-	// 		renderer.SubmitText(Entity{ id });
-	// 	});
-
-	// world.query_builder()
-	// .with<ButtonComponent>()
-	// .build()
-	// .each(
-	// 	[&](flecs::entity id)
-	// 	{
-	// 		renderer.SubmitButton(Entity{ id });
-	// 	});
-
-	renderer.Render();
 }
 
 void Scene::RegisterSystems() {

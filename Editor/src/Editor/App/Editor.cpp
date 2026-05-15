@@ -26,7 +26,6 @@
 #include <Engine/Graphics/Renderer2D.h>
 #include <Engine/Script/ScriptGlue.h>
 #include <Engine/Scene/Scene.h>
-#include <Engine/Scene/SceneRenderer.h>
 
 #include "./SceneRenderer.h"
 #include "../Asset/AssetManager.h"
@@ -51,10 +50,6 @@ static Ref<Scene> s_CurrentScene;
 static ECS::Entity s_Selected;
 
 static Ref<EditorAssetManager> s_AssetManager;
-static Ref<EditorSceneRenderer> s_EditorSceneRenderer;
-static Ref<RenderPass> s_OutputPass;
-
-enum class EditorMode { Edit, Preview, Play, Pause };
 
 static EditorMode s_EditorMode = EditorMode::Edit;
 
@@ -117,6 +112,10 @@ void Editor::ClearSelected() {
 	s_Selected = ECS::Entity{ };
 }
 
+EditorMode Editor::GetMode() {
+	return s_EditorMode;
+}
+
 static void BuildDockLayout(ImGuiID dockspaceID) {
 	ImGui::DockBuilderRemoveNode(dockspaceID);
 	ImGui::DockBuilderAddNode(dockspaceID,
@@ -141,9 +140,9 @@ static void BuildDockLayout(ImGuiID dockspaceID) {
 	ImGui::DockBuilderDockWindow("Component Editor", s_DockRight);
 
 	// Bottom row — all three share the same node (tabbed)
-	ImGui::DockBuilderDockWindow("Content Browser",  s_DockBottom);
-	ImGui::DockBuilderDockWindow("Asset Editor",     s_DockBottom);
-	ImGui::DockBuilderDockWindow("Console",          s_DockBottom);
+	ImGui::DockBuilderDockWindow("Content Browser", s_DockBottom);
+	ImGui::DockBuilderDockWindow("Asset Editor", s_DockBottom);
+	ImGui::DockBuilderDockWindow("Console", s_DockBottom);
 
 	ImGui::DockBuilderFinish(dockspaceID);
 }
@@ -157,10 +156,11 @@ static void DrawMainMenuBar() {
 		if(ImGui::MenuItem("Open", "Ctrl+P")) { }
 		if(ImGui::MenuItem("Save", "Ctrl+S")) { }
 		ImGui::Separator();
-		if(ImGui::MenuItem("Run", "Ctrl+R")) Editor::OnPlay();
+		if(ImGui::MenuItem("Run", "Ctrl+R"))
+			Editor::OnPlay();
 		ImGui::Separator();
 		if(ImGui::MenuItem("Export")) { }
-		if(ImGui::MenuItem("Export To")){ }
+		if(ImGui::MenuItem("Export To")) { }
 		ImGui::EndMenu();
 	}
 
@@ -173,13 +173,16 @@ static void DrawMainMenuBar() {
 
 	ImGui::Separator();
 	if(s_EditorMode == EditorMode::Edit || s_EditorMode == EditorMode::Pause) {
-		if(ImGui::MenuItem("Play")) Editor::OnPlay();
+		if(ImGui::MenuItem("Play"))
+			Editor::OnPlay();
 	}
 	if(s_EditorMode == EditorMode::Play) {
-		if(ImGui::MenuItem("Pause")) Editor::OnPause();
+		if(ImGui::MenuItem("Pause"))
+			Editor::OnPause();
 	}
 	if(s_EditorMode != EditorMode::Edit) {
-		if(ImGui::MenuItem("Stop")) Editor::OnStop();
+		if(ImGui::MenuItem("Stop"))
+			Editor::OnStop();
 	}
 
 	ImGui::EndMainMenuBar();
@@ -205,7 +208,6 @@ void Editor::Init(const CommandLineArgs& args) {
 	ScriptGlue::RegisterInterface();
 
 	s_AssetManager = CreateRef<EditorAssetManager>();
-	s_EditorSceneRenderer = CreateRef<EditorSceneRenderer>();
 
 	s_App = CreateRef<App>();
 	s_App->AppLoad =
@@ -229,19 +231,7 @@ void Editor::Init(const CommandLineArgs& args) {
 			.EnableRead = true
 		});
 
-	auto libPath = Application::GetLibraryDir();
-	s_OutputPass =
-		RenderPass::Create("Output",
-			AssetImporter::GetShader({
-				libPath + "/Editor/assets/Shaders/Framebuffer.glsl.vert",
-				libPath + "/Editor/assets/Shaders/Framebuffer.glsl.frag"
-			}), output);
-	s_OutputPass->SetData(Renderer2D::GetScreenBuffer());
-
-	s_App->ChangeScreen = false;
-	s_App->RenderScene = false;
 	s_App->Running = false;
-	s_App->SetOutputPass(s_OutputPass);
 
 	if(args["--open_project"]) {
 		Str path = args["--open_project"];
@@ -291,12 +281,6 @@ void Editor::Update(TimeStep ts) {
 
 	if(!s_CurrentScene)
 		return;
-
-	s_CurrentScene->OnUpdate(ts);
-	if(s_EditorMode == EditorMode::Edit)
-		s_EditorSceneRenderer->Update(ts);
-	else if(s_EditorMode == EditorMode::Preview)
-		s_App->GetSceneRenderer()->Update(ts);
 
 	s_Hierarchy.Update(ts);
 	s_Visualizer.Update(ts);
@@ -359,8 +343,6 @@ Project& Editor::GetProject() {
 void Editor::OpenProject(const Str& path) {
 	Application::PushDir(path);
 	s_AssetManager->LoadRegistry();
-	// if(!s_App->GetSceneRenderer())
-	// 	s_App->CreateSceneRenderer();
 }
 
 void Editor::NewProject(const Str& path) {
@@ -386,79 +368,80 @@ void Editor::SaveScene(const Str& name) {
 
 }
 
+void Editor::SaveScene() {
+	SaveScene(s_CurrentScene->Name);
+}
+
 void Editor::OnPlay(bool debug) {
-	if(s_EditorMode == EditorMode::Edit) {
-		Str screen = s_CurrentScene->Screen;
-		s_EditorMode = EditorMode::Play;
-		// SaveScene();
+	if(s_EditorMode != EditorMode::Edit)
+		return;
 
-		App::Get()->PrepareScreen();
+	s_EditorMode = EditorMode::Play;
+	SaveScene();
 
-		s_Debugging = debug;
-		if(s_Debugging) {
-			ScriptManager::StartDebug();
+	s_Debugging = debug;
+	if(!s_Debugging) {
+		App::Get()->Running = true;
+		App::Get()->OnLoad();
+		App::Get()->LoadScene(s_CurrentScene.get());
+		return;
+	}
 
-			s_Updated = false;
-			s_AppThread = CreateRef<std::thread>(
-				[screen]()
-				{
-					App::Get()->Running = true;
-					App::Get()->OnLoad();
-					App::Get()->LoadScene(s_CurrentScene.get());
-					App::Get()->ScreenSet(screen);
+	ScriptManager::StartDebug();
 
-					while(true) {
-						std::unique_lock<std::mutex> lock(s_Mutex);
-						s_Condition.wait(lock, []() { return s_Updated; });
-						s_Updated = false;
-
-						if(s_State == EditorMode::Play)
-							App::Get()->OnUpdate(s_TimeStep);
-						else if(s_State == EditorMode::Pause)
-							continue;
-						else if(s_State == EditorMode::Edit)
-							break;
-					}
-
-					App::Get()->OnClose();
-					App::Get()->Running = false;
-
-					asThreadCleanup();
-				});
-
-			s_AppThread->detach();
-		}
-		else {
+	s_Updated = false;
+	s_AppThread =
+		CreateRef<std::thread>(
+		[]()
+		{
 			App::Get()->Running = true;
 			App::Get()->OnLoad();
 			App::Get()->LoadScene(s_CurrentScene.get());
-			App::Get()->ScreenSet(screen);
-		}
-	}
+
+			while(true) {
+				std::unique_lock<std::mutex> lock(s_Mutex);
+				s_Condition.wait(lock, []() { return s_Updated; });
+				s_Updated = false;
+
+				if(s_State == EditorMode::Play)
+					App::Get()->OnUpdate(s_TimeStep);
+				else if(s_State == EditorMode::Pause)
+					continue;
+				else if(s_State == EditorMode::Edit)
+					break;
+			}
+
+			App::Get()->OnClose();
+			App::Get()->Running = false;
+
+			asThreadCleanup();
+		});
+
+	s_AppThread->detach();
 }
 
 void Editor::OnPause() {
 	s_EditorMode = EditorMode::Pause;
-	if(s_Debugging) {
+	if(!s_Debugging)
+		App::Get()->Running = false;
+	else {
 		std::lock_guard<std::mutex> lock(s_Mutex);
 		s_State = s_EditorMode;
 		s_Updated = true;
 		s_Condition.notify_one();
 	}
-	else
-		App::Get()->Running = false;
 }
 
 void Editor::OnResume() {
 	s_EditorMode = EditorMode::Play;
-	if(s_Debugging) {
+	if(s_Debugging)
+		App::Get()->Running = true;
+	else {
 		std::lock_guard<std::mutex> lock(s_Mutex);
 		s_State = s_EditorMode;
 		s_Updated = true;
 		s_Condition.notify_one();
 	}
-	else
-		App::Get()->Running = true;
 }
 
 void Editor::OnStop() {

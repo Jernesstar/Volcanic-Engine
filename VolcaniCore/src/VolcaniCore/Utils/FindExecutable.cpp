@@ -22,13 +22,13 @@ std::string FindExecutablePath() {
 	std::string s(w.begin(), w.end());
 	char* buf = (char*)s.c_str();
 #endif
-#elif VOLCANIC_LINUX
-	char buf[2*PATH_MAX];
-	size_t len = readlink("/proc/self/exe", buf, 2*PATH_MAX);
+#elif defined(VOLCANIC_LINUX)
+	// char buf[2*PATH_MAX];
+	// size_t len = readlink("/proc/self/exe", buf, 2*PATH_MAX);
 // #elif VOLCANICENGINE_APPLE
 	// NS_GetExecutablePath
 #endif
-	return std::string(buf, len);
+	// return std::string(buf, len);
 }
 
 }

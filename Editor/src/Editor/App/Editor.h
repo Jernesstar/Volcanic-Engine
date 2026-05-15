@@ -12,6 +12,8 @@ using namespace VolcanicEngine;
 
 namespace VolcanicEditor {
 
+enum class EditorMode { Edit, Preview, Play, Pause };
+
 class Editor {
 public:
 	static void Init(const CommandLineArgs& args);
@@ -26,6 +28,8 @@ public:
 	static void OnStop();
 
 	static Project& GetProject();
+	static EditorMode GetMode();
+
 	static void OpenProject(const Str& path);
 	static void NewProject(const Str& path);
 	static void SaveProject();
@@ -33,7 +37,9 @@ public:
 	static void NewScene(const Str& name);
 	static void OpenScene(const Str& name);
 	static void SaveScene(const Str& name);
+	static void SaveScene();
 
+	// Selection — shared across panels
 	static ECS::Entity GetSelected();
 	static void SetSelected(ECS::Entity entity);
 	static void ClearSelected();

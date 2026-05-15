@@ -4,8 +4,6 @@
 
 #include "ECS/World.h"
 
-#include "SceneRenderer.h"
-
 using namespace VolcaniCore;
 
 namespace VolcanicEngine {
@@ -13,8 +11,6 @@ namespace VolcanicEngine {
 class Scene {
 public:
 	std::string Name;
-	std::string Screen;
-
 	ECS::World World3D;
 	ECS::World World2D;
 	ECS::World Canvas;
@@ -24,7 +20,6 @@ public:
 	~Scene() = default;
 
 	void OnUpdate(TimeStep ts);
-	void OnRender(SceneRenderer& renderer);
 	void RegisterSystems();
 	void UnregisterSystems();
 };
