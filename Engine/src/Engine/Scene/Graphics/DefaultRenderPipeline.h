@@ -10,17 +10,20 @@ class ScriptPipelineContext;
 
 class DefaultRenderPipeline : public RenderPipeline {
 public:
+	DefaultRenderPipeline() = default;
+	~DefaultRenderPipeline() = default;
+
 	void OnInit() override;
 	void OnRender(Scene* scene) override;
 	void OnResize(u32 w, u32 h) override;
 	Ref<Framebuffer> GetOutput() const override;
 
-	// Hook registration — called by the script binding layer
-	void AddHook(PipelineStage stage, asIScriptFunction* fn);
-	void RemoveHook(PipelineStage stage, asIScriptFunction* fn);
+	// // Hook registration — called by the script binding layer
+	// void AddHook(PipelineStage stage, asIScriptFunction* fn);
+	// void RemoveHook(PipelineStage stage, asIScriptFunction* fn);
 
-	// Named output access — scripts read these to composite on top
-	Ref<Framebuffer> GetBuffer(const std::string& name) const;
+	// // Named output access — scripts read these to composite on top
+	// Ref<Framebuffer> GetBuffer(const std::string& name) const;
 
 private:
 	void ExecuteHooks(PipelineStage stage, ScriptPipelineContext* ctx);

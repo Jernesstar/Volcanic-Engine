@@ -11,6 +11,9 @@ namespace VolcanicEngine {
 // with a basic depth prepass. The visualizer blits the colour attachment.
 class EditorRenderPipeline : public RenderPipeline {
 public:
+	EditorRenderPipeline() = default;
+	~EditorRenderPipeline() = default;
+
 	void OnInit() override;
 	void OnRender(Scene* scene) override;
 	void OnResize(u32 w, u32 h) override;

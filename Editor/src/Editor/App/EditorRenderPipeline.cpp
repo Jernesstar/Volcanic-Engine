@@ -15,16 +15,15 @@ static constexpr u32 DEFAULT_W = 1920;
 static constexpr u32 DEFAULT_H = 1080;
 
 void EditorRenderPipeline::OnInit() {
-	// auto libPath = Application::GetLibraryDir();
+	auto libPath = Application::GetLibraryDir();
 
-	// // ── Output framebuffer (colour + depth) ───────────────────────────────
-	// m_OutputBuffer = RendererAPI::Get()->CreateFramebuffer({
-	// 	.Attachments = {
-	// 		{ AttachmentTarget::Color, DEFAULT_W, DEFAULT_H },
-	// 		{ AttachmentTarget::Depth, DEFAULT_W, DEFAULT_H }
-	// 	},
-	// 	.EnableRead = true
-	// });
+	// ── Output framebuffer (colour + depth) ───────────────────────────────
+	m_OutputBuffer = RendererAPI::Get()->CreateFramebuffer({
+		.Attachments = {
+			{ AttachmentTarget::Color, DEFAULT_W, DEFAULT_H },
+			{ AttachmentTarget::Depth, DEFAULT_W, DEFAULT_H }
+		}
+	});
 
 	// // ── Geometry pass — opaque meshes, basic PBR/Blinn-Phong ─────────────
 	// m_GeometryPass = RenderPass::Create("EditorGeometry",

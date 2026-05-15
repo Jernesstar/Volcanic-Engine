@@ -9,6 +9,10 @@ Ref<Framebuffer> DefaultRenderPipeline::GetOutput() const {
 
 }
 
+void DefaultRenderPipeline::OnInit() {
+
+}
+
 void DefaultRenderPipeline::OnRender(Scene* scene) {
 	// auto ctx = ScriptPipelineContext::Factory(this, scene);
 
@@ -31,6 +35,10 @@ void DefaultRenderPipeline::OnRender(Scene* scene) {
 	// ExecuteHooks(PipelineStage::PostGeometry, ctx);
 
 	// // ... shadows, skybox, transparency, post-process, UI ...
+}
+
+void DefaultRenderPipeline::OnResize(u32 w, u32 h) {
+
 }
 
 void DefaultRenderPipeline::ExecuteHooks(PipelineStage stage, ScriptPipelineContext* ctx) {

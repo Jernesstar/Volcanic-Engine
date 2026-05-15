@@ -38,26 +38,42 @@ void SceneVisualizerPanel::Draw() {
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
 	ImGui::Begin("Scene Visualizer", &Open, winFlags);
 	ImGui::PopStyleVar();
+	RenderPipeline* pipeline =
+		Editor::GetMode() == EditorMode::Edit
+			? &m_EditorPipeline
+			: App::Get()->GetSceneRenderer().GetPipeline().get();
 
 	// ── View mode tab bar ─────────────────────────────────────────────────
 	if(ImGui::BeginTabBar("VisualizerTabs", ImGuiTabBarFlags_None)) {
 		if(ImGui::BeginTabItem("3D")) {
 			m_ViewMode = ViewMode::World3D;
+			pipeline->Render3D = true;
+			pipeline->Render2D = false;
+			pipeline->RenderCanvas = false;
 			DrawViewport();
 			ImGui::EndTabItem();
 		}
 		if(ImGui::BeginTabItem("2D")) {
 			m_ViewMode = ViewMode::World2D;
+			pipeline->Render3D = false;
+			pipeline->Render2D = true;
+			pipeline->RenderCanvas = false;
 			DrawViewport();
 			ImGui::EndTabItem();
 		}
 		if(ImGui::BeginTabItem("Canvas")) {
 			m_ViewMode = ViewMode::Canvas;
+			pipeline->Render3D = false;
+			pipeline->Render2D = false;
+			pipeline->RenderCanvas = true;
 			DrawViewport();
 			ImGui::EndTabItem();
 		}
 		if(ImGui::BeginTabItem("Composite")) {
 			m_ViewMode = ViewMode::Composite;
+			pipeline->Render3D = true;
+			pipeline->Render2D = true;
+			pipeline->RenderCanvas = true;
 			DrawViewport();
 			ImGui::EndTabItem();
 		}

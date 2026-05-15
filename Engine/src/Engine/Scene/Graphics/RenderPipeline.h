@@ -25,6 +25,11 @@ enum class PipelineStage {
 
 class RenderPipeline {
 public:
+	bool Render3D = true;
+	bool Render2D = true;
+	bool RenderCanvas = true;
+
+public:
 	RenderPipeline() = default;
 	virtual ~RenderPipeline() = default;
 
