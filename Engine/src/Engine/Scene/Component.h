@@ -68,13 +68,20 @@ struct AudioComponent : public Component {
 };
 
 struct MeshComponent : public Component {
-	Asset MeshSourceAsset;
-	Asset MaterialAsset;
+	Asset GeometryAsset;
+	Map<u32, Asset> MaterialOverrides; // slot -> Material or MaterialInstance asset
 
 	MeshComponent() = default;
-	MeshComponent(const Asset& source, const Asset& mat)
-		: MeshSourceAsset(source), MaterialAsset(mat) { }
+	MeshComponent(const Asset& geometry, const Asset& material)
+		: GeometryAsset(geometry) {
+		MaterialOverrides[0] = material;
+	}
 	MeshComponent(const MeshComponent& other) = default;
+
+	Asset GetMaterialForSlot(u32 slot) const {
+		auto it = MaterialOverrides.find(slot);
+		return it != MaterialOverrides.end() ? it->second : Asset{};
+	}
 };
 
 struct SkyboxComponent : public Component {

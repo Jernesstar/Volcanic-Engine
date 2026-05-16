@@ -26,6 +26,9 @@ static ImTextureID FramebufferColorID(Ref<Framebuffer> fb) {
 void SceneVisualizerPanel::Update(TimeStep ts) {
 	auto mode = Editor::GetMode();
 
+	if(m_Hovered)
+		m_Controller.OnUpdate(ts);
+
 	if(mode == EditorMode::Edit && m_Scene) {
 		m_EditorPipeline.SetSelectedEntity(Editor::GetSelected());
 		m_EditorPipeline.OnRender(m_Scene);
@@ -85,6 +88,13 @@ void SceneVisualizerPanel::Draw() {
 
 void SceneVisualizerPanel::SetContext(Scene* scene) {
 	m_Scene = scene;
+	// auto camera = CreateRef<StereographicCamera>(75.0f);
+	// camera->SetPosition({ 0.0f, 1.0f, 15.0f });
+	// camera->Resize(1920, 1080);
+	// camera->SetProjection(0.001f, 10'000.0f);
+	// m_Controller.SetCamera(camera);
+	// m_Controller.TranslationSpeed = 25.0f;
+
 	if(scene)
 		m_EditorPipeline.OnInit();
 }

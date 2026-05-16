@@ -1,24 +1,24 @@
-#include "Mesh.h"
+#include "Geometry.h"
 
 using namespace VolcaniCore;
 
 namespace VolcanicEngine::Graphics {
 
-Ref<Mesh> Mesh::Create(MeshType type,
+Ref<Geometry> Geometry::Create(GeometryType type,
 						Buffer<Vertex>&& vertices,
 						Buffer<u32>&& indices)
 {
-	auto mesh = CreateRef<Mesh>(type);
-	mesh->SubMeshes.Emplace(std::move(vertices), std::move(indices), 0U);
-	return mesh;
+	auto geometry = CreateRef<Geometry>(type);
+	geometry->Surfaces.Emplace(std::move(vertices), std::move(indices), 0U);
+	return geometry;
 }
 
-Ref<Mesh> Mesh::Create(MeshType type) {
+Ref<Geometry> Geometry::Create(GeometryType type) {
 	Buffer<u32> indices;
 	Buffer<Vertex> vertices;
 
 	switch(type) {
-		case MeshType::Cube:
+		case GeometryType::Cube:
 		{
 			vertices =
 			{
@@ -74,7 +74,7 @@ Ref<Mesh> Mesh::Create(MeshType type) {
 			break;
 		}
 
-		case MeshType::Quad:
+		case GeometryType::Quad:
 		{
 			vertices =
 			{

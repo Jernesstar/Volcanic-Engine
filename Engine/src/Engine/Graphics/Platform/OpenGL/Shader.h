@@ -30,8 +30,12 @@ public:
 		glDeleteProgram(m_ProgramID);
 	}
 
-	void SetShaderData(List<Graphics::ShaderFile>&& files) override {
+	void SetShaderData(List<Graphics::ShaderFile>&& files,
+					   const Graphics::ShaderLayout& layout) override
+	{
 		List<u32> ids(files.Count());
+
+		m_Layout = layout;
 
 		for(const auto& shader : files) {
 			u32 type = GetShaderType(shader.FileType);
@@ -43,7 +47,6 @@ public:
 				glCompileShader(shaderID);
 			}
 			else if(shader.DataType == Graphics::ShaderDataType::Binary) {
-				// Expects u8, so here we set Count == GetMaxSize = GetMaxCount * 4
 				glShaderBinary(1, &shaderID, GL_SHADER_BINARY_FORMAT_SPIR_V,
 					shader.Data.Get(), (GLsizei)shader.Data.GetMaxSize());
 				glSpecializeShader(shaderID, "main", 0, nullptr, nullptr);

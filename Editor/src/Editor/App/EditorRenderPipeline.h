@@ -1,14 +1,14 @@
 #pragma once
 
+#include <Engine/Scene/Scene.h>
 #include <Engine/Graphics/RenderPass.h>
 #include <Engine/Graphics/Platform/Framebuffer.h>
 #include <Engine/Scene/Graphics/RenderPipeline.h>
 
+using namespace VolcanicEngine::ECS;
+
 namespace VolcanicEngine {
 
-// Lightweight pipeline used only in the editor's Edit mode.
-// No post-processing or shadows — just geometry drawn into an HDR colour buffer
-// with a basic depth prepass. The visualizer blits the colour attachment.
 class EditorRenderPipeline : public RenderPipeline {
 public:
 	EditorRenderPipeline() = default;
@@ -24,13 +24,56 @@ public:
 	void SetSelectedEntity(ECS::Entity entity) { m_Selected = entity; }
 
 private:
-	Ref<RenderPass> m_GeometryPass;
-	Ref<RenderPass> m_SkyboxPass;
-	Ref<RenderPass> m_OutlinePass;  // draws selection outline on top
-
-	Ref<Framebuffer> m_OutputBuffer; // colour + depth
-
 	ECS::Entity m_Selected;
+	Ref<Framebuffer> m_OutputBuffer;
+
+	Entity Selected;
+	bool Hovered = false;
+
+	// Grid
+	Ref<RenderPass> GridPass;
+
+	// Outlining
+	Ref<RenderPass> MaskPass;
+	Ref<RenderPass> OutlinePass;
+
+	// Lines
+	Ref<RenderPass> LinePass;
+	DrawCommand* LineCommand;
+
+	// Billboards
+	Ref<RenderPass> BillboardPass;
+	DrawBuffer* BillboardBuffer;
+	Ref<Texture> DirectionalLightIcon;
+	Ref<Texture> PointLightIcon;
+	Ref<Texture> SpotlightIcon;
+	Ref<Texture> CameraIcon;
+	Ref<Texture> ParticlesIcon;
+
+	Ref<RenderPass> GeometryPass;
+	DrawCommand* GeometryCommand;
+
+	bool HasCamera = false;
+	bool HasDirectionalLight = false;
+	u32 PointLightCount = 0;
+	u32 SpotlightCount = 0;
+	u32 ParticleEmitterCount = 0;
+	List<std::pair<Vec3, u32>> Billboards;
+
+private:
+	void Begin3D();
+	void SubmitCamera3D(const Entity& entity);
+	void SubmitSkybox(const Entity& entity);
+	void SubmitLight3D(const Entity& entity);
+	void SubmitParticles(const Entity& entity);
+	void SubmitGeometry(const Entity& entity);
+	void End3D();
+
+	void Begin2D();
+	void End2D();
+
+	void BeginCanvas();
+	void EndCanvas();
 };
 
 }

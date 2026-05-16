@@ -450,7 +450,7 @@ void RegisterAssetManager() {
 
 	engine->RegisterEnum("AssetType");
 	engine->RegisterEnumValue("AssetType", "None", 0);
-	engine->RegisterEnumValue("AssetType", "Mesh", 1);
+	engine->RegisterEnumValue("AssetType", "Geometry", 1);
 	engine->RegisterEnumValue("AssetType", "Texture", 2);
 	engine->RegisterEnumValue("AssetType", "Cubemap", 3);
 	engine->RegisterEnumValue("AssetType", "Shader", 4);
@@ -458,7 +458,8 @@ void RegisterAssetManager() {
 	engine->RegisterEnumValue("AssetType", "Font", 6);
 	engine->RegisterEnumValue("AssetType", "Audio", 7);
 	engine->RegisterEnumValue("AssetType", "Script", 8);
-	engine->RegisterEnumValue("AssetType", "Custom", 9);
+	engine->RegisterEnumValue("AssetType", "Model", 9);
+	engine->RegisterEnumValue("AssetType", "Custom", 10);
 
 	engine->RegisterObjectType("Asset", sizeof(Asset),
 		asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_ALLINTS
@@ -786,10 +787,10 @@ void RegisterScene() {
 		asOFFSET(AudioComponent, AudioAsset));
 
 	engine->RegisterObjectType("MeshComponent", 0, asOBJ_REF | asOBJ_NOCOUNT);
-	engine->RegisterObjectProperty("MeshComponent", "Asset MeshSourceAsset",
-		asOFFSET(MeshComponent, MeshSourceAsset));
-	engine->RegisterObjectProperty("MeshComponent", "Asset MaterialAsset",
-		asOFFSET(MeshComponent, MaterialAsset));
+	engine->RegisterObjectProperty("MeshComponent", "Asset GeometryAsset",
+		asOFFSET(MeshComponent, GeometryAsset));
+	engine->RegisterObjectMethod("MeshComponent", "Asset GetMaterial(uint32)",
+		asMETHOD(MeshComponent, GetMaterialForSlot), asCALL_THISCALL);
 
 	engine->RegisterObjectType("SkyboxComponent", 0, asOBJ_REF | asOBJ_NOCOUNT);
 	engine->RegisterObjectProperty("SkyboxComponent", "Asset CubemapAsset",

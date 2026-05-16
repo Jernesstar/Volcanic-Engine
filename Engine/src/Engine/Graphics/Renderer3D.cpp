@@ -15,7 +15,7 @@ static DrawBuffer* s_MeshBuffer;
 static DrawBuffer* s_LineBuffer;
 static DrawBuffer* s_CubemapBuffer;
 
-static Map<SubMesh*, DrawCommand*> s_Meshes;
+static Map<SubGeometry*, DrawCommand*> s_Geometries;
 static u64 s_InstancesIndex = 0;
 
 void Renderer3D::Init() {
@@ -162,7 +162,7 @@ void Renderer3D::Begin(Ref<Camera> camera) {
 }
 
 void Renderer3D::End() {
-	s_Meshes.clear();
+	s_Geometries.clear();
 }
 
 void Renderer3D::DrawSkybox(Ref<Cubemap> cubemap) {
@@ -177,16 +177,16 @@ void Renderer3D::DrawSkybox(Ref<Cubemap> cubemap) {
 	.Set("u_Skybox", CubemapSlot{ cubemap, 0 });
 }
 
-static void DrawSubMesh(Ref<Mesh> root, SubMesh& mesh, const glm::mat4& tr,
+static void DrawSubGeometry(Ref<Geometry> root, SubGeometry& sub, const glm::mat4& tr,
 						DrawCommand* cmd)
 {
 	DrawCommand* command;
-	if(s_Meshes.count(&mesh))
-		command = s_Meshes[&mesh];
+	if(s_Geometries.count(&sub))
+		command = s_Geometries[&sub];
 	else {
 		if(Renderer::GetPass()) {
 			command = Renderer::NewCommand();
-			s_Meshes[&mesh] = command;
+			s_Geometries[&sub] = command;
 		}
 		else{
 			command = RendererAPI::Get()->NewCommand(cmd->Pass);
@@ -196,7 +196,7 @@ static void DrawSubMesh(Ref<Mesh> root, SubMesh& mesh, const glm::mat4& tr,
 
 	auto* buffer = command->Pass->Buffer;
 
-	if(!command->VerticesIndex) { // First time seeing this mesh this frame
+	if(!command->VerticesIndex) { // First time seeing this geometry this frame
 		if(cmd) {
 			command->IndicesIndex = s_MeshBuffer->GetIndexCount();
 			command->VerticesIndex = s_MeshBuffer->GetVertexCount();
@@ -206,24 +206,10 @@ static void DrawSubMesh(Ref<Mesh> root, SubMesh& mesh, const glm::mat4& tr,
 		command->Blending = BlendingMode::Off;
 		command->Culling = CullingMode::Back;
 
-		if(!command->Uniforms && root->Materials) {
-			SubMaterial& mat = root->Materials[mesh.MaterialIndex];
-			command->Uniforms
-			.Set("u_Material.IsTextured", (bool)mat.Diffuse)
-			.Set("u_Material.Diffuse", TextureSlot{ mat.Diffuse, 0 })
-			.Set("u_Material.Specular", TextureSlot{ mat.Specular, 1 })
-			.Set("u_Material.Emissive", TextureSlot{ mat.Emissive, 2 });
-
-			command->Uniforms
-			.Set("u_Material.DiffuseColor", mat.DiffuseColor)
-			.Set("u_Material.SpecularColor", mat.SpecularColor)
-			.Set("u_Material.EmissiveColor", mat.EmissiveColor);
-		}
-
 		command->IndicesIndex = s_MeshBuffer->GetIndexCount();
 		command->VerticesIndex = s_MeshBuffer->GetVertexCount();
-		buffer->Add(DrawBufferIndex::E_Index, mesh.Indices.Get(), mesh.Indices.GetCount());
-		buffer->Add(DrawBufferIndex::E_Vertex, mesh.Vertices.Get(), mesh.Vertices.GetCount());
+		buffer->Add(DrawBufferIndex::E_Index, sub.Indices.Get(), sub.Indices.GetCount());
+		buffer->Add(DrawBufferIndex::E_Vertex, sub.Vertices.Get(), sub.Vertices.GetCount());
 	}
 
 	if(!command->DrawCalls || command->DrawCalls[-1].InstanceCount >= 10'000) {
@@ -239,11 +225,11 @@ static void DrawSubMesh(Ref<Mesh> root, SubMesh& mesh, const glm::mat4& tr,
 	buffer->Add(DrawBufferIndex::E_Instance, glm::value_ptr(tr), 1);
 }
 
-void Renderer3D::DrawMesh(Ref<Mesh> mesh, const glm::mat4& tr,
+void Renderer3D::DrawGeometry(Ref<Geometry> geometry, const glm::mat4& tr,
 						  DrawCommand* command)
 {
-	for(auto& subMesh : mesh->SubMeshes)
-		DrawSubMesh(mesh, subMesh, tr, command);
+	for(auto& sub : geometry->Surfaces)
+		DrawSubGeometry(geometry, sub, tr, command);
 }
 
 void Renderer3D::DrawQuad(Ref<Quad> quad, const glm::mat4& tr,

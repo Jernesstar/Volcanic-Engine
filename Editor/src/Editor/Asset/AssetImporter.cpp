@@ -13,6 +13,8 @@
 #include <glslang/SPIRV/Logger.h>
 #include <glslang/SPIRV/GlslangToSpv.h>
 
+#include <SPIRV-Cross/spirv_glsl.hpp>
+
 #include <soloud.h>
 #include <soloud_wav.h>
 
@@ -21,7 +23,7 @@
 #include <VolcaniCore/Core/Assert.h>
 #include <VolcaniCore/Core/FileUtils.h>
 
-#include <Engine/Graphics/Mesh.h>
+#include <Engine/Graphics/Geometry.h>
 #include <Engine/Graphics/Platform/RendererAPI.h>
 
 #include "ScriptManager.h"
@@ -58,32 +60,7 @@ Ref<Texture> AssetImporter::GetTexture(const std::string& path, bool flip) {
 	return texture;
 }
 
-// Ref<Cubemap> AssetImporter::GetCubemap(const std::string& folder) {
-// 	List<fs::path> paths;
-// 	for(auto path : FileUtils::GetFiles(folder, { ".png", ".jpg", ".jpeg" }))
-// 		paths.Add(fs::path(path));
-
-// 	if(paths.Count() < 6)
-// 		Log::Warning(
-// 			"Folder %s does not have at least 6 images", folder.c_str());
-
-// 	Map<std::string, i32> map =
-// 	{
-// 		{ "right", 0 }, { "left",	1 },
-// 		{ "top",   2 }, { "bottom", 3 },
-// 		{ "front", 4 }, { "back",	5 }
-// 	};
-// 	List<ImageData> output(6);
-// 	for(u32 i = 0; i < 6; i++)
-// 		output.Emplace();
-
-// 	for(auto& path : paths)
-// 		output[map[path.filename().string()]] = GetImageData(path.string());
-
-// 	return Cubemap::Create(output);
-// }
-
-static SubMesh LoadMesh(const aiMesh* mesh) {
+static SubGeometry LoadSubGeometry(const aiMesh* mesh) {
 	Buffer<Vertex> vertices(mesh->mNumVertices);
 	Buffer<u32> indices(mesh->mNumFaces * 3);
 
@@ -125,41 +102,7 @@ static std::string GetMaterialPath(const std::string& dir,
 	return fullPath.string();
 }
 
-static Ref<Texture> LoadTexture(const std::string& dir,
-	const aiMaterial* material, aiTextureType type)
-{
-	auto path = GetMaterialPath(dir, material, type);
-	if(path == "")
-		return nullptr;
-	return AssetImporter::GetTexture(path, false);
-}
-
-static SubMaterial LoadMaterial(const std::string& dir, const aiMaterial* mat) {
-	glm::vec4 diffuse = glm::vec4(0.0f);
-	glm::vec4 specular = glm::vec4(0.0f);
-	glm::vec4 emissive = glm::vec4(0.0f);
-
-	aiColor4D color;
-	if(mat->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS)
-		diffuse = glm::vec4(color.r, color.g, color.b, color.a);
-	if(mat->Get(AI_MATKEY_COLOR_SPECULAR, color) == AI_SUCCESS)
-		specular = glm::vec4(color.r, color.g, color.b, color.a);
-	if(mat->Get(AI_MATKEY_COLOR_EMISSIVE, color) == AI_SUCCESS)
-		emissive = glm::vec4(color.r, color.g, color.b, color.a);
-
-	return {
-		.Diffuse  = LoadTexture(dir, mat, aiTextureType_DIFFUSE),
-		.Specular = LoadTexture(dir, mat, aiTextureType_SPECULAR),
-		.Emissive = LoadTexture(dir, mat, aiTextureType_EMISSIVE),
-		// .Roughness = LoadTexture(dir, mat, aiTextureType_DIFFUSE_ROUGHNESS)
-
-		.DiffuseColor  = diffuse,
-		.SpecularColor = specular,
-		.EmissiveColor = emissive
-	};
-}
-
-Ref<Mesh> AssetImporter::GetMesh(const std::string& path) {
+Ref<Geometry> AssetImporter::GetGeometry(const std::string& path) {
 	Assimp::Importer importer;
 	u32 loadFlags = aiProcess_Triangulate
 						| aiProcess_GenSmoothNormals
@@ -170,22 +113,17 @@ Ref<Mesh> AssetImporter::GetMesh(const std::string& path) {
 	VOLCANICORE_ASSERT_ARGS(scene, "Error importing mesh from %s: %s",
 							path.c_str(), importer.GetErrorString());
 
-	Ref<Mesh> mesh = CreateRef<Mesh>(MeshType::Model);
-	mesh->SubMeshes.Allocate(scene->mNumMeshes);
-	mesh->Materials.Allocate(scene->mNumMaterials);
+	Ref<Geometry> geometry = CreateRef<Geometry>(GeometryType::Model);
+	geometry->Surfaces.Allocate(scene->mNumMeshes);
 
 	for(u32 i = 0; i < scene->mNumMeshes; i++)
-		mesh->SubMeshes.AddMove(LoadMesh(scene->mMeshes[i]));
+		geometry->Surfaces.AddMove(LoadSubGeometry(scene->mMeshes[i]));
 
-	auto dir = (fs::path(path).parent_path() / "textures").string();
-	for(u32 i = 0; i < scene->mNumMaterials; i++)
-		mesh->Materials.Add(LoadMaterial(dir, scene->mMaterials[i]));
-
-	return mesh;
+	return geometry;
 }
 
-void AssetImporter::GetMeshData(const std::string& path,
-	List<SubMesh>& meshes, List<MaterialPaths>& materialPaths)
+void AssetImporter::GetGeometryData(const std::string& path,
+	List<SubGeometry>& surfaces, List<MaterialPaths>& materialPaths)
 {
 	Assimp::Importer importer;
 	u32 loadFlags = aiProcess_Triangulate
@@ -197,11 +135,11 @@ void AssetImporter::GetMeshData(const std::string& path,
 	VOLCANICORE_ASSERT_ARGS(scene, "Error importing mesh from %s: %s",
 							path.c_str(), importer.GetErrorString());
 
-	meshes.Allocate(scene->mNumMeshes);
+	surfaces.Allocate(scene->mNumMeshes);
 	materialPaths.Allocate(scene->mNumMaterials);
 
 	for(u32 i = 0; i < scene->mNumMeshes; i++)
-		meshes.AddMove(LoadMesh(scene->mMeshes[i]));
+		surfaces.AddMove(LoadSubGeometry(scene->mMeshes[i]));
 
 	auto dir = (fs::path(path).parent_path() / "textures").string();
 	for(u32 i = 0; i < scene->mNumMaterials; i++) {
@@ -210,7 +148,9 @@ void AssetImporter::GetMeshData(const std::string& path,
 		auto specularPath = GetMaterialPath(dir, mat, aiTextureType_SPECULAR);
 		auto emissivePath = GetMaterialPath(dir, mat, aiTextureType_EMISSIVE);
 
-		glm::vec4 diffuse, specular, emissive;
+		glm::vec4 diffuse = glm::vec4(0.0f);
+		glm::vec4 specular = glm::vec4(0.0f);
+		glm::vec4 emissive = glm::vec4(0.0f);
 		aiColor4D color;
 		if(mat->Get(AI_MATKEY_COLOR_DIFFUSE, color) == AI_SUCCESS)
 			diffuse = glm::vec4(color.r, color.g, color.b, color.a);
@@ -280,14 +220,16 @@ List<ShaderFile> GetShaders(const std::string& shaderFolder,
 
 Ref<Shader> AssetImporter::GetShader(const List<std::string>& paths) {
 	List<Graphics::ShaderFile> list(paths.Count());
+	Graphics::ShaderLayout layout;
 	for(auto path : paths) {
 		auto file = TryGetShader(path);
-		auto str = FileUtils::ReadFile(file.Path);
-		list.Emplace(file.Type, str);
+		auto data = GetShaderData(path);
+		ReflectShader(data, layout);
+		list.Emplace(file.Type, std::move(data));
 	}
 
 	auto shader = RendererAPI::Get()->CreateShader({});
-	shader->SetShaderData(std::move(list));
+	shader->SetShaderData(std::move(list), layout);
 	return shader;
 }
 
@@ -371,6 +313,44 @@ Buffer<u32> AssetImporter::GetShaderData(const std::string& path) {
 	data.Set(spirv.data(), spirv.size());
 
 	return data;
+}
+
+void AssetImporter::ReflectShader(const VolcaniCore::Buffer<u32>& spirv,
+								  Graphics::ShaderLayout& layout)
+{
+	spirv_cross::CompilerGLSL compiler(spirv.Get(), spirv.GetCount());
+	spirv_cross::ShaderResources resources = compiler.get_shader_resources();
+
+	auto getPropType = [&](const spirv_cross::SPIRType& type) {
+		if(type.basetype == spirv_cross::SPIRType::Float) {
+			if(type.columns == 1) {
+				if(type.vecsize == 1) return Graphics::ShaderPropType::Float;
+				if(type.vecsize == 2) return Graphics::ShaderPropType::Vec2;
+				if(type.vecsize == 3) return Graphics::ShaderPropType::Vec3;
+				if(type.vecsize == 4) return Graphics::ShaderPropType::Vec4;
+			}
+			if(type.columns == 4 && type.vecsize == 4) return Graphics::ShaderPropType::Mat4;
+		}
+		if(type.basetype == spirv_cross::SPIRType::Int) return Graphics::ShaderPropType::Int;
+		return Graphics::ShaderPropType::Int; // Default
+	};
+
+	for(auto& resource : resources.sampled_images) {
+		layout.Samplers.Emplace(resource.name, Graphics::ShaderPropType::Texture,
+			compiler.get_decoration(resource.id, spv::DecorationBinding),
+			compiler.get_decoration(resource.id, spv::DecorationDescriptorSet));
+	}
+
+	for(auto& resource : resources.uniform_buffers) {
+		const auto& type = compiler.get_type(resource.base_type_id);
+		for(u32 i = 0; i < type.member_types.size(); i++) {
+			std::string name = compiler.get_member_name(resource.base_type_id, i);
+			const auto& memberType = compiler.get_type(type.member_types[i]);
+			layout.Uniforms.Emplace(name, getPropType(memberType),
+				compiler.get_decoration(resource.id, spv::DecorationBinding),
+				compiler.get_decoration(resource.id, spv::DecorationDescriptorSet));
+		}
+	}
 }
 
 Buffer<f32> AssetImporter::GetAudioData(const std::string& path) {

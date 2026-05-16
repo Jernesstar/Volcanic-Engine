@@ -48,7 +48,7 @@ project "Editor"
         "%{Includes.ImGuizmo}",
         "%{Includes.assimp}",
         "%{Includes.glslang}",
-        "%{Includes.SPIRVCross}",
+        "%{Includes.SPIRV_Cross}",
         "%{Includes.yaml_cpp}",
         "%{Includes.rapidjson}",
         "%{Includes.efsw}",

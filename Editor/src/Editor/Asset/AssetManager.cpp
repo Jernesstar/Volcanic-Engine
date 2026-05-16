@@ -245,23 +245,34 @@ void EditorAssetManager::Build(Asset asset) {
 		auto refs = m_AssetRegistry->GetRefs(asset);
 
 		List<ShaderFile> files;
+		ShaderLayout layout;
 		u64 size = sizeof(u64);
 		for(auto& ref : refs) {
 			auto shaderPath = GetPath(ref.ID);
 			Log::Info("Shader path {} for {}", shaderPath, (u64)ref.ID);
 			ShaderFile file = AssetImporter::GetShaderFileData(shaderPath);
 			size += sizeof(u32) + file.Data.GetSize();
+			
+			AssetImporter::ReflectShader(file.Data, layout);
+
 			files.AddMove(std::move(file));
 		}
 
-		BytesWriter wr(size);
+		// Calculate size for layout serialization
+		// This is a bit tricky since we don't know the size of layout beforehand easily
+		// but BytesWriter will resize anyway. Let's just give it a reasonable estimate or just let it resize.
+		
+		BytesWriter wr(size + 1024); // Extra space for layout
 		wr.Write((u64)files.Count());
 
 		for(auto& file : files) {
 			wr.Write((u32)file.FileType);
 			wr.Write(file.Data);
-			m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
 		}
+
+		wr.Write(layout);
+
+		m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
 	}
 	else if(asset.Type == AssetType::Audio) {
 		Buffer<f32> soundData = AssetImporter::GetAudioData(path);

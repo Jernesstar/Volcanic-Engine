@@ -5,6 +5,7 @@
 #include <VolcaniCore/Core/Template.h>
 
 #include <Engine/Graphics/Material.h>
+#include <Engine/Graphics/Model.h>
 #include <Engine/Audio/Sound.h>
 #include <Engine/Script/ScriptModule.h>
 
@@ -40,10 +41,10 @@ template<typename T>
 static Ref<T> LoadFromBytes(Bytes&& bytes);
 
 template<>
-inline Ref<Mesh> LoadFromBytes<Mesh>(Bytes&& bytes) {
+inline Ref<Geometry> LoadFromBytes<Geometry>(Bytes&& bytes) {
 	BytesReader reader(std::move(bytes));
 
-	auto mesh = CreateRef<Mesh>(MeshType::Model);
+	auto geometry = CreateRef<Geometry>(GeometryType::Model);
 
 	u64 count;
 	reader.Read(count);
@@ -51,16 +52,16 @@ inline Ref<Mesh> LoadFromBytes<Mesh>(Bytes&& bytes) {
 	for(u64 i = 0; i < count; i++) {
 		Buffer<Vertex> vertices;
 		Buffer<u32> indices;
-		u32 matIndex;
+		u32 surfaceSlot;
 		reader.Read(vertices);
 		reader.Read(indices);
-		reader.Read(matIndex);
+		reader.Read(surfaceSlot);
 
-		mesh->SubMeshes.Emplace(std::move(vertices), std::move(indices),
-								matIndex);
+		geometry->Surfaces.Emplace(std::move(vertices), std::move(indices),
+								surfaceSlot);
 	}
 
-	return mesh;
+	return geometry;
 }
 template<>
 inline Ref<Texture> LoadFromBytes<Texture>(Bytes&& bytes) {
@@ -98,8 +99,11 @@ inline Ref<Shader> LoadFromBytes<Shader>(Bytes&& bytes) {
 		files.AddMove({ (ShaderFileType)type, std::move(data) });
 	}
 
+	ShaderLayout layout;
+	reader.Read(layout);
+
 	auto shader = RendererAPI::Get()->CreateShader({ });
-	shader->SetShaderData(std::move(files));
+	shader->SetShaderData(std::move(files), layout);
 	return shader;
 }
 template<>
@@ -136,6 +140,13 @@ inline Ref<Material> LoadFromBytes<Material>(Bytes&& bytes) {
 	return nullptr;
 }
 
+template<>
+inline Ref<ModelAsset> LoadFromBytes<ModelAsset>(Bytes&& bytes) {
+	BytesReader reader(std::move(bytes));
+
+	return nullptr;
+}
+
 class AssetManager : public Derivable<AssetManager> {
 public:
 	static AssetManager* Get() { return s_Instance; }
@@ -153,8 +164,8 @@ public:
 
 		Bytes bytes = m_AssetRegistry->GetData(asset);
 
-		if(asset.Type == AssetType::Mesh)
-			m_MeshAssets[asset.ID] = LoadFromBytes<Mesh>(std::move(bytes));
+		if(asset.Type == AssetType::Geometry)
+			m_GeometryAssets[asset.ID] = LoadFromBytes<Geometry>(std::move(bytes));
 		else if(asset.Type == AssetType::Texture)
 			m_TextureAssets[asset.ID] = LoadFromBytes<Texture>(std::move(bytes));
 		else if(asset.Type == AssetType::Cubemap)
@@ -167,6 +178,8 @@ public:
 			m_ScriptAssets[asset.ID] = LoadFromBytes<ScriptModule>(std::move(bytes));
 		else if(asset.Type == AssetType::Material)
 			m_MaterialAssets[asset.ID] = LoadFromBytes<Material>(std::move(bytes));
+		else if(asset.Type == AssetType::Model)
+			m_ModelAssets[asset.ID] = LoadFromBytes<ModelAsset>(std::move(bytes));
 	}
 
 	void Unload(Asset asset) {
@@ -177,8 +190,8 @@ public:
 
 		m_LoadedAssets.erase(asset.ID);
 
-		if(asset.Type == AssetType::Mesh)
-			m_MeshAssets.erase(asset.ID);
+		if(asset.Type == AssetType::Geometry)
+			m_GeometryAssets.erase(asset.ID);
 		else if(asset.Type == AssetType::Texture)
 			m_TextureAssets.erase(asset.ID);
 		else if(asset.Type == AssetType::Cubemap)
@@ -191,6 +204,8 @@ public:
 			m_ScriptAssets.erase(asset.ID);
 		else if(asset.Type == AssetType::Material)
 			m_MaterialAssets.erase(asset.ID);
+		else if(asset.Type == AssetType::Model)
+			m_ModelAssets.erase(asset.ID);
 	}
 
 	template<typename T>
@@ -200,8 +215,8 @@ public:
 
 		Load(asset);
 
-		if(asset.Type == AssetType::Mesh)
-			return std::reinterpret_pointer_cast<T>(m_MeshAssets[asset.ID]);
+		if(asset.Type == AssetType::Geometry)
+			return std::reinterpret_pointer_cast<T>(m_GeometryAssets[asset.ID]);
 		else if(asset.Type == AssetType::Texture)
 			return std::reinterpret_pointer_cast<T>(m_TextureAssets[asset.ID]);
 		else if(asset.Type == AssetType::Cubemap)
@@ -214,6 +229,8 @@ public:
 			return std::reinterpret_pointer_cast<T>(m_ScriptAssets[asset.ID]);
 		else if(asset.Type == AssetType::Material)
 			return std::reinterpret_pointer_cast<T>(m_MaterialAssets[asset.ID]);
+		else if(asset.Type == AssetType::Model)
+			return std::reinterpret_pointer_cast<T>(m_ModelAssets[asset.ID]);
 
 		return nullptr;
 	}
@@ -231,11 +248,12 @@ public:
 	void ClearCache() {
 		m_LoadedAssets.clear();
 
-		m_MeshAssets.clear();
+		m_GeometryAssets.clear();
 		m_TextureAssets.clear();
 		m_CubemapAssets.clear();
 		m_ShaderAssets.clear();
 		m_MaterialAssets.clear();
+		m_ModelAssets.clear();
 		m_AudioAssets.clear();
 		m_ScriptAssets.clear();
 	}
@@ -246,11 +264,12 @@ protected:
 	Ref<AssetRegistry> m_AssetRegistry;
 	Map<UUID, bool> m_LoadedAssets;
 
-	Map<UUID, Ref<Mesh>> m_MeshAssets;
+	Map<UUID, Ref<Geometry>> m_GeometryAssets;
 	Map<UUID, Ref<Texture>> m_TextureAssets;
 	Map<UUID, Ref<Cubemap>> m_CubemapAssets;
 	Map<UUID, Ref<Shader>> m_ShaderAssets;
 	Map<UUID, Ref<Material>> m_MaterialAssets;
+	Map<UUID, Ref<ModelAsset>> m_ModelAssets;
 	Map<UUID, Ref<Sound>> m_AudioAssets;
 	Map<UUID, Ref<ScriptModule>> m_ScriptAssets;
 

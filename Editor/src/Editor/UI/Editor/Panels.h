@@ -5,6 +5,7 @@
 #include <imgui/imgui.h>
 
 #include <Engine/Scene/Scene.h>
+#include <Engine/Scene/CameraController.h>
 #include <Engine/Graphics/Platform/Framebuffer.h>
 
 #include <Editor/App/EditorRenderPipeline.h>
@@ -37,19 +38,24 @@ public:
 
 	void SetContext(Scene* scene);
 	ViewMode GetViewMode() const { return m_ViewMode; }
+	void SetHovered(bool hovered) { m_Hovered = hovered; }
 	void OnResize(u32 w, u32 h);
 	Ref<Framebuffer> GetActiveFramebuffer() const;
 
 	void Update(VolcaniCore::TimeStep ts) override;
 	void Draw() override;
-
+	
 private:
-	void DrawViewport();
-
 	Scene* m_Scene = nullptr;
 	ViewMode m_ViewMode = ViewMode::Composite;
 	EditorRenderPipeline m_EditorPipeline;
 	ImVec2 m_LastSize;
+	
+	CameraController m_Controller;
+	bool m_Hovered;
+
+private:
+	void DrawViewport();
 };
 
 class ComponentEditorPanel : public Panel {

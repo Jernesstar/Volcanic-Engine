@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Engine/Graphics/Mesh.h>
+#include <Engine/Graphics/Geometry.h>
 #include <Engine/Graphics/Platform/Texture.h>
 #include <Engine/Graphics/Platform/Cubemap.h>
 #include <Engine/Graphics/Platform/Shader.h>
@@ -29,9 +29,9 @@ public:
 	static Graphics::ImageData GetImageData(const std::string& path,
 		bool flip = true);
 
-	static Ref<Graphics::Mesh> GetMesh(const std::string& path);
-	static void GetMeshData(const std::string& path,
-		List<Graphics::SubMesh>& mesh,
+	static Ref<Graphics::Geometry> GetGeometry(const std::string& path);
+	static void GetGeometryData(const std::string& path,
+		List<Graphics::SubGeometry>& geometry,
 		List<MaterialPaths>& materialPaths);
 
 	static Ref<Graphics::Texture> GetTexture(const std::string& path,
@@ -39,6 +39,8 @@ public:
 	// static Ref<Graphics::Cubemap> GetCubemap(const std::string& path);
 
 	static VolcaniCore::Buffer<u32> GetShaderData(const std::string& path);
+	static void ReflectShader(const VolcaniCore::Buffer<u32>& spirv,
+							  Graphics::ShaderLayout& layout);
 	static Graphics::ShaderFile GetShaderFileData(const std::string& path);
 	static Ref<Graphics::Shader> GetShader(const List<std::string>& path);
 

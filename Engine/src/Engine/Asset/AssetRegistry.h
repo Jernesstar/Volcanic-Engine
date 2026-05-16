@@ -4,7 +4,7 @@
 #include <VolcaniCore/Core/UUID.h>
 #include <VolcaniCore/Core/List.h>
 
-#include <Engine/Graphics/Mesh.h>
+#include <Engine/Graphics/Geometry.h>
 #include <Engine/Graphics/Platform/Shader.h>
 #include <Engine/Graphics/Platform/Texture.h>
 #include <Engine/Graphics/Platform/Cubemap.h>
@@ -21,7 +21,7 @@ namespace VolcanicEngine {
 
 enum class AssetType : u8 {
 	None,
-	Mesh,
+	Geometry,
 	Texture,
 	Cubemap,
 	Shader,
@@ -29,6 +29,7 @@ enum class AssetType : u8 {
 	Font,
 	Audio,
 	Script,
+	Model,      // NEW: import hierarchy descriptor (not GPU data)
 	Custom
 };
 

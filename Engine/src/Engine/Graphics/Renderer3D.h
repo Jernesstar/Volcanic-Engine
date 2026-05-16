@@ -7,7 +7,7 @@
 
 #include "Camera.h"
 #include "RenderPass.h"
-#include "Mesh.h"
+#include "Geometry.h"
 #include "Material.h"
 #include "Point.h"
 #include "Line.h"
@@ -31,7 +31,7 @@ public:
 
 	static void DrawSkybox(Ref<Cubemap> cubemap);
 
-	static void DrawMesh(Ref<Mesh> mesh, const glm::mat4& tr = glm::mat4(1.0f),
+	static void DrawGeometry(Ref<Geometry> geometry, const glm::mat4& tr = glm::mat4(1.0f),
 						 DrawCommand* command = nullptr);
 
 	static void DrawQuad(Ref<Quad> quad, const glm::mat4& tr,

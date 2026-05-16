@@ -2,133 +2,81 @@
 
 #include <bitset>
 
-#include <angelscript/sdk/add_on/scriptarray/scriptarray.h>
+#include <yaml-cpp/yaml.h>
 
 #include <VolcaniCore/Core/Assert.h>
 #include <VolcaniCore/Core/FileUtils.h>
-#include <VolcaniCore/Core/List.h>
-#include <VolcaniCore/Core/UUID.h>
-#include <VolcaniCore/Utils/BinaryWriter.h>
-#include <VolcaniCore/Utils/BinaryReader.h>
+#include <VolcaniCore/Core/Log.h>
 
-#include <Engine/App/App.h>
-#include <Engine/Graphics/Mesh.h>
-#include <Engine/Graphics/Camera.h>
-#include <Engine/Script/ScriptClass.h>
-#include <Engine/Script/Types/GridSet.h>
-#include <Engine/Script/Types/GridSet3D.h>
-#include <Engine/Script/Types/Timer.h>
+#include <Engine/Graphics/Geometry.h>
+#include <Engine/Graphics/Platform/RendererAPI.h>
+#include <Engine/Graphics/StereographicCamera.h>
+#include <Engine/Graphics/OrthographicCamera.h>
+#include <Engine/Graphics/IsometricCamera.h>
+
+#include <Engine/Asset/AssetManager.h>
+#include <Engine/Audio/Sound.h>
+
+#include <Engine/Core/YAMLSerializer.h>
+#include <Engine/Core/BinaryWriter.h>
+
 #include <Engine/Scene/Component.h>
+#include <Engine/Script/ScriptModule.h>
+#include <Engine/Script/ScriptClass.h>
+#include <Engine/Script/ScriptObject.h>
 
-#include "../Asset/AssetManager.h"
+#include "Asset/AssetManager.h"
+#include "Asset/AssetImporter.h"
+
 #include "ScriptManager.h"
 
-#undef near
-#undef far
+#include <EngineTypes/GridSet.h>
+
+using namespace VolcaniCore;
+using namespace VolcanicEngine;
+using namespace VolcanicEngine::Audio;
+using namespace VolcanicEngine::Graphics;
+using namespace VolcanicEngine::Script;
 
 namespace VolcanicEditor {
 
-template<>
-Serializer& Serializer::Write(const Vertex& value) {
-	SetOptions(Serializer::Options::ArrayOneLine);
-	BeginSequence();
-		Write(value.Position);
-		Write(value.Normal);
-		Write(value.TexCoord);
-	EndSequence();
-	return *this;
-}
-
-template<>
-Serializer& Serializer::Write(const Asset& value) {
-	BeginMapping();
-		WriteKey("ID").Write((u64)value.ID);
-		WriteKey("Type").Write(AssetTypeToString(value.Type));
-	EndMapping();
-	return *this;
-}
-
-static void DeserializeEntity(YAML::Node entityNode, World& scene);
-static void SerializeEntity(YAMLSerializer& out, const Entity& entity);
-
-void SceneLoader::EditorLoad(Scene& scene, const std::string& path) {
-	YAML::Node file;
-	try {
-		file = YAML::LoadFile(path);
+static std::string AssetTypeToString(AssetType type) {
+	switch(type) {
+		case AssetType::None:	  return "None";
+		case AssetType::Geometry: return "Geometry";
+		case AssetType::Texture:  return "Texture";
+		case AssetType::Cubemap:  return "Cubemap";
+		case AssetType::Shader:	  return "Shader";
+		case AssetType::Material: return "Material";
+		case AssetType::Font:	  return "Font";
+		case AssetType::Audio:	  return "Audio";
+		case AssetType::Script:	  return "Script";
+		case AssetType::Model:    return "Model";
+		case AssetType::Custom:	  return "Custom";
 	}
-	catch(YAML::ParserException e) {
-		VOLCANICORE_ASSERT_ARGS(false, "Could not load file %s: %s",
-								path.c_str(), e.what());
-	}
-	auto sceneNode = file["Scene"];
-
-	VOLCANICORE_ASSERT(sceneNode);
-
-	scene.Name = sceneNode["Name"].as<std::string>();
-
-	for(auto node : sceneNode["World3D"])
-		DeserializeEntity(node["Entity"], scene.World3D);
-	for(auto node : sceneNode["World2D"])
-		DeserializeEntity(node["Entity"], scene.World2D);
-	for(auto node : sceneNode["Canvas"])
-		DeserializeEntity(node["Entity"], scene.Canvas);
-
-	Log::Info("Loaded scene {} from path {}", scene.Name, path);
+	return "Unknown";
 }
 
-void SceneLoader::EditorSave(const Scene& scene, const std::string& path) {
-	YAMLSerializer serializer;
-	serializer.BeginMapping(); // File
-
-	serializer
-	.WriteKey("Scene").BeginMapping()
-		.WriteKey("Name").Write(scene.Name);
-
-	serializer.WriteKey("World3D").BeginSequence(); // World3D
-	scene.World3D
-	.ForEach(
-		[&](const Entity& entity)
-		{
-			serializer.BeginMapping(); // Entity
-			SerializeEntity(serializer, entity);
-			serializer.EndMapping(); // Entity
-		});
-	serializer.EndSequence(); // World3D
-
-	serializer.WriteKey("World2D").BeginSequence(); // World2D
-	scene.World2D
-	.ForEach(
-		[&](const Entity& entity)
-		{
-			serializer.BeginMapping(); // Entity
-			SerializeEntity(serializer, entity);
-			serializer.EndMapping(); // Entity
-		});
-	serializer.EndSequence(); // World2D
-
-	serializer.WriteKey("Canvas").BeginSequence(); // Canvas
-	scene.Canvas
-	.ForEach(
-		[&](const Entity& entity)
-		{
-			serializer.BeginMapping(); // Entity
-			SerializeEntity(serializer, entity);
-			serializer.EndMapping(); // Entity
-		});
-	serializer.EndSequence(); // Canvas
-
-	serializer.EndMapping(); // Scene
-
-	serializer.EndMapping(); // File
-
-	serializer.Finalize(path);
+static AssetType AssetTypeFromString(const std::string& str) {
+	if(str == "Geometry") return AssetType::Geometry;
+	if(str == "Texture")  return AssetType::Texture;
+	if(str == "Cubemap")  return AssetType::Cubemap;
+	if(str == "Shader")   return AssetType::Shader;
+	if(str == "Material") return AssetType::Material;
+	if(str == "Font")	  return AssetType::Font;
+	if(str == "Audio")	  return AssetType::Audio;
+	if(str == "Script")   return AssetType::Script;
+	if(str == "Model")    return AssetType::Model;
+	if(str == "Custom")	  return AssetType::Custom;
+	return AssetType::None;
 }
 
-void SaveScript(YAMLSerializer& serializer, Ref<ScriptObject> obj) {
+static void SaveScript(YAMLSerializer& serializer, Ref<ScriptObject> obj) {
+	auto* handle = obj->GetHandle();
+
 	serializer.WriteKey("Class").Write(obj->GetClass()->Name);
 	serializer.WriteKey("Fields").BeginSequence();
 
-	auto* handle = obj->GetHandle();
 	for(u32 i = 0; i < handle->GetPropertyCount(); i++) {
 		ScriptField field = obj->GetProperty(i);
 		bool editorField =
@@ -137,232 +85,154 @@ void SaveScript(YAMLSerializer& serializer, Ref<ScriptObject> obj) {
 		if(!editorField)
 			continue;
 
+		std::string typeName;
+		if(field.Type)
+			typeName = field.Type->GetName();
+
 		serializer.BeginMapping()
-			.WriteKey("Field").BeginMapping();
-
-		serializer.WriteKey("Name").Write(field.Name);
-
-		if(field.TypeID == asTYPEID_BOOL) {
-			serializer
-				.WriteKey("Type").Write(std::string("bool"))
-				.WriteKey("Value").Write(*field.As<bool>());
-		}
-		else if(field.TypeID == asTYPEID_INT8) {
-			serializer
-				.WriteKey("Type").Write(std::string("int8"))
-				.WriteKey("Value").Write((i32)*field.As<i8>());
-		}
-		else if(field.TypeID == asTYPEID_INT16) {
-			serializer
-				.WriteKey("Type").Write(std::string("int16"))
-				.WriteKey("Value").Write((i32)*field.As<i16>());
-		}
-		else if(field.TypeID == asTYPEID_INT32) {
-			serializer
-				.WriteKey("Type").Write(std::string("int32"))
-				.WriteKey("Value").Write(*field.As<i32>());
-		}
-		else if(field.TypeID == asTYPEID_INT64) {
-			serializer
-				.WriteKey("Type").Write(std::string("int64"))
-				.WriteKey("Value").Write(*field.As<i64>());
-		}
-		else if(field.TypeID == asTYPEID_UINT8) {
-			serializer
-				.WriteKey("Type").Write(std::string("uint8"))
-				.WriteKey("Value").Write((u32)*field.As<u8>());
-		}
-		else if(field.TypeID == asTYPEID_UINT16) {
-			serializer
-				.WriteKey("Type").Write(std::string("uint16"))
-				.WriteKey("Value").Write((u32)*field.As<u16>());
-		}
-		else if(field.TypeID == asTYPEID_UINT32) {
-			serializer
-				.WriteKey("Type").Write(std::string("uint32"))
-				.WriteKey("Value").Write(*field.As<u32>());
-		}
-		else if(field.TypeID == asTYPEID_UINT64) {
-			serializer
-				.WriteKey("Type").Write(std::string("uint64"))
-				.WriteKey("Value").Write(*field.As<u64>());
-		}
-		else if(field.TypeID == asTYPEID_FLOAT) {
-			serializer
-				.WriteKey("Type").Write(std::string("float"))
-				.WriteKey("Value").Write(*field.As<f32>());
-		}
-		else if(field.TypeID == asTYPEID_DOUBLE) {
-			serializer
-				.WriteKey("Type").Write(std::string("double"))
-				.WriteKey("Value").Write(*(f32*)field.As<f64>());
-		}
-		else if(std::string(field.Type->GetName()) == "string") {
-			serializer
-				.WriteKey("Type").Write(std::string("array"))
-				.WriteKey("Value").Write(*field.As<std::string>());
-		}
-		else if(std::string(field.Type->GetName()) == "array") {
-			serializer
-				.WriteKey("Type").Write(std::string("array"))
+			.WriteKey("Field")
+			.BeginMapping()
+				.WriteKey("Name").Write(field.Name)
+				.WriteKey("Type").Write(typeName == "" ? "int" : typeName)
 				.WriteKey("Value");
 
-			serializer.SetOptions(Serializer::Options::ArrayOneLine);
-			serializer
-					.BeginSequence();
-			auto* data = field.As<CScriptArray>();
-			for(u32 i = 0; i < data->GetSize(); i++)
-				serializer
-					.Write(*(u32*)data->At(i));
-
-			serializer
-				.EndSequence();
+		if(field.TypeID == asTYPEID_BOOL)
+			serializer.Write(*field.As<bool>());
+		else if(field.TypeID == asTYPEID_INT8)
+			serializer.Write((i32)*field.As<i8>());
+		else if(field.TypeID == asTYPEID_INT16)
+			serializer.Write((i32)*field.As<i16>());
+		else if(field.TypeID == asTYPEID_INT32)
+			serializer.Write(*field.As<i32>());
+		else if(field.TypeID == asTYPEID_INT64)
+			serializer.Write(*field.As<i64>());
+		else if(field.TypeID == asTYPEID_UINT8)
+			serializer.Write((u32)*field.As<u8>());
+		else if(field.TypeID == asTYPEID_UINT16)
+			serializer.Write((u32)*field.As<u16>());
+		else if(field.TypeID == asTYPEID_UINT32)
+			serializer.Write(*field.As<u32>());
+		else if(field.TypeID == asTYPEID_UINT64)
+			serializer.Write(*field.As<u64>());
+		else if(field.TypeID == asTYPEID_FLOAT)
+			serializer.Write(*field.As<f32>());
+		else if(field.TypeID == asTYPEID_DOUBLE)
+			serializer.Write((f32)*field.As<f64>());
+		else if(typeName == "string")
+			serializer.Write(*field.As<std::string>());
+		else if(typeName == "array") {
+			auto* array = field.As<CScriptArray>();
+			// Works for primitive types
+			serializer.BeginSequence();
+			for(u32 i = 0; i < array->GetSize(); i++)
+				serializer.Write(*(u32*)array->At(i));
+			serializer.EndSequence();
 		}
-		else if(std::string(field.Type->GetName()) == "Asset") {
-			serializer
-				.WriteKey("Type").Write(std::string("Asset"))
-				.WriteKey("Value").Write(*field.As<Asset>());
+		else if(typeName == "Asset") {
+			auto asset = *field.As<Asset>();
+			serializer.BeginMapping()
+				.WriteKey("ID").Write((u64)asset.ID)
+				.WriteKey("Type").Write(AssetTypeToString(asset.Type))
+			.EndMapping();
 		}
-		else if(std::string(field.Type->GetName()) == "Vec3") {
-			serializer
-				.WriteKey("Type").Write(std::string("Vec3"))
-				.WriteKey("Value").Write(*field.As<Vec3>());
-		}
-		else if(std::string(field.Type->GetName()) == "Vec2") {
-			serializer
-				.WriteKey("Type").Write(std::string("Vec2"))
-				.WriteKey("Value").Write(*field.As<Vec2>());
-		}
-		else if(std::string(field.Type->GetName()) == "GridSet") {
-			serializer
-				.WriteKey("Type").Write(std::string("GridSet"))
-				.WriteKey("Value").BeginMapping();
-
+		else if(typeName == "Vec3")
+			serializer.Write(*field.As<Vec3>());
+		else if(typeName == "GridSet") {
 			auto* grid = field.As<GridSet>();
-			serializer.WriteKey("Width").Write(grid->GetWidth());
-			serializer.WriteKey("Height").Write(grid->GetHeight());
-
-			serializer.WriteKey("Data")
-				.BeginSequence();
+			serializer.BeginMapping()
+				.WriteKey("Width").Write(grid->GetWidth())
+				.WriteKey("Height").Write(grid->GetHeight())
+				.WriteKey("Data").BeginSequence();
 			for(u32 y = 0; y < grid->GetHeight(); y++) {
-				serializer.SetOptions(Serializer::Options::ArrayOneLine);
 				serializer.BeginSequence();
 				for(u32 x = 0; x < grid->GetWidth(); x++)
-					serializer.Write(*grid->At(x, y));
+					serializer.Write((u32)*grid->At(x, y));
 				serializer.EndSequence();
 			}
-			serializer.EndSequence();
-
-			serializer.EndMapping();
-		}
-		// Script Type
-		else if(field.Is(ScriptQualifier::ScriptObject)) {
-			// auto* type = field.Type;
-			// for(u32 i = 0; i < type->GetPropertyCount(); i++) {
-			// 	u64 offset;
-			// 	type->GetProperty()
-			// }
+			serializer.EndSequence().EndMapping();
 		}
 
-			serializer.EndMapping()
-		.EndMapping();
+		serializer.EndMapping().EndMapping();
 	}
 
-	serializer
-		.EndSequence();
+	serializer.EndSequence();
 }
 
-void SerializeEntity(YAMLSerializer& serializer, const Entity& entity) {
-	serializer.WriteKey("Entity").BeginMapping(); // Entity
-
+static void SerializeEntity(YAMLSerializer& serializer, Entity entity) {
+	serializer.BeginMapping();
+	serializer.WriteKey("Entity").Write((u64)entity.GetHandle());
 	serializer.WriteKey("Name").Write(entity.GetName());
-	serializer.WriteKey("ID").Write((u64)entity.GetHandle());
 
-	serializer.WriteKey("Components")
-	.BeginMapping(); // Components
+	serializer.WriteKey("Components").BeginMapping();
 
-	if(entity.Has<TagComponent>()) {
-		auto& tag = entity.Get<TagComponent>().Tag;
-
-		serializer.WriteKey("TagComponent")
-		.BeginMapping()
-			.WriteKey("Tag").Write(tag)
-		.EndMapping();
-	}
 	if(entity.Has<CameraComponent>()) {
-		auto& camera = entity.Get<CameraComponent>().Cam;
-		auto type = camera->GetType();
-		std::string s;
-		switch(type) {
-			case Camera::Type::Orthographic:
-				s = "Orthographic";
-				break;
-			case Camera::Type::Stereographic:
-				s = "Stereographic";
-				break;
-			case Camera::Type::Isometric:
-				s = "Isometric";
-				break;
-		}
+		auto camera = entity.Get<CameraComponent>().Cam;
+		std::string type;
+		if(camera->GetType() == Camera::Type::Orthographic)
+			type = "Orthographic";
+		else if(camera->GetType() == Camera::Type::Stereographic)
+			type = "Stereographic";
+		else if(camera->GetType() == Camera::Type::Isometric)
+			type = "Isometric";
 
 		serializer.WriteKey("CameraComponent")
 		.BeginMapping()
-			.WriteKey("Camera").BeginMapping()
-			.WriteKey("Type").Write(s);
+			.WriteKey("Camera")
+			.BeginMapping()
+				.WriteKey("Type").Write(type)
+				.WriteKey("Position").Write(camera->GetPosition())
+				.WriteKey("Direction").Write(camera->GetDirection())
+				.WriteKey("ViewportWidth").Write(camera->GetViewportWidth())
+				.WriteKey("ViewportHeight").Write(camera->GetViewportHeight())
+				.WriteKey("Near").Write(camera->GetNear())
+				.WriteKey("Far").Write(camera->GetFar());
 
-		if(type == Camera::Type::Orthographic)
-			serializer
-			.WriteKey("Rotation")
-			.Write(camera->As<OrthographicCamera>()->GetRotation());
-		if(type == Camera::Type::Stereographic)
-			serializer
-			.WriteKey("VerticalFOV")
-			.Write(camera->As<StereographicCamera>()->GetVerticalFOV());
-		else if(type == Camera::Type::Isometric)
-			serializer
-			.WriteKey("Distance")
-			.Write(camera->As<IsometricCamera>()->R);
+		if(camera->GetType() == Camera::Type::Orthographic)
+			serializer.WriteKey("Rotation").Write(camera->As<OrthographicCamera>()->GetRotation());
+		else if(camera->GetType() == Camera::Type::Stereographic)
+			serializer.WriteKey("VerticalFOV").Write(camera->As<StereographicCamera>()->GetVerticalFOV());
+		else if(camera->GetType() == Camera::Type::Isometric)
+			serializer.WriteKey("Distance").Write(camera->As<IsometricCamera>()->R);
 
-		serializer
-			.WriteKey("Position").Write(camera->GetPosition())
-			.WriteKey("Direction").Write(camera->GetDirection())
-			.WriteKey("ViewportWidth").Write(camera->GetViewportWidth())
-			.WriteKey("ViewportHeight").Write(camera->GetViewportHeight())
-			.WriteKey("Near").Write(camera->GetNear())
-			.WriteKey("Far").Write(camera->GetFar())
-		.EndMapping()
+		serializer.EndMapping().EndMapping();
+	}
+	if(entity.Has<TagComponent>()) {
+		serializer.WriteKey("TagComponent")
+		.BeginMapping()
+			.WriteKey("Tag").Write(entity.Get<TagComponent>().Tag)
 		.EndMapping();
 	}
 	if(entity.Has<TransformComponent>()) {
 		const auto& transform = entity.Get<TransformComponent>();
-
 		serializer.WriteKey("TransformComponent")
 		.BeginMapping()
-			.WriteKey("Transform").BeginMapping()
+			.WriteKey("Transform")
+			.BeginMapping()
 				.WriteKey("Translation").Write(transform.Translation)
-				.WriteKey("Rotation")	.Write(transform.Rotation)
-				.WriteKey("Scale")		.Write(transform.Scale)
+				.WriteKey("Rotation").Write(transform.Rotation)
+				.WriteKey("Scale").Write(transform.Scale)
 			.EndMapping()
-		.EndMapping(); // TransformComponent
+		.EndMapping();
 	}
 	if(entity.Has<AudioComponent>()) {
-		Asset asset = entity.Get<AudioComponent>().AudioAsset;
+		auto asset = entity.Get<AudioComponent>().AudioAsset;
 		serializer.WriteKey("AudioComponent")
 		.BeginMapping()
 			.WriteKey("AssetID").Write((u64)asset.ID)
 		.EndMapping();
 	}
 	if(entity.Has<MeshComponent>()) {
-		Asset meshSource = entity.Get<MeshComponent>().MeshSourceAsset;
-		Asset material = entity.Get<MeshComponent>().MaterialAsset;
+		const auto& mc = entity.Get<MeshComponent>();
 		serializer.WriteKey("MeshComponent")
 		.BeginMapping()
-			.WriteKey("MeshSourceID").Write((u64)meshSource.ID)
-			.WriteKey("MaterialID").Write((u64)material.ID)
-		.EndMapping();
+			.WriteKey("GeometryID").Write((u64)mc.GeometryAsset.ID)
+			.WriteKey("MaterialOverrides").BeginMapping();
+		for(auto& [slot, mat] : mc.MaterialOverrides)
+			serializer.WriteKey(std::to_string(slot)).Write((u64)mat.ID);
+		serializer.EndMapping().EndMapping();
 	}
 	if(entity.Has<SkyboxComponent>()) {
-		Asset asset = entity.Get<SkyboxComponent>().CubemapAsset;
+		auto asset = entity.Get<SkyboxComponent>().CubemapAsset;
 		serializer.WriteKey("SkyboxComponent")
 		.BeginMapping()
 			.WriteKey("AssetID").Write((u64)asset.ID)
@@ -650,11 +520,22 @@ void DeserializeEntity(YAML::Node entityNode, World& world) {
 
 	auto meshComponentNode = components["MeshComponent"];
 	if(meshComponentNode) {
-		auto sourceID = meshComponentNode["MeshSourceID"].as<u64>();
-		auto materialID = meshComponentNode["MaterialID"].as<u64>();
-		entity.Add<MeshComponent>(
-			Asset{ sourceID, AssetType::Mesh },
-			Asset{ materialID, AssetType::Material });
+		auto geometryID = meshComponentNode["GeometryID"] ? meshComponentNode["GeometryID"].as<u64>() : meshComponentNode["MeshSourceID"].as<u64>();
+		auto& mc = entity.Add<MeshComponent>();
+		mc.GeometryAsset = Asset{ geometryID, AssetType::Geometry };
+		
+		auto materialOverridesNode = meshComponentNode["MaterialOverrides"];
+		if(materialOverridesNode) {
+			for(auto overrideNode : materialOverridesNode) {
+				auto slot = std::stoul(overrideNode.first.as<std::string>());
+				auto materialID = overrideNode.second.as<u64>();
+				mc.MaterialOverrides[slot] = Asset{ materialID, AssetType::Material };
+			}
+		} else {
+			// Backwards compatibility
+			auto materialID = meshComponentNode["MaterialID"].as<u64>();
+			mc.MaterialOverrides[0] = Asset{ materialID, AssetType::Material };
+		}
 	}
 
 	auto skyboxComponentNode = components["SkyboxComponent"];
@@ -822,8 +703,12 @@ BinaryWriter& BinaryWriter::WriteObject(const AudioComponent& comp) {
 
 template<>
 BinaryWriter& BinaryWriter::WriteObject(const MeshComponent& comp) {
-	Write((u64)comp.MeshSourceAsset.ID);
-	Write((u64)comp.MaterialAsset.ID);
+	Write((u64)comp.GeometryAsset.ID);
+	Write((u32)comp.MaterialOverrides.size());
+	for(auto& [slot, mat] : comp.MaterialOverrides) {
+		Write(slot);
+		Write((u64)mat.ID);
+	}
 	return *this;
 }
 

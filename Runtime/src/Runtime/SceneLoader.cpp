@@ -91,12 +91,19 @@ BinaryReader& BinaryReader::ReadObject(AudioComponent& comp) {
 
 template<>
 BinaryReader& BinaryReader::ReadObject(MeshComponent& comp) {
-	uint64_t sourceID;
-	Read(sourceID);
-	uint64_t materialID;
-	Read(materialID);
-	comp.MeshSourceAsset = { sourceID, AssetType::Mesh };
-	comp.MaterialAsset = { materialID, AssetType::Material };
+	uint64_t geometryID;
+	Read(geometryID);
+	comp.GeometryAsset = { geometryID, AssetType::Geometry };
+
+	uint32_t overrideCount;
+	Read(overrideCount);
+	for(uint32_t i = 0; i < overrideCount; i++) {
+		uint32_t slot;
+		Read(slot);
+		uint64_t materialID;
+		Read(materialID);
+		comp.MaterialOverrides[slot] = { materialID, AssetType::Material };
+	}
 
 	return *this;
 }
