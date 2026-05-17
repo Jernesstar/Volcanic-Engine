@@ -20,25 +20,38 @@ using MatPropValue = std::variant<i32, f32, Vec2, Vec3, Vec4, Mat4, Ref<Texture>
 
 struct MatProp {
 	ShaderPropType Type;
-	MatPropValue   Value;
+	MatPropValue Value;
 };
 
 struct Material {
-	Asset             ShaderAsset;   // NullAsset = default PBR
-	Map<Str, MatProp> Props;         // name -> value
+	Asset ShaderAsset; // NullAsset = default render pipeline
+	Map<Str, MatProp> Props; // name -> value
 
-	// Convenience setters
-	void SetInt  (const Str& name, i32 v)           { Props[name] = { ShaderPropType::Int,   v }; }
-	void SetFloat(const Str& name, f32 v)           { Props[name] = { ShaderPropType::Float, v }; }
-	void SetVec2 (const Str& name, const Vec2& v)   { Props[name] = { ShaderPropType::Vec2,  v }; }
-	void SetVec3 (const Str& name, const Vec3& v)   { Props[name] = { ShaderPropType::Vec3,  v }; }
-	void SetVec4 (const Str& name, const Vec4& v)   { Props[name] = { ShaderPropType::Vec4,  v }; }
-	void SetMat4 (const Str& name, const Mat4& v)   { Props[name] = { ShaderPropType::Mat4,  v }; }
-	void SetTex  (const Str& name, Ref<Texture> v)  { Props[name] = { ShaderPropType::Texture, v }; }
+	void SetInt(const Str& name, i32 v) {
+		Props[name] = { ShaderPropType::Int,   v };
+	}
+	void SetFloat(const Str& name, f32 v) {
+		Props[name] = { ShaderPropType::Float, v };
+	}
+	void SetVec2(const Str& name, const Vec2& v) {
+		Props[name] = { ShaderPropType::Vec2,  v };
+	}
+	void SetVec3(const Str& name, const Vec3& v) {
+		Props[name] = { ShaderPropType::Vec3,  v };
+	}
+	void SetVec4(const Str& name, const Vec4& v) {
+		Props[name] = { ShaderPropType::Vec4,  v };
+	}
+	void SetMat4(const Str& name, const Mat4& v) {
+		Props[name] = { ShaderPropType::Mat4,  v };
+	}
+	void SetTex(const Str& name, Ref<Texture> v)  {
+		Props[name] = { ShaderPropType::Texture, v };
+	}
 };
 
 struct MaterialInstance {
-	Asset             ParentAsset;
+	Asset ParentAsset;
 	Map<Str, MatProp> Overrides;
 };
 

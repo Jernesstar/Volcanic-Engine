@@ -136,10 +136,6 @@ public:
 	u32 GetInstanceCount() const override { return InstancesCount; }
 };
 
-void Resize(u32 width, u32 height) {
-	glViewport(0, 0, (i32)width, (i32)height);
-}
-
 void Clear() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
@@ -158,8 +154,8 @@ void Renderer::Init() {
 	glEnable(GL_FRAMEBUFFER_SRGB);	// Gamma correction
 
 	s_EmptyVAO = CreateRef<VertexArray>();
-	s_Passes.Allocate(8);
-	s_Commands.Allocate(8);
+	s_Passes.Allocate(40);
+	s_Commands.Allocate(40);
 }
 
 void Renderer::Close() {
@@ -229,13 +225,6 @@ static void SetOptions(DrawCommand& cmd) {
 	}
 	else
 		glDisable(GL_SCISSOR_TEST);
-
-	if(cmd.Viewport)
-		glViewport(cmd.ViewportX, cmd.ViewportY, cmd.ViewportW, cmd.ViewportH);
-	if(cmd.Clear) {
-		glClearColor(cmd.ClearColor.r, cmd.ClearColor.g, cmd.ClearColor.b, cmd.ClearColor.a);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	}
 
 	if(cmd.DepthTesting == DepthTestingMode::On)
 		glEnable(GL_DEPTH_TEST);
@@ -336,20 +325,20 @@ void Renderer::EndFrame() {
 	for(auto& cmd : s_Commands) {
 		SetOptions(cmd);
 
-		if(cmd.ViewportW && cmd.ViewportH)
-			Resize(cmd.ViewportW, cmd.ViewportH);
-		else if(cmd.Pass && cmd.Pass->Output) {
-			auto att = cmd.Pass->Output->Get(AttachmentTarget::Color, 0);
-			Resize(att->Spec.Width, att->Spec.Height);
-		}
-
 		if(cmd.Pass && cmd.Pass->Output)
 			cmd.Pass->Output->As<OpenGL::Framebuffer>()->Bind();
-		else
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-		if(cmd.Clear)
-			Clear();
+		if(cmd.Viewport)
+			glViewport(cmd.ViewportX, cmd.ViewportY, cmd.ViewportW, cmd.ViewportH);
+		else if(cmd.Pass && cmd.Pass->Output) {
+			auto att = cmd.Pass->Output->Get(AttachmentTarget::Color, 0);
+			glViewport(0, 0, att->Spec.Width, att->Spec.Height);
+		}
+
+		if(cmd.Clear) {
+			glClearColor(cmd.ClearColor.r, cmd.ClearColor.g, cmd.ClearColor.b, cmd.ClearColor.a);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		}
 
 		if(cmd.Pass && cmd.ComputeX && cmd.ComputeY && cmd.ComputeZ)
 			cmd.Pass->Pipeline->As<OpenGL::Shader>()->Lock();
@@ -358,8 +347,6 @@ void Renderer::EndFrame() {
 			cmd.Pass->Pipeline->As<OpenGL::Shader>()->Bind();
 			SetUniforms(cmd);
 		}
-		else
-			glUseProgram(0);
 
 		if(cmd.Pass && cmd.ComputeX && cmd.ComputeY && cmd.ComputeZ)
 			cmd.Pass->Pipeline->As<OpenGL::Shader>()
@@ -379,8 +366,11 @@ void Renderer::EndFrame() {
 		for(auto& call : cmd.DrawCalls)
 			SubmitDrawCall(cmd, call);
 
-		Resize(Application::GetWindow()->GetWidth(),
-				Application::GetWindow()->GetHeight());
+		glViewport(0, 0,
+			Application::GetWindow()->GetWidth(),
+			Application::GetWindow()->GetHeight());
+		glUseProgram(0);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	s_Commands.Clear();

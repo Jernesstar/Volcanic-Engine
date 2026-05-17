@@ -48,12 +48,20 @@ void SceneVisualizerPanel::Draw() {
 
 	// ── View mode tab bar ─────────────────────────────────────────────────
 	if(ImGui::BeginTabBar("VisualizerTabs", ImGuiTabBarFlags_None)) {
+		if(Editor::GetMode() != EditorMode::Edit
+		&& ImGui::BeginTabItem("Composite"))
+		{
+			m_ViewMode = ViewMode::Composite;
+			pipeline->Render3D = true;
+			pipeline->Render2D = true;
+			pipeline->RenderCanvas = true;
+			ImGui::EndTabItem();
+		}
 		if(ImGui::BeginTabItem("3D")) {
 			m_ViewMode = ViewMode::World3D;
 			pipeline->Render3D = true;
 			pipeline->Render2D = false;
 			pipeline->RenderCanvas = false;
-			DrawViewport();
 			ImGui::EndTabItem();
 		}
 		if(ImGui::BeginTabItem("2D")) {
@@ -61,7 +69,6 @@ void SceneVisualizerPanel::Draw() {
 			pipeline->Render3D = false;
 			pipeline->Render2D = true;
 			pipeline->RenderCanvas = false;
-			DrawViewport();
 			ImGui::EndTabItem();
 		}
 		if(ImGui::BeginTabItem("Canvas")) {
@@ -69,49 +76,42 @@ void SceneVisualizerPanel::Draw() {
 			pipeline->Render3D = false;
 			pipeline->Render2D = false;
 			pipeline->RenderCanvas = true;
-			DrawViewport();
-			ImGui::EndTabItem();
-		}
-		if(ImGui::BeginTabItem("Composite")) {
-			m_ViewMode = ViewMode::Composite;
-			pipeline->Render3D = true;
-			pipeline->Render2D = true;
-			pipeline->RenderCanvas = true;
-			DrawViewport();
 			ImGui::EndTabItem();
 		}
 		ImGui::EndTabBar();
 	}
+
+	DrawViewport();
 
 	ImGui::End();
 }
 
 void SceneVisualizerPanel::SetContext(Scene* scene) {
 	m_Scene = scene;
-	// auto camera = CreateRef<StereographicCamera>(75.0f);
-	// camera->SetPosition({ 0.0f, 1.0f, 15.0f });
-	// camera->Resize(1920, 1080);
-	// camera->SetProjection(0.001f, 10'000.0f);
-	// m_Controller.SetCamera(camera);
-	// m_Controller.TranslationSpeed = 25.0f;
+	auto camera = CreateRef<StereographicCamera>(75.0f);
+	camera->SetPosition({ 0.0f, 1.0f, 15.0f });
+	camera->Resize(1920, 1080);
+	camera->SetProjection(0.001f, 10'000.0f);
+	m_Controller.SetCamera(camera);
+	m_Controller.TranslationSpeed = 25.0f;
 
-	if(scene)
+	if(scene) {
 		m_EditorPipeline.OnInit();
+		m_EditorPipeline.SetCamera(camera);
+	}
 }
 
 void SceneVisualizerPanel::OnResize(u32 w, u32 h) {
-	m_EditorPipeline.OnResize(w, h);
+	// m_EditorPipeline.OnResize(w, h);
 }
 
 void SceneVisualizerPanel::DrawViewport() {
 	ImVec2 size = ImGui::GetContentRegionAvail();
 
-	// Pick which framebuffer to display
 	Ref<Framebuffer> fb = GetActiveFramebuffer();
 	ImTextureID texID = FramebufferColorID(fb);
 
 	if(!texID) {
-		// No output yet — draw a dark placeholder
 		ImGui::PushStyleColor(ImGuiCol_ChildBg, { 0.08f, 0.08f, 0.08f, 1.0f });
 		ImGui::BeginChild("##VP", size);
 		ImVec2 center = {
@@ -125,10 +125,8 @@ void SceneVisualizerPanel::DrawViewport() {
 		return;
 	}
 
-	// Blit — flip UV vertically so OpenGL origin (bottom-left) maps correctly
 	ImGui::Image(texID, size, { 0.0f, 1.0f }, { 1.0f, 0.0f });
 
-	// Resize pipeline when the panel is resized
 	if(size.x != m_LastSize.x || size.y != m_LastSize.y) {
 		m_LastSize = size;
 		OnResize((u32)size.x, (u32)size.y);
@@ -138,7 +136,7 @@ void SceneVisualizerPanel::DrawViewport() {
 	}
 
 	// ── Play-mode overlay ────────────────────────────────────────────────
-	if(Editor::GetMode() == EditorMode::Play) {
+	if(Editor::GetMode() == EditorMode::Edit) {
 		ImVec2 overlayPos = {
 			ImGui::GetItemRectMin().x + 8.0f,
 			ImGui::GetItemRectMin().y + 8.0f
@@ -153,7 +151,7 @@ void SceneVisualizerPanel::DrawViewport() {
 			| ImGuiWindowFlags_NoFocusOnAppearing
 			| ImGuiWindowFlags_NoNav;
 		if(ImGui::Begin("##PlayOverlay", nullptr, overlayFlags)) {
-			ImGui::TextColored({ 0.2f, 1.0f, 0.2f, 1.0f }, "▶  PLAYING");
+			ImGui::TextColored({ 0.2f, 1.0f, 0.2f, 1.0f }, "PLAYING");
 		}
 		ImGui::End();
 	}
@@ -161,11 +159,8 @@ void SceneVisualizerPanel::DrawViewport() {
 
 Ref<Framebuffer> SceneVisualizerPanel::GetActiveFramebuffer() const {
 	auto mode = Editor::GetMode();
-
 	if(mode == EditorMode::Edit)
 		return m_EditorPipeline.GetOutput();
-
-	// Preview / Play — read from the App's renderer
 	if(App::Get())
 		return App::Get()->GetSceneRenderer().GetOutput();
 

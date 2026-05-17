@@ -90,15 +90,15 @@ void Renderer::Clear() {
 	if(!s_Command) {
 		auto command = RendererAPI::Get()->NewCommand(nullptr);
 		command->Clear = true;
-		command->ClearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+		command->ClearColor = { 1.0f, 0.0f, 0.0f, 1.0f };
 	}
 	else {
 		GetCommand()->Clear = true;
-		GetCommand()->ClearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
+		GetCommand()->ClearColor = { 1.0f, 0.0f, 0.0f, 1.0f };
 	}
 }
 
-void Renderer::Resize(uint32_t width, uint32_t height) {
+void Renderer::Resize(u32 width, u32 height) {
 	s_Command->ViewportW = width;
 	s_Command->ViewportH = height;
 }
@@ -107,7 +107,7 @@ void Renderer::PushOptions() {
 	s_OptionsValid = true;
 }
 
-void Renderer::PopOptions(uint32_t count) {
+void Renderer::PopOptions(u32 count) {
 	s_OptionsValid = false;
 }
 

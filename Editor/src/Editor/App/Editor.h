@@ -12,7 +12,7 @@ using namespace VolcanicEngine;
 
 namespace VolcanicEditor {
 
-enum class EditorMode { Edit, Preview, Play, Pause };
+enum class EditorMode { Edit, Play, Pause };
 
 class Editor {
 public:

@@ -40,44 +40,30 @@ private:
 
 Str AssetTypeToString(AssetType type) {
 	switch(type) {
-		case AssetType::Mesh:
-			return "Mesh";
-		case AssetType::Texture:
-			return "Texture";
-		case AssetType::Cubemap:
-			return "Cubemap";
-		case AssetType::Shader:
-			return "Shader";
-		case AssetType::Font:
-			return "Font";
-		case AssetType::Audio:
-			return "Audio";
-		case AssetType::Script:
-			return "Script";
-		case AssetType::Material:
-			return "Material";
+		case AssetType::Geometry: return "Geometry";
+		case AssetType::Material: return "Material";
+		case AssetType::Model:    return "Model";
+		case AssetType::Texture:  return "Texture";
+		case AssetType::Cubemap:  return "Cubemap";
+		case AssetType::Shader:   return "Shader";
+		case AssetType::Font:     return "Font";
+		case AssetType::Audio:    return "Audio";
+		case AssetType::Script:   return "Script";
 	}
 
 	return "None";
 }
 
 AssetType AssetTypeFromString(const Str& str) {
-	if(str == "Mesh")
-		return AssetType::Mesh;
-	else if(str == "Texture")
-		return AssetType::Texture;
-	else if(str == "Cubemap")
-		return AssetType::Cubemap;
-	else if(str == "Shader")
-		return AssetType::Shader;
-	else if(str == "Font")
-		return AssetType::Font;
-	else if(str == "Audio")
-		return AssetType::Audio;
-	else if(str == "Script")
-		return AssetType::Script;
-	else if(str == "Material")
-		return AssetType::Material;
+	if(str == "Geometry")      return AssetType::Geometry;
+	else if(str == "Material") return AssetType::Material;
+	else if(str == "Model")    return AssetType::Model;
+	else if(str == "Texture")  return AssetType::Texture;
+	else if(str == "Cubemap")  return AssetType::Cubemap;
+	else if(str == "Shader")   return AssetType::Shader;
+	else if(str == "Font")     return AssetType::Font;
+	else if(str == "Audio")    return AssetType::Audio;
+	else if(str == "Script")   return AssetType::Script;
 
 	return AssetType::None;
 }
@@ -201,27 +187,29 @@ void EditorAssetManager::Build(Asset asset) {
 	if(asset.ID > 100) // Not a native asset
 		path = fs::canonical(path).string();
 
-	if(asset.Type == AssetType::Mesh) {
-		List<SubMesh> meshes;
-		List<MaterialPaths> materials;
-		AssetImporter::GetMeshData(path, meshes, materials);
+	if(asset.Type == AssetType::Geometry) {
+		Log::Info("Loading geometry {}", (u64)asset.ID);
+		List<SubGeometry> surfaces;
+		List<MaterialPaths> materialPaths;
+		AssetImporter::GetGeometryData(path, surfaces, materialPaths);
 
 		u64 size = sizeof(u64);
-		for(auto& mesh : meshes) {
-			size += mesh.Vertices.GetSize();
-			size += mesh.Indices.GetSize();
-			size += sizeof(u32);
-		}
+		for(auto& s : surfaces)
+			size += s.Vertices.GetSize() + s.Indices.GetSize() + sizeof(u32);
 
 		BytesWriter wr(size);
-		wr.Write(meshes.Count());
-		for(auto& mesh : meshes) {
-			wr.Write(mesh.Vertices);
-			wr.Write(mesh.Indices);
-			wr.Write(mesh.MaterialIndex);
+		wr.Write(surfaces.Count());
+		for(auto& s : surfaces) {
+			wr.Write(s.Vertices);
+			wr.Write(s.Indices);
+			wr.Write(s.SurfaceSlot);
 		}
-
 		m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
+	}
+	else if(asset.Type == AssetType::Model) {
+		// Lightweight: register child Geometry + Material assets,
+		// serialize the ModelNode hierarchy as asset ID references only.
+		// GPU data lives in the child Geometry assets, not here.
 	}
 	else if(asset.Type == AssetType::Texture) {
 		ImageData image = AssetImporter::GetImageData(path, false);
@@ -252,16 +240,14 @@ void EditorAssetManager::Build(Asset asset) {
 			Log::Info("Shader path {} for {}", shaderPath, (u64)ref.ID);
 			ShaderFile file = AssetImporter::GetShaderFileData(shaderPath);
 			size += sizeof(u32) + file.Data.GetSize();
-			
-			AssetImporter::ReflectShader(file.Data, layout);
+			Buffer<u32> data((u32*)file.Data.Get(), file.Data.GetSize(), 0, false);
+
+			Log::Info("Reflecting shader");
+			AssetImporter::ReflectShader(data, layout);
 
 			files.AddMove(std::move(file));
 		}
 
-		// Calculate size for layout serialization
-		// This is a bit tricky since we don't know the size of layout beforehand easily
-		// but BytesWriter will resize anyway. Let's just give it a reasonable estimate or just let it resize.
-		
 		BytesWriter wr(size + 1024); // Extra space for layout
 		wr.Write((u64)files.Count());
 
@@ -353,25 +339,33 @@ void EditorAssetManager::LoadRegistry() {
 	auto rootPath = fs::path("Asset");
 	m_Path = (rootPath / ".magma.assetpk").string();
 
-	List<fs::path> paths
-	{
-		(rootPath / "Mesh"),
-		(rootPath / "Texture"),
-		(rootPath / "Cubemap"),
-		(rootPath / "Shader"),
-		(rootPath / "Material"),
-		(rootPath / "Font"),
-		(rootPath / "Audio"),
-		(rootPath / "Script"),
-		// (rootPath / "Custom")
+	struct AssetFolder {
+		fs::path Path;
+		AssetType Type;
 	};
 
-	for(auto& assetDir : paths)
-		if(fs::exists(assetDir))
+	List<AssetFolder> folders {
+		{ rootPath / "Geometry", AssetType::Geometry },
+		{ rootPath / "Texture",  AssetType::Texture  },
+		{ rootPath / "Cubemap",  AssetType::Cubemap  },
+		{ rootPath / "Shader",   AssetType::Shader   },
+		{ rootPath / "Material", AssetType::Material },
+		{ rootPath / "Font",     AssetType::Font     },
+		{ rootPath / "Audio",    AssetType::Audio    },
+		{ rootPath / "Script",   AssetType::Script   },
+		{ rootPath / "Model",    AssetType::Model    },
+		{ rootPath / "Custom",   AssetType::Custom    },
+	};
+
+	for(auto& folder : folders) {
+		if(fs::exists(folder.Path))
 			s_WatcherIDs.Add(
-				s_FileWatcher->addWatch(assetDir.string(), s_Listener));
+				s_FileWatcher->addWatch(folder.Path.string(), s_Listener)
+			);
+	}
 
 	s_FileWatcher->watch();
+	Log::Info("Watching...");
 
 	YAML::Node file;
 	try {
@@ -392,28 +386,30 @@ void EditorAssetManager::LoadRegistry() {
 		UUID id = node["ID"].as<u64>();
 		Str path;
 		if(node["Path"]) {
-			path = (paths[(u32)type - 1] / node["Path"].as<Str>()).generic_string();
+			path = (
+				folders[(u32)type - 1].Path / node["Path"].as<Str>()
+			).generic_string();
 			if(!fs::exists(path)) {
 				Log::Warning("Asset path '{}' does not exist", path);
 				continue;
 			}
 		}
+		Log::Info("Adding asset {} {} {}", node["Type"].as<Str>(), (u64)id, path);
 
 		Asset asset = Add(type, id, true, path);
 		if(node["Name"])
 			m_AssetRegistry->NameAsset(asset, node["Name"].as<Str>());
 	}
 
-	u32 i = 1;
-	for(auto& folder : paths) {
-		for(auto path : FileUtils::GetFiles(folder.string())) {
-			if(i == 1)
-				path = FileUtils::GetFiles(path, { ".obj" })[0];
+	Log::Info("Loaded registered assets");
+
+	for(auto& folder : folders) {
+		for(auto& path : FileUtils::GetFiles(folder.Path.string()))
 			if(!GetFromPath(path))
-				Add((AssetType)i, 0, true, path);
-		}
-		i++;
+				Add(folder.Type, 0, true, path);
 	}
+
+	Log::Info("New assets");
 
 	auto libPath = Application::GetLibraryDir();
 	Asset asset;
@@ -515,17 +511,14 @@ void EditorAssetManager::LoadRegistry() {
 	}
 
 	{
-		asset = { 109, AssetType::Mesh };
-		m_MeshAssets[asset.ID] = Mesh::Create(MeshType::Cube);
+		asset = { 109, AssetType::Geometry };
+		m_GeometryAssets[asset.ID] =
+			Geometry::Create(GeometryType::Cube);
 		m_LoadedAssets[asset.ID] = true;
 		m_AssetRegistry->NameAsset(asset, "Cube");
 	}
 
-	// m_AssetRegistry->For(
-	// 	[&](Asset asset)
-	// 	{
-	// 		Build(asset);
-	// 	});
+	Log::Info("Default assets");
 }
 
 void EditorAssetManager::Save() {
@@ -578,6 +571,24 @@ void EditorAssetManager::Export(const Str& exportPath) {
 }
 
 namespace VolcaniCore {
+
+template<>
+BytesWriter& BytesWriter::WriteObject(const ShaderPropDeclaration& decl) {
+	Write(decl.Name);
+	Write((u8)decl.Type);
+	Write(decl.Binding);
+	Write(decl.Set);
+	return *this;
+}
+
+template<>
+BytesWriter& BytesWriter::WriteObject(const ShaderLayout& layout) {
+	Write((u32)layout.Uniforms.Count());
+	for(auto& decl : layout.Uniforms) Write(decl);
+	Write((u32)layout.Samplers.Count());
+	for(auto& decl : layout.Samplers) Write(decl);
+	return *this;
+}
 
 template<>
 BytesWriter& BytesWriter::WriteObject(const Asset& asset) {

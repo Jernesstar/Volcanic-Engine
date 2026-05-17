@@ -127,7 +127,9 @@ void Renderer3D::Init() {
 }
 
 void Renderer3D::Close() {
-
+	delete s_MeshBuffer;
+	delete s_LineBuffer;
+	delete s_CubemapBuffer;
 }
 
 DrawBuffer* Renderer3D::GetMeshBuffer() {

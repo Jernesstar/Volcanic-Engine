@@ -2,35 +2,41 @@
 
 #include <bitset>
 
-#include <yaml-cpp/yaml.h>
+#include <angelscript/sdk/add_on/scriptarray/scriptarray.h>
 
 #include <VolcaniCore/Core/Assert.h>
 #include <VolcaniCore/Core/FileUtils.h>
-#include <VolcaniCore/Core/Log.h>
+#include <VolcaniCore/Core/List.h>
+#include <VolcaniCore/Core/UUID.h>
+#include <VolcaniCore/Utils/BinaryWriter.h>
+#include <VolcaniCore/Utils/BinaryReader.h>
 
+#include <Engine/App/App.h>
+#include <Engine/Graphics/Camera.h>
 #include <Engine/Graphics/Geometry.h>
+#include <Engine/Graphics/Camera.h>
 #include <Engine/Graphics/Platform/RendererAPI.h>
-#include <Engine/Graphics/StereographicCamera.h>
-#include <Engine/Graphics/OrthographicCamera.h>
-#include <Engine/Graphics/IsometricCamera.h>
-
-#include <Engine/Asset/AssetManager.h>
-#include <Engine/Audio/Sound.h>
-
-#include <Engine/Core/YAMLSerializer.h>
-#include <Engine/Core/BinaryWriter.h>
-
-#include <Engine/Scene/Component.h>
+#include <Engine/Script/ScriptClass.h>
+#include <Engine/Script/Types/GridSet.h>
+#include <Engine/Script/Types/GridSet3D.h>
+#include <Engine/Script/Types/Timer.h>
+#include <Engine/Script/ScriptEngine.h>
 #include <Engine/Script/ScriptModule.h>
 #include <Engine/Script/ScriptClass.h>
 #include <Engine/Script/ScriptObject.h>
+#include <Engine/Script/Types/GridSet.h>
+#include <Engine/Scene/Component.h>
+#include <Engine/Scene/Component.h>
+#include <Engine/Audio/Sound.h>
+#include <Engine/Asset/AssetManager.h>
 
-#include "Asset/AssetManager.h"
-#include "Asset/AssetImporter.h"
+#include <Editor/Asset/AssetManager.h>
+#include <Editor/Asset/AssetImporter.h>
 
 #include "ScriptManager.h"
 
-#include <EngineTypes/GridSet.h>
+#undef near
+#undef far
 
 using namespace VolcaniCore;
 using namespace VolcanicEngine;
@@ -40,38 +46,103 @@ using namespace VolcanicEngine::Script;
 
 namespace VolcanicEditor {
 
-static std::string AssetTypeToString(AssetType type) {
-	switch(type) {
-		case AssetType::None:	  return "None";
-		case AssetType::Geometry: return "Geometry";
-		case AssetType::Texture:  return "Texture";
-		case AssetType::Cubemap:  return "Cubemap";
-		case AssetType::Shader:	  return "Shader";
-		case AssetType::Material: return "Material";
-		case AssetType::Font:	  return "Font";
-		case AssetType::Audio:	  return "Audio";
-		case AssetType::Script:	  return "Script";
-		case AssetType::Model:    return "Model";
-		case AssetType::Custom:	  return "Custom";
+template<>
+Serializer& Serializer::Write(const Vertex& value) {
+	SetOptions(Serializer::Options::ArrayOneLine);
+	BeginSequence();
+		Write(value.Position);
+		Write(value.Normal);
+		Write(value.TexCoord);
+	EndSequence();
+	return *this;
+}
+
+template<>
+Serializer& Serializer::Write(const Asset& value) {
+	BeginMapping();
+		WriteKey("ID").Write((u64)value.ID);
+		WriteKey("Type").Write(AssetTypeToString(value.Type));
+	EndMapping();
+	return *this;
+}
+
+void DeserializeEntity(YAML::Node entityNode, World& scene);
+void SerializeEntity(YAMLSerializer& out, const Entity& entity);
+
+void SceneLoader::EditorLoad(Scene& scene, const std::string& path) {
+	YAML::Node file;
+	try {
+		file = YAML::LoadFile(path);
 	}
-	return "Unknown";
+	catch(YAML::ParserException e) {
+		VOLCANICORE_ASSERT_ARGS(false, "Could not load file %s: %s",
+								path.c_str(), e.what());
+	}
+	auto sceneNode = file["Scene"];
+
+	VOLCANICORE_ASSERT(sceneNode);
+
+	scene.Name = sceneNode["Name"].as<std::string>();
+
+	for(auto node : sceneNode["World3D"])
+		DeserializeEntity(node["Entity"], scene.World3D);
+	for(auto node : sceneNode["World2D"])
+		DeserializeEntity(node["Entity"], scene.World2D);
+	for(auto node : sceneNode["Canvas"])
+		DeserializeEntity(node["Entity"], scene.Canvas);
+
+	Log::Info("Loaded scene {} from path {}", scene.Name, path);
 }
 
-static AssetType AssetTypeFromString(const std::string& str) {
-	if(str == "Geometry") return AssetType::Geometry;
-	if(str == "Texture")  return AssetType::Texture;
-	if(str == "Cubemap")  return AssetType::Cubemap;
-	if(str == "Shader")   return AssetType::Shader;
-	if(str == "Material") return AssetType::Material;
-	if(str == "Font")	  return AssetType::Font;
-	if(str == "Audio")	  return AssetType::Audio;
-	if(str == "Script")   return AssetType::Script;
-	if(str == "Model")    return AssetType::Model;
-	if(str == "Custom")	  return AssetType::Custom;
-	return AssetType::None;
+void SceneLoader::EditorSave(const Scene& scene, const std::string& path) {
+	YAMLSerializer serializer;
+	serializer.BeginMapping(); // File
+
+	serializer
+	.WriteKey("Scene").BeginMapping()
+		.WriteKey("Name").Write(scene.Name);
+
+	serializer.WriteKey("World3D").BeginSequence(); // World3D
+	scene.World3D
+	.ForEach(
+		[&](const Entity& entity)
+		{
+			serializer.BeginMapping(); // Entity
+			SerializeEntity(serializer, entity);
+			serializer.EndMapping(); // Entity
+		});
+	serializer.EndSequence(); // World3D
+
+	serializer.WriteKey("World2D").BeginSequence(); // World2D
+	scene.World2D
+	.ForEach(
+		[&](const Entity& entity)
+		{
+			serializer.BeginMapping(); // Entity
+			SerializeEntity(serializer, entity);
+			serializer.EndMapping(); // Entity
+		});
+	serializer.EndSequence(); // World2D
+
+	serializer.WriteKey("Canvas").BeginSequence(); // Canvas
+	scene.Canvas
+	.ForEach(
+		[&](const Entity& entity)
+		{
+			serializer.BeginMapping(); // Entity
+			SerializeEntity(serializer, entity);
+			serializer.EndMapping(); // Entity
+		});
+	serializer.EndSequence(); // Canvas
+
+	serializer.EndMapping(); // Scene
+
+	serializer.EndMapping(); // File
+
+	serializer.Finalize(path);
 }
 
-static void SaveScript(YAMLSerializer& serializer, Ref<ScriptObject> obj) {
+void SaveScript(YAMLSerializer& serializer, Ref<ScriptObject> obj) {
 	auto* handle = obj->GetHandle();
 
 	serializer.WriteKey("Class").Write(obj->GetClass()->Name);
@@ -158,7 +229,7 @@ static void SaveScript(YAMLSerializer& serializer, Ref<ScriptObject> obj) {
 	serializer.EndSequence();
 }
 
-static void SerializeEntity(YAMLSerializer& serializer, Entity entity) {
+void SerializeEntity(YAMLSerializer& serializer, const Entity& entity) {
 	serializer.BeginMapping();
 	serializer.WriteKey("Entity").Write((u64)entity.GetHandle());
 	serializer.WriteKey("Name").Write(entity.GetName());
@@ -521,7 +592,7 @@ void DeserializeEntity(YAML::Node entityNode, World& world) {
 	auto meshComponentNode = components["MeshComponent"];
 	if(meshComponentNode) {
 		auto geometryID = meshComponentNode["GeometryID"] ? meshComponentNode["GeometryID"].as<u64>() : meshComponentNode["MeshSourceID"].as<u64>();
-		auto& mc = entity.Add<MeshComponent>();
+		auto& mc = entity.Set<MeshComponent>();
 		mc.GeometryAsset = Asset{ geometryID, AssetType::Geometry };
 		
 		auto materialOverridesNode = meshComponentNode["MaterialOverrides"];

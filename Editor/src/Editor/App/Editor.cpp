@@ -185,6 +185,7 @@ static void DrawMainMenuBar() {
 			Editor::OnStop();
 	}
 
+
 	ImGui::EndMainMenuBar();
 }
 
@@ -221,16 +222,6 @@ void Editor::Init(const CommandLineArgs& args) {
 			Str scenePath = "App/Scene/" + scene.Name + ".scene";
 			SceneLoader::EditorLoad(scene, scenePath);
 		};
-
-	auto window = Application::GetWindow();
-	auto output =
-		RendererAPI::Get()->CreateFramebuffer({
-			.Attachments = {
-				{ AttachmentTarget::Color, 1920, 1080 }
-			},
-			.EnableRead = true
-		});
-
 	s_App->Running = false;
 
 	if(args["--open_project"]) {
@@ -261,8 +252,8 @@ void Editor::Close() {
 }
 
 void Editor::Update(TimeStep ts) {
-	Renderer::BeginFrame();
 	UIRenderer::BeginFrame();
+	Renderer::BeginFrame();
 	// ImGuizmo::BeginFrame();
 
 	if(s_EditorMode == EditorMode::Play) {
@@ -325,6 +316,8 @@ void Editor::Render() {
 
 	DrawMainMenuBar();
 
+	Renderer::EndFrame();
+
 	s_Hierarchy.Draw();
 	s_Visualizer.Draw();
 	s_ComponentEditor.Draw();
@@ -333,7 +326,6 @@ void Editor::Render() {
 	s_Console.Draw();
 
 	UIRenderer::EndFrame();
-	Renderer::EndFrame();
 }
 
 Project& Editor::GetProject() {

@@ -1,13 +1,16 @@
 #pragma once
 
 #include <Engine/Scene/Scene.h>
+#include <Engine/Graphics/Camera.h>
 #include <Engine/Graphics/RenderPass.h>
 #include <Engine/Graphics/Platform/Framebuffer.h>
 #include <Engine/Scene/Graphics/RenderPipeline.h>
 
+using namespace VolcanicEngine;
+using namespace VolcanicEngine::Graphics;
 using namespace VolcanicEngine::ECS;
 
-namespace VolcanicEngine {
+namespace VolcanicEditor {
 
 class EditorRenderPipeline : public RenderPipeline {
 public:
@@ -18,14 +21,16 @@ public:
 	void OnRender(Scene* scene) override;
 	void OnResize(u32 w, u32 h) override;
 
-	Ref<Framebuffer> GetOutput() const override { return m_OutputBuffer; }
+	Ref<Framebuffer> GetOutput() const override { return m_Output; }
 
 	// Entity outline for selection highlight
 	void SetSelectedEntity(ECS::Entity entity) { m_Selected = entity; }
+	void SetCamera(Ref<Camera> cam) { m_Camera = cam; }
 
 private:
+	Ref<Camera> m_Camera;
 	ECS::Entity m_Selected;
-	Ref<Framebuffer> m_OutputBuffer;
+	Ref<Framebuffer> m_Output;
 
 	Entity Selected;
 	bool Hovered = false;
@@ -67,6 +72,7 @@ private:
 	void SubmitLight3D(const Entity& entity);
 	void SubmitParticles(const Entity& entity);
 	void SubmitGeometry(const Entity& entity);
+	void AddBillboard(Vec3 position, u32 type);
 	void End3D();
 
 	void Begin2D();

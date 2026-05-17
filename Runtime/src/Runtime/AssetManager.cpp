@@ -10,11 +10,6 @@ namespace VolcanicRuntime {
 
 RuntimeAssetManager::RuntimeAssetManager() {
 
-	// Lava assets
-	m_AssetRegistry[Asset{ 10012345, AssetType::Mesh }] = true;
-	m_MeshAssets[10012345] = Mesh::Create(MeshType::Cube);
-	m_AssetRegistry[Asset{ 10112345, AssetType::Mesh }] = true;
-	m_MeshAssets[10112345] = Mesh::Create(MeshType::Quad);
 }
 
 RuntimeAssetManager::~RuntimeAssetManager() {

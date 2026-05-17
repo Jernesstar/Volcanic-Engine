@@ -34,60 +34,22 @@ struct ShaderFile {
 
 enum class ShaderPropType { Int, Float, Vec2, Vec3, Vec4, Mat4, Texture, Sampler };
 
-struct ShaderPropDecl {
+struct ShaderPropDeclaration {
 	std::string Name;
 	ShaderPropType Type;
-	u32 Binding;       // descriptor set binding index
+	u32 Binding; // descriptor set binding index
 	u32 Set;
 };
 
 struct ShaderLayout {
-	List<ShaderPropDecl> Uniforms;
-	List<ShaderPropDecl> Samplers;
+	List<ShaderPropDeclaration> Uniforms;
+	List<ShaderPropDeclaration> Samplers;
 };
 
 }
 
 #include <VolcaniCore/Utils/BytesWriter.h>
 #include <VolcaniCore/Utils/BytesReader.h>
-
-namespace VolcaniCore {
-
-template<>
-inline BytesWriter& BytesWriter::WriteObject(const VolcanicEngine::Graphics::ShaderPropDecl& decl) {
-	Write(decl.Name);
-	Write((u32)decl.Type);
-	Write(decl.Binding);
-	Write(decl.Set);
-	return *this;
-}
-
-template<>
-inline BytesReader& BytesReader::ReadObject(VolcanicEngine::Graphics::ShaderPropDecl& decl) {
-	Read(decl.Name);
-	u32 type;
-	Read(type);
-	decl.Type = (VolcanicEngine::Graphics::ShaderPropType)type;
-	Read(decl.Binding);
-	Read(decl.Set);
-	return *this;
-}
-
-template<>
-inline BytesWriter& BytesWriter::WriteObject(const VolcanicEngine::Graphics::ShaderLayout& layout) {
-	Write(layout.Uniforms);
-	Write(layout.Samplers);
-	return *this;
-}
-
-template<>
-inline BytesReader& BytesReader::ReadObject(VolcanicEngine::Graphics::ShaderLayout& layout) {
-	Read(layout.Uniforms);
-	Read(layout.Samplers);
-	return *this;
-}
-
-}
 
 namespace VolcanicEngine::Graphics {
 
