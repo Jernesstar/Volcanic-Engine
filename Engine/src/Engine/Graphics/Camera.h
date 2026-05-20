@@ -238,8 +238,8 @@ private:
 		ViewProjection = Projection * View;
 	}
 	void Resize(u32 width, u32 height) override {
-		ViewportWidth = 480;
-		ViewportHeight = 270;
+		ViewportWidth = 320;
+		ViewportHeight = 180;
 	}
 };
 

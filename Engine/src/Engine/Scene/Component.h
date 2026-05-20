@@ -69,7 +69,7 @@ struct AudioComponent : public Component {
 
 struct MeshComponent : public Component {
 	Asset GeometryAsset;
-	Map<u32, Asset> MaterialOverrides; // slot -> Material or MaterialInstance asset
+	Map<u32, Asset> MaterialOverrides; // slot -> Material asset
 
 	MeshComponent() = default;
 	MeshComponent(const Asset& geometry, const Asset& material)

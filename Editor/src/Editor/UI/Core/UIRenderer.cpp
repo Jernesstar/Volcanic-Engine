@@ -397,8 +397,7 @@ void UIRenderer::Init() {
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable
 					| ImGuiConfigFlags_ViewportsEnable
-					| ImGuiConfigFlags_NavEnableKeyboard
-					| ImGuiConfigFlags_NavEnableSetMousePos;
+					| ImGuiConfigFlags_NavEnableKeyboard;
 	io.DisplaySize = ImVec2(window->GetWidth(), window->GetHeight());
 
 	if(Graphics::RendererAPI::GetBackend() == Graphics::RendererBackend::OpenGL){
@@ -450,6 +449,16 @@ void UIRenderer::Init() {
 		});
 
 	ImGui::StyleColorsDark();
+
+	Application::PushDir();
+	float fontSize = 15.0f;
+	io.Fonts->AddFontFromFileTTF(
+		"Editor/assets/Fonts/JetBrainsMono-Bold.ttf", fontSize);
+	io.FontDefault =
+		io.Fonts->AddFontFromFileTTF(
+			"Editor/assets/Fonts/JetBrainsMono-Regular.ttf", fontSize);
+	io.IniFilename = nullptr;
+	Application::PopDir();
 }
 
 void UIRenderer::Close() {

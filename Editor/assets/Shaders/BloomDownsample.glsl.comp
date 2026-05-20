@@ -1,0 +1,54 @@
+#version 460 core
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(binding = 0) uniform sampler2D u_SrcTexture;
+layout(binding = 1, rgba16f) writeonly uniform image2D u_DstMip;
+
+layout(location = 0) uniform vec2  u_SrcResolution;
+layout(location = 1) uniform float u_Threshold;
+layout(location = 2) uniform int   u_IsMipZero; // 1 on first downsample only
+
+void main()
+{
+	ivec2 dstCoord = ivec2(gl_GlobalInvocationID.xy);
+	ivec2 dstSize  = imageSize(u_DstMip);
+	if(dstCoord.x >= dstSize.x || dstCoord.y >= dstSize.y)
+		return;
+
+	// UV of the destination texel centre in source texture space
+	vec2 uv = (vec2(dstCoord) + 0.5) / vec2(dstSize);
+
+	vec2 texel = 1.0 / u_SrcResolution;
+	float x = texel.x;
+	float y = texel.y;
+
+	// 13-tap Kawase downsample (CoD Siggraph 2014)
+	vec3 a = texture(u_SrcTexture, vec2(uv.x - 2*x, uv.y + 2*y)).rgb;
+	vec3 b = texture(u_SrcTexture, vec2(uv.x,       uv.y + 2*y)).rgb;
+	vec3 c = texture(u_SrcTexture, vec2(uv.x + 2*x, uv.y + 2*y)).rgb;
+	vec3 d = texture(u_SrcTexture, vec2(uv.x - 2*x, uv.y      )).rgb;
+	vec3 e = texture(u_SrcTexture, vec2(uv.x,        uv.y      )).rgb;
+	vec3 f = texture(u_SrcTexture, vec2(uv.x + 2*x, uv.y      )).rgb;
+	vec3 g = texture(u_SrcTexture, vec2(uv.x - 2*x, uv.y - 2*y)).rgb;
+	vec3 h = texture(u_SrcTexture, vec2(uv.x,        uv.y - 2*y)).rgb;
+	vec3 i = texture(u_SrcTexture, vec2(uv.x + 2*x, uv.y - 2*y)).rgb;
+	vec3 j = texture(u_SrcTexture, vec2(uv.x - x,   uv.y + y  )).rgb;
+	vec3 k = texture(u_SrcTexture, vec2(uv.x + x,   uv.y + y  )).rgb;
+	vec3 l = texture(u_SrcTexture, vec2(uv.x - x,   uv.y - y  )).rgb;
+	vec3 m = texture(u_SrcTexture, vec2(uv.x + x,   uv.y - y  )).rgb;
+
+	vec3 result;
+	result  = e * 0.125;
+	result += (a + c + g + i) * 0.03125;
+	result += (b + d + f + h) * 0.0625;
+	result += (j + k + l + m) * 0.125;
+
+	// Brightness threshold applied only on the first mip (source = HDR scene)
+	if(u_IsMipZero == 1) {
+		float brightness = dot(result, vec3(0.2126, 0.7152, 0.0722));
+		result *= step(u_Threshold, brightness);
+	}
+
+	imageStore(u_DstMip, dstCoord, vec4(result, 1.0));
+}

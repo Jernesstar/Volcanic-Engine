@@ -86,6 +86,10 @@ static void AppLog(const std::string& msg, App* app) {
 	app->Log(msg);
 }
 
+static void UseDefaultRenderPipeline(App* app) {
+	app->UseDefaultPipeline();
+}
+
 // ── Constructor / script registration ────────────────────────────────────────
 
 App::App() {
@@ -99,6 +103,9 @@ App::App() {
 	ScriptEngine::Get()->RegisterObjectMethod("AppClass",
 		"void LoadScene(const string &in)",
 		asFUNCTION(ScriptLoadScene), asCALL_CDECL_OBJLAST);
+	ScriptEngine::Get()->RegisterObjectMethod("AppClass",
+		"void UseDefaultRenderPipeline()",
+		asFUNCTION(UseDefaultRenderPipeline), asCALL_CDECL_OBJLAST);
 
 	ScriptEngine::Get()->RegisterGlobalFunction(
 		"SceneClass& get_Scene() property",

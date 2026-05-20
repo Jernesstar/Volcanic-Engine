@@ -16,26 +16,74 @@ public:
 		return new ScriptPipelineContext(pipeline, scene);
 	}
 
-	void AddRef()  { m_refCount++; }
-	void Release() { if(--m_refCount == 0) delete this; }
+public:
+	ScriptPipelineContext(DefaultRenderPipeline* pipeline, Scene* scene)
+	: m_Pipeline(pipeline), m_Scene(scene) { }
 
-	// Read the pipeline's named buffers
+	~ScriptPipelineContext() { RestoreOutput(); }
+
+	void AddRef()  { m_RefCount++; }
+	void Release() { if(--m_RefCount == 0) delete this; }
+
+	Scene* GetScene() { return m_Scene; }
+
 	ScriptFramebuffer* GetBuffer(const std::string& name) {
-		return ScriptFramebuffer::Wrap(m_pipeline->GetBuffer(name));
+		return ScriptFramebuffer::Wrap(m_Pipeline->GetBuffer(name));
 	}
 
-	// Insert an extra pass at this stage
+	void RedirectOutput(ScriptFramebuffer* fb) {
+		m_RedirectedBuffer = fb;
+		if(fb) fb->AddRef();
+	}
+
+	void RestoreOutput() {
+		if(m_RedirectedBuffer) {
+			m_RedirectedBuffer->Release();
+			m_RedirectedBuffer = nullptr;
+		}
+	}
+
+	bool HasRedirection() const { return m_RedirectedBuffer != nullptr; }
+	ScriptFramebuffer* GetRedirectedBuffer() const { return m_RedirectedBuffer; }
+
+	void SuppressBlit() { m_SuppressBlit = true; }
+	bool IsBlitSuppressed() const { return m_SuppressBlit; }
+
+	void SetBloomThreshold(f32 t)  { m_Pipeline->m_BloomThreshold = t; }
+	void SetFilterRadius(f32 r)    { m_Pipeline->m_FilterRadius   = r; }
+	f32 GetBloomThreshold() const { return m_Pipeline->m_BloomThreshold; }
+	f32 GetFilterRadius() const { return m_Pipeline->m_FilterRadius; }
+
+	void SetSubPixelOffset(glm::vec2 offset) {
+		m_SubPixelOffset = offset;
+		m_HasOffset = true;
+	}
+
+	glm::vec2 GetSubPixelOffset() const {
+		return m_SubPixelOffset;
+	}
+	bool HasSubPixelOffset() const {
+		return m_HasOffset;
+	}
+
+	// ── Pass insertion ────────────────────────────────────────────────────────
+
 	void AddPass(ScriptRenderPass* pass) {
-		Renderer::StartPass(pass->GetPass());
-		// caller draws into it, then calls End()
+		if(pass)
+			Renderer::StartPass(pass->GetPass());
 	}
-
-	Scene* GetScene() { return m_scene; }
 
 private:
-	int m_refCount = 1;
-	DefaultRenderPipeline* m_pipeline;
-	Scene* m_scene;
+	int m_RefCount = 1;
+
+	DefaultRenderPipeline* m_Pipeline;
+	Scene* m_Scene;
+
+	ScriptFramebuffer* m_RedirectedBuffer = nullptr;
+	bool m_SuppressBlit = false;
+
+	glm::vec2 m_SubPixelOffset = { 0.0f, 0.0f };
+	bool m_HasOffset = false;
 };
 
 }

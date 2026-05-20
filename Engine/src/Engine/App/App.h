@@ -39,7 +39,6 @@ public:
 	void SetProject(const Project& project) { m_Project = project; }
 	Project& GetProject() { return m_Project; }
 
-	// ── Render pipeline API (also script-exposed) ─────────────────────────
 	SceneRenderer& GetSceneRenderer() { return m_SceneRenderer; }
 	Ref<Framebuffer> GetRenderOutput() { return m_SceneRenderer.GetOutput(); }
 

@@ -1,6 +1,7 @@
 #pragma once
 
-#include "Platform/Framebuffer.h"
+#include <Engine/Graphics/Platform/RendererAPI.h>
+#include <Engine/Graphics/Platform/Framebuffer.h>
 
 using namespace VolcanicEngine::Graphics;
 
@@ -12,25 +13,28 @@ public:
 		return new ScriptFramebuffer();
 	}
 
-	ScriptFramebuffer() {
+	static ScriptFramebuffer* Wrap(Ref<Framebuffer> fb) {
+		return new ScriptFramebuffer(fb);
+	}
 
+	ScriptFramebuffer(Ref<Framebuffer> fb = nullptr) {
+		m_Framebuffer = fb;
 	}
 
 	void AddRef() { m_RefCount++; }
 	void Release() { if(--m_RefCount == 0) delete this; }
 
-	void AddColorAttachment(TextureFormat fmt) {
-		// m_Spec.Attachments.Add({ AttachmentType::Color, fmt });
+	void AddColorAttachment(u32 w, u32 h) {
+		m_Spec.Attachments.Add({ AttachmentTarget::Color, w, h });
 	}
-	void AddDepthAttachment() {
-		// m_Spec.Attachments.Add(
-		// 	{ AttachmentType::Depth, TextureFormat::Depth24Stencil8 });
+	void AddDepthAttachment(u32 w, u32 h) {
+		m_Spec.Attachments.Add({ AttachmentTarget::Depth, w, h });
 	}
 
 	Ref<Framebuffer> Resolve() {
-		// if(!m_Framebuffer)
-		// 	m_Framebuffer = Framebuffer::Create(m_Spec);
-		// return m_Framebuffer;
+		if(!m_Framebuffer)
+			m_Framebuffer = RendererAPI::Get()->CreateFramebuffer(m_Spec);
+		return m_Framebuffer;
 	}
 
 	// ScriptTexture* GetColor(u32 idx = 0);

@@ -179,8 +179,8 @@ void Renderer3D::DrawSkybox(Ref<Cubemap> cubemap) {
 	.Set("u_Skybox", CubemapSlot{ cubemap, 0 });
 }
 
-static void DrawSubGeometry(Ref<Geometry> root, SubGeometry& sub, const glm::mat4& tr,
-						DrawCommand* cmd)
+static void DrawSubGeometry(Ref<Geometry> root, SubGeometry& sub,
+	const glm::mat4& tr, DrawCommand* cmd)
 {
 	DrawCommand* command;
 	if(s_Geometries.count(&sub))

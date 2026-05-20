@@ -45,6 +45,7 @@ void Renderer::EndFrame() {
 	Renderer3D::EndFrame();
 	Renderer2D::EndFrame();
 	RendererAPI::Get()->EndFrame();
+	s_Frame = { };
 }
 
 void Renderer::StartPass(Ref<RenderPass> pass, bool pushCommand) {
@@ -90,11 +91,11 @@ void Renderer::Clear() {
 	if(!s_Command) {
 		auto command = RendererAPI::Get()->NewCommand(nullptr);
 		command->Clear = true;
-		command->ClearColor = { 1.0f, 0.0f, 0.0f, 1.0f };
+		command->ClearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 	}
 	else {
 		GetCommand()->Clear = true;
-		GetCommand()->ClearColor = { 1.0f, 0.0f, 0.0f, 1.0f };
+		GetCommand()->ClearColor = { 0.0f, 0.0f, 0.0f, 1.0f };
 	}
 }
 

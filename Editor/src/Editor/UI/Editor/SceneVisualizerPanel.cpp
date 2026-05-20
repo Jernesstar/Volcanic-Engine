@@ -3,6 +3,7 @@
 #include <imgui/imgui.h>
 
 #include <VolcaniCore/Core/Application.h>
+#include <VolcaniCore/Window/Input.h>
 
 #include <Engine/App/App.h>
 #include <Engine/Graphics/Platform/OpenGL/Texture.h>
@@ -11,6 +12,7 @@
 #include "Editor.h"
 #include "EditorRenderPipeline.h"
 
+using namespace VolcanicEngine;
 using namespace VolcanicEngine::Graphics;
 
 namespace VolcanicEditor {
@@ -26,7 +28,7 @@ static ImTextureID FramebufferColorID(Ref<Framebuffer> fb) {
 void SceneVisualizerPanel::Update(TimeStep ts) {
 	auto mode = Editor::GetMode();
 
-	if(m_Hovered)
+	if(m_Hovered || Input::GetCursorMode() == CursorMode::Locked)
 		m_Controller.OnUpdate(ts);
 
 	if(mode == EditorMode::Edit && m_Scene) {
@@ -45,6 +47,8 @@ void SceneVisualizerPanel::Draw() {
 		Editor::GetMode() == EditorMode::Edit
 			? &m_EditorPipeline
 			: App::Get()->GetSceneRenderer().GetPipeline().get();
+
+	m_Hovered = ImGui::IsWindowHovered();
 
 	// ── View mode tab bar ─────────────────────────────────────────────────
 	if(ImGui::BeginTabBar("VisualizerTabs", ImGuiTabBarFlags_None)) {
@@ -104,19 +108,21 @@ void SceneVisualizerPanel::SetContext(Scene* scene) {
 void SceneVisualizerPanel::OnResize(u32 w, u32 h) {
 	// m_EditorPipeline.OnResize(w, h);
 }
-
 void SceneVisualizerPanel::DrawViewport() {
-	ImVec2 size = ImGui::GetContentRegionAvail();
+	ImVec2 availSize = ImGui::GetContentRegionAvail();
 
 	Ref<Framebuffer> fb = GetActiveFramebuffer();
 	ImTextureID texID = FramebufferColorID(fb);
 
+	// 1. Fill the background with a Unity-like grey color
+	ImGui::PushStyleColor(ImGuiCol_ChildBg, { 0.18f, 0.18f, 0.18f, 1.0f });
+	ImGui::BeginChild("##ViewportContainer", availSize,
+		ImGuiChildFlags_None, ImGuiWindowFlags_NoScrollbar);
+
 	if(!texID) {
-		ImGui::PushStyleColor(ImGuiCol_ChildBg, { 0.08f, 0.08f, 0.08f, 1.0f });
-		ImGui::BeginChild("##VP", size);
 		ImVec2 center = {
-			ImGui::GetCursorPosX() + size.x * 0.5f - 60.0f,
-			ImGui::GetCursorPosY() + size.y * 0.5f - 7.0f
+			ImGui::GetCursorPosX() + availSize.x * 0.5f - 60.0f,
+			ImGui::GetCursorPosY() + availSize.y * 0.5f - 7.0f
 		};
 		ImGui::SetCursorPos(center);
 		ImGui::TextDisabled("(no output)");
@@ -125,18 +131,39 @@ void SceneVisualizerPanel::DrawViewport() {
 		return;
 	}
 
-	ImGui::Image(texID, size, { 0.0f, 1.0f }, { 1.0f, 0.0f });
+	float targetWidth = 1920.0f; 
+	float targetHeight = 1080.0f;
+	float targetAspect = targetWidth / targetHeight;
+	float availAspect = availSize.x / availSize.y;
 
-	if(size.x != m_LastSize.x || size.y != m_LastSize.y) {
-		m_LastSize = size;
-		OnResize((u32)size.x, (u32)size.y);
-		if(App::Get() && Editor::GetMode() != EditorMode::Edit)
-			App::Get()->GetSceneRenderer().GetPipeline()->OnResize(
-				(u32)size.x, (u32)size.y);
+	ImVec2 imageSize;
+
+	// 3. Calculate aspect ratio fitting
+	if (availAspect > targetAspect) {
+		// Window is wider than the target aspect ratio (Pillarbox)
+		imageSize.y = availSize.y;
+		imageSize.x = availSize.y * targetAspect;
+	} else {
+		// Window is taller than the target aspect ratio (Letterbox)
+		imageSize.x = availSize.x;
+		imageSize.y = availSize.x / targetAspect;
 	}
 
+	// 4. Center the image inside the child window
+	ImVec2 imagePos = {
+		(availSize.x - imageSize.x) * 0.5f,
+		(availSize.y - imageSize.y) * 0.5f
+	};
+	ImGui::SetCursorPos(imagePos);
+	// 5. Draw the scaled image
+	ImGui::Image(texID, imageSize, { 0.0f, 1.0f }, { 1.0f, 0.0f });
+	m_Hovered = ImGui::IsItemHovered();
+
+	ImGui::EndChild();
+	ImGui::PopStyleColor();
+
 	// ── Play-mode overlay ────────────────────────────────────────────────
-	if(Editor::GetMode() == EditorMode::Edit) {
+	if(Editor::GetMode() == EditorMode::Play) {
 		ImVec2 overlayPos = {
 			ImGui::GetItemRectMin().x + 8.0f,
 			ImGui::GetItemRectMin().y + 8.0f
@@ -155,6 +182,29 @@ void SceneVisualizerPanel::DrawViewport() {
 		}
 		ImGui::End();
 	}
+
+	ImVec2 overlayPos = {
+		ImGui::GetItemRectMax().x - 120.0f,
+		ImGui::GetItemRectMin().y + 10.0f
+	};
+	ImGui::SetNextWindowPos(overlayPos, ImGuiCond_Always);
+	ImGui::SetNextWindowBgAlpha(0.55f);
+	auto overlayFlags =
+		ImGuiWindowFlags_NoDecoration
+		| ImGuiWindowFlags_NoInputs
+		| ImGuiWindowFlags_AlwaysAutoResize
+		| ImGuiWindowFlags_NoSavedSettings
+		| ImGuiWindowFlags_NoFocusOnAppearing
+		| ImGuiWindowFlags_NoNav;
+	if(ImGui::Begin("##DebugOverlay", nullptr, overlayFlags)) {
+		auto info = Renderer::GetDebugInfo();
+		ImGui::Text("FPS: %0.1f", info.FPS);
+		ImGui::Text("Draw Calls: %li", info.DrawCalls);
+		ImGui::Text("Indices: %li", info.Indices);
+		ImGui::Text("Vertices: %li", info.Vertices);
+		ImGui::Text("Instances: %li", info.Instances);
+	}
+	ImGui::End();
 }
 
 Ref<Framebuffer> SceneVisualizerPanel::GetActiveFramebuffer() const {

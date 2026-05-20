@@ -18,9 +18,12 @@ void SceneRenderer::OnSceneLoad() {
 		m_Pipeline->OnInit();
 }
 
-void SceneRenderer::OnSceneClose() { }
+void SceneRenderer::OnSceneClose() {
 
-void SceneRenderer::Update(TimeStep ts) { }
+}
+
+void SceneRenderer::Update(TimeStep ts) {
+}
 
 void SceneRenderer::Render(Scene* scene) {
 	if(m_Pipeline)

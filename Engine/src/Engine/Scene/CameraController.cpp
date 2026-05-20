@@ -23,7 +23,7 @@ void CameraController::OnUpdate(TimeStep ts) {
 	glm::vec2 delta = (mousePosition - m_LastMousePosition) * 0.001f;
 	m_LastMousePosition = mousePosition;
 
-	if(!Input::MouseButtonPressed(Mouse::LeftButton)) {
+	if(!Input::MouseButtonPressed(Mouse::RightButton)) {
 		Input::SetCursorMode(CursorMode::Normal);
 		return;
 	}
@@ -31,11 +31,11 @@ void CameraController::OnUpdate(TimeStep ts) {
 	Input::SetCursorMode(CursorMode::Locked);
 
 	glm::vec3 finalPos = m_Camera->GetPosition();
-	glm::vec3 finalDir;
+	glm::vec3 forward = m_Camera->GetDirection();
+	glm::vec3 finalDir = forward;
 	bool moved = false;
 
 	glm::vec3 up(0.0f, 1.0f, 0.0f);
-	glm::vec3 forward = m_Camera->GetDirection();
 	glm::vec3 right = glm::normalize(glm::cross(forward, up));
 
 	glm::ivec3 inputDir(0);
@@ -46,21 +46,24 @@ void CameraController::OnUpdate(TimeStep ts) {
 	inputDir.z = Input::KeyPressed(m_Controls[Control::Forward])
 			   - Input::KeyPressed(m_Controls[Control::Backward]);
 
-	if(moved = (inputDir.x || inputDir.y || inputDir.z)) {
+	if(inputDir.x || inputDir.y || inputDir.z) {
+		moved = true;
 		glm::vec3 moveDir(0.0f);
 		moveDir += (float)inputDir.x * right;
 		moveDir += (float)inputDir.y * up;
 		moveDir += (float)inputDir.z * forward;
 		float moveSpeed = TranslationSpeed * 0.001f;
 		finalPos += glm::normalize(moveDir) * moveSpeed * (float)ts;
+		Log::Info("Moved to [ {}, {}, {} ]", finalPos.x, finalPos.y, finalPos.z);
 	}
 
-	if(moved |= (delta != glm::vec2(0.0f) && RotationSpeed != 0.0f)) {
+	if(delta != glm::vec2(0.0f) && RotationSpeed != 0.0f) {
+		moved = true;
 		float pitchDelta = delta.y * RotationSpeed;
 		float yawDelta   = delta.x * RotationSpeed;
 
-		glm::quat q = glm::cross(glm::angleAxis(-pitchDelta, right),
-								 glm::angleAxis(-yawDelta, up));
+		glm::quat q = glm::angleAxis(-pitchDelta, right) *
+					  glm::angleAxis(-yawDelta, up);
 		finalDir = glm::rotate(glm::normalize(q), forward);
 	}
 

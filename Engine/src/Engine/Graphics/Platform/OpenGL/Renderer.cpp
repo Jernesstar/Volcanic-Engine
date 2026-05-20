@@ -3,6 +3,8 @@
 #include <VolcaniCore/Core/Assert.h>
 #include <VolcaniCore/Core/Application.h>
 
+#include <Engine/Graphics/Renderer.h>
+
 #include <glad/glad.h>
 
 #include "VertexArray.h"
@@ -313,6 +315,12 @@ static void SubmitDrawCall(DrawCommand& cmd, DrawCall& call) {
 
 		// Add indirect objects. When full, make draw call and clear
 	}
+
+	auto& frame = Graphics::Renderer::GetFrame();
+	frame.Info.DrawCalls++;
+	frame.Info.Indices += call.IndexCount;
+	frame.Info.Vertices += call.VertexCount;
+	frame.Info.Instances += call.InstanceCount;
 }
 
 void Renderer::EndFrame() {

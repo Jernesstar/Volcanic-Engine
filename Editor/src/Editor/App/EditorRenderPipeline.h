@@ -6,6 +6,8 @@
 #include <Engine/Graphics/Platform/Framebuffer.h>
 #include <Engine/Scene/Graphics/RenderPipeline.h>
 
+#include "CameraController.h"
+
 using namespace VolcanicEngine;
 using namespace VolcanicEngine::Graphics;
 using namespace VolcanicEngine::ECS;
@@ -23,7 +25,6 @@ public:
 
 	Ref<Framebuffer> GetOutput() const override { return m_Output; }
 
-	// Entity outline for selection highlight
 	void SetSelectedEntity(ECS::Entity entity) { m_Selected = entity; }
 	void SetCamera(Ref<Camera> cam) { m_Camera = cam; }
 
@@ -32,47 +33,49 @@ private:
 	ECS::Entity m_Selected;
 	Ref<Framebuffer> m_Output;
 
-	Entity Selected;
-	bool Hovered = false;
-
 	// Grid
-	Ref<RenderPass> GridPass;
+	Ref<RenderPass> m_GridPass;
+
+	// Skybox
+	Ref<RenderPass> m_SkyboxPass;
+
+	// Geometry
+	Ref<RenderPass> m_GeometryPass;
+	DrawCommand* m_GeometryCommand = nullptr;
 
 	// Outlining
-	Ref<RenderPass> MaskPass;
-	Ref<RenderPass> OutlinePass;
+	Ref<RenderPass> m_MaskPass;
+	Ref<RenderPass> m_OutlinePass;
 
 	// Lines
-	Ref<RenderPass> LinePass;
-	DrawCommand* LineCommand;
+	Ref<RenderPass> m_LinePass;
+	DrawCommand* m_LineCommand = nullptr;
 
 	// Billboards
-	Ref<RenderPass> BillboardPass;
-	DrawBuffer* BillboardBuffer;
-	Ref<Texture> DirectionalLightIcon;
-	Ref<Texture> PointLightIcon;
-	Ref<Texture> SpotlightIcon;
-	Ref<Texture> CameraIcon;
-	Ref<Texture> ParticlesIcon;
+	Ref<RenderPass> m_BillboardPass;
+	DrawBuffer* m_BillboardBuffer = nullptr;
+	Ref<Texture> m_CameraIcon;
+	Ref<Texture> m_DirectionalLightIcon;
+	Ref<Texture> m_PointLightIcon;
+	Ref<Texture> m_SpotlightIcon;
+	Ref<Texture> m_ParticlesIcon;
 
-	Ref<RenderPass> GeometryPass;
-	DrawCommand* GeometryCommand;
-
-	bool HasCamera = false;
-	bool HasDirectionalLight = false;
-	u32 PointLightCount = 0;
-	u32 SpotlightCount = 0;
-	u32 ParticleEmitterCount = 0;
-	List<std::pair<Vec3, u32>> Billboards;
+	bool m_HasCamera = false;
+	bool m_HasDirectionalLight = false;
+	u32 m_PointLightCount = 0;
+	u32 m_SpotlightCount = 0;
+	u32 m_ParticleEmitterCount = 0;
+	List<std::pair<Vec3, u32>> m_Billboards;
 
 private:
+	void AddBillboard(Vec3 pos, u32 type);
+
 	void Begin3D();
 	void SubmitCamera3D(const Entity& entity);
 	void SubmitSkybox(const Entity& entity);
 	void SubmitLight3D(const Entity& entity);
 	void SubmitParticles(const Entity& entity);
 	void SubmitGeometry(const Entity& entity);
-	void AddBillboard(Vec3 position, u32 type);
 	void End3D();
 
 	void Begin2D();

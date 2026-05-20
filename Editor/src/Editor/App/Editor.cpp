@@ -191,19 +191,8 @@ static void DrawMainMenuBar() {
 
 void Editor::Init(const CommandLineArgs& args) {
 	Log::Init();
-
 	Renderer::Init();
-
 	UIRenderer::Init();
-
-	// float fontSize = 15.0f;
-	// ImGuiIO& io = ImGui::GetIO();
-	// io.Fonts->AddFontFromFileTTF(
-	// 	"Editor/assets/fonts/JetBrainsMono-Bold.ttf", fontSize);
-	// io.FontDefault =
-	// 	io.Fonts->AddFontFromFileTTF(
-	// 		"Editor/assets/fonts/JetBrainsMono-Regular.ttf", fontSize);
-	// io.IniFilename = nullptr;
 
 	ScriptEngine::Init();
 	ScriptGlue::RegisterInterface();
@@ -221,6 +210,10 @@ void Editor::Init(const CommandLineArgs& args) {
 		{
 			Str scenePath = "App/Scene/" + scene.Name + ".scene";
 			SceneLoader::EditorLoad(scene, scenePath);
+		};
+	s_App->Log =
+		[](const Str& str)
+		{
 		};
 	s_App->Running = false;
 
@@ -242,18 +235,17 @@ void Editor::Close() {
 	OnStop();
 
 	s_CurrentScene.reset();
-
 	s_App.reset();
 	s_AssetManager.reset();
 
+	ScriptEngine::Shutdown();
 	UIRenderer::Close();
 	Renderer::Close();
-	ScriptEngine::Shutdown();
 }
 
 void Editor::Update(TimeStep ts) {
-	UIRenderer::BeginFrame();
 	Renderer::BeginFrame();
+	UIRenderer::BeginFrame();
 	// ImGuizmo::BeginFrame();
 
 	if(s_EditorMode == EditorMode::Play) {
@@ -316,8 +308,6 @@ void Editor::Render() {
 
 	DrawMainMenuBar();
 
-	Renderer::EndFrame();
-
 	s_Hierarchy.Draw();
 	s_Visualizer.Draw();
 	s_ComponentEditor.Draw();
@@ -326,6 +316,7 @@ void Editor::Render() {
 	s_Console.Draw();
 
 	UIRenderer::EndFrame();
+	Renderer::EndFrame();
 }
 
 Project& Editor::GetProject() {
@@ -426,7 +417,7 @@ void Editor::OnPause() {
 
 void Editor::OnResume() {
 	s_EditorMode = EditorMode::Play;
-	if(s_Debugging)
+	if(!s_Debugging)
 		App::Get()->Running = true;
 	else {
 		std::lock_guard<std::mutex> lock(s_Mutex);
