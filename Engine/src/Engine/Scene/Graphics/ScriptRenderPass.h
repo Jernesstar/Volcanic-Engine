@@ -30,15 +30,44 @@ public:
 	}
 
 	void SetInputTexture(const std::string& name, ScriptTexture* tex) {
+		if(!tex) return;
 		m_Pass->GetUniforms().Set(name, [tex]() {
-			return TextureSlot{ tex->GetTexture(), tex->NextSlot() };
+			if(tex->IsRawTexture())
+				return TextureSlot{ tex->GetTexture(), tex->NextSlot() };
+			return TextureSlot{ nullptr, tex->NextSlot() }; // Should probably handle attachments too
 		});
+	}
+
+	void SetInputInt(const std::string& name, i32 val) {
+		m_Pass->GetUniforms().Set(name, [val]() { return val; });
 	}
 	void SetInputFloat(const std::string& name, float val) {
 		m_Pass->GetUniforms().Set(name, [val]() { return val; });
 	}
+	void SetInputVec2(const std::string& name, const glm::vec2& val) {
+		m_Pass->GetUniforms().Set(name, [val]() { return val; });
+	}
+	void SetInputVec3(const std::string& name, const glm::vec3& val) {
+		m_Pass->GetUniforms().Set(name, [val]() { return val; });
+	}
 	void SetInputVec4(const std::string& name, const glm::vec4& val) {
 		m_Pass->GetUniforms().Set(name, [val]() { return val; });
+	}
+	void SetInputMat4(const std::string& name, const glm::mat4& val) {
+		m_Pass->GetUniforms().Set(name, [val]() { return val; });
+	}
+
+	void Execute() {
+		Renderer::StartPass(m_Pass);
+		auto* cmd = Renderer::GetCommand();
+		m_Pass->SetUniforms(cmd);
+
+		auto* call = cmd->NewCall();
+		call->VertexCount = 6;
+		call->Primitive   = DrawPrimitive::Triangle;
+		call->Partition   = DrawPartition::Single;
+
+		Renderer::EndPass();
 	}
 
 	ScriptFramebuffer* GetOutput() { return m_OutputRef; }
@@ -49,4 +78,5 @@ private:
 	Ref<RenderPass> m_Pass;
 	ScriptFramebuffer* m_OutputRef = nullptr;
 };
+
 }

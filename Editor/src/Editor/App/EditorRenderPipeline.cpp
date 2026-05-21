@@ -25,8 +25,8 @@ void EditorRenderPipeline::OnInit() {
 	m_Output =
 		RendererAPI::Get()->CreateFramebuffer({
 			.Attachments = {
-				{ AttachmentTarget::Color,   DEFAULT_W, DEFAULT_H },
-				{ AttachmentTarget::Depth,   DEFAULT_W, DEFAULT_H },
+				{ AttachmentTarget::Color, DEFAULT_W, DEFAULT_H },
+				{ AttachmentTarget::Depth, DEFAULT_W, DEFAULT_H },
 			}
 		});
 

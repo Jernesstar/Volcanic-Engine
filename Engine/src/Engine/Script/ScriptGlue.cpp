@@ -37,6 +37,11 @@
 #include "Scene/ScriptSystem.h"
 #include "Scene/PhysicsSystem.h"
 
+#include "Scene/Graphics/RenderPipeline.h"
+#include "Scene/Graphics/DefaultRenderPipeline.h"
+#include "Scene/Graphics/SceneRenderer.h"
+#include "Scene/Graphics/ScriptPipelineContext.h"
+
 #include "App.h"
 
 using namespace VolcaniCore;
@@ -52,6 +57,7 @@ static void RegisterEvents();
 static void RegisterAssetManager();
 static void RegisterECS();
 static void RegisterScene();
+static void RegisterRenderPipeline();
 
 void ScriptGlue::RegisterInterface() {
 	auto* engine = ScriptEngine::Get();
@@ -64,11 +70,6 @@ void ScriptGlue::RegisterInterface() {
 	RegisterScriptDictionary(engine);
 
 	RegisterEvents();
-	ScriptEngine::RegisterInterface("IScreen")
-		.AddMethod("void OnLoad()")
-		.AddMethod("void OnClose()")
-		.AddMethod("void OnUpdate(float ts)");
-
 	ScriptEngine::RegisterInterface("IEntityController")
 		.AddMethod("void OnStart()")
 		.AddMethod("void OnUpdate(float ts)")
@@ -86,6 +87,24 @@ void ScriptGlue::RegisterInterface() {
 	RegisterAssetManager();
 	RegisterECS();
 	RegisterScene();
+
+	RegisterRenderPipeline();
+
+	ScriptEngine::RegisterInterface("IRenderHook")
+		.AddMethod("void PreShadows(PipelineContext@ ctx)")
+		.AddMethod("void PostShadows(PipelineContext@ ctx)")
+		.AddMethod("void PreDepth(PipelineContext@ ctx)")
+		.AddMethod("void PostDepth(PipelineContext@ ctx)")
+		.AddMethod("void PreGeometry(PipelineContext@ ctx)")
+		.AddMethod("void PostGeometry(PipelineContext@ ctx)")
+		.AddMethod("void PreSkybox(PipelineContext@ ctx)")
+		.AddMethod("void PostSkybox(PipelineContext@ ctx)")
+		.AddMethod("void PreTransparency(PipelineContext@ ctx)")
+		.AddMethod("void PostTransparency(PipelineContext@ ctx)")
+		.AddMethod("void PrePostProcess(PipelineContext@ ctx)")
+		.AddMethod("void PostPostProcess(PipelineContext@ ctx)")
+		.AddMethod("void PreUI(PipelineContext@ ctx)")
+		.AddMethod("void PostUI(PipelineContext@ ctx)");
 
 	// ScriptEngine::Get()
 	// 	->RegisterInterfaceMethod("IEntityController",
@@ -157,6 +176,9 @@ void RegisterGlobalFunctions() {
 		"void print(const string &in)", asFUNCTION(print), asCALL_CDECL);
 }
 
+static void Vec2DefaultConstructor(Vec2* ptr) {
+	new(ptr) Vec2();
+}
 static void Vec3DefaultConstructor(Vec3* ptr) {
 	new(ptr) Vec3();
 }
@@ -164,6 +186,9 @@ static void Vec4DefaultConstructor(Vec4* ptr) {
 	new(ptr) Vec4();
 }
 
+static void Vec2CopyConstructor(const Vec2& other, Vec2* ptr) {
+	new(ptr) Vec2(other);
+}
 static void Vec3CopyConstructor(const Vec3& other, Vec3* ptr) {
 	new(ptr) Vec3(other);
 }
@@ -171,6 +196,9 @@ static void Vec4CopyConstructor(const Vec4& other, Vec4* ptr) {
 	new(ptr) Vec4(other);
 }
 
+static void Vec2ConvConstructor(float v, Vec2* ptr) {
+	new(ptr) Vec2(v);
+}
 static void Vec3ConvConstructor(float v, Vec3* ptr) {
 	new(ptr) Vec3(v);
 }
@@ -178,6 +206,9 @@ static void Vec4ConvConstructor(float v, Vec4* ptr) {
 	new(ptr) Vec4(v);
 }
 
+static void Vec2InitConstructor(float r, float g, Vec2* ptr) {
+	new(ptr) Vec2(r, g);
+}
 static void Vec3InitConstructor(float r, float g, float b, Vec3* ptr) {
 	new(ptr) Vec3(r, g, b);
 }
@@ -185,6 +216,9 @@ static void Vec4InitConstructor(float r, float g, float b, float a, Vec4* ptr) {
 	new(ptr) Vec4(r, g, b, a);
 }
 
+static void Vec2ListConstructor(float* list, Vec2* ptr) {
+	new(ptr) Vec2(list[0], list[1]);
+}
 static void Vec3ListConstructor(float* list, Vec3* ptr) {
 	new(ptr) Vec3(list[0], list[1], list[2]);
 }
@@ -192,27 +226,63 @@ static void Vec4ListConstructor(float* list, Vec4* ptr) {
 	new(ptr) Vec4(list[0], list[1], list[2], list[3]);
 }
 
+static Vec2 AddVec2(const Vec2& v1, const Vec2& v2) {
+	return v1 + v2;
+}
 static Vec3 AddVec3(const Vec3& v1, const Vec3& v2) {
 	return v1 + v2;
 }
+static Vec4 AddVec4(const Vec4& v1, const Vec4& v2) {
+	return v1 + v2;
+}
 
+static Vec2 SubVec2(const Vec2& v1, const Vec2& v2) {
+	return v1 - v2;
+}
 static Vec3 SubVec3(const Vec3& v1, const Vec3& v2) {
 	return v1 - v2;
 }
+static Vec4 SubVec4(const Vec4& v1, const Vec4& v2) {
+	return v1 - v2;
+}
 
+static Vec2 NegateVec2(const Vec2& dest) {
+	return -dest;
+}
 static Vec3 NegateVec3(const Vec3& dest) {
 	return -dest;
 }
+static Vec4 NegateVec4(const Vec4& dest) {
+	return -dest;
+}
 
+static Vec2 MultiplyVec2(float r, const Vec2& dest) {
+	return r * dest;
+}
 static Vec3 MultiplyVec3(float r, const Vec3& dest) {
 	return r * dest;
 }
+static Vec4 MultiplyVec4(float r, const Vec4& dest) {
+	return r * dest;
+}
 
+static Vec2 FloatDivideVec2(float r, const Vec2& dest) {
+	return r / dest;
+}
 static Vec3 FloatDivideVec3(float r, const Vec3& dest) {
 	return r / dest;
 }
+static Vec4 FloatDivideVec4(float r, const Vec4& dest) {
+	return r / dest;
+}
 
+static Vec2 FloatDividedByVec2(float r, const Vec2& dest) {
+	return dest / r;
+}
 static Vec3 FloatDividedByVec3(float r, const Vec3& dest) {
+	return dest / r;
+}
+static Vec4 FloatDividedByVec4(float r, const Vec4& dest) {
 	return dest / r;
 }
 
@@ -220,25 +290,90 @@ void RegisterTypes() {
 	auto* engine = ScriptEngine::Get();
 
 	// engine->SetDefaultNamespace("Math");
+	engine->RegisterObjectType("Vec2", sizeof(Vec2),
+		asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_ALLFLOATS
+		| asGetTypeTraits<Vec2>());
 	engine->RegisterObjectType("Vec3", sizeof(Vec3),
 		asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_ALLFLOATS
 		| asGetTypeTraits<Vec3>());
+	engine->RegisterObjectType("Vec4", sizeof(Vec4),
+		asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_ALLFLOATS
+		| asGetTypeTraits<Vec4>());
+
+	engine->RegisterObjectBehaviour("Vec2", asBEHAVE_CONSTRUCT,
+		"void f()", asFUNCTION(Vec2DefaultConstructor), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("Vec3", asBEHAVE_CONSTRUCT,
 		"void f()", asFUNCTION(Vec3DefaultConstructor), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectBehaviour("Vec4", asBEHAVE_CONSTRUCT,
+		"void f()", asFUNCTION(Vec4DefaultConstructor), asCALL_CDECL_OBJLAST);
+
+	engine->RegisterObjectBehaviour("Vec2", asBEHAVE_CONSTRUCT,
+		"void f(const Vec2 &in)", asFUNCTION(Vec2CopyConstructor),
+		asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("Vec3", asBEHAVE_CONSTRUCT,
 		"void f(const Vec3 &in)", asFUNCTION(Vec3CopyConstructor),
 		asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectBehaviour("Vec4", asBEHAVE_CONSTRUCT,
+		"void f(const Vec4 &in)", asFUNCTION(Vec4CopyConstructor),
+		asCALL_CDECL_OBJLAST);
+
+	engine->RegisterObjectBehaviour("Vec2", asBEHAVE_CONSTRUCT,
+		"void f(float)", asFUNCTION(Vec2ConvConstructor), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("Vec3", asBEHAVE_CONSTRUCT,
 		"void f(float)", asFUNCTION(Vec3ConvConstructor), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectBehaviour("Vec4", asBEHAVE_CONSTRUCT,
+		"void f(float)", asFUNCTION(Vec4ConvConstructor), asCALL_CDECL_OBJLAST);
+
+	engine->RegisterObjectBehaviour("Vec2", asBEHAVE_CONSTRUCT,
+		"void f(float, float)", asFUNCTION(Vec2InitConstructor),
+		asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("Vec3", asBEHAVE_CONSTRUCT,
 		"void f(float, float, float)", asFUNCTION(Vec3InitConstructor),
 		asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectBehaviour("Vec4", asBEHAVE_CONSTRUCT,
+		"void f(float, float, float, float)", asFUNCTION(Vec4InitConstructor),
+		asCALL_CDECL_OBJLAST);
+
+	engine->RegisterObjectBehaviour("Vec2", asBEHAVE_LIST_CONSTRUCT,
+		"void f(const int &in) { float, float }",
+		asFUNCTION(Vec2ListConstructor), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("Vec3", asBEHAVE_LIST_CONSTRUCT,
 		"void f(const int &in) { float, float, float }",
 		asFUNCTION(Vec3ListConstructor), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectBehaviour("Vec4", asBEHAVE_LIST_CONSTRUCT,
+		"void f(const int &in) { float, float, float, float }",
+		asFUNCTION(Vec4ListConstructor), asCALL_CDECL_OBJLAST);
+
+	engine->RegisterObjectProperty("Vec2", "float x", asOFFSET(Vec2, x));
+	engine->RegisterObjectProperty("Vec2", "float y", asOFFSET(Vec2, y));
+
 	engine->RegisterObjectProperty("Vec3", "float x", asOFFSET(Vec3, x));
 	engine->RegisterObjectProperty("Vec3", "float y", asOFFSET(Vec3, y));
 	engine->RegisterObjectProperty("Vec3", "float z", asOFFSET(Vec3, z));
+
+	engine->RegisterObjectProperty("Vec4", "float x", asOFFSET(Vec4, x));
+	engine->RegisterObjectProperty("Vec4", "float y", asOFFSET(Vec4, y));
+	engine->RegisterObjectProperty("Vec4", "float z", asOFFSET(Vec4, z));
+	engine->RegisterObjectProperty("Vec4", "float w", asOFFSET(Vec4, w));
+
+	engine->RegisterObjectMethod("Vec2", "Vec2 &opAddAssign(const Vec2 &in)",
+		asMETHODPR(Vec2, operator+=, (const Vec2 &), Vec2&), asCALL_THISCALL);
+	engine->RegisterObjectMethod("Vec2", "Vec2 &opSubAssign(const Vec2 &in)",
+		asMETHODPR(Vec2, operator-=, (const Vec2 &), Vec2&), asCALL_THISCALL);
+	engine->RegisterObjectMethod("Vec2", "Vec2 opAdd(const Vec2 &in) const",
+		asFUNCTION(AddVec2), asCALL_CDECL_OBJFIRST);
+	engine->RegisterObjectMethod("Vec2", "Vec2 opSub(const Vec2 &in) const",
+		asFUNCTION(SubVec2), asCALL_CDECL_OBJFIRST);
+	engine->RegisterObjectMethod("Vec2", "Vec2 opNeg() const",
+		asFUNCTION(NegateVec2), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("Vec2", "Vec2 opMul(float r) const",
+		asFUNCTION(MultiplyVec2), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("Vec2", "Vec2 opMul_r(float r) const",
+		asFUNCTION(MultiplyVec2), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("Vec2", "Vec2 opDiv(float r) const",
+		asFUNCTION(FloatDivideVec2), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("Vec2", "Vec2 opDiv_r(float r) const",
+		asFUNCTION(FloatDividedByVec2), asCALL_CDECL_OBJLAST);
 
 	engine->RegisterObjectMethod("Vec3", "Vec3 &opAddAssign(const Vec3 &in)",
 		asMETHODPR(Vec3, operator+=, (const Vec3 &), Vec3&), asCALL_THISCALL);
@@ -259,12 +394,43 @@ void RegisterTypes() {
 	engine->RegisterObjectMethod("Vec3", "Vec3 opDiv_r(float r) const",
 		asFUNCTION(FloatDividedByVec3), asCALL_CDECL_OBJLAST);
 
+	engine->RegisterObjectMethod("Vec4", "Vec4 &opAddAssign(const Vec4 &in)",
+		asMETHODPR(Vec4, operator+=, (const Vec4 &), Vec4&), asCALL_THISCALL);
+	engine->RegisterObjectMethod("Vec4", "Vec4 &opSubAssign(const Vec4 &in)",
+		asMETHODPR(Vec4, operator-=, (const Vec4 &), Vec4&), asCALL_THISCALL);
+	engine->RegisterObjectMethod("Vec4", "Vec4 opAdd(const Vec4 &in) const",
+		asFUNCTION(AddVec4), asCALL_CDECL_OBJFIRST);
+	engine->RegisterObjectMethod("Vec4", "Vec4 opSub(const Vec4 &in) const",
+		asFUNCTION(SubVec4), asCALL_CDECL_OBJFIRST);
+	engine->RegisterObjectMethod("Vec4", "Vec4 opNeg() const",
+		asFUNCTION(NegateVec4), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("Vec4", "Vec4 opMul(float r) const",
+		asFUNCTION(MultiplyVec4), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("Vec4", "Vec4 opMul_r(float r) const",
+		asFUNCTION(MultiplyVec4), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("Vec4", "Vec4 opDiv(float r) const",
+		asFUNCTION(FloatDivideVec4), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("Vec4", "Vec4 opDiv_r(float r) const",
+		asFUNCTION(FloatDividedByVec4), asCALL_CDECL_OBJLAST);
+
 	engine->RegisterGlobalFunction("float radians(float deg)",
 		asFUNCTIONPR(glm::radians, (float), float), asCALL_CDECL);
-	engine->RegisterGlobalFunction("Vec3 radians(const Vec3 &in)",
-		asFUNCTIONPR(glm::radians, (const Vec3&), Vec3), asCALL_CDECL);
 	engine->RegisterGlobalFunction("float degrees(float deg)",
 		asFUNCTIONPR(glm::degrees, (float), float), asCALL_CDECL);
+
+	engine->RegisterGlobalFunction("Vec2 radians(const Vec2 &in)",
+		asFUNCTIONPR(glm::radians, (const Vec2&), Vec2), asCALL_CDECL);
+	engine->RegisterGlobalFunction("Vec2 degrees(const Vec2 &in)",
+		asFUNCTIONPR(glm::degrees, (const Vec2&), Vec2), asCALL_CDECL);
+	engine->RegisterGlobalFunction("Vec2 sin(const Vec2 &in)",
+		asFUNCTIONPR(glm::sin, (const Vec2&), Vec2), asCALL_CDECL);
+	engine->RegisterGlobalFunction("Vec2 cos(const Vec2 &in)",
+		asFUNCTIONPR(glm::cos, (const Vec2&), Vec2), asCALL_CDECL);
+	engine->RegisterGlobalFunction("Vec2 normalize(const Vec2 &in)",
+		asFUNCTIONPR(glm::normalize, (const Vec2&), Vec2), asCALL_CDECL);
+
+	engine->RegisterGlobalFunction("Vec3 radians(const Vec3 &in)",
+		asFUNCTIONPR(glm::radians, (const Vec3&), Vec3), asCALL_CDECL);
 	engine->RegisterGlobalFunction("Vec3 degrees(const Vec3 &in)",
 		asFUNCTIONPR(glm::degrees, (const Vec3&), Vec3), asCALL_CDECL);
 	engine->RegisterGlobalFunction("Vec3 sin(const Vec3 &in)",
@@ -273,6 +439,17 @@ void RegisterTypes() {
 		asFUNCTIONPR(glm::cos, (const Vec3&), Vec3), asCALL_CDECL);
 	engine->RegisterGlobalFunction("Vec3 normalize(const Vec3 &in)",
 		asFUNCTIONPR(glm::normalize, (const Vec3&), Vec3), asCALL_CDECL);
+
+	engine->RegisterGlobalFunction("Vec4 radians(const Vec4 &in)",
+		asFUNCTIONPR(glm::radians, (const Vec4&), Vec4), asCALL_CDECL);
+	engine->RegisterGlobalFunction("Vec4 degrees(const Vec4 &in)",
+		asFUNCTIONPR(glm::degrees, (const Vec4&), Vec4), asCALL_CDECL);
+	engine->RegisterGlobalFunction("Vec4 sin(const Vec4 &in)",
+		asFUNCTIONPR(glm::sin, (const Vec4&), Vec4), asCALL_CDECL);
+	engine->RegisterGlobalFunction("Vec4 cos(const Vec4 &in)",
+		asFUNCTIONPR(glm::cos, (const Vec4&), Vec4), asCALL_CDECL);
+	engine->RegisterGlobalFunction("Vec4 normalize(const Vec4 &in)",
+		asFUNCTIONPR(glm::normalize, (const Vec4&), Vec4), asCALL_CDECL);
 }
 
 static KeyPressedEvent* KeyPressedEventCast(KeyEvent* event) {
@@ -1049,6 +1226,230 @@ void RegisterScene() {
 	engine->RegisterObjectMethod("SceneClass", "ScriptSystem@ GetScriptSystem()",
 		asMETHODPR(ECS::World, Get<ScriptSystem>, (), ScriptSystem*),
 		asCALL_THISCALL, 0, asOFFSET(Scene, World3D));
+}
+
+
+static ScriptFramebuffer* FramebufferFactory(u32 w, u32 h) {
+	return ScriptFramebuffer::Factory(w, h);
+}
+
+static ScriptRenderPass* RenderPassFactory(const std::string& name,
+										   const std::string& shaderName)
+{
+	return ScriptRenderPass::Factory(name, shaderName);
+}
+
+static void ScriptFramebufferAddColor(ScriptFramebuffer* fb) {
+	fb->AddColorAttachment();
+}
+
+static void ScriptFramebufferAddDepth(ScriptFramebuffer* fb) {
+	fb->AddDepthAttachment();
+}
+
+static ScriptTexture* ScriptFramebufferGetColor(uint32_t idx, ScriptFramebuffer* fb) {
+	return fb->GetColor(idx);
+}
+
+static ScriptTexture* ScriptFramebufferGetDepth(ScriptFramebuffer* fb) {
+	return fb->GetDepth();
+}
+
+static void RenderPassSetOutput(ScriptFramebuffer* fb, ScriptRenderPass* pass) {
+	pass->SetOutput(fb);
+}
+
+static void RenderPassSetTexture(const std::string& name, ScriptTexture* tex,
+								 ScriptRenderPass* pass)
+{
+	pass->SetInputTexture(name, tex);
+}
+
+static void RenderPassSetFloat(const std::string& name, float val,
+							   ScriptRenderPass* pass)
+{
+	pass->SetInputFloat(name, val);
+}
+
+static void RenderPassSetVec2(const std::string& name, const Vec2& val,
+							  ScriptRenderPass* pass)
+{
+	pass->SetInputVec2(name, val);
+}
+
+static void RenderPassSetVec4(const std::string& name, const Vec4& val,
+							  ScriptRenderPass* pass)
+{
+	pass->SetInputVec4(name, val);
+}
+
+static void RenderPassExecute(ScriptRenderPass* pass) {
+	pass->Execute();
+}
+
+static ScriptFramebuffer* ContextGetBuffer(const std::string& name,
+										   ScriptPipelineContext* ctx)
+{
+	return ctx->GetBuffer(name);
+}
+
+static void ContextRedirectOutput(ScriptFramebuffer* fb,
+								  ScriptPipelineContext* ctx)
+{
+	ctx->RedirectOutput(fb);
+}
+
+static void ContextSetSubPixelOffset(const Vec2& offset,
+									 ScriptPipelineContext* ctx)
+{
+	ctx->SetSubPixelOffset(offset);
+}
+
+static Vec2 ContextGetSubPixelOffset(ScriptPipelineContext* ctx) {
+	return ctx->GetSubPixelOffset();
+}
+
+static ScriptTexture* ContextGetBufferColor(const std::string& bufName,
+											uint32_t idx,
+											ScriptPipelineContext* ctx)
+{
+	auto* fb = ctx->GetBuffer(bufName);
+	if(!fb) return nullptr;
+	return fb->GetColor(idx);
+}
+
+void RegisterRenderPipeline() {
+	auto* engine = ScriptEngine::Get();
+
+	engine->RegisterObjectType("Texture", 0, asOBJ_REF | asOBJ_NOCOUNT);
+	engine->RegisterObjectType("Framebuffer", 0, asOBJ_REF);
+	engine->RegisterObjectType("RenderPass", 0, asOBJ_REF);
+
+	engine->RegisterObjectBehaviour("Framebuffer", asBEHAVE_ADDREF,
+		"void f()", asMETHOD(ScriptFramebuffer, AddRef), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("Framebuffer", asBEHAVE_RELEASE,
+		"void f()", asMETHOD(ScriptFramebuffer, Release), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("Framebuffer", asBEHAVE_FACTORY,
+		"Framebuffer@ f(uint, uint)",
+		asFUNCTION(FramebufferFactory), asCALL_CDECL);
+
+	engine->RegisterObjectMethod("Framebuffer",
+		"void AddColorAttachment()",
+		asFUNCTION(ScriptFramebufferAddColor), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("Framebuffer",
+		"void AddDepthAttachment()",
+		asFUNCTION(ScriptFramebufferAddDepth), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("Framebuffer",
+		"Texture@ GetColor(uint idx = 0)",
+		asFUNCTION(ScriptFramebufferGetColor), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("Framebuffer",
+		"Texture@ GetDepth()",
+		asFUNCTION(ScriptFramebufferGetDepth), asCALL_CDECL_OBJLAST);
+
+	engine->RegisterObjectBehaviour("RenderPass", asBEHAVE_ADDREF,
+		"void f()", asMETHOD(ScriptRenderPass, AddRef), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("RenderPass", asBEHAVE_RELEASE,
+		"void f()", asMETHOD(ScriptRenderPass, Release), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("RenderPass", asBEHAVE_FACTORY,
+		"RenderPass@ f(const string &in, const string &in)",
+		asFUNCTION(RenderPassFactory), asCALL_CDECL);
+
+	engine->RegisterObjectMethod("RenderPass",
+		"void SetOutput(Framebuffer@)",
+		asFUNCTION(RenderPassSetOutput), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("RenderPass",
+		"void SetInputTexture(const string &in, Texture@)",
+		asFUNCTION(RenderPassSetTexture), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("RenderPass",
+		"void SetInputFloat(const string &in, float)",
+		asFUNCTION(RenderPassSetFloat), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("RenderPass",
+		"void SetInputVec2(const string &in, const Vec2 &in)",
+		asFUNCTION(RenderPassSetVec2), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("RenderPass",
+		"void SetInputVec4(const string &in, const Vec4 &in)",
+		asFUNCTION(RenderPassSetVec4), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("RenderPass",
+		"void Execute()",
+		asFUNCTION(RenderPassExecute), asCALL_CDECL_OBJLAST);
+
+	// ── PipelineContext ───────────────────────────────────────────────────────
+	engine->RegisterObjectType("PipelineContext", 0, asOBJ_REF);
+	engine->RegisterObjectBehaviour("PipelineContext", asBEHAVE_ADDREF,
+		"void f()", asMETHOD(ScriptPipelineContext, AddRef), asCALL_THISCALL);
+	engine->RegisterObjectBehaviour("PipelineContext", asBEHAVE_RELEASE,
+		"void f()", asMETHOD(ScriptPipelineContext, Release), asCALL_THISCALL);
+	// No factory — context objects are only created by the engine
+
+	engine->RegisterEnum("PipelineStage");
+	engine->RegisterEnumValue("PipelineStage", "PreDepthPrepass",
+		(int)PipelineStage::PreDepthPrepass);
+	engine->RegisterEnumValue("PipelineStage", "PostDepthPrepass",
+		(int)PipelineStage::PostDepthPrepass);
+	engine->RegisterEnumValue("PipelineStage", "PreGeometry",
+		(int)PipelineStage::PreGeometry);
+	engine->RegisterEnumValue("PipelineStage", "PostGeometry",
+		(int)PipelineStage::PostGeometry);
+	engine->RegisterEnumValue("PipelineStage", "PreShadows",
+		(int)PipelineStage::PreShadows);
+	engine->RegisterEnumValue("PipelineStage", "PostShadows",
+		(int)PipelineStage::PostShadows);
+	engine->RegisterEnumValue("PipelineStage", "PreSkybox",
+		(int)PipelineStage::PreSkybox);
+	engine->RegisterEnumValue("PipelineStage", "PostSkybox",
+		(int)PipelineStage::PostSkybox);
+	engine->RegisterEnumValue("PipelineStage", "PreTransparency",
+		(int)PipelineStage::PreTransparency);
+	engine->RegisterEnumValue("PipelineStage", "PostTransparency",
+		(int)PipelineStage::PostTransparency);
+	engine->RegisterEnumValue("PipelineStage", "PrePostProcess",
+		(int)PipelineStage::PrePostProcess);
+	engine->RegisterEnumValue("PipelineStage", "PostPostProcess",
+		(int)PipelineStage::PostPostProcess);
+	engine->RegisterEnumValue("PipelineStage", "PreUI",
+		(int)PipelineStage::PreUI);
+	engine->RegisterEnumValue("PipelineStage", "PostUI",
+		(int)PipelineStage::PostUI);
+
+	// Hook callback funcdef — matches void fn(PipelineContext@)
+	engine->RegisterFuncdef("void PipelineHookCallback(PipelineContext@)");
+
+	engine->RegisterObjectMethod("PipelineContext",
+		"Framebuffer@ GetBuffer(const string &in)",
+		asFUNCTION(ContextGetBuffer), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("PipelineContext",
+		"Texture@ GetBufferColor(const string &in, uint idx = 0)",
+		asFUNCTION(ContextGetBufferColor), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("PipelineContext",
+		"void RedirectOutput(Framebuffer@)",
+		asFUNCTION(ContextRedirectOutput), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("PipelineContext",
+		"void RestoreOutput()",
+		asMETHOD(ScriptPipelineContext, RestoreOutput), asCALL_THISCALL);
+	engine->RegisterObjectMethod("PipelineContext",
+		"void SuppressBlit()",
+		asMETHOD(ScriptPipelineContext, SuppressBlit), asCALL_THISCALL);
+	engine->RegisterObjectMethod("PipelineContext",
+		"void SetBloomThreshold(float)",
+		asMETHOD(ScriptPipelineContext, SetBloomThreshold), asCALL_THISCALL);
+	engine->RegisterObjectMethod("PipelineContext",
+		"void SetBloomRadius(int)",
+		asMETHOD(ScriptPipelineContext, SetBloomRadius), asCALL_THISCALL);
+	engine->RegisterObjectMethod("PipelineContext",
+		"void SetSubPixelOffset(const Vec2 &in)",
+		asFUNCTION(ContextSetSubPixelOffset), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("PipelineContext",
+		"Vec2 get_SubPixelOffset() const property",
+		asFUNCTION(ContextGetSubPixelOffset), asCALL_CDECL_OBJLAST);
+
+	// --- RenderPipeline interface (script-implementable) ---
+	engine->RegisterInterface("IRenderPipeline");
+	engine->RegisterInterfaceMethod("IRenderPipeline",
+		"void OnInit()");
+	engine->RegisterInterfaceMethod("IRenderPipeline",
+		"void OnRender()");
+	engine->RegisterInterfaceMethod("IRenderPipeline",
+		"void OnResize(uint w, uint h)");
 }
 
 }

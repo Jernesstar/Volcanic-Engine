@@ -49,8 +49,9 @@ public:
 	void SuppressBlit() { m_SuppressBlit = true; }
 	bool IsBlitSuppressed() const { return m_SuppressBlit; }
 
-	void SetBloomThreshold(f32 t)  { m_Pipeline->m_BloomThreshold = t; }
-	void SetFilterRadius(f32 r)    { m_Pipeline->m_FilterRadius   = r; }
+	void SetBloomThreshold(f32 t) { m_Pipeline->m_BloomThreshold = t; }
+	void SetFilterRadius(f32 r) { m_Pipeline->m_FilterRadius = r; }
+	void SetBloomRadius(int r) { m_Pipeline->m_FilterRadius = (f32)r / 1000.0f; }
 	f32 GetBloomThreshold() const { return m_Pipeline->m_BloomThreshold; }
 	f32 GetFilterRadius() const { return m_Pipeline->m_FilterRadius; }
 

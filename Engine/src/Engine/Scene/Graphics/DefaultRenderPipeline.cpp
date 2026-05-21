@@ -108,7 +108,7 @@ void DefaultRenderPipeline::OnResize(u32 w, u32 h) {
 // ── GetOutput ─────────────────────────────────────────────────────────────────
 
 Ref<Framebuffer> DefaultRenderPipeline::GetOutput() const {
-	return nullptr;
+	return m_OutputBuffer;
 }
 
 Ref<Framebuffer> DefaultRenderPipeline::GetBuffer(const std::string& name) const {
@@ -121,25 +121,49 @@ Ref<Framebuffer> DefaultRenderPipeline::GetBuffer(const std::string& name) const
 
 // ── Hook API ──────────────────────────────────────────────────────────────────
 
-void DefaultRenderPipeline::AddHook(PipelineStage stage, asIScriptFunction* fn) {
-	fn->AddRef();
-	m_Hooks[stage].Add(fn);
+static const char* s_HookMethodNames[] = {
+	"void PreDepth(PipelineContext@)",
+	"void PostDepth(PipelineContext@)",
+	"void PreGeometry(PipelineContext@)",
+	"void PostGeometry(PipelineContext@)",
+	"void PreShadows(PipelineContext@)",
+	"void PostShadows(PipelineContext@)",
+	"void PreSkybox(PipelineContext@)",
+	"void PostSkybox(PipelineContext@)",
+	"void PreTransparency(PipelineContext@)",
+	"void PostTransparency(PipelineContext@)",
+	"void PrePostProcess(PipelineContext@)",
+	"void PostPostProcess(PipelineContext@)",
+	"void PreUI(PipelineContext@)",
+	"void PostUI(PipelineContext@)"
+};
+
+void DefaultRenderPipeline::AddRenderHook(asIScriptObject* obj) {
+	RenderHook hook;
+	hook.Object = obj;
+	auto* type = obj->GetObjectType();
+	for(u32 i = 0; i <= (u32)PipelineStage::PostUI; i++)
+		hook.Methods[i] = type->GetMethodByDecl(s_HookMethodNames[i]);
+
+	m_RenderHooks.Add(hook);
 }
 
-void DefaultRenderPipeline::RemoveHook(PipelineStage stage, asIScriptFunction* fn) {
-	auto& list = m_Hooks[stage];
-	for(u64 i = 0; i < list.Count(); i++) {
-		if(list[i] == fn) {
-			list[i]->Release();
-			list.Pop(i);
+void DefaultRenderPipeline::RemoveRenderHook(asIScriptObject* obj) {
+	for(u64 i = 0; i < m_RenderHooks.Count(); i++) {
+		if(m_RenderHooks[i].Object == obj) {
+			m_RenderHooks.Pop(i);
 			return;
 		}
 	}
 }
 
 void DefaultRenderPipeline::ExecuteHooks(PipelineStage stage, ScriptPipelineContext* ctx) {
-	for(auto* fn : m_Hooks[stage]) {
-		ScriptFunc func{ fn, ScriptEngine::GetContext() };
+	u32 stageIdx = (u32)stage;
+	for(auto& hook : m_RenderHooks) {
+		auto* fn = hook.Methods[stageIdx];
+		if(!fn) continue;
+
+		ScriptFunc func{ fn, ScriptEngine::GetContext(), hook.Object };
 		func.CallVoid(ctx);
 	}
 

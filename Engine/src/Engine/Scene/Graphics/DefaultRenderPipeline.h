@@ -27,11 +27,17 @@ public:
 	Ref<Framebuffer> GetOutput() const override;
 
 	// Hook registration
-	void AddHook(PipelineStage stage, asIScriptFunction* fn);
-	void RemoveHook(PipelineStage stage, asIScriptFunction* fn);
+	void AddRenderHook(asIScriptObject* obj);
+	void RemoveRenderHook(asIScriptObject* obj);
 
 	// Named buffer access (for ScriptPipelineContext)
 	Ref<Framebuffer> GetBuffer(const std::string& name) const;
+
+private:
+	struct RenderHook {
+		asIScriptObject* Object;
+		asIScriptFunction* Methods[(u64)PipelineStage::PostUI + 1];
+	};
 
 private:
 	void ExecuteHooks(PipelineStage stage, ScriptPipelineContext* ctx);
@@ -85,7 +91,7 @@ private:
 
 	Map<u64, ParticleEmitterGPU> m_ParticleState;
 
-	Map<PipelineStage, List<asIScriptFunction*>> m_Hooks;
+	List<RenderHook> m_RenderHooks;
 
 	friend class ScriptPipelineContext;
 };

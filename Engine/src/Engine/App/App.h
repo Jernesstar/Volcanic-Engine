@@ -43,7 +43,8 @@ public:
 	Ref<Framebuffer> GetRenderOutput() { return m_SceneRenderer.GetOutput(); }
 
 	void UseDefaultPipeline();
-	void AddPipelineHook(asIScriptObject* hookObj);
+	void AddRenderHook(asIScriptObject* obj);
+	void RemoveRenderHook(asIScriptObject* obj);
 	void SetPipeline(asIScriptObject* pipelineObj);
 
 private:

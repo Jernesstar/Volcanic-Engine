@@ -103,6 +103,8 @@ void SceneVisualizerPanel::SetContext(Scene* scene) {
 		m_EditorPipeline.OnInit();
 		m_EditorPipeline.SetCamera(camera);
 	}
+
+	
 }
 
 void SceneVisualizerPanel::OnResize(u32 w, u32 h) {
