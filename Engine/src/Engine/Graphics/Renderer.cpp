@@ -114,7 +114,7 @@ void Renderer::PopOptions(u32 count) {
 
 void Renderer::Flush() {
 	s_Command = nullptr;
-	RendererAPI::Get()->EndFrame();
+	Renderer::EndFrame();
 }
 
 FrameDebugInfo Renderer::GetDebugInfo() {

@@ -30,6 +30,7 @@ Application::Application(const AppSpecification& spec,
 	s_Instance = this;
 	s_Spec = spec;
 
+	// glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
 	VOLCANICORE_ASSERT(glfwInit(), "Failed to initialize GLFW");
 
 	s_Window = CreateRef<Window>();

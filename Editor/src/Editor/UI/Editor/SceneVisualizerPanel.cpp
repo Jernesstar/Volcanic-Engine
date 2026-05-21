@@ -92,8 +92,8 @@ void SceneVisualizerPanel::Draw() {
 
 void SceneVisualizerPanel::SetContext(Scene* scene) {
 	m_Scene = scene;
-	auto camera = CreateRef<StereographicCamera>(75.0f);
-	camera->SetPosition({ 0.0f, 1.0f, 15.0f });
+	auto camera = CreateRef<StereographicCamera>(80.0f);
+	camera->SetPosition({ 0.0f, -15.0f, 15.0f });
 	camera->Resize(1920, 1080);
 	camera->SetProjection(0.001f, 10'000.0f);
 	m_Controller.SetCamera(camera);
@@ -103,8 +103,6 @@ void SceneVisualizerPanel::SetContext(Scene* scene) {
 		m_EditorPipeline.OnInit();
 		m_EditorPipeline.SetCamera(camera);
 	}
-
-	
 }
 
 void SceneVisualizerPanel::OnResize(u32 w, u32 h) {

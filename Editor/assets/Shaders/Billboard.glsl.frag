@@ -9,4 +9,5 @@ layout(location = 0) out vec4 FragColor;
 void main()
 {
     FragColor = texture(u_Texture, v_TexCoords);
+    FragColor = vec4(v_TexCoords, 1.0, 1.0);
 }
