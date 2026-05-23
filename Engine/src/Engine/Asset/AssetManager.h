@@ -62,7 +62,7 @@ static MatPropValue ReadMatPropValue(BytesReader& reader, ShaderPropType type) {
 }
 
 static void ReadModelNode(BytesReader& reader, ModelNode& node) {
-	reader.Read(node.Name);
+	// reader.Read(node.Name);
 	reader.ReadData(&node.LocalTransform, sizeof(Vec3) * 3);
 
 	u64 geoId; u8 geoType;
@@ -70,15 +70,10 @@ static void ReadModelNode(BytesReader& reader, ModelNode& node) {
 	reader.Read(geoType);
 	node.GeometryAsset = { geoId, (AssetType)geoType };
 
-	u32 matCount;
-	reader.Read(matCount);
-	node.MaterialAssets.Allocate(matCount);
-	for(u32 i = 0; i < matCount; i++) {
-		u64 matId; u8 matType;
-		reader.Read(matId);
-		reader.Read(matType);
-		node.MaterialAssets.Add({ matId, (AssetType)matType });
-	}
+	u64 matId; u8 matType;
+	reader.Read(matId);
+	reader.Read(matType);
+	node.MaterialAsset = { matId, (AssetType)matType };
 
 	u32 childCount;
 	reader.Read(childCount);
@@ -233,14 +228,10 @@ inline Ref<Material> LoadFromBytes<Material>(Bytes&& bytes) {
 	return mat;
 }
 
-// Model format: recursive ModelNode tree
-// Node: [name] [mat4 transform] [geo id: u64] [geo type: u8]
-//       [mat count: u32] ([mat id: u64] [mat type: u8])*
-//       [child count: u32] [child nodes]*
 template<>
-inline Ref<ModelAsset> LoadFromBytes<ModelAsset>(Bytes&& bytes) {
+inline Ref<Model> LoadFromBytes<Model>(Bytes&& bytes) {
 	BytesReader reader(std::move(bytes));
-	auto model = CreateRef<ModelAsset>();
+	auto model = CreateRef<Model>();
 	ReadModelNode(reader, model->Root);
 	return model;
 }
@@ -266,7 +257,7 @@ public:
 		else if(asset.Type == AssetType::Material)
 			m_MaterialAssets[asset.ID] = LoadFromBytes<Material>(std::move(bytes));
 		else if(asset.Type == AssetType::Model)
-			m_ModelAssets[asset.ID] = LoadFromBytes<ModelAsset>(std::move(bytes));
+			m_ModelAssets[asset.ID] = LoadFromBytes<Model>(std::move(bytes));
 		else if(asset.Type == AssetType::Texture)
 			m_TextureAssets[asset.ID] = LoadFromBytes<Texture>(std::move(bytes));
 		else if(asset.Type == AssetType::Cubemap)
@@ -285,14 +276,22 @@ public:
 
 		m_LoadedAssets.erase(asset.ID);
 
-		if(asset.Type == AssetType::Geometry)        m_GeometryAssets.erase(asset.ID);
-		else if(asset.Type == AssetType::Texture)    m_TextureAssets.erase(asset.ID);
-		else if(asset.Type == AssetType::Cubemap)    m_CubemapAssets.erase(asset.ID);
-		else if(asset.Type == AssetType::Shader)     m_ShaderAssets.erase(asset.ID);
-		else if(asset.Type == AssetType::Audio)      m_AudioAssets.erase(asset.ID);
-		else if(asset.Type == AssetType::Script)     m_ScriptAssets.erase(asset.ID);
-		else if(asset.Type == AssetType::Material)   m_MaterialAssets.erase(asset.ID);
-		else if(asset.Type == AssetType::Model)      m_ModelAssets.erase(asset.ID);
+		if(asset.Type == AssetType::Geometry)
+			m_GeometryAssets.erase(asset.ID);
+		else if(asset.Type == AssetType::Texture)
+			m_TextureAssets.erase(asset.ID);
+		else if(asset.Type == AssetType::Cubemap)
+			m_CubemapAssets.erase(asset.ID);
+		else if(asset.Type == AssetType::Shader)
+			m_ShaderAssets.erase(asset.ID);
+		else if(asset.Type == AssetType::Audio)
+			m_AudioAssets.erase(asset.ID);
+		else if(asset.Type == AssetType::Script)
+			m_ScriptAssets.erase(asset.ID);
+		else if(asset.Type == AssetType::Material)
+			m_MaterialAssets.erase(asset.ID);
+		else if(asset.Type == AssetType::Model)
+			m_ModelAssets.erase(asset.ID);
 	}
 
 	template<typename T>
@@ -353,14 +352,14 @@ public:
 
 protected:
 	Ref<AssetRegistry> m_AssetRegistry;
-	Map<UUID, bool>    m_LoadedAssets;
+	Map<UUID, bool> m_LoadedAssets;
 
 	Map<UUID, Ref<Geometry>>     m_GeometryAssets;
 	Map<UUID, Ref<Texture>>      m_TextureAssets;
 	Map<UUID, Ref<Cubemap>>      m_CubemapAssets;
 	Map<UUID, Ref<Shader>>       m_ShaderAssets;
 	Map<UUID, Ref<Material>>     m_MaterialAssets;
-	Map<UUID, Ref<ModelAsset>>   m_ModelAssets;
+	Map<UUID, Ref<Model>>        m_ModelAssets;
 	Map<UUID, Ref<Sound>>        m_AudioAssets;
 	Map<UUID, Ref<ScriptModule>> m_ScriptAssets;
 

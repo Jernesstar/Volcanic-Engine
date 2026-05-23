@@ -11,14 +11,14 @@ using namespace VolcaniCore;
 namespace VolcanicEngine::Graphics {
 
 struct ModelNode {
-	Str             Name;
-	Transform       LocalTransform;
-	Asset           GeometryAsset;   // may be null (group node)
-	List<Asset>     MaterialAssets;  // one per surface slot
+	Transform LocalTransform;
+	Asset GeometryAsset;
+	Asset MaterialAsset;
 	List<ModelNode> Children;
 };
 
-struct ModelAsset {
+struct Model {
+	// Str Name;
 	ModelNode Root;
 };
 

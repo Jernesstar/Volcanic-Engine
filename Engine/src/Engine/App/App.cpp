@@ -168,6 +168,7 @@ void App::OnLoad() {
 	AppLoad(s_AppModule);
 	s_AppObject = s_AppModule->GetClass("Game")->Instantiate();
 	s_AppObject->Call("OnLoad");
+	Log::Info("App loaded");
 }
 
 void App::OnClose() {
@@ -198,6 +199,7 @@ void App::LoadScene(Scene* scene) {
 	s_Scene.reset();
 	s_Scene = Ref<Scene>();
 	*s_Scene = *scene;
+	Log::Info("Scene '{}' loaded", scene->Name);
 }
 
 Scene* App::GetScene() {
