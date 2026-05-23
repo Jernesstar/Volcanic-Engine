@@ -95,6 +95,8 @@ void DefaultRenderPipeline::OnInit() {
 	m_TonemapPass->SetData(Renderer2D::GetScreenBuffer());
 	// m_SkyboxPass->SetData(Renderer3D::GetCubemapBuffer());
 	m_ParticleDrawPass->SetData(Renderer2D::GetScreenBuffer());
+
+	Log::Info("Initialized DefaultRenderPipeline");
 }
 
 // ── Resize ────────────────────────────────────────────────────────────────────

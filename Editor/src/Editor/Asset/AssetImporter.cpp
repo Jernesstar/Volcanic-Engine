@@ -271,8 +271,7 @@ Buffer<u32> AssetImporter::GetShaderData(const std::string& path) {
 		shader.parse(resources, defaultVersion, defaultProfile,
 					 forceDefaults, forwardCompatible, messageFlags);
 	if(!parsed) {
-		Log::Error("Failed to parse '%s': %s",
-			path.c_str(), shader.getInfoLog());
+		Log::Error("Failed to parse '{}': {}", path, shader.getInfoLog());
 		glslang::FinalizeProcess();
 		return { };
 	}
@@ -281,8 +280,7 @@ Buffer<u32> AssetImporter::GetShaderData(const std::string& path) {
 	program.addShader(&shader);
 	bool linked = program.link(messageFlags);
 	if(!linked) {
-		Log::Error("Failed to link '%s': %s",
-			path.c_str(), program.getInfoLog());
+		Log::Error("Failed to link '{}': {}", path, program.getInfoLog());
 		glslang::FinalizeProcess();
 		return { };
 	}
@@ -302,7 +300,7 @@ Buffer<u32> AssetImporter::GetShaderData(const std::string& path) {
 	spv::SpvBuildLogger logger;
 	glslang::GlslangToSpv(intermediateRef, spirv, &logger, &options);
 	if(!spirv.size()) {
-		Log::Info("SPIRV Log: %s", logger.getAllMessages().c_str());
+		Log::Info("SPIRV Log: {}", logger.getAllMessages());
 		glslang::FinalizeProcess();
 		return { };
 	}

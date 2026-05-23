@@ -1,7 +1,7 @@
 #version 460 core
 
-uniform vec3 u_CameraPosition;
-uniform vec3 u_LightPosition;
+layout(location = 2) uniform vec3 u_CameraPosition;
+layout(location = 3) uniform vec3 u_LightPosition;
 
 layout(binding = 0) uniform sampler2D u_Diffuse;
 layout(binding = 1) uniform sampler2D u_ShadowMap;
@@ -11,7 +11,7 @@ layout(location = 1) in vec3 v_Normal;
 layout(location = 2) in vec2 v_TexCoords;
 layout(location = 3) in vec4 v_PositionLightSpace;
 
-out vec4 FragColor;
+layout(location = 0) out vec4 FragColor;
 
 float ShadowCalculation()
 {

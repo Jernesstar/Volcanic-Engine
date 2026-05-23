@@ -1,7 +1,7 @@
 #version 460 core
 
-uniform mat4 u_ViewProj;
-uniform mat4 u_LightSpaceMatrix;
+layout(location = 0) uniform mat4 u_ViewProj;
+layout(location = 1) uniform mat4 u_LightSpaceMatrix;
 
 layout(location = 0) in vec3 a_Position;
 layout(location = 1) in vec3 a_Normal;

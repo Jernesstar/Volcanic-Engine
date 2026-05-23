@@ -23,12 +23,12 @@ void CameraController::OnUpdate(TimeStep ts) {
 	glm::vec2 delta = (mousePosition - m_LastMousePosition) * 0.001f;
 	m_LastMousePosition = mousePosition;
 
-	// if(!Input::MouseButtonPressed(Mouse::LeftButton)) {
-	// 	Input::SetCursorMode(CursorMode::Normal);
-	// 	return;
-	// }
+	if(!Input::MouseButtonPressed(Mouse::LeftButton)) {
+		Input::SetCursorMode(CursorMode::Normal);
+		return;
+	}
 
-	// Input::SetCursorMode(CursorMode::Locked);
+	Input::SetCursorMode(CursorMode::Locked);
 
 	glm::vec3 finalPos = m_Camera->GetPosition();
 	glm::vec3 forward = m_Camera->GetDirection();

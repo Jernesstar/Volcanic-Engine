@@ -321,7 +321,12 @@ public:
 
 	template<typename T>
 	Ref<T> Get(const Str& name) {
-		return Get<T>(m_AssetRegistry->FindAsset(name));
+		Asset asset = m_AssetRegistry->FindAsset(name);
+		if(!asset) {
+			Log::Error("Asset not found: {}", name);
+			return nullptr;
+		}
+		return Get<T>(asset);
 	}
 
 	bool IsLoaded(Asset asset) const {

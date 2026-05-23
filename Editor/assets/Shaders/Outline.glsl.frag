@@ -54,5 +54,4 @@ void main()
     }
 
     FragColor = vec4(u_Color, a);
-    FragColor = vec4(v_TexCoords, 0.0, 1.0);
 }
