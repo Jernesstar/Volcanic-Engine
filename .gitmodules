@@ -64,3 +64,6 @@
 [submodule "Editor/.vendor/ImGuizmo"]
 	path = Editor/.vendor/ImGuizmo
 	url = https://github.com/CedricGuillemet/ImGuizmo.git
+[submodule "Editor/.vendor/json"]
+	path = Editor/.vendor/json
+	url = https://github.com/nlohmann/json.git

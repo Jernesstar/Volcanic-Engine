@@ -26,6 +26,13 @@ struct MaterialPaths {
 
 class AssetImporter {
 public:
+	struct ModelNodeData {
+		Transform         LocalTransform;
+		i32               GeometryIndex = -1;  // index into outSurfaces
+		i32               MaterialIndex = -1;  // index into outMaterials
+		List<ModelNodeData> Children;
+	};
+
 	static Graphics::ImageData GetImageData(const std::string& path,
 		bool flip = true);
 
@@ -33,6 +40,11 @@ public:
 	static void GetGeometryData(const std::string& path,
 		List<Graphics::SubGeometry>& geometry,
 		List<MaterialPaths>& materialPaths);
+
+	static ModelNodeData GetModelData(
+		const std::string& path,
+		List<Graphics::SubGeometry>&  outSurfaces,
+		List<MaterialPaths>& outMaterials);
 
 	static Ref<Graphics::Texture> GetTexture(const std::string& path,
 		bool flip = true);

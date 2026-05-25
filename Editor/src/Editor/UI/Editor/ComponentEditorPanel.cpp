@@ -423,6 +423,7 @@ void ComponentEditorPanel::Update(TimeStep ts) {
 }
 
 void ComponentEditorPanel::Draw() {
+	ImGui::SetNextWindowSizeConstraints(ImVec2(40, 0), ImVec2(60, 0));
 	ImGui::Begin("Component Editor", &Open);
 
 	if(!m_Context || !m_Context.IsValid()) {

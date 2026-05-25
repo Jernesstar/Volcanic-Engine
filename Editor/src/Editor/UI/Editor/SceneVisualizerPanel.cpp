@@ -92,8 +92,8 @@ void SceneVisualizerPanel::Draw() {
 
 void SceneVisualizerPanel::SetContext(Scene* scene) {
 	m_Scene = scene;
-	auto camera = CreateRef<StereographicCamera>(80.0f);
-	camera->SetPosition({ 0.0f, 5.0f, 15.0f });
+	auto camera = CreateRef<StereographicCamera>(75.0f);
+	camera->SetPosition({ 0.0f, 1.0f, 15.0f });
 	camera->Resize(1920, 1080);
 	camera->SetProjection(0.001f, 10'000.0f);
 	m_Controller.SetCamera(camera);
@@ -101,13 +101,17 @@ void SceneVisualizerPanel::SetContext(Scene* scene) {
 
 	if(scene) {
 		m_EditorPipeline.OnInit();
+		m_EditorPipeline.Render3D = false;
+		m_EditorPipeline.Render2D = false;
+		m_EditorPipeline.RenderCanvas = false;
 		m_EditorPipeline.SetCamera(camera);
 	}
 }
 
 void SceneVisualizerPanel::OnResize(u32 w, u32 h) {
-	// m_EditorPipeline.OnResize(w, h);
+
 }
+
 void SceneVisualizerPanel::DrawViewport() {
 	ImVec2 availSize = ImGui::GetContentRegionAvail();
 
@@ -131,7 +135,7 @@ void SceneVisualizerPanel::DrawViewport() {
 		return;
 	}
 
-	float targetWidth = 1920.0f; 
+	float targetWidth = 1920.0f;
 	float targetHeight = 1080.0f;
 	float targetAspect = targetWidth / targetHeight;
 	float availAspect = availSize.x / availSize.y;

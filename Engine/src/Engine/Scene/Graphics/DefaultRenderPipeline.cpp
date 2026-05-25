@@ -424,7 +424,7 @@ void DefaultRenderPipeline::OnRender(Scene* scene) {
 				if(!geo) return;
 
 				// Bind material for this draw command
-				auto matAsset = mesh.GetMaterialForSlot(0);
+				auto matAsset = mesh.MaterialAsset;
 				auto mat = AssetManager::Get()->Get<Material>(matAsset);
 				if(mat)
 					MaterialBinder::Bind(cmd, *mat);

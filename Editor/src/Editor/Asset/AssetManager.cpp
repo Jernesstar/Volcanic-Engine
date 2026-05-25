@@ -166,6 +166,25 @@ static efsw::FileWatcher* s_FileWatcher;
 static FileWatcher* s_Listener;
 static List<efsw::WatchID> s_WatcherIDs;
 
+// Mirrors ReadModelNode in AssetManager.h exactly:
+// [transform: 9 floats] [geoID: u64] [geoType: u8] [matID: u64] [matType: u8]
+// [childCount: u32] [children...]
+static void WriteModelNode(BytesWriter& wr,
+	const AssetImporter::ModelNodeData& node,
+	const List<Asset>& geoAssets,
+	const List<Asset>& matAssets)
+{
+	wr.WriteData(&node.LocalTransform, sizeof(Vec3) * 3);
+
+	Asset geo = (node.GeometryIndex >= 0) ? geoAssets[node.GeometryIndex] : Asset{};
+	Asset mat = (node.MaterialIndex >= 0) ? matAssets[node.MaterialIndex] : Asset{};
+	wr.Write((u64)geo.ID); wr.Write((u8)geo.Type);
+	wr.Write((u64)mat.ID); wr.Write((u8)mat.Type);
+	wr.Write((u32)node.Children.Count());
+	for(auto& child : node.Children)
+		WriteModelNode(wr, child, geoAssets, matAssets);
+}
+
 EditorAssetManager::EditorAssetManager()
 	: AssetManager()
 {
@@ -207,9 +226,98 @@ void EditorAssetManager::Build(Asset asset) {
 		m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
 	}
 	else if(asset.Type == AssetType::Model) {
-		// Lightweight: register child Geometry + Material assets,
-		// serialize the ModelNode hierarchy as asset ID references only.
-		// GPU data lives in the child Geometry assets, not here.
+		List<SubGeometry>   surfaces;
+		List<MaterialPaths> mats;
+		AssetImporter::ModelNodeData root =
+			AssetImporter::GetModelData(path, surfaces, mats);
+
+		// Deterministic child UUIDs — stable across editor restarts.
+		// Different primes per slot type to avoid ID collisions.
+		auto geoChildID = [&](u32 i) -> UUID {
+			return UUID(((u64)asset.ID * 6364136223846793005ULL) ^ (u64)(i + 1));
+		};
+		auto matChildID = [&](u32 i) -> UUID {
+			return UUID(((u64)asset.ID * 2862933555777941757ULL) ^ (u64)(i + 1));
+		};
+		auto texChildID = [&](u32 i) -> UUID {
+			return UUID(((u64)asset.ID * 1442695040888963407ULL) ^ (u64)(i + 1));
+		};
+
+		// ── Geometry child assets ────────────────────────────────────────────
+		List<Asset> geoAssets;
+		geoAssets.Allocate(surfaces.Count());
+		for(u32 i = 0; i < (u32)surfaces.Count(); i++) {
+			auto& surf = surfaces[i];
+			Asset geoAsset{ geoChildID(i), AssetType::Geometry, false };
+			m_AssetRegistry->Add(geoAsset);
+
+			// One surface per decomposed geometry; normalize slot to 0 so
+			// MeshComponent::GetMaterialForSlot(0) resolves correctly.
+			BytesWriter wr(sizeof(u64)
+				+ surf.Vertices.GetSize()
+				+ surf.Indices.GetSize()
+				+ sizeof(u32));
+			wr.Write((u64)1);
+			wr.Write(surf.Vertices);
+			wr.Write(surf.Indices);
+			wr.Write((u32)0);
+			m_AssetRegistry->SetData(geoAsset, std::move(wr.Bytes));
+			geoAssets.Add(geoAsset);
+		}
+
+		// ── Material child assets ────────────────────────────────────────────
+		// All model-derived materials reference the native GBuffer shader (ID 100).
+		Asset gbufShader{ 100, AssetType::Shader };
+
+		List<Asset> matAssets;
+		matAssets.Allocate(mats.Count());
+		for(u32 i = 0; i < (u32)mats.Count(); i++) {
+			auto& mp = mats[i];
+			Asset matAsset{ matChildID(i), AssetType::Material, false };
+			m_AssetRegistry->Add(matAsset);
+
+			// Optional diffuse texture
+			Asset diffTex{};
+			if(!mp.Diffuse.empty() && fs::exists(mp.Diffuse)) {
+				diffTex = { texChildID(i), AssetType::Texture, false };
+				m_AssetRegistry->Add(diffTex);
+
+				ImageData img = AssetImporter::GetImageData(mp.Diffuse, false);
+				BytesWriter texWr(sizeof(u32) * 3 + img.Data.GetSize());
+				texWr.Write(img.Width);
+				texWr.Write(img.Height);
+				texWr.Write(img.BPP);
+				texWr.Write(img.Data);
+				m_AssetRegistry->SetData(diffTex, std::move(texWr.Bytes));
+			}
+
+			u32 propCount = diffTex ? 2u : 1u;
+			BytesWriter matWr(256);
+			matWr.Write((u64)gbufShader.ID);
+			matWr.Write((u8)gbufShader.Type);
+			matWr.Write(propCount);
+
+			// DiffuseColor — always present
+			matWr.Write(Str("DiffuseColor"));
+			matWr.Write((u8)ShaderPropType::Vec4);
+			matWr.WriteData(&mp.DiffuseColor.x, sizeof(Vec4));
+
+			// DiffuseMap — only when a texture was found
+			if(diffTex) {
+				matWr.Write(Str("DiffuseMap"));
+				matWr.Write((u8)ShaderPropType::Texture);
+				matWr.Write((u64)diffTex.ID);
+				matWr.Write((u8)diffTex.Type);
+			}
+
+			m_AssetRegistry->SetData(matAsset, std::move(matWr.Bytes));
+			matAssets.Add(matAsset);
+		}
+
+		// ── ModelNode hierarchy ──────────────────────────────────────────────
+		BytesWriter modelWr(2048);
+		WriteModelNode(modelWr, root, geoAssets, matAssets);
+		m_AssetRegistry->SetData(asset, std::move(modelWr.Bytes));
 	}
 	else if(asset.Type == AssetType::Texture) {
 		ImageData image = AssetImporter::GetImageData(path, false);
@@ -299,7 +407,6 @@ Asset EditorAssetManager::Add(AssetType type, UUID id, bool primary,
 		m_Paths[newAsset.ID] = path;
 
 	m_AssetRegistry->Add(newAsset);
-	Build(newAsset);
 	return newAsset;
 }
 
@@ -404,9 +511,14 @@ void EditorAssetManager::LoadRegistry() {
 	Log::Info("Loaded registered assets");
 
 	for(auto& folder : folders) {
-		for(auto& path : FileUtils::GetFiles(folder.Path.string()))
-			if(!GetFromPath(path))
-				Add(folder.Type, 0, true, path);
+		for(auto& path : FileUtils::GetFiles(folder.Path.string())) {
+			if(folder.Type == AssetType::Model)
+				path = FileUtils::GetFiles(path, { ".obj" })[0];
+			if(!GetFromPath(path)) {
+				auto newAsset = Add(folder.Type, 0, true, path);
+				Build(newAsset);
+			}
+		}
 	}
 
 	Log::Info("New assets");
@@ -534,7 +646,7 @@ void EditorAssetManager::LoadRegistry() {
 	Application::PopDir();
 
 	{
-		asset = { 109, AssetType::Geometry };
+		asset = { 110, AssetType::Geometry };
 		m_GeometryAssets[asset.ID] =
 			Geometry::Create(GeometryType::Cube);
 		m_LoadedAssets[asset.ID] = true;

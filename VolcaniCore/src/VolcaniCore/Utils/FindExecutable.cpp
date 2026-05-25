@@ -6,6 +6,7 @@
 	#include <windows.h>
 #elif VOLCANIC_LINUX
 	#include <unistd.h>
+	#include <climits>
 #endif
 
 namespace VolcaniCore {

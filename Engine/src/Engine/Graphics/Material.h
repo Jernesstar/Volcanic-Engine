@@ -28,24 +28,24 @@ struct Material {
 	Map<Str, MatProp> Props; // name -> value
 
 	void SetInt(const Str& name, i32 v) {
-		Props[name] = { ShaderPropType::Int,   v };
+		Props[name] = { ShaderPropType::Int, v };
 	}
 	void SetFloat(const Str& name, f32 v) {
 		Props[name] = { ShaderPropType::Float, v };
 	}
 	void SetVec2(const Str& name, const Vec2& v) {
-		Props[name] = { ShaderPropType::Vec2,  v };
+		Props[name] = { ShaderPropType::Vec2, v };
 	}
 	void SetVec3(const Str& name, const Vec3& v) {
-		Props[name] = { ShaderPropType::Vec3,  v };
+		Props[name] = { ShaderPropType::Vec3, v };
 	}
 	void SetVec4(const Str& name, const Vec4& v) {
-		Props[name] = { ShaderPropType::Vec4,  v };
+		Props[name] = { ShaderPropType::Vec4, v };
 	}
 	void SetMat4(const Str& name, const Mat4& v) {
-		Props[name] = { ShaderPropType::Mat4,  v };
+		Props[name] = { ShaderPropType::Mat4, v };
 	}
-	void SetTex(const Str& name, Ref<Texture> v)  {
+	void SetTex(const Str& name, Ref<Texture> v) {
 		Props[name] = { ShaderPropType::Texture, v };
 	}
 };

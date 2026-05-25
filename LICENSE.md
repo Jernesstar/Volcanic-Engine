@@ -1,29 +1,21 @@
-Copyright © 2026 LavaFlow Technologies
+MIT License
 
-All rights reserved.
+Copyright (c) 2026 Jercy Mukala
 
-## 1. License Grant  
-   LavaFlow Technologies (“Licensor”) grants the Licensee a limited, non-transferable, non-sublicensable, subscription-based license to use VolcanicEngine (the “Software”) solely for the Licensee’s internal development purposes, subject to the terms of this Agreement.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-## 2. Restrictions  
-   The Licensee may NOT:
-   - Copy, distribute, or sublicense the Software to any third party.
-   - Modify, reverse engineer, decompile, or attempt to derive source code from the Software, except as expressly permitted by Licensor.
-   - Use the Software outside the scope of the subscription or in violation of this License.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-## 3. Subscription Terms  
-   - Access to the Software is provided on a subscription basis.
-   - Subscription fees must be paid as required for continued access.
-   - Licensor may suspend or terminate access for non-payment or breach of this License.
-
-## 4. Intellectual Property  
-   - The Software, including all source code, binaries, documentation, trademarks, and associated materials, is the exclusive property of Licensor.
-   - This License does not convey any ownership rights to Licensee.
-
-## 5. Termination  
-   - Licensor may terminate this License at any time for violation of its terms.
-   - Upon termination, the Licensee must immediately cease all use of the Software and destroy all copies.
-
-## 6. Disclaimer  
-   - The Software is provided “as is” without warranty of any kind, either express or implied.
-   - Licensor is not liable for any damages arising from use of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

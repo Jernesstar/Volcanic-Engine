@@ -217,7 +217,7 @@ static void DrawSubGeometry(Ref<Geometry> root, SubGeometry& sub,
 	if(!command->DrawCalls || command->DrawCalls[-1].InstanceCount >= 10'000) {
 		auto* call = command->NewCall();
 		call->Partition = DrawPartition::Instanced;
-		call->Primitive = DrawPrimitive::Line;
+		call->Primitive = DrawPrimitive::Triangle;
 		call->InstanceOffset = s_InstancesIndex;
 		s_InstancesIndex += 10'000;
 	}

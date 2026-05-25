@@ -31,7 +31,7 @@ ScriptObject::ScriptObject(asIScriptObject* obj, ScriptClass* cl,
 	m_Handle = obj;
 	m_Class = cl;
 	m_Initialized = initialized;
-	AddRef();
+	m_RefCount = 1;
 }
 
 ScriptObject::~ScriptObject() {

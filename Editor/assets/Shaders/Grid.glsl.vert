@@ -1,6 +1,6 @@
 #version 460 core
 
-layout(location = 0) uniform mat4 u_ViewProj = mat4(1.0);
+layout(location = 0) uniform mat4 u_ViewProj;
 layout(location = 1) uniform vec3 u_CameraPosition;
 layout(location = 2) uniform float u_GridSize = 100.0;
 

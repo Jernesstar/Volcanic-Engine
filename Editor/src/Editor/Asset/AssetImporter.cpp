@@ -102,6 +102,82 @@ static std::string GetMaterialPath(const std::string& dir,
 	return fullPath.string();
 }
 
+static AssetImporter::ModelNodeData LoadModelNode(
+	const aiNode* node, const aiScene* scene,
+	Map<u32, u32>& meshIndexMap) // global aiMesh idx -> outSurfaces idx
+{
+	AssetImporter::ModelNodeData data;
+
+	aiVector3D pos, scale;
+	aiQuaternion rot;
+	node->mTransformation.Decompose(scale, rot, pos);
+	data.LocalTransform.Translation = { pos.x, pos.y, pos.z };
+	data.LocalTransform.Scale       = { scale.x, scale.y, scale.z };
+	glm::quat q(rot.w, rot.x, rot.y, rot.z);
+	data.LocalTransform.Rotation = glm::degrees(glm::eulerAngles(q));
+
+	if(node->mNumMeshes == 1) {
+		u32 mi = node->mMeshes[0];
+		data.GeometryIndex = (i32)meshIndexMap[mi];
+		data.MaterialIndex = (i32)scene->mMeshes[mi]->mMaterialIndex;
+	}
+	else {
+		// Multi-mesh node: collapse into synthetic children with identity transform
+		for(u32 i = 0; i < node->mNumMeshes; i++) {
+			u32 mi = node->mMeshes[i];
+			AssetImporter::ModelNodeData& child = data.Children.Emplace();
+			child.LocalTransform  = Transform{};
+			child.GeometryIndex   = (i32)meshIndexMap[mi];
+			child.MaterialIndex   = (i32)scene->mMeshes[mi]->mMaterialIndex;
+		}
+	}
+
+	for(u32 i = 0; i < node->mNumChildren; i++)
+		data.Children.Add(LoadModelNode(node->mChildren[i], scene, meshIndexMap));
+
+	return data;
+}
+
+AssetImporter::ModelNodeData AssetImporter::GetModelData(
+	const std::string&   path,
+	List<SubGeometry>&   outSurfaces,
+	List<MaterialPaths>& outMaterials)
+{
+	Assimp::Importer importer;
+	u32 flags = aiProcess_Triangulate | aiProcess_GenSmoothNormals
+			  | aiProcess_FlipUVs    | aiProcess_JoinIdenticalVertices;
+	const aiScene* scene = importer.ReadFile(path.c_str(), flags);
+	VOLCANICORE_ASSERT_ARGS(scene, "Error importing model '{}': {}",
+		path, importer.GetErrorString());
+
+	outSurfaces.Allocate(scene->mNumMeshes);
+	Map<u32, u32> meshIndexMap;
+	for(u32 i = 0; i < scene->mNumMeshes; i++) {
+		meshIndexMap[i] = outSurfaces.Count();
+		outSurfaces.AddMove(LoadSubGeometry(scene->mMeshes[i]));
+	}
+
+	auto dir = (fs::path(path).parent_path() / "textures").string();
+	outMaterials.Allocate(scene->mNumMaterials);
+	for(u32 i = 0; i < scene->mNumMaterials; i++) {
+		auto* mat = scene->mMaterials[i];
+		auto diffuse = GetMaterialPath(dir, mat, aiTextureType_DIFFUSE);
+		auto specular = GetMaterialPath(dir, mat, aiTextureType_SPECULAR);
+		auto emissive = GetMaterialPath(dir, mat, aiTextureType_EMISSIVE);
+
+		glm::vec4 diffColor{}, specColor{}, emisColor{};
+		aiColor4D c;
+		if(mat->Get(AI_MATKEY_COLOR_DIFFUSE,  c) == AI_SUCCESS) diffColor = { c.r, c.g, c.b, c.a };
+		if(mat->Get(AI_MATKEY_COLOR_SPECULAR, c) == AI_SUCCESS) specColor = { c.r, c.g, c.b, c.a };
+		if(mat->Get(AI_MATKEY_COLOR_EMISSIVE, c) == AI_SUCCESS) emisColor = { c.r, c.g, c.b, c.a };
+
+		outMaterials.Emplace(diffuse, specular, emissive,
+							  diffColor, specColor, emisColor);
+	}
+
+	return LoadModelNode(scene->mRootNode, scene, meshIndexMap);
+}
+
 Ref<Geometry> AssetImporter::GetGeometry(const std::string& path) {
 	Assimp::Importer importer;
 	u32 loadFlags = aiProcess_Triangulate
@@ -110,7 +186,7 @@ Ref<Geometry> AssetImporter::GetGeometry(const std::string& path) {
 						| aiProcess_JoinIdenticalVertices;
 	const aiScene* scene = importer.ReadFile(path.c_str(), loadFlags);
 
-	VOLCANICORE_ASSERT_ARGS(scene, "Error importing mesh from %s: %s",
+	VOLCANICORE_ASSERT_ARGS(scene, "Error importing mesh from {}: {}",
 							path.c_str(), importer.GetErrorString());
 
 	Ref<Geometry> geometry = CreateRef<Geometry>(GeometryType::Model);
@@ -132,7 +208,7 @@ void AssetImporter::GetGeometryData(const std::string& path,
 						| aiProcess_JoinIdenticalVertices;
 	const aiScene* scene = importer.ReadFile(path.c_str(), loadFlags);
 
-	VOLCANICORE_ASSERT_ARGS(scene, "Error importing mesh from %s: %s",
+	VOLCANICORE_ASSERT_ARGS(scene, "Error importing mesh from {}: {}",
 							path.c_str(), importer.GetErrorString());
 
 	surfaces.Allocate(scene->mNumMeshes);

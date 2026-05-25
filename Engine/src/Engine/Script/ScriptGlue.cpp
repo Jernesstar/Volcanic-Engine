@@ -918,10 +918,6 @@ void RegisterECS() {
 // 	return HitInfo();
 // }
 
-static void SetMeshMaterial(u32 slot, Asset mat, MeshComponent* mc) {
-	mc->MaterialOverrides[slot] = mat;
-}
-
 void RegisterScene() {
 	auto* engine = ScriptEngine::Get();
 
@@ -970,11 +966,8 @@ void RegisterScene() {
 	engine->RegisterObjectType("MeshComponent", 0, asOBJ_REF | asOBJ_NOCOUNT);
 	engine->RegisterObjectProperty("MeshComponent", "Asset GeometryAsset",
 		asOFFSET(MeshComponent, GeometryAsset));
-	engine->RegisterObjectMethod("MeshComponent", "Asset GetMaterial(uint32)",
-		asMETHOD(MeshComponent, GetMaterialForSlot), asCALL_THISCALL);
-	engine->RegisterObjectMethod("MeshComponent",
-		"void SetMaterial(uint32, Asset)",
-		asFUNCTION(SetMeshMaterial), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectProperty("MeshComponent", "Asset MaterialAsset",
+		asOFFSET(MeshComponent, MaterialAsset));
 
 	engine->RegisterObjectType("SkyboxComponent", 0, asOBJ_REF | asOBJ_NOCOUNT);
 	engine->RegisterObjectProperty("SkyboxComponent", "Asset CubemapAsset",

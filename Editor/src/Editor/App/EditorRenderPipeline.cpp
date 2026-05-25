@@ -153,11 +153,13 @@ void EditorRenderPipeline::OnRender(Scene* scene) {
 
 	if(Render2D) {
 		Begin2D();
+
 		End2D();
 	}
 
 	if(RenderCanvas) {
 		BeginCanvas();
+
 		EndCanvas();
 	}
 }
@@ -302,10 +304,9 @@ void EditorRenderPipeline::SubmitGeometry(const Entity& entity) {
 	auto& mc = entity.Get<MeshComponent>();
 	auto& tc = entity.Get<TransformComponent>();
 
-	if(!mc.GeometryAsset)
+	if(!mc.GeometryAsset || !mc.MaterialAsset)
 		return;
 
-	mgr->Load(mc.GeometryAsset);
 	auto geometry = mgr->Get<Geometry>(mc.GeometryAsset);
 	if(!geometry)
 		return;
@@ -314,15 +315,10 @@ void EditorRenderPipeline::SubmitGeometry(const Entity& entity) {
 	auto* command = RendererAPI::Get()->NewCommand(m_GeometryPass->Get());
 	command->Uniforms = m_GeometryCommand->Uniforms; // inherit camera
 
-	Asset matAsset = mc.GetMaterialForSlot(0);
-	if(matAsset) {
-		mgr->Load(matAsset);
-		auto mat = mgr->Get<Material>(matAsset);
-		if(mat) {
-			// Resolve textures and upload through MaterialBinder
-			MaterialBinder::Bind(command, *mat);
-		}
-	}
+	// Resolve textures and upload through MaterialBinder
+	auto mat = mgr->Get<Material>(mc.MaterialAsset);
+	if(mat)
+		MaterialBinder::Bind(command, *mat);
 
 	Transform t = tc;
 	Renderer3D::DrawGeometry(geometry, t.GetTransform(), command);
@@ -384,7 +380,9 @@ void EditorRenderPipeline::End3D() {
 		if(type == 0) {
 			command = RendererAPI::Get()->NewCommand(m_GridPass->Get());
 			command->Uniforms
+			.Set("u_ViewProj", m_Camera->GetViewProjection())
 			.Set("u_CameraPosition", m_Camera->GetPosition());
+			command->Culling = CullingMode::Back;
 		}
 		else {
 			command = RendererAPI::Get()->NewCommand(m_BillboardPass->Get());
@@ -433,14 +431,22 @@ void EditorRenderPipeline::End3D() {
 	Renderer::Flush();
 }
 
-// ── 2D ────────────────────────────────────────────────────────────────────────
+void EditorRenderPipeline::Begin2D() {
+	auto* command = RendererAPI::Get()->NewCommand(m_GridPass->Get());
+	command->Clear = true;
+}
 
-void EditorRenderPipeline::Begin2D() { }
-void EditorRenderPipeline::End2D()   { }
+void EditorRenderPipeline::End2D() {
 
-// ── Canvas ────────────────────────────────────────────────────────────────────
+}
 
-void EditorRenderPipeline::BeginCanvas() { }
-void EditorRenderPipeline::EndCanvas()   { }
+void EditorRenderPipeline::BeginCanvas() {
+	auto* command = RendererAPI::Get()->NewCommand(m_GridPass->Get());
+	command->Clear = true;
+}
+
+void EditorRenderPipeline::EndCanvas() {
+
+}
 
 }

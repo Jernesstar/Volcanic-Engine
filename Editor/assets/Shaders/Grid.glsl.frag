@@ -2,7 +2,7 @@
 
 layout(location = 1) uniform vec3 u_CameraPosition;
 layout(location = 2) uniform float u_GridSize = 100.0;
-layout(location = 3) uniform float u_GridMinPixelsBetweenCells = 2.0;
+layout(location = 3) uniform float u_GridMinPixelsBetweenCells = 5.0;
 layout(location = 4) uniform float u_GridCellSize = 0.025;
 layout(location = 5) uniform vec4 u_GridColorThin = vec4(0.5, 0.5, 0.5, 1.0);
 layout(location = 6) uniform vec4 u_GridColorThick = vec4(1.0);
