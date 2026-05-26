@@ -244,8 +244,8 @@ void Editor::Close() {
 }
 
 void Editor::Update(TimeStep ts) {
-	Renderer::BeginFrame();
 	UIRenderer::BeginFrame();
+	Renderer::BeginFrame();
 	// ImGuizmo::BeginFrame();
 
 	if(s_EditorMode == EditorMode::Play) {
@@ -315,8 +315,8 @@ void Editor::Render() {
 	s_AssetEditor.Draw();
 	s_Console.Draw();
 
-	UIRenderer::EndFrame();
 	Renderer::EndFrame();
+	UIRenderer::EndFrame();
 }
 
 Project& Editor::GetProject() {

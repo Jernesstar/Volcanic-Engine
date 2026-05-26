@@ -182,13 +182,8 @@ static void DrawAudioComponent(ECS::Entity& entity) {
 static void DrawMeshComponent(ECS::Entity& entity) {
 	ComponentSection<MeshComponent>("Mesh Component", entity, [&] {
 		auto& comp = entity.Set<MeshComponent>();
-		ImGui::Text("Geometry Source: %llu", (uint64_t)comp.GeometryAsset.ID);
-		if(ImGui::TreeNode("Material Overrides")) {
-			for(auto& [slot, mat] : comp.MaterialOverrides) {
-				ImGui::Text("Slot %u: %llu", slot, (uint64_t)mat.ID);
-			}
-			ImGui::TreePop();
-		}
+		ImGui::Text("Geometry Source: %llu", (u64)comp.GeometryAsset.ID);
+		ImGui::Text("Material %llu", (u64)comp.MaterialAsset.ID);
 		// TODO: hook up ContentBrowserPanel asset picker
 	});
 }

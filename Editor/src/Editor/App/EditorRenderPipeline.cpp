@@ -427,8 +427,6 @@ void EditorRenderPipeline::End3D() {
 	m_PointLightCount = 0;
 	m_SpotlightCount = 0;
 	m_ParticleEmitterCount = 0;
-
-	Renderer::Flush();
 }
 
 void EditorRenderPipeline::Begin2D() {

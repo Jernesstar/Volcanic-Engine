@@ -297,9 +297,7 @@ void SerializeEntity(YAMLSerializer& serializer, const Entity& entity) {
 		serializer.WriteKey("MeshComponent")
 		.BeginMapping()
 			.WriteKey("GeometryID").Write((u64)mc.GeometryAsset.ID)
-			.WriteKey("MaterialOverrides").BeginMapping();
-		for(auto& [slot, mat] : mc.MaterialOverrides)
-			serializer.WriteKey(std::to_string(slot)).Write((u64)mat.ID);
+			.WriteKey("MaterialID").Write((u64)mc.MaterialAsset.ID);
 		serializer.EndMapping().EndMapping();
 	}
 	if(entity.Has<SkyboxComponent>()) {
@@ -591,22 +589,11 @@ void DeserializeEntity(YAML::Node entityNode, World& world) {
 
 	auto meshComponentNode = components["MeshComponent"];
 	if(meshComponentNode) {
-		auto geometryID = meshComponentNode["GeometryID"] ? meshComponentNode["GeometryID"].as<u64>() : meshComponentNode["MeshSourceID"].as<u64>();
 		auto& mc = entity.Set<MeshComponent>();
+		auto geometryID = meshComponentNode["GeometryID"].as<u64>();
+		auto materialID = meshComponentNode["MaterialID"].as<u64>();
 		mc.GeometryAsset = Asset{ geometryID, AssetType::Geometry };
-		
-		auto materialOverridesNode = meshComponentNode["MaterialOverrides"];
-		if(materialOverridesNode) {
-			for(auto overrideNode : materialOverridesNode) {
-				auto slot = std::stoul(overrideNode.first.as<std::string>());
-				auto materialID = overrideNode.second.as<u64>();
-				mc.MaterialOverrides[slot] = Asset{ materialID, AssetType::Material };
-			}
-		} else {
-			// Backwards compatibility
-			auto materialID = meshComponentNode["MaterialID"].as<u64>();
-			mc.MaterialOverrides[0] = Asset{ materialID, AssetType::Material };
-		}
+		mc.MaterialAsset = Asset{ materialID, AssetType::Material };
 	}
 
 	auto skyboxComponentNode = components["SkyboxComponent"];
@@ -775,11 +762,7 @@ BinaryWriter& BinaryWriter::WriteObject(const AudioComponent& comp) {
 template<>
 BinaryWriter& BinaryWriter::WriteObject(const MeshComponent& comp) {
 	Write((u64)comp.GeometryAsset.ID);
-	Write((u32)comp.MaterialOverrides.size());
-	for(auto& [slot, mat] : comp.MaterialOverrides) {
-		Write(slot);
-		Write((u64)mat.ID);
-	}
+	Write((u64)comp.MaterialAsset.ID);
 	return *this;
 }
 

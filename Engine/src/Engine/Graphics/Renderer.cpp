@@ -42,10 +42,10 @@ void Renderer::BeginFrame() {
 }
 
 void Renderer::EndFrame() {
+	s_Frame = { };
 	Renderer3D::EndFrame();
 	Renderer2D::EndFrame();
 	RendererAPI::Get()->EndFrame();
-	s_Frame = { };
 }
 
 void Renderer::StartPass(Ref<RenderPass> pass, bool pushCommand) {

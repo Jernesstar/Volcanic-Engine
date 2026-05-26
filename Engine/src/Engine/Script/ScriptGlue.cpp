@@ -939,7 +939,7 @@ void RegisterScene() {
 		asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectMethod("CameraComponent",
 		"void set_Width(uint32) property", asFUNCTION(SetCameraWidth),
-		asCALL_CDECL_OBJLAST);	
+		asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectMethod("CameraComponent",
 		"uint32 get_Height() const property", asFUNCTION(GetCameraHeight),
 		asCALL_CDECL_OBJLAST);
