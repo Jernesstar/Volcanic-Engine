@@ -167,10 +167,12 @@ void DefaultRenderPipeline::ExecuteHooks(PipelineStage stage, ScriptPipelineCont
 
 		ScriptFunc func{ fn, ScriptEngine::GetContext(), hook.Object };
 		func.CallVoid(ctx);
+		Log::Info("Executed hooks for stage {}", s_HookMethodNames[(u32)stage]);
 	}
 
 	// Apply any output redirection the hook requested
 	if(ctx->HasRedirection()) {
+		Log::Info("Applying output redirection for stage {}", s_HookMethodNames[(u32)stage]);
 		Ref<Framebuffer> target = ctx->GetRedirectedBuffer()->Resolve();
 		if(stage == PipelineStage::PreGeometry)
 			m_GeometryPass->SetOutput(target);
@@ -200,7 +202,7 @@ void DefaultRenderPipeline::TickParticles(Scene* scene, TimeStep ts,
 					BufferLayout particleLayout = {
 						{ "Position", BufferDataType::Vec3 },
 						{ "Velocity", BufferDataType::Vec3 },
-						{ "Life",     BufferDataType::Float },
+						{ "Life", BufferDataType::Float },
 					};
 					BufferLayout freeListLayout = {
 						{ "Indices", BufferDataType::Int },
@@ -229,9 +231,8 @@ void DefaultRenderPipeline::TickParticles(Scene* scene, TimeStep ts,
 
 				auto& gpu = m_ParticleState[id];
 				gpu.Timer += (f32)ts;
-
 				u32 toSpawn = (u32)(gpu.Timer / spec.SpawnInterval);
-				gpu.Timer   = glm::mod(gpu.Timer, spec.SpawnInterval);
+				gpu.Timer = glm::mod(gpu.Timer, spec.SpawnInterval);
 				if(toSpawn == 0)
 					return;
 
@@ -242,11 +243,11 @@ void DefaultRenderPipeline::TickParticles(Scene* scene, TimeStep ts,
 				cmd->Compute  = true;
 				cmd->ComputeX = workGroups;
 				cmd->Uniforms
-				.Set("u_TimeStep",        (f32)ts)
-				.Set("u_ParticlesToSpawn",(i32)toSpawn)
+				.Set("u_TimeStep", (f32)ts)
+				.Set("u_ParticlesToSpawn", (i32)toSpawn)
 				.Set("u_EmitterPosition", spec.Position)
-				.Set("u_ParticleLifetime",spec.ParticleLifetime)
-				.Set("u_Offset",          spec.Offset)
+				.Set("u_ParticleLifetime", spec.ParticleLifetime)
+				.Set("u_Offset", spec.Offset)
 				.Set(StorageSlot{ gpu.ParticleBuffer, "", 0 })
 				.Set(StorageSlot{ gpu.FreeListBuffer,  "", 1 });
 			});
@@ -307,8 +308,8 @@ void DefaultRenderPipeline::TickParticles(Scene* scene, TimeStep ts,
 
 				auto* cmd = Renderer::NewCommand();
 				cmd->DepthTesting = DepthTestingMode::On;
-				cmd->Blending     = BlendingMode::Additive;
-				cmd->Culling      = CullingMode::Off;
+				cmd->Blending = BlendingMode::Additive;
+				cmd->Culling = CullingMode::Off;
 
 				if(tex)
 					cmd->Uniforms.Set("u_Texture", TextureSlot{ tex, 0 });
@@ -317,10 +318,10 @@ void DefaultRenderPipeline::TickParticles(Scene* scene, TimeStep ts,
 				.Set(StorageSlot{ gpu.ParticleBuffer, "", 0 });
 
 				auto* call = cmd->NewCall();
-				call->VertexCount   = 6;
+				call->VertexCount = 6;
 				call->InstanceCount = (u32)gpu.MaxParticleCount;
-				call->Primitive     = DrawPrimitive::Triangle;
-				call->Partition     = DrawPartition::Instanced;
+				call->Primitive = DrawPrimitive::Triangle;
+				call->Partition = DrawPartition::Instanced;
 			});
 	}
 	Renderer::EndPass();
@@ -509,8 +510,8 @@ void DefaultRenderPipeline::OnRender(Scene* scene) {
 
 		auto* call = cmd->NewCall();
 		call->VertexCount = 6;
-		call->Primitive   = DrawPrimitive::Triangle;
-		call->Partition   = DrawPartition::Single;
+		call->Primitive = DrawPrimitive::Triangle;
+		call->Partition = DrawPartition::Single;
 	}
 	Renderer::EndPass();
 

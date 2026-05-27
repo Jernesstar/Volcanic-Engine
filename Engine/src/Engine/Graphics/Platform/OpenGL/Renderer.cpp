@@ -143,12 +143,11 @@ void Clear() {
 }
 
 Renderer::Renderer() {
-	int success = gladLoadGL();
-	VOLCANICORE_ASSERT(success, "Glad could not load OpenGL");
-	// printf(
-	// 	"Successfully loaded OpenGL\n \
-	// 	\tVersion: %s\n \
-	// 	\tGPU: %s", glGetString(GL_VERSION), glGetString(GL_RENDERER));
+	VOLCANICORE_ASSERT(gladLoadGL(), "Glad could not load OpenGL");
+	printf(
+		"Successfully loaded OpenGL\n"
+		"  Version: %s\n"
+		"  GPU: %s\n", glGetString(GL_VERSION), glGetString(GL_RENDERER));
 }
 
 void Renderer::Init() {

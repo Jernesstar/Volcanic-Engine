@@ -23,8 +23,9 @@ static void MessageCallback(const asSMessageInfo *msg, void *param) {
 
 void ScriptEngine::Init() {
 	s_Engine = asCreateScriptEngine();
-
 	s_Engine->SetMessageCallback(asFUNCTION(MessageCallback), 0, asCALL_CDECL);
+	for(uint32_t i = 0; i < 5; i++)
+		s_Contexts.Add(s_Engine->CreateContext());
 }
 
 void ScriptEngine::Shutdown() {

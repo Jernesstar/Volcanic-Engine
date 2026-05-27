@@ -171,7 +171,6 @@ void Renderer3D::DrawSkybox(Ref<Cubemap> cubemap) {
 	auto* command = Renderer::NewCommand();
 	auto* call = command->NewCall();
 
-	// call->DepthMask = false;
 	call->Partition = DrawPartition::Single;
 	call->VertexCount = 36;
 
@@ -182,48 +181,26 @@ void Renderer3D::DrawSkybox(Ref<Cubemap> cubemap) {
 static void DrawSubGeometry(Ref<Geometry> root, SubGeometry& sub,
 	const glm::mat4& tr, DrawCommand* cmd)
 {
-	DrawCommand* command;
-	if(s_Geometries.count(&sub))
-		command = s_Geometries[&sub];
-	else {
-		if(Renderer::GetPass()) {
-			command = Renderer::NewCommand();
-			s_Geometries[&sub] = command;
-		}
-		else{
-			command = RendererAPI::Get()->NewCommand(cmd->Pass);
-			command->Uniforms = cmd->Uniforms;
-		}
-	}
-
+	auto* command = cmd ? cmd : Renderer::NewCommand();
 	auto* buffer = command->Pass->Buffer;
 
-	if(!command->VerticesIndex) { // First time seeing this geometry this frame
-		if(cmd) {
-			command->IndicesIndex = s_MeshBuffer->GetIndexCount();
-			command->VerticesIndex = s_MeshBuffer->GetVertexCount();
-		}
+	command->DepthTesting = DepthTestingMode::On;
+	command->Blending = BlendingMode::Greatest;
+	command->Culling = CullingMode::Back;
+	// command->IndicesIndex = buffer->GetIndexCount();
+	// command->VerticesIndex = buffer->GetVertexCount();
+	buffer->Add(DrawBufferIndex::E_Index, sub.Indices.Get(), sub.Indices.GetCount());
+	buffer->Add(DrawBufferIndex::E_Vertex, sub.Vertices.Get(), sub.Vertices.GetCount());
 
-		command->DepthTesting = DepthTestingMode::On;
-		command->Blending = BlendingMode::Off;
-		command->Culling = CullingMode::Back;
-
-		command->IndicesIndex = s_MeshBuffer->GetIndexCount();
-		command->VerticesIndex = s_MeshBuffer->GetVertexCount();
-		buffer->Add(DrawBufferIndex::E_Index, sub.Indices.Get(), sub.Indices.GetCount());
-		buffer->Add(DrawBufferIndex::E_Vertex, sub.Vertices.Get(), sub.Vertices.GetCount());
-	}
-
-	if(!command->DrawCalls || command->DrawCalls[-1].InstanceCount >= 10'000) {
-		auto* call = command->NewCall();
-		call->Partition = DrawPartition::Instanced;
-		call->Primitive = DrawPrimitive::Triangle;
-		call->InstanceOffset = s_InstancesIndex;
-		s_InstancesIndex += 10'000;
-	}
-
-	auto& call = command->DrawCalls[-1];
-	call.InstanceCount++;
+	auto* call = command->NewCall();
+	call->Partition = DrawPartition::Instanced;
+	call->Primitive = DrawPrimitive::Triangle;
+	call->VertexOffset = 0;
+	call->VertexCount = sub.Vertices.GetCount();
+	call->IndexOffset = 0;
+	call->IndexCount = sub.Indices.GetCount();
+	call->InstanceOffset = 0;
+	call->InstanceCount = 1;
 	buffer->Add(DrawBufferIndex::E_Instance, glm::value_ptr(tr), 1);
 }
 

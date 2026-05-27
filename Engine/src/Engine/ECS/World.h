@@ -93,7 +93,6 @@ public:
 
 private:
 	flecs::world m_World;
-	flecs::query<> m_AllEntitiesQuery;
 	Map<u64, void*> m_Systems;
 };
 

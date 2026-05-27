@@ -908,16 +908,6 @@ void RegisterECS() {
 		asMETHOD(Entity, Kill), asCALL_THISCALL);
 }
 
-// static HitInfo PhysicsRaycastScreen(uint32_t x, uint32_t y, PhysicsSystem* sys) {
-
-// 	return HitInfo();
-// }
-
-// static HitInfo PhysicsRaycast(const Vec3& start, const Vec3& dir, PhysicsSystem* sys) {
-
-// 	return HitInfo();
-// }
-
 void RegisterScene() {
 	auto* engine = ScriptEngine::Get();
 
@@ -1295,6 +1285,8 @@ static void ContextRedirectOutput(ScriptFramebuffer* fb,
 static void ContextSetSubPixelOffset(const Vec2& offset,
 									 ScriptPipelineContext* ctx)
 {
+	if(!ctx) 
+		Log::Error("Context is null");
 	ctx->SetSubPixelOffset(offset);
 }
 
@@ -1303,7 +1295,7 @@ static Vec2 ContextGetSubPixelOffset(ScriptPipelineContext* ctx) {
 }
 
 static ScriptTexture* ContextGetBufferColor(const std::string& bufName,
-											uint32_t idx,
+											u32 idx,
 											ScriptPipelineContext* ctx)
 {
 	auto* fb = ctx->GetBuffer(bufName);

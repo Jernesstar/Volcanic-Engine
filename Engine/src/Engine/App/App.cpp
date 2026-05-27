@@ -90,17 +90,13 @@ static void UseDefaultRenderPipeline(App* app) {
 	app->UseDefaultPipeline();
 }
 
-static void ScriptAddRenderHook(asIScriptObject* obj, App* app)
-{
+static void ScriptAddRenderHook(asIScriptObject* obj, App* app) {
 	app->AddRenderHook(obj);
 }
 
-static void ScriptRemoveRenderHook(asIScriptObject* obj, App* app)
-{
+static void ScriptRemoveRenderHook(asIScriptObject* obj, App* app) {
 	app->RemoveRenderHook(obj);
 }
-
-// ── Constructor / script registration ────────────────────────────────────────
 
 App::App() {
 	s_Instance = this;
@@ -196,9 +192,8 @@ void App::OnUpdate(TimeStep ts) {
 }
 
 void App::LoadScene(Scene* scene) {
-	s_Scene.reset();
-	s_Scene = Ref<Scene>();
-	*s_Scene = *scene;
+	s_Scene = CreateRef<Scene>(scene->Name);
+	SceneLoad(*s_Scene);
 	Log::Info("Scene '{}' loaded", scene->Name);
 }
 

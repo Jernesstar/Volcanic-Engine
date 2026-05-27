@@ -30,7 +30,6 @@ void EditorRenderPipeline::OnInit() {
 			}
 		});
 
-	// ── Grid ──────────────────────────────────────────────────────────────
 	m_GridPass =
 		RenderPass::Create("Grid",
 			AssetImporter::GetShader({
@@ -39,7 +38,6 @@ void EditorRenderPipeline::OnInit() {
 			}), m_Output);
 	m_GridPass->SetData(Renderer2D::GetScreenBuffer());
 
-	// ── Skybox ────────────────────────────────────────────────────────────
 	// m_SkyboxPass =
 	// 	RenderPass::Create("Skybox",
 	// 		AssetImporter::GetShader({
@@ -48,7 +46,6 @@ void EditorRenderPipeline::OnInit() {
 	// 		}), m_Output);
 	// m_SkyboxPass->SetData(Renderer3D::GetCubemapBuffer());
 
-	// ── Geometry ──────────────────────────────────────────────────────────
 	m_GeometryPass =
 		RenderPass::Create("Geometry",
 			AssetImporter::GetShader({
@@ -57,7 +54,6 @@ void EditorRenderPipeline::OnInit() {
 			}), m_Output);
 	m_GeometryPass->SetData(Renderer3D::GetMeshBuffer());
 
-	// ── Mask + Outline ────────────────────────────────────────────────────
 	m_MaskPass =
 		RenderPass::Create("Mask",
 			AssetImporter::GetShader({
@@ -80,7 +76,6 @@ void EditorRenderPipeline::OnInit() {
 			}), m_Output);
 	m_OutlinePass->SetData(Renderer2D::GetScreenBuffer());
 
-	// ── Lines ─────────────────────────────────────────────────────────────
 	m_LinePass =
 		RenderPass::Create("Line",
 			AssetImporter::GetShader({
@@ -89,7 +84,6 @@ void EditorRenderPipeline::OnInit() {
 			}), m_Output);
 	m_LinePass->SetData(Renderer3D::GetLineBuffer());
 
-	// ── Billboards ────────────────────────────────────────────────────────
 	BufferLayout instanceLayout =
 	{
 		{
@@ -168,13 +162,9 @@ void EditorRenderPipeline::OnResize(u32 w, u32 h) {
 	// m_Output->Resize(w, h);
 }
 
-// ── Internal helpers ──────────────────────────────────────────────────────────
-
 void EditorRenderPipeline::AddBillboard(Vec3 pos, u32 type) {
 	m_Billboards.Add({ pos, type });
 }
-
-// ── 3D ────────────────────────────────────────────────────────────────────────
 
 void EditorRenderPipeline::Begin3D() {
 	m_GeometryCommand = RendererAPI::Get()->NewCommand(m_GeometryPass->Get());
@@ -248,30 +238,29 @@ void EditorRenderPipeline::SubmitCamera3D(const Entity& entity) {
 
 	auto* call = m_LineCommand->NewCall();
 	call->VertexCount = 9;
-	call->IndexCount  = indexCount;
-	call->Partition   = DrawPartition::Single;
-	call->Primitive   = DrawPrimitive::Line;
+	call->IndexCount = indexCount;
+	call->Partition = DrawPartition::Single;
+	call->Primitive = DrawPrimitive::Line;
 }
 
 void EditorRenderPipeline::SubmitSkybox(const Entity& entity) {
 	auto& sc = entity.Get<SkyboxComponent>();
 	auto* mgr = AssetManager::Get();
-	mgr->Load(sc.CubemapAsset);
 	auto cubemap = mgr->Get<Cubemap>(sc.CubemapAsset);
 	if(!cubemap)
 		return;
 
 	auto* command = RendererAPI::Get()->NewCommand(m_SkyboxPass->Get());
 	command->DepthTesting = DepthTestingMode::Off;
-	command->Culling      = CullingMode::Front;
+	command->Culling = CullingMode::Front;
 	command->Uniforms
 	.Set("u_ViewProj", m_Camera->GetViewProjection())
 	.Set("u_Skybox", CubemapSlot{ cubemap, 0 });
 
 	auto* call = command->NewCall();
 	call->VertexCount = 36;
-	call->Partition   = DrawPartition::Single;
-	call->Primitive   = DrawPrimitive::Cubemap;
+	call->Partition = DrawPartition::Single;
+	call->Primitive = DrawPrimitive::Cubemap;
 }
 
 void EditorRenderPipeline::SubmitLight3D(const Entity& entity) {
@@ -304,21 +293,21 @@ void EditorRenderPipeline::SubmitGeometry(const Entity& entity) {
 	auto& mc = entity.Get<MeshComponent>();
 	auto& tc = entity.Get<TransformComponent>();
 
-	if(!mc.GeometryAsset || !mc.MaterialAsset)
-		return;
-
 	auto geometry = mgr->Get<Geometry>(mc.GeometryAsset);
-	if(!geometry)
-		return;
 
-	// Build a per-entity draw command so material uniforms differ per mesh
 	auto* command = RendererAPI::Get()->NewCommand(m_GeometryPass->Get());
-	command->Uniforms = m_GeometryCommand->Uniforms; // inherit camera
 
 	// Resolve textures and upload through MaterialBinder
 	auto mat = mgr->Get<Material>(mc.MaterialAsset);
-	if(mat)
-		MaterialBinder::Bind(command, *mat);
+	// if(mat)
+	// 	MaterialBinder::Bind(command, *mat);
+	// else
+	{
+		command->Uniforms
+		.Set("u_ViewProj", m_Camera->GetViewProjection())
+		.Set("u_Material.IsTextured", 0)
+		.Set("u_Material.DiffuseColor", Vec4(0.8f));
+	}
 
 	Transform t = tc;
 	Renderer3D::DrawGeometry(geometry, t.GetTransform(), command);
@@ -337,9 +326,7 @@ void EditorRenderPipeline::End3D() {
 		auto& tc = m_Selected.Get<TransformComponent>();
 		auto* mgr = AssetManager::Get();
 
-		mgr->Load(mc.GeometryAsset);
 		auto geometry = mgr->Get<Geometry>(mc.GeometryAsset);
-
 		if(geometry) {
 			{
 				auto* cmd = RendererAPI::Get()->NewCommand(m_MaskPass->Get());
@@ -388,11 +375,11 @@ void EditorRenderPipeline::End3D() {
 			command = RendererAPI::Get()->NewCommand(m_BillboardPass->Get());
 			command->Uniforms
 			.Set("u_View", m_Camera->GetView())
-			.Set("u_BillboardWidth",  1.0f)
+			.Set("u_BillboardWidth", 1.0f)
 			.Set("u_BillboardHeight", 1.0f);
 
 			Ref<Texture> icon;
-			if(type == 1)      icon = m_CameraIcon;
+			if(type == 1) icon = m_CameraIcon;
 			else if(type == 2) icon = m_DirectionalLightIcon;
 			else if(type == 3) icon = m_PointLightIcon;
 			else if(type == 4) icon = m_SpotlightIcon;
@@ -417,8 +404,7 @@ void EditorRenderPipeline::End3D() {
 			call->Partition = DrawPartition::Instanced;
 			call->InstanceOffset = m_BillboardBuffer->GetInstanceCount();
 			call->InstanceCount = 1;
-			m_BillboardBuffer->Add(DrawBufferIndex::E_Instance,
-				glm::value_ptr(pos), 1);
+			m_BillboardBuffer->Add(DrawBufferIndex::E_Instance, glm::value_ptr(pos), 1);
 		}
 	}
 

@@ -22,7 +22,7 @@ public:
 
 	~ScriptPipelineContext() { RestoreOutput(); }
 
-	void AddRef()  { m_RefCount++; }
+	void AddRef() { m_RefCount++; }
 	void Release() { if(--m_RefCount == 0) delete this; }
 
 	Scene* GetScene() { return m_Scene; }
@@ -55,12 +55,12 @@ public:
 	f32 GetBloomThreshold() const { return m_Pipeline->m_BloomThreshold; }
 	f32 GetFilterRadius() const { return m_Pipeline->m_FilterRadius; }
 
-	void SetSubPixelOffset(glm::vec2 offset) {
+	void SetSubPixelOffset(Vec2 offset) {
 		m_SubPixelOffset = offset;
 		m_HasOffset = true;
 	}
 
-	glm::vec2 GetSubPixelOffset() const {
+	Vec2 GetSubPixelOffset() const {
 		return m_SubPixelOffset;
 	}
 	bool HasSubPixelOffset() const {
