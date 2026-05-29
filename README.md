@@ -1,89 +1,164 @@
 # VolcanicEngine
 
-VolcanicEngine is a modular, high-performance C++20 game engine and development platform. It is built with a focus on scriptable flexibility, a clean layered architecture, and modern rendering techniques.
+VolcanicEngine is a modular, high-performance C++20 game engine built around a scriptable-first philosophy: game developers write exclusively in **AngelScript** — no C++ required at the game layer. The engine handles rendering, physics, audio, ECS, and UI through a clean layered architecture, exposing all of it to scripts through a first-class binding surface.
 
-## 🏗️ Architecture Overview
+---
+
+## 🏗️ Architecture
 
 The engine is divided into four primary modules:
 
-1.  **VolcaniCore**: The foundational layer providing cross-platform abstractions for windowing (GLFW), input, logging (spdlog), and core utility types (Buffer, List, UUID).
-2.  **Engine**: The core systems including a deferred rendering pipeline, ECS (flecs), Jolt Physics, AngelScript integration, and SoLoud audio.
-3.  **Editor**: A comprehensive desktop application for scene editing, asset management, and live debugging, built using ImGui.
-4.  **Runtime**: A streamlined execution environment for running built Volcanic projects.
+| Module | Role |
+|---|---|
+| **VolcaniCore** | Cross-platform foundation: windowing (GLFW), input, logging (spdlog), and core utility types (`Buffer`, `List`, `UUID`) |
+| **Engine** | Core runtime: ECS (flecs), deferred rendering (OpenGL 4.6), Jolt Physics, AngelScript integration, SoLoud audio |
+| **Editor** | Desktop authoring tool: scene editing, asset management, live debugging, built on ImGui |
+| **Runtime** | Streamlined execution environment for shipping built Volcanic projects |
 
 ---
 
-## 🌍 The 3-Way Scene Split
+## 🌍 Triple-World ECS Architecture
 
-VolcanicEngine utilizes a unique triple-world ECS structure within every `Scene`. This allows for strict separation of concerns and optimized processing paths for different types of content:
+Every `Scene` in VolcanicEngine contains three independent ECS worlds, each backed by **flecs** and processed on separate rendering paths. This allows 3D gameplay, 2D sprites, and UI to coexist cleanly without architectural compromise.
 
-### 1. World3D
-Designed for traditional 3D gameplay. It handles:
-*   **Geometry & Materials**: Static and dynamic meshes with property-based materials.
-*   **Lighting**: Directional, Point, and Spotlights for deferred shading.
-*   **Physics**: Rigid body simulation and collision detection.
-*   **Particles**: High-performance compute-shader-driven particle systems.
+### World3D
 
-### 2. World2D
-A dedicated world for 2D sprites, parallax backgrounds, and 2D lighting, allowing for mixed-dimension projects without architectural friction.
+The primary 3D simulation world. Systems registered here drive:
 
-### 3. Canvas
-A specialized world for User Interfaces. Instead of a traditional hierarchy-only UI, the Canvas uses ECS for layout and rendering:
-*   **Components**: `RectComponent`, `TextComponent`, `ImageComponent`, `ButtonComponent`.
-*   **Layout Engine**: `LayoutComponent` for automatic vertical/horizontal alignment and spacing.
-*   **Interactivity**: ECS-based event propagation for UI elements.
+- **Meshes & Materials**: `MeshComponent` with per-slot `MaterialInstance` overrides. Geometry (topology) and Material (surface description) are separate registered assets, decomposed at import time from embedded FBX/OBJ materials via Assimp.
+- **Lighting**: Directional, Point, and Spotlights feeding a deferred G-Buffer shading pass with cascaded shadow maps.
+- **Physics**: Jolt rigid body simulation and collision detection.
+- **Particles**: Compute-shader-driven particle systems simulated and emitted entirely on the GPU.
+
+### World2D
+
+A dedicated world for 2D content — sprites, parallax layers, and 2D lighting — enabling mixed-dimension projects without polluting 3D world state. The 2D lighting model uses a **1D polar-coordinate shadow map** for point light occlusion and a normal-map accumulation pass for diffuse contribution.
+
+### Canvas
+
+A specialized ECS world for UI. Rather than a traditional scene-graph hierarchy, layout and rendering are driven by components:
+
+- `RectComponent` — position, size, and anchor in screen space
+- `LayoutComponent` — automatic vertical/horizontal alignment and spacing
+- `ImageComponent` — textured quads
+- `TextComponent` — font-atlas-based text rendering (font system integration in progress)
+- `ButtonComponent` — ECS-driven input event propagation
+
+Canvas animation uses a four-layer stack: **tweens → keyframe clips → state machines → sequencers**, with a computed style pattern (`CanvasStyleComponent → AnimatedStyleComponent → ComputedStyleComponent`) that prevents animation from clobbering base property values.
+
+**Final composite order**: `World3D → World2D (with lighting) → tonemap → Canvas → screen`
 
 ---
 
-## 🎨 Scriptable Rendering Pipeline
-
-The engine features a highly extensible rendering architecture centered around the `DefaultRenderPipeline` and its integration with **AngelScript**.
+## 🎨 Rendering Pipeline
 
 ### Default Render Pipeline
-A sophisticated deferred renderer featuring:
-*   **Shadow Mapping**: Cascaded shadow maps for directional lights.
-*   **G-Buffer Pass**: Efficient storage of position, normal, and albedo data.
-*   **Compute Particles**: Simulation and emission handled entirely on the GPU.
-*   **Post-Processing**: A multi-pass compute-based Bloom (Downsample/Upsample chain) and Tonemapping.
 
-### Script Hooks & Pipelines
-VolcanicEngine empowers developers to modify the rendering flow without touching C++:
-*   **Pipeline Hooks**: Inject custom logic at 14 distinct stages, including `PreGeometry`, `PostShadows`, and `PrePostProcess`.
-*   **Redirection**: Scripts can redirect the pipeline's output to custom `Framebuffers` for specialized effects (e.g., pixel-art downscaling).
-*   **Custom Pipelines**: Developers can implement the entire `IRenderPipeline` interface in AngelScript to build completely custom rendering paths.
+A deferred renderer with the following pass structure:
+
+1. **Shadow Pass** — Cascaded shadow maps for directional lights
+2. **G-Buffer Pass** — Position, normal, albedo/roughness/metallic written to MRT
+3. **Lighting Pass** — Deferred shading from all light sources + shadow lookup
+4. **Particle Pass** — Compute-simulated particles composited over the lit scene
+5. **Post-Process** — Multi-pass compute Bloom (downsample/upsample chain) → Tonemapping
+6. **World2D** — Lit 2D sprites composited over the tonemapped 3D frame
+7. **Canvas** — UI composited last, always on top
+
+### Scriptable Render Hooks
+
+The `DefaultRenderPipeline` exposes **14 named injection points** via a `PipelineStage` enum (`PreGeometry`, `PostShadows`, `PrePostProcess`, etc.). Scripts register hook callbacks that receive a `ScriptPipelineContext` — a safe, read-only view of named framebuffers at that stage boundary.
+
+```angelscript
+void OnPrePostProcess(PipelineContext@ ctx)
+{
+    Framebuffer@ gbuffer = ctx.GetFramebuffer("GBuffer");
+    // sample, blit, or redirect output
+}
+```
+
+### Fully Custom Script Pipelines
+
+For complete control, a script class can implement the `IRenderPipeline` interface. `RenderPipelineLoader` discovers the class by name in the project's script modules, instantiates it, and wraps it in a `ScriptRenderPipeline` C++ proxy that dispatches all virtual calls into the AngelScript object. The `SceneRenderer` holds a `Ref<RenderPipeline>` that can be switched at runtime between the default+hooks pipeline and a fully custom one.
+
+### Custom Shader Materials
+
+Materials are defined as a two-tier structure:
+
+- **`Material`** — fixed PBR fields (albedo, normal, roughness, metallic, emissive) + an open `std::variant`-based property map (`MaterialProperty`) accepting `int`, `float`, `vec2`–`vec4`, `mat4`, or `Texture`
+- **`MaterialInstance`** — a sparse override layer on top of a base `Material`; only differing properties are stored
+
+A `MaterialBinder` resolves the full property set (instance overrides merged with base defaults) and writes into the existing `Uniforms` system before each draw call. SPIRV-Cross reflection is used to validate property names against the bound shader at bind time.
 
 ---
 
-## 📦 Editor & Asset Management
+## 📦 Asset System
 
-The Volcanic Editor provides a professional workflow for managing game content.
+### Asset Identity & Pipeline
 
-### Asset Management System
-*   **Binary Building**: The `EditorAssetManager` converts raw source files (FBX, PNG, GLSL) into optimized binary blobs for the engine.
-*   **Hot Reloading**: Integrated file watching (`efsw`) enables real-time updates of textures, shaders, and scripts without restarting the editor.
-*   **UUID Persistence**: Assets are tracked via stable UUIDs, ensuring robust referencing even when files are moved.
+All assets are tracked by stable **UUIDs** so references survive file moves and renames. The `EditorAssetManager` drives a build pipeline that converts raw source files (FBX, PNG, GLSL, `.prefab`) into optimized binary blobs consumed by the Runtime.
 
-### Material System
-Volcanic features a flexible property-based material system:
-*   **Material Blueprints**: Define a shader and a set of default properties (Colors, Scalars, Textures).
-*   **Material Instances**: Create variations of materials with specific property overrides, reducing draw call overhead and simplifying asset management.
-*   **Assimp Integration**: Automatically extracts material properties and textures during 3D model import.
+Hot reloading via **efsw** (embedded file system watcher) triggers live updates to textures, shaders, and scripts without restarting the editor.
+
+### Geometry vs. Material Separation
+
+Import decomposes 3D models into independent registered assets:
+
+- `Geometry` — vertex/index buffers, topology, LOD data
+- `Material` — surface description, shader reference, property defaults
+
+`MeshComponent` holds an array of `(Geometry, MaterialInstance)` slot pairs, allowing per-slot material overrides without duplicating geometry.
+
+### Prefab System
+
+Compound entities are authored as `.prefab` YAML assets. The `PrefabLibrary` registers them by name; instantiation spawns the full entity hierarchy into the target ECS world. `ComponentRegistry` provides string-dispatch serialization/deserialization so component types registered in C++ can be round-tripped through the YAML format without bespoke per-type code.
+
+---
+
+## ✍️ AngelScript Integration
+
+AngelScript scriptability is a **first-class constraint** on every system design decision. C++ interfaces are designed with script exposure in mind from the start. Script-facing types include:
+
+- `ScriptFramebuffer`, `ScriptRenderPass`, `ScriptRenderer` — render pipeline access
+- `ScriptPipelineContext` — safe framebuffer read access inside hooks
+- `ScriptRenderPipeline` — full pipeline override via AngelScript class
+- ECS component types — read/write access to all engine components from script
+- Asset handles — `AssetID`-based lookups for meshes, textures, materials, prefabs
 
 ---
 
 ## 🛠️ Getting Started
 
 ### Prerequisites
-*   **Compiler**: C++20 compatible (GCC 11+, Clang 13+, MSVC 2022).
-*   **Build System**: Premake5.
-*   **Graphics**: OpenGL 4.6+ support.
 
-### Build Commands
+- **Compiler**: C++20 (GCC 11+, Clang 13+, MSVC 2022)
+- **Build System**: Premake5
+- **Graphics**: OpenGL 4.6+
+
+### Build
+
 ```bash
-./.scripts/premake.sh  # Generate project files
-./.scripts/build.sh    # Build all modules
-./.scripts/run.sh      # Launch the Editor
+./.scripts/premake.sh   # Generate project files
+./.scripts/build.sh     # Build all modules
+./.scripts/run.sh       # Launch the Editor
 ```
 
+### Dependencies
+
+| Library | Purpose |
+|---|---|
+| flecs | Entity Component System |
+| Jolt Physics | Rigid body simulation |
+| AngelScript | Scripting layer |
+| SPIRV-Cross | Shader reflection & property validation |
+| Assimp | 3D model import |
+| ImGui | Editor UI |
+| spdlog | Logging |
+| efsw | Hot reload file watching |
+| SoLoud | Audio |
+| GLFW | Windowing & input |
+
+---
+
 ## 📜 License
-This project is licensed under the [LICENSE.md](LICENSE.md).
+
+This project is licensed under the terms in [LICENSE.md](LICENSE.md).
