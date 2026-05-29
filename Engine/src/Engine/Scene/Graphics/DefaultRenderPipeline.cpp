@@ -1,6 +1,10 @@
 #include "DefaultRenderPipeline.h"
 #include "ScriptPipelineContext.h"
 
+#include <Engine/Debug/AgentDebugLog.h>
+
+#include <sstream>
+
 #include <Engine/Graphics/Renderer.h>
 #include <Engine/Graphics/Renderer3D.h>
 #include <Engine/Graphics/Renderer2D.h>
@@ -147,6 +151,24 @@ void DefaultRenderPipeline::AddRenderHook(asIScriptObject* obj) {
 	for(u32 i = 0; i <= (u32)PipelineStage::PostUI; i++)
 		hook.Methods[i] = type->GetMethodByDecl(s_HookMethodNames[i]);
 
+	// #region agent log
+	{
+		auto* prePP = hook.Methods[(u32)PipelineStage::PrePostProcess];
+		std::ostringstream d;
+		d << "{\"pipeline\":" << (void*)this << ",\"hookObj\":"
+		  << (void*)obj << ",\"hookRefCount\":" << obj->AddRef()
+		  << ",\"hookCount\":" << (m_RenderHooks.Count() + 1)
+		  << ",\"prePPFn\":" << (void*)prePP;
+		if(prePP)
+			d << ",\"prePPDecl\":\"" << prePP->GetDeclaration() << "\"";
+		d << "}";
+		AgentDebug::Log("E", "DefaultRenderPipeline.cpp:AddRenderHook",
+			"hook registered", d.str());
+
+		obj->Release();
+	}
+	// #endregion
+
 	m_RenderHooks.Add(hook);
 }
 
@@ -161,12 +183,49 @@ void DefaultRenderPipeline::RemoveRenderHook(asIScriptObject* obj) {
 
 void DefaultRenderPipeline::ExecuteHooks(PipelineStage stage, ScriptPipelineContext* ctx) {
 	u32 stageIdx = (u32)stage;
+
+	if(stage == PipelineStage::PrePostProcess) {
+		// #region agent log
+		{
+			std::ostringstream d;
+			d << "{\"pipeline\":" << (void*)this << ",\"ctx\":"
+			  << (void*)ctx << ",\"hookCount\":" << m_RenderHooks.Count()
+			  << "}";
+			AgentDebug::Log("B", "DefaultRenderPipeline.cpp:ExecuteHooks",
+				"PrePostProcess begin", d.str());
+		}
+		// #endregion
+	}
+
 	for(auto& hook : m_RenderHooks) {
 		auto* fn = hook.Methods[stageIdx];
 		if(!fn) continue;
 
+		if(stage == PipelineStage::PrePostProcess) {
+			// #region agent log
+			{
+				std::ostringstream d;
+				d << "{\"hookObj\":" << (void*)hook.Object
+				  << ",\"hookRefCount\":" << hook.Object->AddRef()
+				  << ",\"fn\":" << (void*)fn << ",\"fnDecl\":\""
+				  << fn->GetDeclaration() << "\"}";
+				AgentDebug::Log("E", "DefaultRenderPipeline.cpp:ExecuteHooks",
+					"calling hook", d.str());
+				hook.Object->Release();
+			}
+			// #endregion
+		}
+
 		ScriptFunc func{ fn, ScriptEngine::GetContext(), hook.Object };
 		func.CallVoid(ctx);
+
+		if(stage == PipelineStage::PrePostProcess) {
+			// #region agent log
+			AgentDebug::Log("B", "DefaultRenderPipeline.cpp:ExecuteHooks",
+				"hook returned", "{\"stage\":\"PrePostProcess\"}");
+			// #endregion
+		}
+
 		Log::Info("Executed hooks for stage {}", s_HookMethodNames[(u32)stage]);
 	}
 

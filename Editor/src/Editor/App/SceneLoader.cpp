@@ -75,8 +75,8 @@ void SceneLoader::EditorLoad(Scene& scene, const std::string& path) {
 		file = YAML::LoadFile(path);
 	}
 	catch(YAML::ParserException e) {
-		VOLCANICORE_ASSERT_ARGS(false, "Could not load file %s: %s",
-								path.c_str(), e.what());
+		VOLCANICORE_ASSERT_ARGS(false, "Could not load file {}: {}",
+								path, e.what());
 	}
 	auto sceneNode = file["Scene"];
 
@@ -435,7 +435,7 @@ Ref<ScriptObject> LoadScript(Entity entity, Asset asset,
 	auto mod = AssetManager::Get()->Get<ScriptModule>(asset);
 	if(!mod) {
 		Log::Info(
-			"Could not load script module %lu, needed for Entity %lu",
+			"Could not load script module {}, needed for Entity {}",
 			(u64)asset.ID, (u64)entity.GetHandle());
 		return nullptr;
 	}
@@ -447,8 +447,8 @@ Ref<ScriptObject> LoadScript(Entity entity, Asset asset,
 	auto _class = mod->GetClass(className);
 	if(!_class) {
 		Log::Info(
-			"Could not find class '%s' in module %lu, needed for Entity %lu",
-			className.c_str(), (u64)asset.ID, (u64)entity.GetHandle());
+			"Could not find class '{}' in module {}, needed for Entity {}",
+			className, (u64)asset.ID, (u64)entity.GetHandle());
 		return nullptr;
 	}
 

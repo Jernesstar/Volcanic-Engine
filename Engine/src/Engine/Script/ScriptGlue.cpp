@@ -42,6 +42,10 @@
 #include "Scene/Graphics/SceneRenderer.h"
 #include "Scene/Graphics/ScriptPipelineContext.h"
 
+#include <Engine/Debug/AgentDebugLog.h>
+
+#include <sstream>
+
 #include "App.h"
 
 using namespace VolcaniCore;
@@ -638,6 +642,16 @@ void RegisterAssetManager() {
 	engine->RegisterEnumValue("AssetType", "Model", 9);
 	engine->RegisterEnumValue("AssetType", "Custom", 10);
 
+	// #region agent log
+	{
+		std::ostringstream d;
+		d << "{\"sizeofAsset\":" << sizeof(Asset)
+		  << ",\"alignofAsset\":" << alignof(Asset) << "}";
+		AgentDebug::Log("D", "ScriptGlue.cpp:RegisterAssetManager",
+			"Asset registration", d.str());
+	}
+	// #endregion
+
 	engine->RegisterObjectType("Asset", sizeof(Asset),
 		asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_ALLINTS
 		| asGetTypeTraits<Asset>());
@@ -1231,11 +1245,19 @@ static void ScriptFramebufferAddDepth(ScriptFramebuffer* fb) {
 }
 
 static ScriptTexture* ScriptFramebufferGetColor(uint32_t idx, ScriptFramebuffer* fb) {
-	return fb->GetColor(idx);
+	auto* tex = fb->GetColor(idx);
+	if(!tex)
+		Log::Warning("Could not find color attachment {0}", idx);
+
+	return tex;
 }
 
 static ScriptTexture* ScriptFramebufferGetDepth(ScriptFramebuffer* fb) {
-	return fb->GetDepth();
+	auto* tex = fb->GetDepth();
+	if(!tex)
+		Log::Warning("Could not find depth attachment");
+
+	return tex;
 }
 
 static void RenderPassSetOutput(ScriptFramebuffer* fb, ScriptRenderPass* pass) {
@@ -1245,6 +1267,10 @@ static void RenderPassSetOutput(ScriptFramebuffer* fb, ScriptRenderPass* pass) {
 static void RenderPassSetTexture(const std::string& name, ScriptTexture* tex,
 								 ScriptRenderPass* pass)
 {
+	if(!tex) {
+		Log::Warning("Texture is null for {0}", name);
+		return;
+	}
 	pass->SetInputTexture(name, tex);
 }
 
@@ -1288,6 +1314,38 @@ static void ContextSetSubPixelOffset(const Vec2& offset,
 	if(!ctx) 
 		Log::Error("Context is null");
 	ctx->SetSubPixelOffset(offset);
+}
+
+static void ContextSetBloomThreshold(ScriptPipelineContext* ctx, float t) {
+	// #region agent log
+	{
+		std::ostringstream d;
+		d << "{\"ctx\":" << (void*)ctx << ",\"t\":" << t << "}";
+		AgentDebug::Log("A", "ScriptGlue.cpp:ContextSetBloomThreshold",
+			"wrapper entry", d.str(), "post-fix");
+	}
+	// #endregion
+	ctx->SetBloomThreshold(t);
+}
+
+static void ContextSetBloomRadius(ScriptPipelineContext* ctx, float r) {
+	// #region agent log
+	{
+		std::ostringstream d;
+		d << "{\"ctx\":" << (void*)ctx << ",\"r\":" << r << "}";
+		AgentDebug::Log("A", "ScriptGlue.cpp:ContextSetBloomRadius",
+			"wrapper entry", d.str(), "post-fix");
+	}
+	// #endregion
+	ctx->SetBloomRadius(r);
+}
+
+static void ContextRestoreOutput(ScriptPipelineContext* ctx) {
+	ctx->RestoreOutput();
+}
+
+static void ContextSuppressBlit(ScriptPipelineContext* ctx) {
+	ctx->SuppressBlit();
 }
 
 static Vec2 ContextGetSubPixelOffset(ScriptPipelineContext* ctx) {
@@ -1410,16 +1468,32 @@ void RegisterRenderPipeline() {
 		asFUNCTION(ContextRedirectOutput), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectMethod("PipelineContext",
 		"void RestoreOutput()",
-		asMETHOD(ScriptPipelineContext, RestoreOutput), asCALL_THISCALL);
+		asFUNCTION(ContextRestoreOutput), asCALL_CDECL_OBJFIRST);
 	engine->RegisterObjectMethod("PipelineContext",
 		"void SuppressBlit()",
-		asMETHOD(ScriptPipelineContext, SuppressBlit), asCALL_THISCALL);
+		asFUNCTION(ContextSuppressBlit), asCALL_CDECL_OBJFIRST);
 	engine->RegisterObjectMethod("PipelineContext",
 		"void SetBloomThreshold(float)",
-		asMETHOD(ScriptPipelineContext, SetBloomThreshold), asCALL_THISCALL);
+		asFUNCTION(ContextSetBloomThreshold), asCALL_CDECL_OBJFIRST);
 	engine->RegisterObjectMethod("PipelineContext",
-		"void SetBloomRadius(int)",
-		asMETHOD(ScriptPipelineContext, SetBloomRadius), asCALL_THISCALL);
+		"void SetBloomRadius(float)",
+		asFUNCTION(ContextSetBloomRadius), asCALL_CDECL_OBJFIRST);
+
+	// #region agent log
+	{
+		auto* bloomType = engine->GetTypeInfoByName("PipelineContext");
+		auto* bloomFn = bloomType
+			? bloomType->GetMethodByName("SetBloomRadius")
+			: nullptr;
+		std::ostringstream d;
+		d << "{\"setBloomRadiusFn\":" << (void*)bloomFn;
+		if(bloomFn)
+			d << ",\"decl\":\"" << bloomFn->GetDeclaration() << "\"";
+		d << "}";
+		AgentDebug::Log("C", "ScriptGlue.cpp:RegisterRenderPipeline",
+			"native SetBloomRadius registered", d.str());
+	}
+	// #endregion
 	engine->RegisterObjectMethod("PipelineContext",
 		"void SetSubPixelOffset(const Vec2 &in)",
 		asFUNCTION(ContextSetSubPixelOffset), asCALL_CDECL_OBJLAST);

@@ -13,6 +13,7 @@
 #include <glslang/SPIRV/Logger.h>
 #include <glslang/SPIRV/GlslangToSpv.h>
 
+#define assert(x) (void)0
 #include <SPIRV-Cross/spirv_glsl.hpp>
 
 #include <soloud.h>

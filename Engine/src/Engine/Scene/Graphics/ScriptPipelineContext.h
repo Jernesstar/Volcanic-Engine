@@ -18,7 +18,7 @@ public:
 
 public:
 	ScriptPipelineContext(DefaultRenderPipeline* pipeline, Scene* scene)
-	: m_Pipeline(pipeline), m_Scene(scene) { }
+		: m_Pipeline(pipeline), m_Scene(scene) { }
 
 	~ScriptPipelineContext() { RestoreOutput(); }
 
@@ -51,7 +51,7 @@ public:
 
 	void SetBloomThreshold(f32 t) { m_Pipeline->m_BloomThreshold = t; }
 	void SetFilterRadius(f32 r) { m_Pipeline->m_FilterRadius = r; }
-	void SetBloomRadius(int r) { m_Pipeline->m_FilterRadius = (f32)r / 1000.0f; }
+	void SetBloomRadius(f32 r) { m_Pipeline->m_FilterRadius = r; }
 	f32 GetBloomThreshold() const { return m_Pipeline->m_BloomThreshold; }
 	f32 GetFilterRadius() const { return m_Pipeline->m_FilterRadius; }
 
