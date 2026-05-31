@@ -1,10 +1,6 @@
 #include "DefaultRenderPipeline.h"
 #include "ScriptPipelineContext.h"
 
-#include <Engine/Debug/AgentDebugLog.h>
-
-#include <sstream>
-
 #include <Engine/Graphics/Renderer.h>
 #include <Engine/Graphics/Renderer3D.h>
 #include <Engine/Graphics/Renderer2D.h>
@@ -22,10 +18,10 @@ namespace VolcanicEngine {
 struct ParticleData {
 	Vec3 Position;
 	Vec3 Velocity;
-	f32  Life;
+	f32 Life;
 };
 
-static constexpr i32 k_EmitWorkGroup   = 64;
+static constexpr i32 k_EmitWorkGroup = 64;
 static constexpr i32 k_UpdateWorkGroup = 128;
 
 void DefaultRenderPipeline::OnInit() {
@@ -89,6 +85,8 @@ void DefaultRenderPipeline::OnInit() {
 	m_LightingPass = RenderPass::Create("Lighting", m_LightingShader, m_HDRBuffer);
 	m_TonemapPass  = RenderPass::Create("Tonemap", m_TonemapShader);
 	// m_SkyboxPass   = RenderPass::Create("Skybox", m_SkyboxShader, m_HDRBuffer);
+	m_DownsamplePass = RenderPass::Create("BloomDownsample", m_DownsampleShader, m_BloomMips);
+	m_UpsamplePass   = RenderPass::Create("BloomUpsample", m_UpsampleShader, m_BloomMips);
 	m_ParticleEmitPass   = RenderPass::Create("ParticleEmit",   m_ParticleEmitShader);
 	m_ParticleUpdatePass = RenderPass::Create("ParticleUpdate", m_ParticleUpdateShader);
 	m_ParticleDrawPass   = RenderPass::Create("ParticleDraw",   m_ParticleDrawShader,  m_HDRBuffer);
@@ -121,7 +119,8 @@ Ref<Framebuffer> DefaultRenderPipeline::GetBuffer(const std::string& name) const
 	if(name == "GBuffer")   return m_GBuffer;
 	if(name == "HDR")       return m_HDRBuffer;
 	if(name == "ShadowMap") return m_ShadowMap;
-	// if(name == "Bloom")     return m_BloomPingPong[1];
+	if(name == "Bloom")     return m_BloomMips;
+	if(name == "Output")    return m_OutputBuffer;
 	return nullptr;
 }
 
@@ -145,29 +144,12 @@ static const char* s_HookMethodNames[] = {
 };
 
 void DefaultRenderPipeline::AddRenderHook(asIScriptObject* obj) {
+	obj->AddRef();
 	RenderHook hook;
 	hook.Object = obj;
 	auto* type = obj->GetObjectType();
 	for(u32 i = 0; i <= (u32)PipelineStage::PostUI; i++)
 		hook.Methods[i] = type->GetMethodByDecl(s_HookMethodNames[i]);
-
-	// #region agent log
-	{
-		auto* prePP = hook.Methods[(u32)PipelineStage::PrePostProcess];
-		std::ostringstream d;
-		d << "{\"pipeline\":" << (void*)this << ",\"hookObj\":"
-		  << (void*)obj << ",\"hookRefCount\":" << obj->AddRef()
-		  << ",\"hookCount\":" << (m_RenderHooks.Count() + 1)
-		  << ",\"prePPFn\":" << (void*)prePP;
-		if(prePP)
-			d << ",\"prePPDecl\":\"" << prePP->GetDeclaration() << "\"";
-		d << "}";
-		AgentDebug::Log("E", "DefaultRenderPipeline.cpp:AddRenderHook",
-			"hook registered", d.str());
-
-		obj->Release();
-	}
-	// #endregion
 
 	m_RenderHooks.Add(hook);
 }
@@ -175,56 +157,39 @@ void DefaultRenderPipeline::AddRenderHook(asIScriptObject* obj) {
 void DefaultRenderPipeline::RemoveRenderHook(asIScriptObject* obj) {
 	for(u64 i = 0; i < m_RenderHooks.Count(); i++) {
 		if(m_RenderHooks[i].Object == obj) {
+			obj->Release();
 			m_RenderHooks.Pop(i);
 			return;
 		}
 	}
 }
 
+void DefaultRenderPipeline::ClearRenderHooks() {
+	for(u64 i = 0; i < m_RenderHooks.Count(); i++) {
+		if(m_RenderHooks[i].Object)
+			m_RenderHooks[i].Object->Release();
+	}
+	m_RenderHooks.Clear();
+
+	if(m_GeometryPass)
+		m_GeometryPass->SetOutput(m_GBuffer);
+	if(m_ShadowPass)
+		m_ShadowPass->SetOutput(m_ShadowMap);
+	if(m_LightingPass)
+		m_LightingPass->SetOutput(m_HDRBuffer);
+
+	m_SubPixelOffset = { 0.0f, 0.0f };
+}
+
 void DefaultRenderPipeline::ExecuteHooks(PipelineStage stage, ScriptPipelineContext* ctx) {
 	u32 stageIdx = (u32)stage;
-
-	if(stage == PipelineStage::PrePostProcess) {
-		// #region agent log
-		{
-			std::ostringstream d;
-			d << "{\"pipeline\":" << (void*)this << ",\"ctx\":"
-			  << (void*)ctx << ",\"hookCount\":" << m_RenderHooks.Count()
-			  << "}";
-			AgentDebug::Log("B", "DefaultRenderPipeline.cpp:ExecuteHooks",
-				"PrePostProcess begin", d.str());
-		}
-		// #endregion
-	}
 
 	for(auto& hook : m_RenderHooks) {
 		auto* fn = hook.Methods[stageIdx];
 		if(!fn) continue;
 
-		if(stage == PipelineStage::PrePostProcess) {
-			// #region agent log
-			{
-				std::ostringstream d;
-				d << "{\"hookObj\":" << (void*)hook.Object
-				  << ",\"hookRefCount\":" << hook.Object->AddRef()
-				  << ",\"fn\":" << (void*)fn << ",\"fnDecl\":\""
-				  << fn->GetDeclaration() << "\"}";
-				AgentDebug::Log("E", "DefaultRenderPipeline.cpp:ExecuteHooks",
-					"calling hook", d.str());
-				hook.Object->Release();
-			}
-			// #endregion
-		}
-
-		ScriptFunc func{ fn, ScriptEngine::GetContext(), hook.Object };
+		ScriptFunc func{ fn, ScriptEngine::GetHookContext(), hook.Object };
 		func.CallVoid(ctx);
-
-		if(stage == PipelineStage::PrePostProcess) {
-			// #region agent log
-			AgentDebug::Log("B", "DefaultRenderPipeline.cpp:ExecuteHooks",
-				"hook returned", "{\"stage\":\"PrePostProcess\"}");
-			// #endregion
-		}
 
 		Log::Info("Executed hooks for stage {}", s_HookMethodNames[(u32)stage]);
 	}
@@ -387,8 +352,8 @@ void DefaultRenderPipeline::TickParticles(Scene* scene, TimeStep ts,
 }
 
 void DefaultRenderPipeline::OnRender(Scene* scene) {
-	auto ctx = Ref<ScriptPipelineContext>(
-		ScriptPipelineContext::Factory(this, scene));
+	ScriptPipelineContext* ctx =
+		ScriptPipelineContext::Factory(this, scene);
 
 	// ── Collect scene data ────────────────────────────────────────────────────
 
@@ -419,12 +384,14 @@ void DefaultRenderPipeline::OnRender(Scene* scene) {
 			skybox = AssetManager::Get()->Get<Cubemap>(asset);
 		});
 
-	if(!mainCamera)
+	if(!mainCamera) {
+		ctx->Release();
 		return;
+	}
 
 	// ── Shadow pass ───────────────────────────────────────────────────────────
 
-	ExecuteHooks(PipelineStage::PreShadows, ctx.get());
+	ExecuteHooks(PipelineStage::PreShadows, ctx);
 
 	// Build a simple orthographic light-space matrix from the first dir light
 	Mat4 lightSpaceMatrix{ 1.0f };
@@ -456,17 +423,17 @@ void DefaultRenderPipeline::OnRender(Scene* scene) {
 	}
 	Renderer::EndPass();
 
-	ExecuteHooks(PipelineStage::PostShadows, ctx.get());
+	ExecuteHooks(PipelineStage::PostShadows, ctx);
 
 	// ── Depth prepass ────────────────────────────────────────────────────────
 
-	ExecuteHooks(PipelineStage::PreDepthPrepass, ctx.get());
+	ExecuteHooks(PipelineStage::PreDepthPrepass, ctx);
 
-	ExecuteHooks(PipelineStage::PostDepthPrepass, ctx.get());
+	ExecuteHooks(PipelineStage::PostDepthPrepass, ctx);
 
 	// ── Geometry pass (G-Buffer fill) ────────────────────────────────────────
 
-	ExecuteHooks(PipelineStage::PreGeometry, ctx.get());
+	ExecuteHooks(PipelineStage::PreGeometry, ctx);
 
 	Renderer::StartPass(m_GeometryPass);
 	{
@@ -494,11 +461,11 @@ void DefaultRenderPipeline::OnRender(Scene* scene) {
 	}
 	Renderer::EndPass();
 
-	ExecuteHooks(PipelineStage::PostGeometry, ctx.get());
+	ExecuteHooks(PipelineStage::PostGeometry, ctx);
 
 	// ── Skybox ────────────────────────────────────────────────────────────────
 
-	ExecuteHooks(PipelineStage::PreSkybox, ctx.get());
+	ExecuteHooks(PipelineStage::PreSkybox, ctx);
 
 	if(skybox) {
 		Renderer::StartPass(m_SkyboxPass);
@@ -520,7 +487,7 @@ void DefaultRenderPipeline::OnRender(Scene* scene) {
 		Renderer::EndPass();
 	}
 
-	ExecuteHooks(PipelineStage::PostSkybox, ctx.get());
+	ExecuteHooks(PipelineStage::PostSkybox, ctx);
 
 	// ── Lighting pass (deferred) ──────────────────────────────────────────────
 
@@ -577,28 +544,26 @@ void DefaultRenderPipeline::OnRender(Scene* scene) {
 	// ── Transparency pass (forward, additive over HDR) ────────────────────────
 
 	f32 ts = scene->World3D.GetNative().delta_time();
-	ExecuteHooks(PipelineStage::PreTransparency, ctx.get());
+	ExecuteHooks(PipelineStage::PreTransparency, ctx);
 	TickParticles(scene, ts, mainCamera);
-	ExecuteHooks(PipelineStage::PostTransparency, ctx.get());
+	ExecuteHooks(PipelineStage::PostTransparency, ctx);
 
 	// ── Bloom (compute) ───────────────────────────────────────────────────────
 
-	ExecuteHooks(PipelineStage::PrePostProcess, ctx.get());
+	ExecuteHooks(PipelineStage::PrePostProcess, ctx);
 	RunBloom();
-	ExecuteHooks(PipelineStage::PostPostProcess, ctx.get());
+	ExecuteHooks(PipelineStage::PostPostProcess, ctx);
 
 	// ── Tonemap + final blit ──────────────────────────────────────────────────
 
 	if(!ctx->IsBlitSuppressed()) {
-		ExecuteHooks(PipelineStage::PreUI, ctx.get());
+		ExecuteHooks(PipelineStage::PreUI, ctx);
 
 		Renderer::StartPass(m_TonemapPass);
 		{
 			auto* cmd = Renderer::GetCommand();
 			cmd->DepthTesting = DepthTestingMode::Off;
 			cmd->Uniforms
-			// mip 0 is the smallest; mip s_MipCount-1 is the largest (half-res)
-			// the final accumulated bloom lives in mip index s_MipCount-1
 			.Set("u_HDR",
 				AttachmentSlot{ m_HDRBuffer->Get(AttachmentTarget::Color), 0 })
 			.Set("u_Bloom",
@@ -616,10 +581,11 @@ void DefaultRenderPipeline::OnRender(Scene* scene) {
 		}
 		Renderer::EndPass();
 
-		ExecuteHooks(PipelineStage::PostUI, ctx.get());
+		ExecuteHooks(PipelineStage::PostUI, ctx);
 	}
 
 	Renderer::Flush();
+	ctx->Release();
 }
 
 // ── Bloom compute passes ──────────────────────────────────────────────────────

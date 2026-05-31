@@ -20,8 +20,11 @@ namespace VolcanicEditor {
 static ImTextureID FramebufferColorID(Ref<Framebuffer> fb) {
 	if(!fb)
 		return (ImTextureID)0;
-	auto att = fb->Get(AttachmentTarget::Color)->As<OpenGL::Attachment>();
-	auto tex = att->GetRendererID();
+	auto att = fb->Get(AttachmentTarget::Color);
+	if(!att)
+		return (ImTextureID)0;
+	auto glAtt = att->As<OpenGL::Attachment>();
+	auto tex = glAtt->GetRendererID();
 	return (ImTextureID)(intptr_t)tex;
 }
 
@@ -167,7 +170,7 @@ void SceneVisualizerPanel::DrawViewport() {
 	ImGui::PopStyleColor();
 
 	// ── Play-mode overlay ────────────────────────────────────────────────
-	if(Editor::GetMode() == EditorMode::Play) {
+	if(Editor::GetMode() == EditorMode::Play || Editor::GetMode() == EditorMode::Pause) {
 		ImVec2 overlayPos = {
 			ImGui::GetItemRectMin().x + 8.0f,
 			ImGui::GetItemRectMin().y + 8.0f
@@ -182,7 +185,10 @@ void SceneVisualizerPanel::DrawViewport() {
 			| ImGuiWindowFlags_NoFocusOnAppearing
 			| ImGuiWindowFlags_NoNav;
 		if(ImGui::Begin("##PlayOverlay", nullptr, overlayFlags)) {
-			ImGui::TextColored({ 0.2f, 1.0f, 0.2f, 1.0f }, "PLAYING");
+			if(Editor::GetMode() == EditorMode::Play)
+				ImGui::TextColored({ 0.2f, 1.0f, 0.2f, 1.0f }, "PLAYING");
+			else if(Editor::GetMode() == EditorMode::Pause)
+				ImGui::TextColored({ 1.0f, 1.0f, 0.2f, 1.0f }, "PAUSED");
 		}
 		ImGui::End();
 	}

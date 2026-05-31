@@ -2,6 +2,9 @@
 
 #include <iostream>
 #include <fstream>
+#include <chrono>
+#include <cstdint>
+#include <filesystem>
 
 #define GLM_ENABLE_EXPERIMENTAL
 
@@ -41,8 +44,6 @@
 #include "Scene/Graphics/DefaultRenderPipeline.h"
 #include "Scene/Graphics/SceneRenderer.h"
 #include "Scene/Graphics/ScriptPipelineContext.h"
-
-#include <Engine/Debug/AgentDebugLog.h>
 
 #include <sstream>
 
@@ -642,16 +643,6 @@ void RegisterAssetManager() {
 	engine->RegisterEnumValue("AssetType", "Model", 9);
 	engine->RegisterEnumValue("AssetType", "Custom", 10);
 
-	// #region agent log
-	{
-		std::ostringstream d;
-		d << "{\"sizeofAsset\":" << sizeof(Asset)
-		  << ",\"alignofAsset\":" << alignof(Asset) << "}";
-		AgentDebug::Log("D", "ScriptGlue.cpp:RegisterAssetManager",
-			"Asset registration", d.str());
-	}
-	// #endregion
-
 	engine->RegisterObjectType("Asset", sizeof(Asset),
 		asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_ALLINTS
 		| asGetTypeTraits<Asset>());
@@ -1247,7 +1238,7 @@ static void ScriptFramebufferAddDepth(ScriptFramebuffer* fb) {
 static ScriptTexture* ScriptFramebufferGetColor(uint32_t idx, ScriptFramebuffer* fb) {
 	auto* tex = fb->GetColor(idx);
 	if(!tex)
-		Log::Warning("Could not find color attachment {0}", idx);
+		Log::Warning("Could not find color attachment {}", idx);
 
 	return tex;
 }
@@ -1268,7 +1259,7 @@ static void RenderPassSetTexture(const std::string& name, ScriptTexture* tex,
 								 ScriptRenderPass* pass)
 {
 	if(!tex) {
-		Log::Warning("Texture is null for {0}", name);
+		Log::Warning("Texture is null for {}", name);
 		return;
 	}
 	pass->SetInputTexture(name, tex);
@@ -1311,32 +1302,16 @@ static void ContextRedirectOutput(ScriptFramebuffer* fb,
 static void ContextSetSubPixelOffset(const Vec2& offset,
 									 ScriptPipelineContext* ctx)
 {
-	if(!ctx) 
+	if(!ctx)
 		Log::Error("Context is null");
 	ctx->SetSubPixelOffset(offset);
 }
 
 static void ContextSetBloomThreshold(ScriptPipelineContext* ctx, float t) {
-	// #region agent log
-	{
-		std::ostringstream d;
-		d << "{\"ctx\":" << (void*)ctx << ",\"t\":" << t << "}";
-		AgentDebug::Log("A", "ScriptGlue.cpp:ContextSetBloomThreshold",
-			"wrapper entry", d.str(), "post-fix");
-	}
-	// #endregion
 	ctx->SetBloomThreshold(t);
 }
 
 static void ContextSetBloomRadius(ScriptPipelineContext* ctx, float r) {
-	// #region agent log
-	{
-		std::ostringstream d;
-		d << "{\"ctx\":" << (void*)ctx << ",\"r\":" << r << "}";
-		AgentDebug::Log("A", "ScriptGlue.cpp:ContextSetBloomRadius",
-			"wrapper entry", d.str(), "post-fix");
-	}
-	// #endregion
 	ctx->SetBloomRadius(r);
 }
 
@@ -1454,9 +1429,6 @@ void RegisterRenderPipeline() {
 	engine->RegisterEnumValue("PipelineStage", "PostUI",
 		(int)PipelineStage::PostUI);
 
-	// Hook callback funcdef — matches void fn(PipelineContext@)
-	engine->RegisterFuncdef("void PipelineHookCallback(PipelineContext@)");
-
 	engine->RegisterObjectMethod("PipelineContext",
 		"Framebuffer@ GetBuffer(const string &in)",
 		asFUNCTION(ContextGetBuffer), asCALL_CDECL_OBJLAST);
@@ -1479,21 +1451,6 @@ void RegisterRenderPipeline() {
 		"void SetBloomRadius(float)",
 		asFUNCTION(ContextSetBloomRadius), asCALL_CDECL_OBJFIRST);
 
-	// #region agent log
-	{
-		auto* bloomType = engine->GetTypeInfoByName("PipelineContext");
-		auto* bloomFn = bloomType
-			? bloomType->GetMethodByName("SetBloomRadius")
-			: nullptr;
-		std::ostringstream d;
-		d << "{\"setBloomRadiusFn\":" << (void*)bloomFn;
-		if(bloomFn)
-			d << ",\"decl\":\"" << bloomFn->GetDeclaration() << "\"";
-		d << "}";
-		AgentDebug::Log("C", "ScriptGlue.cpp:RegisterRenderPipeline",
-			"native SetBloomRadius registered", d.str());
-	}
-	// #endregion
 	engine->RegisterObjectMethod("PipelineContext",
 		"void SetSubPixelOffset(const Vec2 &in)",
 		asFUNCTION(ContextSetSubPixelOffset), asCALL_CDECL_OBJLAST);
@@ -1501,7 +1458,6 @@ void RegisterRenderPipeline() {
 		"Vec2 get_SubPixelOffset() const property",
 		asFUNCTION(ContextGetSubPixelOffset), asCALL_CDECL_OBJLAST);
 
-	// --- RenderPipeline interface (script-implementable) ---
 	engine->RegisterInterface("IRenderPipeline");
 	engine->RegisterInterfaceMethod("IRenderPipeline",
 		"void OnInit()");

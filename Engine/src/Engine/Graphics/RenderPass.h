@@ -32,6 +32,7 @@ public:
 	CallbackMap<glm::mat2> Mat2Callbacks;
 	CallbackMap<glm::mat3> Mat3Callbacks;
 	CallbackMap<glm::mat4> Mat4Callbacks;
+	CallbackMap<AttachmentSlot> AttachmentSlotCallbacks;
 
 	template<class TPredicate>
 	Uniforms& Set(const std::string& uniformName, TPredicate&& callback) {
@@ -51,6 +52,7 @@ public:
 		Mat2Callbacks.clear();
 		Mat3Callbacks.clear();
 		Mat4Callbacks.clear();
+		AttachmentSlotCallbacks.clear();
 		BufferCallbacks.clear();
 
 		return *this;
@@ -63,7 +65,8 @@ public:
 		return IntCallbacks.size() || FloatCallbacks.size()
 		|| TextureCallbacks.size() || BufferCallbacks.size()
 		|| Vec2Callbacks.size() || Vec3Callbacks.size() || Vec4Callbacks.size()
-		|| Mat2Callbacks.size() || Mat3Callbacks.size() || Mat4Callbacks.size();
+		|| Mat2Callbacks.size() || Mat3Callbacks.size() || Mat4Callbacks.size()
+		|| AttachmentSlotCallbacks.size();
 	}
 };
 

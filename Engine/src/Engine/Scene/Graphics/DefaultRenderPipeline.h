@@ -19,7 +19,7 @@ struct ParticleEmitterGPU {
 class DefaultRenderPipeline : public RenderPipeline {
 public:
 	DefaultRenderPipeline() = default;
-	~DefaultRenderPipeline() = default;
+	~DefaultRenderPipeline() { ClearRenderHooks(); }
 
 	void OnInit() override;
 	void OnRender(Scene* scene) override;
@@ -29,6 +29,7 @@ public:
 	// Hook registration
 	void AddRenderHook(asIScriptObject* obj);
 	void RemoveRenderHook(asIScriptObject* obj);
+	void ClearRenderHooks();
 
 	// Named buffer access (for ScriptPipelineContext)
 	Ref<Framebuffer> GetBuffer(const std::string& name) const;

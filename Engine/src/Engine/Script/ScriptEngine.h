@@ -3,6 +3,10 @@
 #include <angelscript.h>
 #include <VolcaniCore/Core/Defines.h>
 
+#include <VolcaniCore/Core/Log.h>
+
+#include <type_traits>
+
 namespace VolcanicEngine::Script {
 
 struct InterfaceBuilder {
@@ -33,6 +37,7 @@ public:
 	}
 
 	static asIScriptContext* GetContext();
+	static asIScriptContext* GetHookContext();
 
 	static InterfaceBuilder RegisterInterface(const std::string& name);
 };
@@ -42,10 +47,7 @@ struct ScriptFunc {
 	asIScriptContext* Context;
 	asIScriptObject* Object = nullptr;
 
-	~ScriptFunc() {
-		if(Context)
-			Context->Unprepare();
-	}
+	~ScriptFunc() = default;
 
 	template<typename T, typename... Args>
 	T CallReturn(Args&&... args) {
@@ -77,7 +79,13 @@ struct ScriptFunc {
 				AddArg(i++, arg);
 			}, std::forward<Args>(args)...);
 
-		Context->Execute();
+		int result = Context->Execute();
+		if(result != asEXECUTION_FINISHED) {
+			const char* exception = Context->GetExceptionString();
+			VolcaniCore::Log::Error("Script exception in '{}': {}",
+				Func->GetDeclaration(),
+				exception ? exception : "unknown");
+		}
 	}
 
 private:
@@ -94,7 +102,11 @@ private:
 
 	template<typename T>
 	void AddArg(uint32_t idx, const T& arg) {
-		Context->SetArgObject(idx, (void*)&arg);
+		using ArgType = std::remove_reference_t<T>;
+		if constexpr(std::is_pointer_v<ArgType>)
+			Context->SetArgObject(idx, const_cast<void*>(static_cast<const void*>(arg)));
+		else
+			Context->SetArgObject(idx, (void*)&arg);
 	}
 
 	template<typename T>

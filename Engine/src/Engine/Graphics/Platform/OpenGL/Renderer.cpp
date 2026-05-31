@@ -339,7 +339,8 @@ void Renderer::EndFrame() {
 			glViewport(cmd.ViewportX, cmd.ViewportY, cmd.ViewportW, cmd.ViewportH);
 		else if(cmd.Pass && cmd.Pass->Output) {
 			auto att = cmd.Pass->Output->Get(AttachmentTarget::Color, 0);
-			glViewport(0, 0, att->Spec.Width, att->Spec.Height);
+			if(att)
+				glViewport(0, 0, att->Spec.Width, att->Spec.Height);
 		}
 
 		if(cmd.Clear) {
@@ -355,11 +356,24 @@ void Renderer::EndFrame() {
 			SetUniforms(cmd);
 		}
 
-		if(cmd.Pass && cmd.ComputeX && cmd.ComputeY && cmd.ComputeZ)
+		if(cmd.Pass && cmd.ComputeX && cmd.ComputeY && cmd.ComputeZ) {
+			if(cmd.Pass->Output) {
+				u32 imageUnit = 1;
+				for(auto& [target, idx] : cmd.Outputs) {
+					auto att = cmd.Pass->Output->Get(target, idx);
+					if(!att)
+						continue;
+					att->As<OpenGL::Attachment>()->BindImage(
+						imageUnit++, GL_READ_WRITE);
+				}
+			}
 			cmd.Pass->Pipeline->As<OpenGL::Shader>()
 				->Compute(cmd.ComputeX, cmd.ComputeY, cmd.ComputeZ);
+			glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT
+				| GL_TEXTURE_FETCH_BARRIER_BIT);
+		}
 
-		if(cmd.Pass && cmd.Pass->Output) {
+		if(cmd.Pass && cmd.Pass->Output && !cmd.ComputeX) {
 			u32 i = 0;
 			for(auto& [target, idx] : cmd.Outputs)
 				cmd.Pass->Output->Attach(target, idx, i++);

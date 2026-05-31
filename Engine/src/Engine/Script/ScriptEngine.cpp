@@ -9,6 +9,7 @@ namespace VolcanicEngine::Script {
 static asIScriptEngine* s_Engine;
 
 static List<asIScriptContext*> s_Contexts;
+static asIScriptContext* s_HookContext = nullptr;
 
 static void MessageCallback(const asSMessageInfo *msg, void *param) {
 	const char* type = "ERR ";
@@ -29,8 +30,13 @@ void ScriptEngine::Init() {
 }
 
 void ScriptEngine::Shutdown() {
+	if(s_HookContext) {
+		s_HookContext->Release();
+		s_HookContext = nullptr;
+	}
 	for(asIScriptContext* context : s_Contexts)
 		context->Release();
+	s_Contexts.Clear();
 	if(s_Engine)
 		s_Engine->ShutDownAndRelease();
 }
@@ -51,15 +57,25 @@ void ScriptEngine::RegisterSingleton(const std::string& className,
 }
 
 asIScriptContext* ScriptEngine::GetContext() {
-	for(auto context : s_Contexts) {
+	for(auto* context : s_Contexts) {
+		if(context == s_HookContext)
+			continue;
 		if(context->GetState() == asEXECUTION_ACTIVE)
 			continue;
+		context->Unprepare();
 		return context;
 	}
 
 	auto* newContext = s_Engine->CreateContext();
 	s_Contexts.Add(newContext);
 	return newContext;
+}
+
+asIScriptContext* ScriptEngine::GetHookContext() {
+	if(!s_HookContext)
+		s_HookContext = s_Engine->CreateContext();
+	s_HookContext->Unprepare();
+	return s_HookContext;
 }
 
 InterfaceBuilder ScriptEngine::RegisterInterface(const std::string& name) {

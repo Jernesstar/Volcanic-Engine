@@ -41,6 +41,12 @@ public:
 			glBindRenderbuffer(GL_RENDERBUFFER, m_RendererID);
 	}
 
+	void BindImage(u32 unit, GLenum access = GL_WRITE_ONLY) const {
+		if(GetType() != Attachment::Type::Texture)
+			return;
+		glBindImageTexture(unit, m_RendererID, 0, GL_FALSE, 0, access, GL_RGBA8);
+	}
+
 	Attachment::Type GetType() const { return m_Type; }
 	u32 GetWidth() const { return Spec.Width; }
 	u32 GetHeight() const { return Spec.Height; }
@@ -121,7 +127,7 @@ public:
 			u32* atts = new u32[colorCount];
 			for(u32 i = 0; i < colorCount; i++)
 				atts[i] = GL_COLOR_ATTACHMENT0 + i;
-			glDrawBuffers(1, atts);
+			glDrawBuffers(colorCount, atts);
 			delete[] atts;
 		}
 
@@ -177,6 +183,11 @@ public:
 		}
 
 		auto att = GetAttachment(t, idx);
+		if(!att) {
+			Log::Error("[OpenGL]: Could not find attachment target {} idx {}",
+				(int)t, idx);
+			return;
+		}
 		u32 id = att->GetRendererID();
 
 		glBindFramebuffer(GL_FRAMEBUFFER, m_BufferID);

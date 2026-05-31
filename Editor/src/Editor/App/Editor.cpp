@@ -172,13 +172,17 @@ static void DrawMainMenuBar() {
 	}
 
 	ImGui::Separator();
-	if(s_EditorMode == EditorMode::Edit || s_EditorMode == EditorMode::Pause) {
+	if(s_EditorMode == EditorMode::Edit) {
 		if(ImGui::MenuItem("Play"))
 			Editor::OnPlay();
 	}
 	if(s_EditorMode == EditorMode::Play) {
 		if(ImGui::MenuItem("Pause"))
 			Editor::OnPause();
+	}
+	else if(s_EditorMode == EditorMode::Pause) {
+		if(ImGui::MenuItem("Resume"))
+			Editor::OnResume();
 	}
 	if(s_EditorMode != EditorMode::Edit) {
 		if(ImGui::MenuItem("Stop"))
@@ -359,6 +363,7 @@ void Editor::OnPlay(bool debug) {
 	if(s_EditorMode != EditorMode::Edit)
 		return;
 
+	Log::Info("OnPlay");
 	s_EditorMode = EditorMode::Play;
 	SaveScene();
 
@@ -404,6 +409,7 @@ void Editor::OnPlay(bool debug) {
 }
 
 void Editor::OnPause() {
+	Log::Info("OnPause");
 	s_EditorMode = EditorMode::Pause;
 	if(!s_Debugging)
 		App::Get()->Running = false;
@@ -416,6 +422,7 @@ void Editor::OnPause() {
 }
 
 void Editor::OnResume() {
+	Log::Info("OnResume");
 	s_EditorMode = EditorMode::Play;
 	if(!s_Debugging)
 		App::Get()->Running = true;
@@ -431,6 +438,7 @@ void Editor::OnStop() {
 	if(s_EditorMode == EditorMode::Edit)
 		return;
 
+	Log::Info("OnStop");
 	s_EditorMode = EditorMode::Edit;
 	if(s_Debugging) {
 		{

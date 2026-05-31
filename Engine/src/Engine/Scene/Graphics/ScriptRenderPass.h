@@ -5,6 +5,7 @@
 #include "ScriptFramebuffer.h"
 
 #include <Engine/Asset/AssetManager.h>
+#include <Engine/Graphics/Renderer2D.h>
 
 namespace VolcanicEngine {
 
@@ -15,6 +16,7 @@ public:
 	{
 		auto shader = AssetManager::Get()->Get<Shader>(shaderName);
 		auto pass = RenderPass::Create(name, shader);
+		pass->SetData(Renderer2D::GetScreenBuffer());
 		return new ScriptRenderPass(pass);
 	}
 
@@ -31,10 +33,18 @@ public:
 
 	void SetInputTexture(const std::string& name, ScriptTexture* tex) {
 		if(!tex) return;
-		m_Pass->GetUniforms().Set(name, [tex]() {
-			if(tex->IsRawTexture())
-				return TextureSlot{ tex->GetTexture(), tex->NextSlot() };
-			return TextureSlot{ nullptr, tex->NextSlot() }; // Should probably handle attachments too
+		u32 slot = m_NextTextureSlot++;
+		if(tex->IsRawTexture()) {
+			Ref<Texture> texture = tex->GetTexture();
+			m_Pass->GetUniforms().Set(name, [texture, slot]() {
+				return TextureSlot{ texture, slot };
+			});
+			return;
+		}
+		Ref<Attachment> att = tex->GetAttachment();
+		if(!att) return;
+		m_Pass->GetUniforms().Set(name, [att, slot]() {
+			return AttachmentSlot{ att, slot };
 		});
 	}
 
@@ -58,6 +68,7 @@ public:
 	}
 
 	void Execute() {
+		m_NextTextureSlot = 0;
 		Renderer::StartPass(m_Pass);
 		auto* cmd = Renderer::GetCommand();
 		m_Pass->SetUniforms(cmd);
@@ -75,6 +86,7 @@ public:
 
 private:
 	int m_RefCount = 1;
+	u32 m_NextTextureSlot = 0;
 	Ref<RenderPass> m_Pass;
 	ScriptFramebuffer* m_OutputRef = nullptr;
 };

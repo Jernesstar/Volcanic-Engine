@@ -168,13 +168,16 @@ void App::OnLoad() {
 }
 
 void App::OnClose() {
-	s_Scene.reset();
-
 	if(s_AppObject)
 		s_AppObject->Call("OnClose");
 
+	if(auto* dp = dynamic_cast<DefaultRenderPipeline*>(
+			m_SceneRenderer.GetPipeline().get()))
+		dp->ClearRenderHooks();
+
 	s_AppObject.reset();
 	s_AppModule.reset();
+	s_Scene.reset();
 }
 
 void App::OnUpdate(TimeStep ts) {

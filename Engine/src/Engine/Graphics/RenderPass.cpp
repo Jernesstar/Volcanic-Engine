@@ -34,6 +34,7 @@ void RenderPass::SetUniforms(DrawCommand* command) {
 	SET_UNIFORM(Mat2);
 	SET_UNIFORM(Mat3);
 	SET_UNIFORM(Mat4);
+	SET_UNIFORM(AttachmentSlot);
 }
 
 GET_HANDLES(int32_t, Int)
@@ -45,5 +46,6 @@ GET_HANDLES(glm::vec4, Vec4)
 GET_HANDLES(glm::mat2, Mat2)
 GET_HANDLES(glm::mat3, Mat3)
 GET_HANDLES(glm::mat4, Mat4)
+GET_HANDLES(AttachmentSlot, AttachmentSlot)
 
 }

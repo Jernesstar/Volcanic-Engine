@@ -3,7 +3,7 @@
 layout(local_size_x = 8, local_size_y = 8) in;
 
 layout(binding = 0) uniform sampler2D u_SrcTexture;
-layout(binding = 1, rgba16f) writeonly uniform image2D u_DstMip;
+layout(binding = 1, rgba8) writeonly uniform image2D u_DstMip;
 
 layout(location = 0) uniform vec2  u_SrcResolution;
 layout(location = 1) uniform float u_Threshold;

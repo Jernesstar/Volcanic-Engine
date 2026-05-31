@@ -45,11 +45,13 @@ public:
 	}
 
 	ScriptTexture* GetColor(u32 idx = 0) {
+		Resolve();
 		return ScriptTexture::WrapAttachment(m_Framebuffer,
 			AttachmentTarget::Color, idx);
-		}
+	}
 
 	ScriptTexture* GetDepth() {
+		Resolve();
 		return ScriptTexture::WrapAttachment(m_Framebuffer,
 			AttachmentTarget::Depth);
 	}
