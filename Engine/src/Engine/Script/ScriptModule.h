@@ -20,10 +20,11 @@ public:
 	asIScriptModule* GetHandle() const { return m_Handle; }
 	const auto& GetClasses() const { return m_Classes; }
 
-	std::string GetName() const { return m_Handle->GetName(); }
+	std::string GetName() const { return m_ModuleName; }
 
 private:
 	asIScriptModule* m_Handle = nullptr;
+	std::string m_ModuleName;
 	Map<std::string, Ref<ScriptClass>> m_Classes;
 };
 

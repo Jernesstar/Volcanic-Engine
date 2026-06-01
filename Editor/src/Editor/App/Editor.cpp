@@ -36,12 +36,31 @@
 #include "SceneLoader.h"
 #include "ScriptManager.h"
 
+#include <chrono>
+#include <fstream>
+#include <sstream>
+
 using namespace VolcaniCore;
 using namespace VolcanicEngine;
 using namespace VolcanicEngine::Graphics;
 using namespace VolcanicEngine::Script;
 
 namespace VolcanicEditor {
+
+// #region agent log
+static void AgentLogEd(const char* loc, const char* msg, const char* hyp,
+	const std::string& dataJson)
+{
+	std::ofstream f("/home/jernesstar/Code/Work/.cursor/.cursor/debug-3c4d03.log",
+		std::ios::app);
+	if(!f) return;
+	auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(
+		std::chrono::system_clock::now().time_since_epoch()).count();
+	f << "{\"sessionId\":\"3c4d03\",\"location\":\"" << loc
+	  << "\",\"message\":\"" << msg << "\",\"hypothesisId\":\"" << hyp
+	  << "\",\"data\":" << dataJson << ",\"timestamp\":" << ts << "}\n";
+}
+// #endregion
 
 static Project s_Project;
 static Ref<App> s_App;
@@ -68,6 +87,7 @@ static AssetEditorPanel     s_AssetEditor;
 static ConsolePanel         s_Console;
 
 static bool s_DockspaceBuilt = false;
+static bool s_PendingStop = false;
 
 static TimeStep s_TimeStep;
 struct {
@@ -205,9 +225,9 @@ void Editor::Init(const CommandLineArgs& args) {
 
 	s_App = CreateRef<App>();
 	s_App->AppLoad =
-		[](Ref<ScriptModule>& script)
+		[]()
 		{
-			script = AssetImporter::GetScript("App/Game.as");
+			return AssetImporter::GetScript("App/Game.as");
 		};
 	s_App->SceneLoad =
 		[](Scene& scene)
@@ -236,18 +256,49 @@ void Editor::Init(const CommandLineArgs& args) {
 }
 
 void Editor::Close() {
+	// #region agent log
+	AgentLogEd("Editor.cpp:Close", "editor close start", "H5",
+		"{\"mode\":" + std::to_string((int)s_EditorMode) + "}");
+	// #endregion
 	OnStop();
+	if(s_PendingStop) {
+		s_PendingStop = false;
+		App::Get()->OnClose();
+	}
 
 	s_CurrentScene.reset();
-	s_App.reset();
+	// #region agent log
+	AgentLogEd("Editor.cpp:Close", "scene reset done", "H7", "{}");
+	// #endregion
 	s_AssetManager.reset();
+	// #region agent log
+	AgentLogEd("Editor.cpp:Close", "asset manager reset done", "H8", "{}");
+	// #endregion
+
+	if(App::Get())
+		App::Get()->ReleaseScriptModule();
 
 	ScriptEngine::Shutdown();
+	// #region agent log
+	AgentLogEd("Editor.cpp:Close", "script engine shutdown", "H5", "{}");
+	// #endregion
+	s_App.reset();
+	// #region agent log
+	AgentLogEd("Editor.cpp:Close", "app reset done", "H7", "{}");
+	// #endregion
 	UIRenderer::Close();
 	Renderer::Close();
+	// #region agent log
+	AgentLogEd("Editor.cpp:Close", "editor close done", "H5", "{}");
+	// #endregion
 }
 
 void Editor::Update(TimeStep ts) {
+	if(s_PendingStop) {
+		s_PendingStop = false;
+		App::Get()->OnClose();
+	}
+
 	UIRenderer::BeginFrame();
 	Renderer::BeginFrame();
 	// ImGuizmo::BeginFrame();
@@ -364,6 +415,9 @@ void Editor::OnPlay(bool debug) {
 		return;
 
 	Log::Info("OnPlay");
+	// #region agent log
+	AgentLogEd("Editor.cpp:OnPlay", "play", "H2", "{}");
+	// #endregion
 	s_EditorMode = EditorMode::Play;
 	SaveScene();
 
@@ -439,8 +493,16 @@ void Editor::OnStop() {
 		return;
 
 	Log::Info("OnStop");
+	// #region agent log
+	AgentLogEd("Editor.cpp:OnStop", "stop", "H5", "{}");
+	// #endregion
 	s_EditorMode = EditorMode::Edit;
-	if(s_Debugging) {
+
+	if(!s_Debugging) {
+		App::Get()->Running = false;
+		s_PendingStop = true;
+	}
+	else {
 		{
 			std::lock_guard<std::mutex> lock(s_Mutex);
 			s_State = s_EditorMode;
@@ -451,10 +513,6 @@ void Editor::OnStop() {
 		s_AppThread.reset();
 		ScriptManager::EndDebug();
 		s_Debugging = false;
-	}
-	else {
-		App::Get()->OnClose();
-		App::Get()->Running = false;
 	}
 }
 

@@ -23,12 +23,31 @@
 
 #include "ScriptGlue.h"
 
+#include <chrono>
+#include <fstream>
+#include <sstream>
+
 using namespace VolcanicEngine::Script;
 using namespace VolcanicEngine::ECS;
 
 namespace fs = std::filesystem;
 
 namespace VolcanicEngine {
+
+// #region agent log
+static void AgentLogApp(const char* loc, const char* msg, const char* hyp,
+	const std::string& dataJson)
+{
+	std::ofstream f("/home/jernesstar/Code/Work/.cursor/.cursor/debug-3c4d03.log",
+		std::ios::app);
+	if(!f) return;
+	auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(
+		std::chrono::system_clock::now().time_since_epoch()).count();
+	f << "{\"sessionId\":\"3c4d03\",\"location\":\"" << loc
+	  << "\",\"message\":\"" << msg << "\",\"hypothesisId\":\"" << hyp
+	  << "\",\"data\":" << dataJson << ",\"timestamp\":" << ts << "}\n";
+}
+// #endregion
 
 // ── Screen state ──────────────────────────────────────────────────────────────
 
@@ -41,6 +60,8 @@ static Ref<Scene> s_Scene;
 static Scene& ScriptGetScene() { return *s_Scene; }
 
 static asIScriptObject* GetScriptApp() {
+	if(!s_AppObject)
+		return nullptr;
 	auto* handle = s_AppObject->GetHandle();
 	handle->AddRef();
 	return handle;
@@ -90,6 +111,12 @@ static void UseDefaultRenderPipeline(App* app) {
 	app->UseDefaultPipeline();
 }
 
+static void UseDefaultRenderPipelineSized(
+	int renderW, int renderH, App* app)
+{
+	app->UseDefaultPipeline((u32)renderW, (u32)renderH);
+}
+
 static void ScriptAddRenderHook(asIScriptObject* obj, App* app) {
 	app->AddRenderHook(obj);
 }
@@ -113,6 +140,9 @@ App::App() {
 		"void UseDefaultRenderPipeline()",
 		asFUNCTION(UseDefaultRenderPipeline), asCALL_CDECL_OBJLAST);
 	ScriptEngine::Get()->RegisterObjectMethod("AppClass",
+		"void UseDefaultRenderPipeline(int renderW, int renderH)",
+		asFUNCTION(UseDefaultRenderPipelineSized), asCALL_CDECL_OBJLAST);
+	ScriptEngine::Get()->RegisterObjectMethod("AppClass",
 		"void AddRenderHook(IRenderHook@)",
 		asFUNCTION(ScriptAddRenderHook), asCALL_CDECL_OBJLAST);
 	ScriptEngine::Get()->RegisterObjectMethod("AppClass",
@@ -130,10 +160,18 @@ App::App() {
 		asFUNCTION(GetAssetManagerInstance), asCALL_CDECL);
 }
 
+App::~App() {
+	s_Instance = nullptr;
+}
+
 // ── Pipeline API ──────────────────────────────────────────────────────────────
 
 void App::UseDefaultPipeline() {
 	m_SceneRenderer.UseDefaultPipeline();
+}
+
+void App::UseDefaultPipeline(u32 renderW, u32 renderH) {
+	m_SceneRenderer.UseDefaultPipeline(renderW, renderH);
 }
 
 void App::AddRenderHook(asIScriptObject* obj) {
@@ -160,28 +198,96 @@ void App::SetPipeline(asIScriptObject* pipelineObj) {
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 
 void App::OnLoad() {
-	s_AppModule = CreateRef<ScriptModule>();
-	AppLoad(s_AppModule);
-	s_AppObject = s_AppModule->GetClass("Game")->Instantiate();
+	// #region agent log
+	{
+		void* pipe = m_SceneRenderer.GetPipeline()
+			? m_SceneRenderer.GetPipeline().get() : nullptr;
+		std::ostringstream d;
+		d << "{\"existingPipeline\":"
+		  << (pipe ? std::to_string((uintptr_t)pipe) : "null") << "}";
+		AgentLogApp("App.cpp:OnLoad", "app load start", "H2", d.str());
+	}
+	// #endregion
+	if(!s_AppModule) {
+		s_AppModule = AppLoad();
+		// #region agent log
+		AgentLogApp("App.cpp:OnLoad", "app module loaded", "H6",
+			"{\"hasModule\":" + std::string(s_AppModule ? "true" : "false")
+			+ ",\"reused\":false}");
+		// #endregion
+	}
+	else {
+		// #region agent log
+		AgentLogApp("App.cpp:OnLoad", "app module reused", "H6", "{}");
+		// #endregion
+	}
+	if(!s_AppModule) {
+		Log::Error("Failed to load app script module");
+		return;
+	}
+
+	auto gameClass = s_AppModule->GetClass("Game");
+	if(!gameClass) {
+		Log::Error("Failed to find Game class in app module");
+		return;
+	}
+
+	if(auto* mod = s_AppModule->GetHandle())
+		mod->ResetGlobalVars();
+
+	s_AppObject = gameClass->Instantiate();
+	// #region agent log
+	AgentLogApp("App.cpp:OnLoad", "game instantiated", "H6",
+		"{\"hasObject\":" + std::string(s_AppObject ? "true" : "false") + "}");
+	// #endregion
+	if(!s_AppObject) {
+		Log::Error("Failed to instantiate Game");
+		return;
+	}
+
 	s_AppObject->Call("OnLoad");
 	Log::Info("App loaded");
 }
 
 void App::OnClose() {
+	// #region agent log
+	{
+		void* pipe = m_SceneRenderer.GetPipeline()
+			? m_SceneRenderer.GetPipeline().get() : nullptr;
+		std::ostringstream d;
+		d << "{\"pipeline\":"
+		  << (pipe ? std::to_string((uintptr_t)pipe) : "null")
+		  << ",\"hasAppObject\":" << (s_AppObject ? "true" : "false") << "}";
+		AgentLogApp("App.cpp:OnClose", "app close start", "H5", d.str());
+	}
+	// #endregion
+
 	if(s_AppObject)
 		s_AppObject->Call("OnClose");
 
-	if(auto* dp = dynamic_cast<DefaultRenderPipeline*>(
-			m_SceneRenderer.GetPipeline().get()))
-		dp->ClearRenderHooks();
+	m_SceneRenderer.OnSceneClose();
 
-	s_AppObject.reset();
-	s_AppModule.reset();
+	ScriptEngine::ResetContexts();
+
 	s_Scene.reset();
+	s_AppObject.reset();
+	if(auto* mod = s_AppModule ? s_AppModule->GetHandle() : nullptr)
+		mod->ResetGlobalVars();
+	// #region agent log
+	AgentLogApp("App.cpp:OnClose", "app close done", "H5", "{}");
+	// #endregion
+	Log::Info("App closed");
+}
+
+void App::ReleaseScriptModule() {
+	// #region agent log
+	AgentLogApp("App.cpp:ReleaseScriptModule", "release script module", "H8", "{}");
+	// #endregion
+	s_AppModule.reset();
 }
 
 void App::OnUpdate(TimeStep ts) {
-	if(!Running)
+	if(!Running || !s_AppObject)
 		return;
 
 	s_AppObject->Call("OnUpdate", (f32)ts);
@@ -190,8 +296,7 @@ void App::OnUpdate(TimeStep ts) {
 		return;
 
 	s_Scene->OnUpdate(ts);
-	m_SceneRenderer.Update(ts);
-	m_SceneRenderer.Render(s_Scene.get());
+	m_SceneRenderer.Render(s_Scene.get(), ts);
 }
 
 void App::LoadScene(Scene* scene) {

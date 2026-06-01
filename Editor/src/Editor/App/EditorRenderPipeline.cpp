@@ -117,7 +117,27 @@ void EditorRenderPipeline::OnInit() {
 	Application::PopDir();
 }
 
-void EditorRenderPipeline::OnRender(Scene* scene) {
+void EditorRenderPipeline::OnClose() {
+	m_GridPass.reset();
+	m_SkyboxPass.reset();
+	m_GeometryPass.reset();
+	m_MaskPass.reset();
+	m_OutlinePass.reset();
+	m_LinePass.reset();
+
+	delete m_BillboardBuffer;
+
+	m_BillboardPass.reset();
+	m_CameraIcon.reset();
+	m_DirectionalLightIcon.reset();
+	m_PointLightIcon.reset();
+	m_SpotlightIcon.reset();
+	m_ParticlesIcon.reset();
+
+	Log::Info("EditorRenderPipeline closed");
+}
+
+void EditorRenderPipeline::OnRender(Scene* scene, TimeStep ts) {
 	if(Render3D) {
 		Begin3D();
 
@@ -156,10 +176,6 @@ void EditorRenderPipeline::OnRender(Scene* scene) {
 
 		EndCanvas();
 	}
-}
-
-void EditorRenderPipeline::OnResize(u32 w, u32 h) {
-	// m_Output->Resize(w, h);
 }
 
 void EditorRenderPipeline::AddBillboard(Vec3 pos, u32 type) {

@@ -62,18 +62,16 @@ private:
 		uint32_t height = spec.Height;
 
 		u32 internalFormat;
-		u32 filter;
+		u32 filter = spec.Filter == Graphics::TextureSampling::Nearest
+			? GL_NEAREST : GL_LINEAR;
 		if(spec.Target == Graphics::AttachmentTarget::Color) {
 			internalFormat = GL_RGBA8;
-			filter = GL_LINEAR;
 		}
 		else if(spec.Target == Graphics::AttachmentTarget::Depth) {
 			internalFormat = GL_DEPTH_COMPONENT32F;
-			filter = GL_LINEAR;
 		}
 		else if(spec.Target == Graphics::AttachmentTarget::Stencil) {
 			internalFormat = GL_STENCIL_INDEX8;
-			filter = GL_LINEAR;
 		}
 
 		glCreateTextures(GL_TEXTURE_2D, 1, &m_RendererID);

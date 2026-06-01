@@ -78,6 +78,21 @@ asIScriptContext* ScriptEngine::GetHookContext() {
 	return s_HookContext;
 }
 
+void ScriptEngine::ResetContexts() {
+	if(s_HookContext) {
+		s_HookContext->Release();
+		s_HookContext = nullptr;
+	}
+	for(asIScriptContext* context : s_Contexts)
+		context->Unprepare();
+}
+
+void ScriptEngine::CollectGarbage() {
+	if(s_Engine)
+		s_Engine->GarbageCollect(
+			asGC_FULL_CYCLE | asGC_DESTROY_GARBAGE);
+}
+
 InterfaceBuilder ScriptEngine::RegisterInterface(const std::string& name) {
 	s_Engine->RegisterInterface(name.c_str());
 

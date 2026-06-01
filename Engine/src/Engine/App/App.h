@@ -21,16 +21,17 @@ public:
 public:
 	bool Running = false;
 
-	Func<void, Ref<ScriptModule>&> AppLoad;
+	Func<Ref<ScriptModule>> AppLoad;
 	Func<void, Scene&> SceneLoad;
 	Func<void, const std::string&> Log;
 
 public:
 	App();
-	~App() = default;
+	~App();
 
 	void OnLoad();
 	void OnClose();
+	void ReleaseScriptModule();
 	void OnUpdate(TimeStep ts);
 
 	void LoadScene(Scene* scene);
@@ -43,6 +44,7 @@ public:
 	Ref<Framebuffer> GetRenderOutput() { return m_SceneRenderer.GetOutput(); }
 
 	void UseDefaultPipeline();
+	void UseDefaultPipeline(u32 renderW, u32 renderH);
 	void AddRenderHook(asIScriptObject* obj);
 	void RemoveRenderHook(asIScriptObject* obj);
 	void SetPipeline(asIScriptObject* pipelineObj);

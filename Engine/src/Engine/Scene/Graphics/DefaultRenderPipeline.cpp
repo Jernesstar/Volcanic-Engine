@@ -9,11 +9,30 @@
 #include <Engine/Scene/Component.h>
 #include <Engine/Scene/Scene.h>
 
+#include <chrono>
+#include <fstream>
+#include <sstream>
+
 using namespace VolcanicEngine::ECS;
 using namespace VolcanicEngine::Graphics;
 using namespace VolcanicEngine::Script;
 
 namespace VolcanicEngine {
+
+// #region agent log
+static void AgentLogDP(const char* loc, const char* msg, const char* hyp,
+	const std::string& dataJson)
+{
+	std::ofstream f("/home/jernesstar/Code/Work/.cursor/.cursor/debug-3c4d03.log",
+		std::ios::app);
+	if(!f) return;
+	auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(
+		std::chrono::system_clock::now().time_since_epoch()).count();
+	f << "{\"sessionId\":\"3c4d03\",\"location\":\"" << loc
+	  << "\",\"message\":\"" << msg << "\",\"hypothesisId\":\"" << hyp
+	  << "\",\"data\":" << dataJson << ",\"timestamp\":" << ts << "}\n";
+}
+// #endregion
 
 struct ParticleData {
 	Vec3 Position;
@@ -24,21 +43,37 @@ struct ParticleData {
 static constexpr i32 k_EmitWorkGroup = 64;
 static constexpr i32 k_UpdateWorkGroup = 128;
 
-void DefaultRenderPipeline::OnInit() {
-	u32 w = m_Width, h = m_Height;
+DefaultRenderPipeline::DefaultRenderPipeline(
+	u32 renderW, u32 renderH, u32 outputW, u32 outputH)
+	: m_RenderWidth(renderW), m_RenderHeight(renderH),
+		m_OutputWidth(outputW), m_OutputHeight(outputH) { }
 
+void DefaultRenderPipeline::OnInit() {
+	// #region agent log
+	{
+		std::ostringstream d;
+		d << "{\"this\":" << (uintptr_t)this
+		  << ",\"hadGBuffer\":" << (m_GBuffer ? "true" : "false")
+		  << ",\"hookCount\":" << m_RenderHooks.Count()
+		  << ",\"particleStateCount\":" << m_ParticleState.size() << "}";
+		AgentLogDP("DefaultRenderPipeline.cpp:OnInit", "pipeline init", "H1", d.str());
+	}
+	// #endregion
+	u32 w = m_RenderWidth, h = m_RenderHeight;
+
+	const auto nearest = TextureSampling::Nearest;
 	m_GBuffer = RendererAPI::CreateFramebuffer({
 		{
-			{ AttachmentTarget::Color, w, h }, // Position  (location 0)
-			{ AttachmentTarget::Color, w, h }, // Normal    (location 1)
-			{ AttachmentTarget::Color, w, h }, // Albedo    (location 2)
-			{ AttachmentTarget::Depth, w, h }, // Specular
+			{ AttachmentTarget::Color, w, h, nearest }, // Position  (location 0)
+			{ AttachmentTarget::Color, w, h, nearest }, // Normal    (location 1)
+			{ AttachmentTarget::Color, w, h, nearest }, // Albedo    (location 2)
+			{ AttachmentTarget::Depth, w, h },
 		}
 	});
 
 	m_HDRBuffer = RendererAPI::CreateFramebuffer({
 		{
-			{ AttachmentTarget::Color, w, h },
+			{ AttachmentTarget::Color, w, h, nearest },
 			{ AttachmentTarget::Depth, w, h },
 		}
 	});
@@ -54,7 +89,7 @@ void DefaultRenderPipeline::OnInit() {
 		glm::ivec2 mipSize{ (i32)w, (i32)h };
 		for(u32 i = 0; i < s_MipCount; i++) {
 			mipSize /= 2;
-			mipSize  = glm::max(mipSize, glm::ivec2(1));
+			mipSize = glm::max(mipSize, glm::ivec2(1));
 			m_MipChain[i].Size = mipSize;
 			bloomSpec.Attachments.Add({ AttachmentTarget::Color,
 				(u32)mipSize.x, (u32)mipSize.y });
@@ -64,7 +99,7 @@ void DefaultRenderPipeline::OnInit() {
 
 	m_OutputBuffer = RendererAPI::CreateFramebuffer({
 		{
-			{ AttachmentTarget::Color, w, h },
+			{ AttachmentTarget::Color, m_OutputWidth, m_OutputHeight },
 		}
 	});
 
@@ -83,7 +118,7 @@ void DefaultRenderPipeline::OnInit() {
 	m_GeometryPass = RenderPass::Create("GBuffer", m_GBufferShader, m_GBuffer);
 	m_ShadowPass   = RenderPass::Create("Shadow", m_ShadowShader, m_ShadowMap);
 	m_LightingPass = RenderPass::Create("Lighting", m_LightingShader, m_HDRBuffer);
-	m_TonemapPass  = RenderPass::Create("Tonemap", m_TonemapShader);
+	m_TonemapPass  = RenderPass::Create("Tonemap", m_TonemapShader, m_OutputBuffer);
 	// m_SkyboxPass   = RenderPass::Create("Skybox", m_SkyboxShader, m_HDRBuffer);
 	m_DownsamplePass = RenderPass::Create("BloomDownsample", m_DownsampleShader, m_BloomMips);
 	m_UpsamplePass   = RenderPass::Create("BloomUpsample", m_UpsampleShader, m_BloomMips);
@@ -98,18 +133,59 @@ void DefaultRenderPipeline::OnInit() {
 	// m_SkyboxPass->SetData(Renderer3D::GetCubemapBuffer());
 	m_ParticleDrawPass->SetData(Renderer2D::GetScreenBuffer());
 
-	Log::Info("Initialized DefaultRenderPipeline");
+	Log::Info(
+		"Initialized DefaultRenderPipeline (render {}x{}, output {}x{}; "
+		"GBuffer {}x{}, HDR {}x{}, Output {}x{})",
+		m_RenderWidth, m_RenderHeight, m_OutputWidth, m_OutputHeight,
+		m_GBuffer->Get(AttachmentTarget::Color, 0)->Spec.Width,
+		m_GBuffer->Get(AttachmentTarget::Color, 0)->Spec.Height,
+		m_HDRBuffer->Get(AttachmentTarget::Color)->Spec.Width,
+		m_HDRBuffer->Get(AttachmentTarget::Color)->Spec.Height,
+		m_OutputBuffer->Get(AttachmentTarget::Color)->Spec.Width,
+		m_OutputBuffer->Get(AttachmentTarget::Color)->Spec.Height);
 }
 
-// ── Resize ────────────────────────────────────────────────────────────────────
+void DefaultRenderPipeline::OnClose() {
+	// #region agent log
+	{
+		std::ostringstream d;
+		d << "{\"this\":" << (uintptr_t)this
+		  << ",\"hookCount\":" << m_RenderHooks.Count()
+		  << ",\"particleStateCount\":" << m_ParticleState.size()
+		  << ",\"hasOutput\":" << (m_OutputBuffer ? "true" : "false") << "}";
+		AgentLogDP("DefaultRenderPipeline.cpp:OnClose", "pipeline close", "H3", d.str());
+	}
+	// #endregion
+	ClearRenderHooks();
+	m_GBufferShader.reset();
+	m_ShadowShader.reset();
+	m_LightingShader.reset();
+	m_DownsampleShader.reset();
+	m_UpsampleShader.reset();
+	m_TonemapShader.reset();
+	m_SkyboxShader.reset();
+	m_ParticleEmitShader.reset();
+	m_ParticleUpdateShader.reset();
+	m_ParticleDrawShader.reset();
 
-void DefaultRenderPipeline::OnResize(u32 w, u32 h) {
-	// m_Width = w;
-	// m_Height = h;
-	// OnInit();
+	m_GeometryPass.reset();
+	m_ShadowPass.reset();
+	m_LightingPass.reset();
+	m_TonemapPass.reset();
+	m_DownsamplePass.reset();
+	m_UpsamplePass.reset();
+	m_ParticleEmitPass.reset();
+	m_ParticleUpdatePass.reset();
+	m_ParticleDrawPass.reset();
+
+	m_GBuffer.reset();
+	m_HDRBuffer.reset();
+	m_ShadowMap.reset();
+	m_BloomMips.reset();
+	m_OutputBuffer.reset();
+	m_ParticleState.clear();
+	Log::Info("DefaultRenderPipeline closed");
 }
-
-// ── GetOutput ─────────────────────────────────────────────────────────────────
 
 Ref<Framebuffer> DefaultRenderPipeline::GetOutput() const {
 	return m_OutputBuffer;
@@ -123,8 +199,6 @@ Ref<Framebuffer> DefaultRenderPipeline::GetBuffer(const std::string& name) const
 	if(name == "Output")    return m_OutputBuffer;
 	return nullptr;
 }
-
-// ── Hook API ──────────────────────────────────────────────────────────────────
 
 static const char* s_HookMethodNames[] = {
 	"void PreDepth(PipelineContext@)",
@@ -170,15 +244,6 @@ void DefaultRenderPipeline::ClearRenderHooks() {
 			m_RenderHooks[i].Object->Release();
 	}
 	m_RenderHooks.Clear();
-
-	if(m_GeometryPass)
-		m_GeometryPass->SetOutput(m_GBuffer);
-	if(m_ShadowPass)
-		m_ShadowPass->SetOutput(m_ShadowMap);
-	if(m_LightingPass)
-		m_LightingPass->SetOutput(m_HDRBuffer);
-
-	m_SubPixelOffset = { 0.0f, 0.0f };
 }
 
 void DefaultRenderPipeline::ExecuteHooks(PipelineStage stage, ScriptPipelineContext* ctx) {
@@ -190,13 +255,10 @@ void DefaultRenderPipeline::ExecuteHooks(PipelineStage stage, ScriptPipelineCont
 
 		ScriptFunc func{ fn, ScriptEngine::GetHookContext(), hook.Object };
 		func.CallVoid(ctx);
-
-		Log::Info("Executed hooks for stage {}", s_HookMethodNames[(u32)stage]);
 	}
 
 	// Apply any output redirection the hook requested
 	if(ctx->HasRedirection()) {
-		Log::Info("Applying output redirection for stage {}", s_HookMethodNames[(u32)stage]);
 		Ref<Framebuffer> target = ctx->GetRedirectedBuffer()->Resolve();
 		if(stage == PipelineStage::PreGeometry)
 			m_GeometryPass->SetOutput(target);
@@ -351,7 +413,7 @@ void DefaultRenderPipeline::TickParticles(Scene* scene, TimeStep ts,
 	Renderer::EndPass();
 }
 
-void DefaultRenderPipeline::OnRender(Scene* scene) {
+void DefaultRenderPipeline::OnRender(Scene* scene, TimeStep ts) {
 	ScriptPipelineContext* ctx =
 		ScriptPipelineContext::Factory(this, scene);
 
@@ -417,7 +479,7 @@ void DefaultRenderPipeline::OnRender(Scene* scene) {
 				auto& tr = entity.Get<TransformComponent>();
 				auto geo = AssetManager::Get()->Get<Geometry>(mesh.GeometryAsset);
 				if(geo)
-					Renderer3D::DrawGeometry(geo, Transform(tr).GetTransform());
+					Renderer3D::DrawGeometry(geo, Transform(tr).GetTransform(), cmd);
 			});
 		Renderer3D::End();
 	}
@@ -467,7 +529,7 @@ void DefaultRenderPipeline::OnRender(Scene* scene) {
 
 	ExecuteHooks(PipelineStage::PreSkybox, ctx);
 
-	if(skybox) {
+	if(skybox && m_SkyboxPass) {
 		Renderer::StartPass(m_SkyboxPass);
 		{
 			auto* cmd = Renderer::GetCommand();
@@ -543,7 +605,6 @@ void DefaultRenderPipeline::OnRender(Scene* scene) {
 
 	// ── Transparency pass (forward, additive over HDR) ────────────────────────
 
-	f32 ts = scene->World3D.GetNative().delta_time();
 	ExecuteHooks(PipelineStage::PreTransparency, ctx);
 	TickParticles(scene, ts, mainCamera);
 	ExecuteHooks(PipelineStage::PostTransparency, ctx);
@@ -568,11 +629,13 @@ void DefaultRenderPipeline::OnRender(Scene* scene) {
 				AttachmentSlot{ m_HDRBuffer->Get(AttachmentTarget::Color), 0 })
 			.Set("u_Bloom",
 				AttachmentSlot{
-					m_BloomMips->Get(AttachmentTarget::Color, s_MipCount - 1), 1
+					m_BloomMips->Get(AttachmentTarget::Color, 0), 1
 				})
 			.Set("u_Exposure", m_Exposure)
 			.Set("u_BloomStrength", m_BloomStrength)
-			.Set("u_SubPixelOffset", m_SubPixelOffset);
+			.Set("u_SubPixelOffset", m_SubPixelOffset)
+			.Set("u_SrcWidth", (f32)m_RenderWidth)
+			.Set("u_SrcHeight", (f32)m_RenderHeight);
 
 			auto* call = cmd->NewCall();
 			call->VertexCount = 6;
@@ -596,7 +659,7 @@ void DefaultRenderPipeline::RunBloom() {
 	// Mip i: chain[i-1] → chain[i]
 	Renderer::StartPass(m_DownsamplePass);
 	{
-		glm::vec2 srcRes{ (f32)m_Width, (f32)m_Height };
+		glm::vec2 srcRes{ (f32)m_RenderWidth, (f32)m_RenderHeight };
 		auto srcAttachment = m_HDRBuffer->Get(AttachmentTarget::Color);
 
 		for(u32 i = 0; i < s_MipCount; i++) {

@@ -36,7 +36,7 @@ void SceneVisualizerPanel::Update(TimeStep ts) {
 
 	if(mode == EditorMode::Edit && m_Scene) {
 		m_EditorPipeline.SetSelectedEntity(Editor::GetSelected());
-		m_EditorPipeline.OnRender(m_Scene);
+		m_EditorPipeline.OnRender(m_Scene, ts);
 	}
 }
 

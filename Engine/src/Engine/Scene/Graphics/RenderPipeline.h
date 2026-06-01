@@ -34,8 +34,8 @@ public:
 	virtual ~RenderPipeline() = default;
 
 	virtual void OnInit() = 0;
-	virtual void OnRender(Scene* scene) = 0;
-	virtual void OnResize(u32, u32) = 0;
+	virtual void OnClose() = 0;
+	virtual void OnRender(Scene* scene, TimeStep ts) = 0;
 
 	virtual Ref<Framebuffer> GetOutput() const = 0;
 };

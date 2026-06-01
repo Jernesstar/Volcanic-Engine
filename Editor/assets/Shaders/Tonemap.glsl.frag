@@ -5,15 +5,13 @@ layout(binding = 1) uniform sampler2D u_Bloom;
 
 layout(location = 0) uniform float u_Exposure      = 1.0;
 layout(location = 1) uniform float u_BloomStrength = 0.04;
-// Sub-pixel UV shift injected by the isometric pixel-snap hook.
-// Zero when the hook is not active (standard perspective pipeline).
 layout(location = 2) uniform vec2  u_SubPixelOffset = vec2(0.0);
+layout(location = 3) uniform float u_SrcWidth      = 1920.0;
+layout(location = 4) uniform float u_SrcHeight     = 1080.0;
 
 layout(location = 0) in  vec2 v_TexCoords;
 layout(location = 0) out vec4 FragColor;
 
-// Narkowicz ACES filmic approximation
-// Preserves hue better than plain Reinhard under high exposure
 vec3 ACES(vec3 x)
 {
 	const float a = 2.51;
@@ -26,21 +24,22 @@ vec3 ACES(vec3 x)
 
 void main()
 {
-	vec2 uv = v_TexCoords + u_SubPixelOffset;
+	vec2 lowResSize = vec2(u_SrcWidth, u_SrcHeight);
+	vec2 snappedUV = (floor(v_TexCoords * lowResSize) + 0.5) / lowResSize;
+	vec2 uv = snappedUV + u_SubPixelOffset;
 
-	vec3 hdr   = texture(u_HDR,   uv).rgb;
-	vec3 bloom = texture(u_Bloom, uv).rgb;
+	ivec2 hdrCoord = clamp(ivec2(uv * lowResSize), ivec2(0),
+		ivec2(lowResSize) - ivec2(1));
+	vec2 bloomSize = vec2(textureSize(u_Bloom, 0));
+	ivec2 bloomCoord = clamp(ivec2(uv * bloomSize), ivec2(0),
+		ivec2(bloomSize) - ivec2(1));
 
-	// Additive bloom composite
+	vec3 hdr   = texelFetch(u_HDR,   hdrCoord, 0).rgb;
+	vec3 bloom = texelFetch(u_Bloom, bloomCoord, 0).rgb;
+
 	vec3 color = hdr + bloom * u_BloomStrength;
-
-	// Exposure
 	color *= u_Exposure;
-
-	// ACES filmic tone map
 	color = ACES(color);
-
-	// Gamma correction (linear → sRGB)
 	color = pow(color, vec3(1.0 / 2.2));
 
 	FragColor = vec4(color, 1.0);

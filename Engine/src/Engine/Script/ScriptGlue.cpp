@@ -1,10 +1,7 @@
 #include "ScriptGlue.h"
 
 #include <iostream>
-#include <fstream>
-#include <chrono>
 #include <cstdint>
-#include <filesystem>
 
 #define GLM_ENABLE_EXPERIMENTAL
 
@@ -44,8 +41,6 @@
 #include "Scene/Graphics/DefaultRenderPipeline.h"
 #include "Scene/Graphics/SceneRenderer.h"
 #include "Scene/Graphics/ScriptPipelineContext.h"
-
-#include <sstream>
 
 #include "App.h"
 
@@ -1464,7 +1459,7 @@ void RegisterRenderPipeline() {
 	engine->RegisterInterfaceMethod("IRenderPipeline",
 		"void OnRender()");
 	engine->RegisterInterfaceMethod("IRenderPipeline",
-		"void OnResize(uint w, uint h)");
+		"void OnClose()");
 }
 
 }

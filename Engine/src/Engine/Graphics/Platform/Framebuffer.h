@@ -4,6 +4,8 @@
 #include <VolcaniCore/Core/Template.h>
 #include <VolcaniCore/Core/List.h>
 
+#include "Texture.h"
+
 using namespace VolcaniCore;
 
 namespace VolcanicEngine::Graphics {
@@ -13,6 +15,7 @@ enum class AttachmentTarget { Color, Depth, Stencil };
 struct AttachmentSpec {
 	AttachmentTarget Target;
 	u32 Width = 0, Height = 0;
+	TextureSampling Filter = TextureSampling::Linear;
 };
 
 class Attachment : public Derivable<Attachment> {

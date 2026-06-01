@@ -20,8 +20,8 @@ public:
 	~EditorRenderPipeline() = default;
 
 	void OnInit() override;
-	void OnRender(Scene* scene) override;
-	void OnResize(u32 w, u32 h) override;
+	void OnClose() override;
+	void OnRender(Scene* scene, TimeStep ts) override;
 
 	Ref<Framebuffer> GetOutput() const override { return m_Output; }
 

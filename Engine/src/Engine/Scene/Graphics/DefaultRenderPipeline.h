@@ -18,12 +18,14 @@ struct ParticleEmitterGPU {
 
 class DefaultRenderPipeline : public RenderPipeline {
 public:
-	DefaultRenderPipeline() = default;
+	DefaultRenderPipeline(
+		u32 renderW = 1920, u32 renderH = 1080,
+		u32 outputW = 1920, u32 outputH = 1080);
 	~DefaultRenderPipeline() { ClearRenderHooks(); }
 
 	void OnInit() override;
-	void OnRender(Scene* scene) override;
-	void OnResize(u32 w, u32 h) override;
+	void OnRender(Scene* scene, TimeStep ts) override;
+	void OnClose() override;
 	Ref<Framebuffer> GetOutput() const override;
 
 	// Hook registration
@@ -54,8 +56,10 @@ private:
 
 	glm::vec2 m_SubPixelOffset = { 0.0f, 0.0f };
 
-	u32 m_Width  = 1920;
-	u32 m_Height = 1080;
+	u32 m_RenderWidth  = 1920;
+	u32 m_RenderHeight = 1080;
+	u32 m_OutputWidth  = 1920;
+	u32 m_OutputHeight = 1080;
 
 	static constexpr u32 s_MipCount = 6;
 

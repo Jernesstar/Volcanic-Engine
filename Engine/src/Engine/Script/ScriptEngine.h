@@ -38,6 +38,8 @@ public:
 
 	static asIScriptContext* GetContext();
 	static asIScriptContext* GetHookContext();
+	static void ResetContexts();
+	static void CollectGarbage();
 
 	static InterfaceBuilder RegisterInterface(const std::string& name);
 };
