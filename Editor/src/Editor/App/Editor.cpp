@@ -3,7 +3,6 @@
 #include <iostream>
 #include <thread>
 #include <mutex>
-#include <sstream>
 #include <iterator>
 
 #define RAPIDJSON_ASSERT(x) ((void)0)
@@ -36,31 +35,12 @@
 #include "SceneLoader.h"
 #include "ScriptManager.h"
 
-#include <chrono>
-#include <fstream>
-#include <sstream>
-
 using namespace VolcaniCore;
 using namespace VolcanicEngine;
 using namespace VolcanicEngine::Graphics;
 using namespace VolcanicEngine::Script;
 
 namespace VolcanicEditor {
-
-// #region agent log
-static void AgentLogEd(const char* loc, const char* msg, const char* hyp,
-	const std::string& dataJson)
-{
-	std::ofstream f("/home/jernesstar/Code/Work/.cursor/.cursor/debug-3c4d03.log",
-		std::ios::app);
-	if(!f) return;
-	auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(
-		std::chrono::system_clock::now().time_since_epoch()).count();
-	f << "{\"sessionId\":\"3c4d03\",\"location\":\"" << loc
-	  << "\",\"message\":\"" << msg << "\",\"hypothesisId\":\"" << hyp
-	  << "\",\"data\":" << dataJson << ",\"timestamp\":" << ts << "}\n";
-}
-// #endregion
 
 static Project s_Project;
 static Ref<App> s_App;
@@ -256,10 +236,6 @@ void Editor::Init(const CommandLineArgs& args) {
 }
 
 void Editor::Close() {
-	// #region agent log
-	AgentLogEd("Editor.cpp:Close", "editor close start", "H5",
-		"{\"mode\":" + std::to_string((int)s_EditorMode) + "}");
-	// #endregion
 	OnStop();
 	if(s_PendingStop) {
 		s_PendingStop = false;
@@ -267,30 +243,15 @@ void Editor::Close() {
 	}
 
 	s_CurrentScene.reset();
-	// #region agent log
-	AgentLogEd("Editor.cpp:Close", "scene reset done", "H7", "{}");
-	// #endregion
 	s_AssetManager.reset();
-	// #region agent log
-	AgentLogEd("Editor.cpp:Close", "asset manager reset done", "H8", "{}");
-	// #endregion
 
 	if(App::Get())
 		App::Get()->ReleaseScriptModule();
 
 	ScriptEngine::Shutdown();
-	// #region agent log
-	AgentLogEd("Editor.cpp:Close", "script engine shutdown", "H5", "{}");
-	// #endregion
 	s_App.reset();
-	// #region agent log
-	AgentLogEd("Editor.cpp:Close", "app reset done", "H7", "{}");
-	// #endregion
 	UIRenderer::Close();
 	Renderer::Close();
-	// #region agent log
-	AgentLogEd("Editor.cpp:Close", "editor close done", "H5", "{}");
-	// #endregion
 }
 
 void Editor::Update(TimeStep ts) {
@@ -414,10 +375,12 @@ void Editor::OnPlay(bool debug) {
 	if(s_EditorMode != EditorMode::Edit)
 		return;
 
+	if(s_PendingStop) {
+		s_PendingStop = false;
+		App::Get()->OnClose();
+	}
+
 	Log::Info("OnPlay");
-	// #region agent log
-	AgentLogEd("Editor.cpp:OnPlay", "play", "H2", "{}");
-	// #endregion
 	s_EditorMode = EditorMode::Play;
 	SaveScene();
 
@@ -493,9 +456,6 @@ void Editor::OnStop() {
 		return;
 
 	Log::Info("OnStop");
-	// #region agent log
-	AgentLogEd("Editor.cpp:OnStop", "stop", "H5", "{}");
-	// #endregion
 	s_EditorMode = EditorMode::Edit;
 
 	if(!s_Debugging) {

@@ -149,7 +149,7 @@ public:
 
 	~Framebuffer() {
 		m_Attachments.Clear();
-		glDeleteBuffers(1, &m_BufferID);
+		glDeleteFramebuffers(1, &m_BufferID);
 	}
 
 	void Bind() const { glBindFramebuffer(GL_FRAMEBUFFER, m_BufferID); }

@@ -5,31 +5,11 @@
 #include <VolcaniCore/Core/Application.h>
 #include <VolcaniCore/Core/FileUtils.h>
 
-#include <chrono>
-#include <fstream>
-#include <sstream>
-
 #include "App/Editor.h"
 
 namespace fs = std::filesystem;
 
 namespace VolcanicEditor {
-
-// #region agent log
-static void AgentLogSM(const char* loc, const char* msg, const char* hyp,
-	const std::string& dataJson)
-{
-	std::ofstream f("/home/jernesstar/Code/Work/.cursor/.cursor/debug-3c4d03.log",
-		std::ios::app);
-	if(!f) return;
-	auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(
-		std::chrono::system_clock::now().time_since_epoch()).count();
-	f << "{\"sessionId\":\"3c4d03\",\"location\":\"" << loc
-	  << "\",\"message\":\"" << msg << "\",\"hypothesisId\":\"" << hyp
-	  << "\",\"data\":" << dataJson << ",\"timestamp\":" << ts << "}\n";
-	f.flush();
-}
-// #endregion
 
 static int IncludeCallback(const char* includeStr, const char* from,
 	CScriptBuilder* builder, void* param)
@@ -68,20 +48,11 @@ asIScriptModule* ScriptManager::LoadScript(const List<std::string>& paths,
 	if(name == "")
 		name = fs::path(paths[0]).filename().stem().string();
 
-	// #region agent log
-	AgentLogSM("ScriptManager.cpp:LoadScript", "load start", "H8",
-		"{\"module\":\"" + name + "\"}");
-	// #endregion
-
 	ScriptEngine::ResetContexts();
 
 	CScriptBuilder builder;
 	int r;
 	r = builder.StartNewModule(engine, name.c_str());
-	// #region agent log
-	AgentLogSM("ScriptManager.cpp:LoadScript", "start module", "H8",
-		"{\"result\":" + std::to_string(r) + "}");
-	// #endregion
 	if(r < 0) {
 		Log::Error("StartNewModule failed for module name '{}'", name);
 		if(error)
@@ -106,10 +77,6 @@ asIScriptModule* ScriptManager::LoadScript(const List<std::string>& paths,
 	}
 
 	r = builder.BuildModule();
-	// #region agent log
-	AgentLogSM("ScriptManager.cpp:LoadScript", "build module", "H8",
-		"{\"result\":" + std::to_string(r) + "}");
-	// #endregion
 	if(r < 0) {
 		Log::Error("BuildModule failed for module name '{}'", name);
 		if(error) *error = true;

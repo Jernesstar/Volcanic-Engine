@@ -9,30 +9,11 @@
 #include <Engine/Scene/Component.h>
 #include <Engine/Scene/Scene.h>
 
-#include <chrono>
-#include <fstream>
-#include <sstream>
-
 using namespace VolcanicEngine::ECS;
 using namespace VolcanicEngine::Graphics;
 using namespace VolcanicEngine::Script;
 
 namespace VolcanicEngine {
-
-// #region agent log
-static void AgentLogDP(const char* loc, const char* msg, const char* hyp,
-	const std::string& dataJson)
-{
-	std::ofstream f("/home/jernesstar/Code/Work/.cursor/.cursor/debug-3c4d03.log",
-		std::ios::app);
-	if(!f) return;
-	auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(
-		std::chrono::system_clock::now().time_since_epoch()).count();
-	f << "{\"sessionId\":\"3c4d03\",\"location\":\"" << loc
-	  << "\",\"message\":\"" << msg << "\",\"hypothesisId\":\"" << hyp
-	  << "\",\"data\":" << dataJson << ",\"timestamp\":" << ts << "}\n";
-}
-// #endregion
 
 struct ParticleData {
 	Vec3 Position;
@@ -49,16 +30,6 @@ DefaultRenderPipeline::DefaultRenderPipeline(
 		m_OutputWidth(outputW), m_OutputHeight(outputH) { }
 
 void DefaultRenderPipeline::OnInit() {
-	// #region agent log
-	{
-		std::ostringstream d;
-		d << "{\"this\":" << (uintptr_t)this
-		  << ",\"hadGBuffer\":" << (m_GBuffer ? "true" : "false")
-		  << ",\"hookCount\":" << m_RenderHooks.Count()
-		  << ",\"particleStateCount\":" << m_ParticleState.size() << "}";
-		AgentLogDP("DefaultRenderPipeline.cpp:OnInit", "pipeline init", "H1", d.str());
-	}
-	// #endregion
 	u32 w = m_RenderWidth, h = m_RenderHeight;
 
 	const auto nearest = TextureSampling::Nearest;
@@ -146,16 +117,6 @@ void DefaultRenderPipeline::OnInit() {
 }
 
 void DefaultRenderPipeline::OnClose() {
-	// #region agent log
-	{
-		std::ostringstream d;
-		d << "{\"this\":" << (uintptr_t)this
-		  << ",\"hookCount\":" << m_RenderHooks.Count()
-		  << ",\"particleStateCount\":" << m_ParticleState.size()
-		  << ",\"hasOutput\":" << (m_OutputBuffer ? "true" : "false") << "}";
-		AgentLogDP("DefaultRenderPipeline.cpp:OnClose", "pipeline close", "H3", d.str());
-	}
-	// #endregion
 	ClearRenderHooks();
 	m_GBufferShader.reset();
 	m_ShadowShader.reset();
@@ -218,6 +179,9 @@ static const char* s_HookMethodNames[] = {
 };
 
 void DefaultRenderPipeline::AddRenderHook(asIScriptObject* obj) {
+	if(!obj)
+		return;
+
 	obj->AddRef();
 	RenderHook hook;
 	hook.Object = obj;
@@ -443,7 +407,8 @@ void DefaultRenderPipeline::OnRender(Scene* scene, TimeStep ts) {
 	scene->World3D.ForEach<SkyboxComponent>(
 		[&](ECS::Entity& entity) {
 			auto asset = entity.Get<SkyboxComponent>().CubemapAsset;
-			skybox = AssetManager::Get()->Get<Cubemap>(asset);
+			if(asset && asset.Type == AssetType::Cubemap)
+				skybox = AssetManager::Get()->Get<Cubemap>(asset);
 		});
 
 	if(!mainCamera) {

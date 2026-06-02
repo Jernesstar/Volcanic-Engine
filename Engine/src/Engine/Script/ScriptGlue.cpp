@@ -142,8 +142,8 @@ void ScriptGlue::Copy(Ref<ScriptObject> src, Ref<ScriptObject> dst) {
 		size_t size = 0;
 		if(field.TypeID > 0 && field.TypeID <= 11) // (Void, Double]
 			size = ScriptEngine::Get()->GetSizeOfPrimitiveType(field.TypeID);
-		// else if(fieldType == "Asset")
-		// 	size = sizeof(Asset);
+		else if(fieldType == "Asset")
+			size = sizeof(Asset);
 		else if(fieldType == "Vec3")
 			size = sizeof(Vec3);
 		else if(fieldType == "Vec2")
@@ -593,6 +593,10 @@ static void AssetInitCtor(u64 id, AssetType type, Asset* ptr) {
 	new (ptr) Asset{ id, type };
 }
 
+static void AssetDestructor(Asset* ptr) {
+	ptr->~Asset();
+}
+
 static u64 GetAssetID(Asset* asset) {
 	return (u64)asset->ID;
 }
@@ -639,13 +643,15 @@ void RegisterAssetManager() {
 	engine->RegisterEnumValue("AssetType", "Custom", 10);
 
 	engine->RegisterObjectType("Asset", sizeof(Asset),
-		asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_ALLINTS
+		asOBJ_VALUE | asOBJ_APP_CLASS_ALLINTS | asOBJ_APP_CLASS_ALIGN8
 		| asGetTypeTraits<Asset>());
 	engine->RegisterObjectBehaviour("Asset", asBEHAVE_CONSTRUCT,
 		"void f()", asFUNCTION(AssetDefaultCtor), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("Asset", asBEHAVE_CONSTRUCT,
 		"void f(uint64, AssetType)", asFUNCTION(AssetInitCtor),
 		asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectBehaviour("Asset", asBEHAVE_DESTRUCT,
+		"void f()", asFUNCTION(AssetDestructor), asCALL_CDECL_OBJLAST);
 
 	engine->RegisterObjectProperty("Asset", "const AssetType Type",
 		asOFFSET(Asset, Type));

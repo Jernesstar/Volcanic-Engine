@@ -451,8 +451,10 @@ asIScriptModule* AssetImporter::GetScriptData(const std::string& path,
 Ref<ScriptModule> AssetImporter::GetScript(const std::string& path) {
 	bool error;
 	asIScriptModule* handle = ScriptManager::LoadScript(path, true, &error);
-	if(error)
+	if(error) {
+		Log::Error("Failed to load script '{}'", path);
 		return nullptr;
+	}
 
 	return CreateRef<ScriptModule>(handle);
 }

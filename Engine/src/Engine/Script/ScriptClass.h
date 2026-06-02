@@ -26,6 +26,8 @@ public:
 		ScriptFunc func = GetFunc();
 		asIScriptObject* obj =
 			func.CallReturn<asIScriptObject*>(std::forward<Args>(args)...);
+		if(obj)
+			obj->AddRef();
 
 		Ref<ScriptObject> newObj =
 			CreateRef<ScriptObject>(obj, const_cast<ScriptClass*>(this), true);
