@@ -171,14 +171,6 @@ void App::RemoveRenderHook(asIScriptObject* obj) {
 		dp->RemoveRenderHook(obj);
 }
 
-void App::ClearPipelineRenderHooks() {
-	auto* dp =
-		dynamic_cast<DefaultRenderPipeline*>(
-			m_SceneRenderer.GetPipeline().get());
-	if(dp)
-		dp->ClearRenderHooks();
-}
-
 void App::SetPipeline(asIScriptObject* pipelineObj) {
 	m_SceneRenderer.SetPipeline(
 		CreateRef<ScriptRenderPipeline>(pipelineObj));
@@ -256,6 +248,7 @@ void App::OnUpdate(TimeStep ts) {
 
 void App::LoadScene(Scene* scene) {
 	s_Scene = CreateRef<Scene>(scene->Name);
+	s_Scene->RegisterSystems();
 	SceneLoad(*s_Scene);
 	Log::Info("Scene '{}' loaded", scene->Name);
 }

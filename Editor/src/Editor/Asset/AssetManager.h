@@ -15,7 +15,7 @@ public:
 	EditorAssetManager();
 	~EditorAssetManager();
 
-	void LoadRegistry();
+	void LoadRegistry(const std::string& projectRoot);
 	void Export(const std::string& exportPath);
 	void Clear();
 	void Save();

@@ -59,7 +59,7 @@ namespace VolcanicEngine {
 
 class AssetRegistry {
 public:
-	AssetRegistry();
+	explicit AssetRegistry(const std::string& projectRoot = "");
 	~AssetRegistry();
 
 	void Add(Asset asset);
@@ -80,6 +80,9 @@ public:
 	void Clear();
 
 private:
+	std::string GetBinPath(UUID id) const;
+
+	std::string m_ProjectRoot;
 	// Registry* m_Registry;
 	// Database* m_AssetMetadata;	// ID: Asset{ ID, Type, Primary }
 	// Database* m_AssetRefs;		// ID: Refs

@@ -1,5 +1,6 @@
-# LavaFlow
-.lavaflow/
+# Logs and captures
+.logs/
+captures/
 
 # VS and VS Code configuration
 .vscode/

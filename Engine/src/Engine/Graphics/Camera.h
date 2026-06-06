@@ -234,12 +234,9 @@ private:
 	}
 	void CalculateView() override {
 		Vec3 up = { 0.0f, 1.0f, 0.0f };
-		View = glm::lookAt(Position, Position + R*Direction, up);
+		Vec3 focus = Position + glm::normalize(Direction) * glm::length(Position);
+		View = glm::lookAt(Position, focus, up);
 		ViewProjection = Projection * View;
-	}
-	void Resize(u32 width, u32 height) override {
-		ViewportWidth = 320;
-		ViewportHeight = 180;
 	}
 };
 

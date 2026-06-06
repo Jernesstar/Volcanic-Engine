@@ -3,8 +3,8 @@
 #define MAX_POINT_LIGHTS 50
 
 layout(location = 0) uniform mat4 u_View;
-layout(location = 1) uniform mat4 u_ViewProj;
-layout(location = 2) uniform float u_Radius;
+layout(location = 4) uniform mat4 u_ViewProj;
+layout(location = 8) uniform float u_Radius;
 
 struct PointLight {
     vec4 Position;

@@ -11,9 +11,9 @@ layout(std430, binding = 0) readonly restrict buffer SSBO_0 {
 };
 
 layout(location = 0) uniform mat4 u_View;
-layout(location = 1) uniform mat4 u_ViewProj;
-layout(location = 2) uniform float u_BillboardWidth;
-layout(location = 3) uniform float u_BillboardHeight;
+layout(location = 4) uniform mat4 u_ViewProj;
+layout(location = 8) uniform float u_BillboardWidth;
+layout(location = 9) uniform float u_BillboardHeight;
 
 const vec2 Vertices[4] =
     vec2[4](

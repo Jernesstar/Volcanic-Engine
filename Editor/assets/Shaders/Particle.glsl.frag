@@ -1,6 +1,6 @@
 #version 460 core
 
-layout(location = 4) uniform sampler2D u_Texture;
+layout(location = 10) uniform sampler2D u_Texture;
 
 layout(location = 0) in vec2 v_TexCoords;
 

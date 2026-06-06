@@ -1,9 +1,9 @@
 #version 460 core
 
-layout(location = 2) uniform float u_Radius;
-layout(location = 3) uniform vec3 u_CameraPosition;
-layout(location = 4) uniform float u_ViewportWidth;
-layout(location = 5) uniform float u_ViewportHeight;
+layout(location = 9) uniform float u_Radius;
+layout(location = 10) uniform vec3 u_CameraPosition;
+layout(location = 11) uniform float u_ViewportWidth;
+layout(location = 12) uniform float u_ViewportHeight;
 
 layout(location = 0) in vec3 v_Position;
 layout(location = 1) in vec3 v_Center;

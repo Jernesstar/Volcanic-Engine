@@ -4,10 +4,18 @@
 #include <imgui/imgui_internal.h>
 #include <imgui/misc/cpp/imgui_stdlib.h>
 
+#include <angelscript/sdk/add_on/scriptarray/scriptarray.h>
+
 #include <glm/gtc/type_ptr.hpp>
 
 #include <Engine/Scene/Component.h>
 #include <Engine/Graphics/Camera.h>
+#include <Engine/Script/ScriptModule.h>
+#include <Engine/Script/ScriptClass.h>
+#include <Engine/Script/Types/GridSet.h>
+
+#include <Editor/App/ScriptManager.h>
+#include <Editor/Asset/AssetManager.h>
 
 #include "Editor.h"
 
@@ -16,6 +24,7 @@
 
 using namespace VolcanicEngine;
 using namespace VolcanicEngine::Graphics;
+using namespace VolcanicEngine::Script;
 
 namespace VolcanicEditor {
 
@@ -196,16 +205,224 @@ static void DrawSkyboxComponent(ECS::Entity& entity) {
 	});
 }
 
+static bool s_SelectingClass = false;
+static bool s_GridSetEdit = false;
+
+static std::string SelectScriptClass(Ref<ScriptModule> mod) {
+	static std::string select = "";
+
+	ImGui::OpenPopup("Select Script Class");
+	if(ImGui::BeginPopupModal("Select Script Class")) {
+		for(const auto& [name, _class] : mod->GetClasses()) {
+			if(!_class->Implements("IEntityController"))
+				continue;
+
+			if(ImGui::Button(name.c_str())) {
+				select = name;
+				s_SelectingClass = false;
+				ImGui::CloseCurrentPopup();
+			}
+		}
+		if(ImGui::Button("Close")) {
+			s_SelectingClass = false;
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::EndPopup();
+	}
+
+	if(select != "") {
+		std::string val = select;
+		select = "";
+		return val;
+	}
+	return "";
+}
+
+static void GridSetEditorPopup(Ref<ScriptObject> obj, const std::string& name) {
+	auto* data = obj->GetProperty(name).As<GridSet>();
+	if(!data)
+		return;
+
+	ImGui::OpenPopup("GridSet Editor");
+	if(ImGui::BeginPopupModal("GridSet Editor")) {
+		if(ImGui::Button("Close")) {
+			s_GridSetEdit = false;
+			ImGui::CloseCurrentPopup();
+		}
+		ImGui::SameLine();
+		if(ImGui::Button("Clear"))
+			data->Clear();
+
+		u32 width = data->GetWidth();
+		u32 height = data->GetHeight();
+		ImGui::SetNextItemWidth(50);
+		bool w = ImGui::InputScalar("Width", ImGuiDataType_U32, &width);
+		ImGui::SameLine();
+		ImGui::SetNextItemWidth(50);
+		bool h = ImGui::InputScalar("Height", ImGuiDataType_U32, &height);
+		if(w)
+			data->ResizeX(width);
+		if(h)
+			data->ResizeY(height);
+
+		if(*data) {
+			for(u32 y = 0; y < height; y++) {
+				for(u32 x = 0; x < width; x++) {
+					u8& val = *data->At(x, y);
+					ImGui::PushID((int)(y * width + x));
+					ImGui::SetNextItemWidth(40.0f);
+					ImGui::InputScalar("##cell", ImGuiDataType_U8, &val);
+					ImGui::PopID();
+					if(x + 1 < width)
+						ImGui::SameLine();
+				}
+			}
+		}
+
+		ImGui::EndPopup();
+	}
+}
+
+static void DrawScriptFields(Ref<ScriptObject> instance) {
+	auto* handle = instance->GetHandle();
+	for(u32 i = 0; i < handle->GetPropertyCount(); i++) {
+		ScriptField field = instance->GetProperty(i);
+		bool editorField =
+			ScriptManager::FieldHasMetadata(
+				instance->GetClass()->Name, field.Name, "EditorField");
+		if(!editorField)
+			continue;
+
+		ImGui::PushID((int)i);
+
+		if(field.Type) {
+			std::string typeName = field.Type->GetName();
+			ImGui::Text("%s", typeName.c_str()); ImGui::SameLine(100.0f);
+			ImGui::Text("%s", field.Name.c_str()); ImGui::SameLine(180.0f);
+
+			if(typeName == "string") {
+				ImGui::SetNextItemWidth(150);
+				ImGui::InputText("##String", field.As<std::string>());
+			}
+			else if(typeName == "Asset") {
+				Asset asset = *field.As<Asset>();
+				ImGui::Text("Type: %s", AssetTypeToString(asset.Type).c_str());
+				ImGui::SameLine(280.0f, 0.0f);
+				ImGui::Text("ID: %llu", (u64)asset.ID);
+			}
+			else if(typeName == "Vec3") {
+				ImGui::SetNextItemWidth(150);
+				ImGui::DragFloat3("##Vec3", glm::value_ptr(*field.As<Vec3>()),
+					0.1f);
+			}
+			else if(typeName == "GridSet") {
+				if(ImGui::Button("Edit GridSet"))
+					s_GridSetEdit = true;
+				if(s_GridSetEdit)
+					GridSetEditorPopup(instance, field.Name);
+			}
+		}
+		else if(field.TypeID == asTYPEID_BOOL) {
+			ImGui::Text("bool"); ImGui::SameLine(100.0f);
+			ImGui::Text("%s", field.Name.c_str()); ImGui::SameLine(180.0f);
+			ImGui::Checkbox("##Bool", field.As<bool>());
+		}
+		else if(field.TypeID == asTYPEID_INT8) {
+			ImGui::Text("int8"); ImGui::SameLine(100.0f);
+			ImGui::Text("%s", field.Name.c_str()); ImGui::SameLine(180.0f);
+			ImGui::SetNextItemWidth(50);
+			ImGui::DragScalar("##S8", ImGuiDataType_S8, field.Data);
+		}
+		else if(field.TypeID == asTYPEID_INT16) {
+			ImGui::Text("int16"); ImGui::SameLine(100.0f);
+			ImGui::Text("%s", field.Name.c_str()); ImGui::SameLine(180.0f);
+			ImGui::SetNextItemWidth(50);
+			ImGui::DragScalar("##S16", ImGuiDataType_S16, field.Data);
+		}
+		else if(field.TypeID == asTYPEID_INT32) {
+			ImGui::Text("int32"); ImGui::SameLine(100.0f);
+			ImGui::Text("%s", field.Name.c_str()); ImGui::SameLine(180.0f);
+			ImGui::SetNextItemWidth(50);
+			ImGui::DragScalar("##S32", ImGuiDataType_S32, field.Data);
+		}
+		else if(field.TypeID == asTYPEID_INT64) {
+			ImGui::Text("int64"); ImGui::SameLine(100.0f);
+			ImGui::Text("%s", field.Name.c_str()); ImGui::SameLine(180.0f);
+			ImGui::SetNextItemWidth(50);
+			ImGui::DragScalar("##S64", ImGuiDataType_S64, field.Data);
+		}
+		else if(field.TypeID == asTYPEID_UINT8) {
+			ImGui::Text("uint8"); ImGui::SameLine(100.0f);
+			ImGui::Text("%s", field.Name.c_str()); ImGui::SameLine(180.0f);
+			ImGui::SetNextItemWidth(50);
+			ImGui::DragScalar("##U8", ImGuiDataType_U8, field.Data);
+		}
+		else if(field.TypeID == asTYPEID_UINT16) {
+			ImGui::Text("uint16"); ImGui::SameLine(100.0f);
+			ImGui::Text("%s", field.Name.c_str()); ImGui::SameLine(180.0f);
+			ImGui::SetNextItemWidth(50);
+			ImGui::DragScalar("##U16", ImGuiDataType_U16, field.Data);
+		}
+		else if(field.TypeID == asTYPEID_UINT32) {
+			ImGui::Text("uint32"); ImGui::SameLine(100.0f);
+			ImGui::Text("%s", field.Name.c_str()); ImGui::SameLine(180.0f);
+			ImGui::SetNextItemWidth(50);
+			ImGui::DragScalar("##U32", ImGuiDataType_U32, field.Data);
+		}
+		else if(field.TypeID == asTYPEID_UINT64) {
+			ImGui::Text("uint64"); ImGui::SameLine(100.0f);
+			ImGui::Text("%s", field.Name.c_str()); ImGui::SameLine(180.0f);
+			ImGui::SetNextItemWidth(50);
+			ImGui::DragScalar("##U64", ImGuiDataType_U64, field.Data);
+		}
+		else if(field.TypeID == asTYPEID_DOUBLE) {
+			ImGui::Text("double"); ImGui::SameLine(100.0f);
+			ImGui::Text("%s", field.Name.c_str()); ImGui::SameLine(180.0f);
+			ImGui::SetNextItemWidth(50);
+			ImGui::DragScalar("##Double", ImGuiDataType_Double,
+				field.As<f64>());
+		}
+		else if(field.TypeID == asTYPEID_FLOAT) {
+			ImGui::Text("float"); ImGui::SameLine(100.0f);
+			ImGui::Text("%s", field.Name.c_str()); ImGui::SameLine(180.0f);
+			ImGui::SetNextItemWidth(50);
+			ImGui::DragFloat("##Float", field.As<f32>(), 0.1f,
+				0.0f, 0.0f, "%.3f");
+		}
+
+		ImGui::PopID();
+	}
+}
+
 static void DrawScriptComponent(ECS::Entity& entity) {
 	ComponentSection<ScriptComponent>("Script Component", entity, [&] {
 		auto& comp = entity.Set<ScriptComponent>();
-		ImGui::Text("Module Asset: %llu", (uint64_t)comp.ModuleAsset.ID);
-		if(comp.Instance)
-			ImGui::Text("Class: %s",
-				comp.Instance->GetClass()->Name.c_str());
-		else
-			ImGui::TextDisabled("(no instance)");
-		// TODO: field editing, class selection
+		ImGui::Text("Module Asset: %llu", (u64)comp.ModuleAsset.ID);
+
+		if(!comp.ModuleAsset)
+			return;
+
+		if(!comp.Instance) {
+			if(ImGui::Button("Create Instance")) {
+				AssetManager::Get()->Load(comp.ModuleAsset);
+				s_SelectingClass = true;
+			}
+			if(s_SelectingClass) {
+				auto mod = AssetManager::Get()->Get<ScriptModule>(comp.ModuleAsset);
+				if(mod) {
+					auto name = SelectScriptClass(mod);
+					if(name != "") {
+						auto _class = mod->GetClass(name);
+						comp.Instance = _class->Construct();
+					}
+				}
+			}
+			return;
+		}
+
+		ImGui::Text("Class: %s", comp.Instance->GetClass()->Name.c_str());
+		ImGui::SeparatorText("Fields");
+		DrawScriptFields(comp.Instance);
 	});
 }
 
@@ -411,7 +628,6 @@ static void DrawAddComponentPopup(ECS::Entity& entity) {
 // ── Panel ─────────────────────────────────────────────────────────────────────
 
 void ComponentEditorPanel::Update(TimeStep ts) {
-	// Keep context in sync with the global selection
 	ECS::Entity sel = Editor::GetSelected();
 	if(sel != m_Context)
 		m_Context = sel;
@@ -421,7 +637,11 @@ void ComponentEditorPanel::Draw() {
 	ImGui::SetNextWindowSizeConstraints(ImVec2(40, 0), ImVec2(60, 0));
 	ImGui::Begin("Component Editor", &Open);
 
-	if(!m_Context || !m_Context.IsValid()) {
+	ECS::Entity sel = Editor::GetSelected();
+	if(sel != m_Context)
+		m_Context = sel;
+
+	if(!m_Context || !m_Context.IsValid() || !m_Context.IsAlive()) {
 		ImGui::TextDisabled("(no entity selected)");
 		ImGui::End();
 		return;

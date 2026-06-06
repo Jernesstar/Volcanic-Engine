@@ -1,7 +1,6 @@
 #version 460 core
 
-layout(location = 0) uniform mat4 u_ViewProj;
-layout(location = 1) uniform mat4 u_LightSpaceMatrix;
+layout(location = 0) uniform mat4 u_LightSpaceMatrix;
 
 layout(location = 0) in vec3 a_Position;
 layout(location = 1) in vec3 a_Normal;
@@ -20,5 +19,5 @@ void main()
     v_TexCoords = a_TexCoords;
     v_FragPosLightSpace = u_LightSpaceMatrix * vec4(v_FragPos, 1.0);
 
-    gl_Position = u_ViewProj * vec4(v_FragPos, 1.0);
+    gl_Position = u_LightSpaceMatrix * vec4(v_FragPos, 1.0);
 }

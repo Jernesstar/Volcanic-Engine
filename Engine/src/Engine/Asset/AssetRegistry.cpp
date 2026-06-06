@@ -1,12 +1,17 @@
 #include "AssetRegistry.h"
 
-#include <VolcaniCore/Core/Application.h>
+#include <filesystem>
+
 #include <VolcaniCore/Utils/BinaryReader.h>
 #include <VolcaniCore/Utils/BinaryWriter.h>
 
+namespace fs = std::filesystem;
+
 namespace VolcanicEngine {
 
-AssetRegistry::AssetRegistry() {
+AssetRegistry::AssetRegistry(const std::string& projectRoot)
+	: m_ProjectRoot(projectRoot)
+{
 	// m_Registry = new Registry(".volc/asset_registry", 4);
 	// m_AssetMetadata = m_Registry->NewDatabase("AssetMetadata");
 	// m_AssetRefs = m_Registry->NewDatabase("AssetRefs", true);
@@ -16,6 +21,11 @@ AssetRegistry::AssetRegistry() {
 
 AssetRegistry::~AssetRegistry() {
 	// delete m_Registry;
+}
+
+std::string AssetRegistry::GetBinPath(UUID id) const {
+	return (fs::path(m_ProjectRoot) / "Asset" / ".bin"
+		/ (std::to_string((u64)id) + ".asset")).generic_string();
 }
 
 void AssetRegistry::Add(Asset asset) {
@@ -29,19 +39,19 @@ void AssetRegistry::Remove(Asset asset) {
 	// m_AssetMetadata->Remove((u64)asset.ID);
 	// m_AssetRefs->Remove((u64)asset.ID);
 
-	auto path = "Asset/.bin/" + std::to_string((u64)asset.ID) + ".asset";
+	auto path = GetBinPath(asset.ID);
 	FileUtils::DeleteFile(path);
 }
 
 void AssetRegistry::SetData(Asset asset, Bytes&& data) {
-	auto path = "Asset/.bin/" + std::to_string((u64)asset.ID) + ".asset";
+	auto path = GetBinPath(asset.ID);
 	FileUtils::CreateFile(path);
 	BinaryWriter writer(path);
 	writer.Write(data);
 }
 
 Bytes AssetRegistry::GetData(Asset asset) {
-	auto path = "Asset/.bin/" + std::to_string((u64)asset.ID) + ".asset";
+	auto path = GetBinPath(asset.ID);
 	BinaryReader reader(path);
 
 	Bytes res;

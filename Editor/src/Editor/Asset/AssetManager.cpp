@@ -440,10 +440,10 @@ void EditorAssetManager::Clear() {
 	s_WatcherIDs.Clear();
 }
 
-void EditorAssetManager::LoadRegistry() {
-	m_AssetRegistry = CreateRef<AssetRegistry>();
+void EditorAssetManager::LoadRegistry(const std::string& projectRoot) {
+	m_AssetRegistry = CreateRef<AssetRegistry>(projectRoot);
 
-	auto rootPath = fs::path("Asset");
+	auto rootPath = fs::path(projectRoot) / "Asset";
 	m_Path = (rootPath / ".magma.assetpk").string();
 
 	struct AssetFolder {
@@ -523,15 +523,17 @@ void EditorAssetManager::LoadRegistry() {
 
 	Log::Info("New assets");
 
-	Application::PushDir();
+	auto editorShader = [](const char* relativePath) {
+		return (fs::path(Application::GetLibraryDir()) / relativePath).string();
+	};
 
 	Asset asset;
 	{
 		asset = { 99, AssetType::Shader };
 		m_ShaderAssets[asset.ID] =
 			AssetImporter::GetShader({
-				"Editor/assets/Shaders/Framebuffer.glsl.vert",
-				"Editor/assets/Shaders/Framebuffer.glsl.frag"
+				editorShader("Editor/assets/Shaders/Framebuffer.glsl.vert"),
+				editorShader("Editor/assets/Shaders/Framebuffer.glsl.frag")
 			});
 		m_LoadedAssets[asset.ID] = true;
 		m_AssetRegistry->NameAsset(asset, "FullscreenQuad");
@@ -541,8 +543,8 @@ void EditorAssetManager::LoadRegistry() {
 		asset = { 100, AssetType::Shader };
 		m_ShaderAssets[asset.ID] =
 			AssetImporter::GetShader({
-				"Editor/assets/Shaders/GBuffer.glsl.vert",
-				"Editor/assets/Shaders/GBuffer.glsl.frag"
+				editorShader("Editor/assets/Shaders/GBuffer.glsl.vert"),
+				editorShader("Editor/assets/Shaders/GBuffer.glsl.frag")
 			});
 		m_LoadedAssets[asset.ID] = true;
 		m_AssetRegistry->NameAsset(asset, "GBuffer");
@@ -552,8 +554,8 @@ void EditorAssetManager::LoadRegistry() {
 		asset = { 101, AssetType::Shader };
 		m_ShaderAssets[asset.ID] =
 			AssetImporter::GetShader({
-				"Editor/assets/Shaders/Shadow.glsl.vert",
-				"Editor/assets/Shaders/Shadow.glsl.frag"
+				editorShader("Editor/assets/Shaders/Shadow.glsl.vert"),
+				editorShader("Editor/assets/Shaders/Shadow.glsl.frag")
 			});
 		m_LoadedAssets[asset.ID] = true;
 		m_AssetRegistry->NameAsset(asset, "ShadowDepth");
@@ -563,8 +565,8 @@ void EditorAssetManager::LoadRegistry() {
 		asset = { 102, AssetType::Shader };
 		m_ShaderAssets[asset.ID] =
 			AssetImporter::GetShader({
-				"Editor/assets/Shaders/Framebuffer.glsl.vert",
-				"Editor/assets/Shaders/DeferredLighting.glsl.frag"
+				editorShader("Editor/assets/Shaders/Framebuffer.glsl.vert"),
+				editorShader("Editor/assets/Shaders/DeferredLighting.glsl.frag")
 			});
 		m_LoadedAssets[asset.ID] = true;
 		m_AssetRegistry->NameAsset(asset, "DeferredLighting");
@@ -574,7 +576,7 @@ void EditorAssetManager::LoadRegistry() {
 		asset = { 103, AssetType::Shader };
 		m_ShaderAssets[asset.ID] =
 			AssetImporter::GetShader({
-				"Editor/assets/Shaders/BloomDownsample.glsl.comp",
+				editorShader("Editor/assets/Shaders/BloomDownsample.glsl.comp"),
 			});
 		m_LoadedAssets[asset.ID] = true;
 		m_AssetRegistry->NameAsset(asset, "BloomDownsample");
@@ -584,7 +586,7 @@ void EditorAssetManager::LoadRegistry() {
 		asset = { 104, AssetType::Shader };
 		m_ShaderAssets[asset.ID] =
 			AssetImporter::GetShader({
-				"Editor/assets/Shaders/BloomUpsample.glsl.comp"
+				editorShader("Editor/assets/Shaders/BloomUpsample.glsl.comp")
 			});
 		m_LoadedAssets[asset.ID] = true;
 		m_AssetRegistry->NameAsset(asset, "BloomUpsample");
@@ -594,8 +596,8 @@ void EditorAssetManager::LoadRegistry() {
 		asset = { 105, AssetType::Shader };
 		m_ShaderAssets[asset.ID] =
 			AssetImporter::GetShader({
-				"Editor/assets/Shaders/Tonemap.glsl.vert",
-				"Editor/assets/Shaders/Tonemap.glsl.frag",
+				editorShader("Editor/assets/Shaders/Tonemap.glsl.vert"),
+				editorShader("Editor/assets/Shaders/Tonemap.glsl.frag"),
 			});
 		m_LoadedAssets[asset.ID] = true;
 		m_AssetRegistry->NameAsset(asset, "Tonemap");
@@ -605,8 +607,8 @@ void EditorAssetManager::LoadRegistry() {
 		asset = { 106, AssetType::Shader };
 		m_ShaderAssets[asset.ID] =
 			AssetImporter::GetShader({
-				"Editor/assets/Shaders/Particle.glsl.vert",
-				"Editor/assets/Shaders/Particle.glsl.frag"
+				editorShader("Editor/assets/Shaders/Particle.glsl.vert"),
+				editorShader("Editor/assets/Shaders/Particle.glsl.frag")
 			});
 		m_LoadedAssets[asset.ID] = true;
 		m_AssetRegistry->NameAsset(asset, "Particle");
@@ -616,7 +618,7 @@ void EditorAssetManager::LoadRegistry() {
 		asset = { 107, AssetType::Shader };
 		m_ShaderAssets[asset.ID] =
 			AssetImporter::GetShader({
-				"Editor/assets/Shaders/ParticleEmitter.glsl.comp",
+				editorShader("Editor/assets/Shaders/ParticleEmitter.glsl.comp"),
 			});
 		m_LoadedAssets[asset.ID] = true;
 		m_AssetRegistry->NameAsset(asset, "ParticleEmitter");
@@ -626,7 +628,7 @@ void EditorAssetManager::LoadRegistry() {
 		asset = { 108, AssetType::Shader };
 		m_ShaderAssets[asset.ID] =
 			AssetImporter::GetShader({
-				"Editor/assets/Shaders/ParticleUpdate.glsl.comp",
+				editorShader("Editor/assets/Shaders/ParticleUpdate.glsl.comp"),
 			});
 		m_LoadedAssets[asset.ID] = true;
 		m_AssetRegistry->NameAsset(asset, "ParticleUpdate");
@@ -636,14 +638,12 @@ void EditorAssetManager::LoadRegistry() {
 		asset = { 109, AssetType::Shader };
 		m_ShaderAssets[asset.ID] =
 			AssetImporter::GetShader({
-				"Editor/assets/Shaders/Framebuffer.glsl.vert",
-				"Editor/assets/Shaders/PixelUpscale.glsl.frag",
+				editorShader("Editor/assets/Shaders/Framebuffer.glsl.vert"),
+				editorShader("Editor/assets/Shaders/PixelUpscale.glsl.frag"),
 			});
 		m_LoadedAssets[asset.ID] = true;
 		m_AssetRegistry->NameAsset(asset, "PixelUpscale");
 	}
-
-	Application::PopDir();
 
 	{
 		asset = { 110, AssetType::Geometry };

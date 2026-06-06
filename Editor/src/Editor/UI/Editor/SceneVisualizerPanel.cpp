@@ -103,7 +103,9 @@ void SceneVisualizerPanel::SetContext(Scene* scene) {
 	m_Controller.TranslationSpeed = 25.0f;
 
 	if(scene) {
-		m_EditorPipeline.OnInit();
+		if(!m_EditorPipeline.GetOutput())
+			m_EditorPipeline.OnInit();
+
 		m_EditorPipeline.Render3D = false;
 		m_EditorPipeline.Render2D = false;
 		m_EditorPipeline.RenderCanvas = false;

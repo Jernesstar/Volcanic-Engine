@@ -1,8 +1,8 @@
 #version 460 core
 
 layout(location = 0) uniform mat4 u_ViewProj;
-layout(location = 1) uniform vec3 u_CameraPosition;
-layout(location = 2) uniform float u_GridSize = 100.0;
+layout(location = 4) uniform vec3 u_CameraPosition;
+layout(location = 5) uniform float u_GridSize = 100.0;
 
 const vec3 Vertices[4] =
     vec3[4](

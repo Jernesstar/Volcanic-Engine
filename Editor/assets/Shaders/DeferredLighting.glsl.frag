@@ -7,7 +7,7 @@ layout(binding = 2) uniform sampler2D u_GAlbedo;   // a = emissive
 layout(binding = 3) uniform sampler2D u_ShadowMap;
 
 layout(location = 0) uniform mat4 u_LightSpaceMatrix;
-layout(location = 1) uniform vec3 u_CameraPos;
+layout(location = 4) uniform vec3 u_CameraPos;
 
 // ── Lights ────────────────────────────────────────────────────────────────────
 struct DirLight {
@@ -26,10 +26,10 @@ struct PointLight {
 	float Quadratic;
 };
 
-layout(location = 4)  uniform int      u_DirLightCount;
-layout(location = 5)  uniform DirLight u_DirLights[4];
-layout(location = 21) uniform int      u_PointLightCount;
-layout(location = 22) uniform PointLight u_PointLights[16];
+layout(location = 5)  uniform int      u_DirLightCount;
+layout(location = 6)  uniform DirLight u_DirLights[4];
+layout(location = 22) uniform int      u_PointLightCount;
+layout(location = 23) uniform PointLight u_PointLights[16];
 
 // ── In / Out ──────────────────────────────────────────────────────────────────
 layout(location = 0) in vec2 v_TexCoords;
@@ -98,14 +98,14 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos,
 // ── Main ──────────────────────────────────────────────────────────────────────
 void main()
 {
-	vec3  fragPos  = texture(u_GPosition, v_TexCoords).rgb;
-	vec3  normal   = normalize(texture(u_GNormal,  v_TexCoords).rgb);
-	vec4  albedoA  = texture(u_GAlbedo,   v_TexCoords);
-	vec3  albedo   = albedoA.rgb;
+	vec3 fragPos = texture(u_GPosition, v_TexCoords).rgb;
+	vec3 normal = normalize(texture(u_GNormal, v_TexCoords).rgb);
+	vec4 albedoA = texture(u_GAlbedo,   v_TexCoords);
+	vec3 albedo = albedoA.rgb;
 	float emissive = albedoA.a;
 
-	vec3  viewDir  = normalize(u_CameraPos - fragPos);
-	vec3  result   = vec3(0.0);
+	vec3 viewDir = normalize(u_CameraPos - fragPos);
+	vec3 result = vec3(0.0);
 
 	for(int i = 0; i < u_DirLightCount; i++)
 		result += CalcDirLight(u_DirLights[i], normal, viewDir, albedo, fragPos);

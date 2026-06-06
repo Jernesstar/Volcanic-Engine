@@ -2,6 +2,10 @@
 #include <chrono>
 #include <thread>
 
+#ifdef VOLCANIC_LINUX
+	#include <stdlib.h>
+#endif
+
 #include "Application.h"
 #include "Assert.h"
 
@@ -30,7 +34,10 @@ Application::Application(const AppSpecification& spec,
 	s_Instance = this;
 	s_Spec = spec;
 
-	// glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+	unsetenv("WAYLAND_DISPLAY");
+	unsetenv("XDG_SESSION_TYPE");
+	glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+
 	VOLCANICORE_ASSERT(glfwInit(), "Failed to initialize GLFW");
 
 	s_Window = CreateRef<Window>();
@@ -87,12 +94,22 @@ void Application::PushDir(const std::string& path) {
 
 	s_OldPath = s_Path;
 	s_Path = path;
-	fs::current_path(s_Path);
+	try {
+		fs::current_path(s_Path);
+	}
+	catch(const std::exception& e) {
+		Log::Error("Failed to push directory '{}': {}", s_Path, e.what());
+	}
 }
 
 void Application::PopDir() {
-	s_Path = s_OldPath;
-	fs::current_path(s_Path);
+	try {
+		s_Path = s_OldPath;
+		fs::current_path(s_Path);
+	}
+	catch(const std::exception& e) {
+		Log::Error("Failed to pop directory '{}': {}", s_Path, e.what());
+	}
 }
 
 void Application::SetCurrentDir() {

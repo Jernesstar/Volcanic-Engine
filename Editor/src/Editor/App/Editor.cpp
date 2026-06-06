@@ -4,6 +4,7 @@
 #include <thread>
 #include <mutex>
 #include <iterator>
+#include <filesystem>
 
 #define RAPIDJSON_ASSERT(x) ((void)0)
 #define RAPIDJSON_HAS_STDSTRING 1
@@ -19,6 +20,8 @@
 
 #include <VolcaniCore/Core/Application.h>
 #include <VolcaniCore/Window/Events.h>
+
+#include <VolcaniCore/Window/Input.h>
 
 #include <Engine/App/App.h>
 #include <Engine/Graphics/Renderer.h>
@@ -41,6 +44,8 @@ using namespace VolcanicEngine::Graphics;
 using namespace VolcanicEngine::Script;
 
 namespace VolcanicEditor {
+
+namespace fs = std::filesystem;
 
 static Project s_Project;
 static Ref<App> s_App;
@@ -67,7 +72,6 @@ static AssetEditorPanel     s_AssetEditor;
 static ConsolePanel         s_Console;
 
 static bool s_DockspaceBuilt = false;
-static bool s_PendingStop = false;
 
 static TimeStep s_TimeStep;
 struct {
@@ -194,7 +198,8 @@ static void DrawMainMenuBar() {
 }
 
 void Editor::Init(const CommandLineArgs& args) {
-	Log::Init();
+	Log::Init(args.Has("--test"));
+	Log::Info("Editor initialized");
 	Renderer::Init();
 	UIRenderer::Init();
 
@@ -207,12 +212,14 @@ void Editor::Init(const CommandLineArgs& args) {
 	s_App->AppLoad =
 		[]()
 		{
-			return AssetImporter::GetScript("App/Game.as");
+			return AssetImporter::GetScript(
+				Editor::GetProject().ResolvePath("App/Game.as"));
 		};
 	s_App->SceneLoad =
 		[](Scene& scene)
 		{
-			Str scenePath = "App/Scene/" + scene.Name + ".scene";
+			Str scenePath = Editor::GetProject().ResolvePath(
+				"App/Scene/" + scene.Name + ".scene");
 			SceneLoader::EditorLoad(scene, scenePath);
 		};
 	s_App->Log =
@@ -225,6 +232,7 @@ void Editor::Init(const CommandLineArgs& args) {
 		Str path = args["--open_project"];
 		Editor::OpenProject(path);
 	}
+
 	if(args["--new_project"]) {
 		Str path = args["--new_project"];
 		Editor::NewProject(path);
@@ -237,10 +245,9 @@ void Editor::Init(const CommandLineArgs& args) {
 
 void Editor::Close() {
 	OnStop();
-	if(s_PendingStop) {
-		s_PendingStop = false;
-		App::Get()->OnClose();
-	}
+
+	SaveScene();
+	SaveProject();
 
 	s_CurrentScene.reset();
 	s_AssetManager.reset();
@@ -255,11 +262,6 @@ void Editor::Close() {
 }
 
 void Editor::Update(TimeStep ts) {
-	if(s_PendingStop) {
-		s_PendingStop = false;
-		App::Get()->OnClose();
-	}
-
 	UIRenderer::BeginFrame();
 	Renderer::BeginFrame();
 	// ImGuizmo::BeginFrame();
@@ -275,6 +277,8 @@ void Editor::Update(TimeStep ts) {
 		else
 			s_App->OnUpdate(ts);
 
+		s_Hierarchy.Update(ts);
+		s_ComponentEditor.Update(ts);
 		return;
 	}
 
@@ -340,8 +344,10 @@ Project& Editor::GetProject() {
 }
 
 void Editor::OpenProject(const Str& path) {
-	Application::PushDir(path);
-	s_AssetManager->LoadRegistry();
+	s_Project.Path = path;
+	s_Project.Name = fs::path(path).filename().string();
+	s_App->SetProject(s_Project);
+	s_AssetManager->LoadRegistry(path);
 }
 
 void Editor::NewProject(const Str& path) {
@@ -358,13 +364,15 @@ void Editor::NewScene(const Str& path) {
 
 void Editor::OpenScene(const Str& name) {
 	s_CurrentScene = CreateRef<Scene>(name);
-	SceneLoader::EditorLoad(*s_CurrentScene, "App/Scene/" + name + ".scene");
+	SceneLoader::EditorLoad(*s_CurrentScene,
+		s_Project.ResolvePath("App/Scene/" + name + ".scene"));
 	s_Hierarchy.SetContext(s_CurrentScene.get());
 	s_Visualizer.SetContext(s_CurrentScene.get());
 }
 
 void Editor::SaveScene(const Str& name) {
-
+	SceneLoader::EditorSave(*s_CurrentScene,
+		s_Project.ResolvePath("App/Scene/" + name + ".scene"));
 }
 
 void Editor::SaveScene() {
@@ -375,12 +383,8 @@ void Editor::OnPlay(bool debug) {
 	if(s_EditorMode != EditorMode::Edit)
 		return;
 
-	if(s_PendingStop) {
-		s_PendingStop = false;
-		App::Get()->OnClose();
-	}
-
 	Log::Info("OnPlay");
+
 	s_EditorMode = EditorMode::Play;
 	SaveScene();
 
@@ -389,6 +393,8 @@ void Editor::OnPlay(bool debug) {
 		App::Get()->Running = true;
 		App::Get()->OnLoad();
 		App::Get()->LoadScene(s_CurrentScene.get());
+		ClearSelected();
+		s_Hierarchy.SetContext(App::Get()->GetScene());
 		return;
 	}
 
@@ -460,7 +466,7 @@ void Editor::OnStop() {
 
 	if(!s_Debugging) {
 		App::Get()->Running = false;
-		s_PendingStop = true;
+		App::Get()->OnClose();
 	}
 	else {
 		{
@@ -473,6 +479,13 @@ void Editor::OnStop() {
 		s_AppThread.reset();
 		ScriptManager::EndDebug();
 		s_Debugging = false;
+	}
+
+	ClearSelected();
+	Input::SetCursorMode(CursorMode::Normal);
+	if(s_CurrentScene) {
+		s_Hierarchy.SetContext(s_CurrentScene.get());
+		s_Visualizer.SetContext(s_CurrentScene.get());
 	}
 }
 

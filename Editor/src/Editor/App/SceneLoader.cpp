@@ -156,65 +156,101 @@ void SaveScript(YAMLSerializer& serializer, Ref<ScriptObject> obj) {
 		if(!editorField)
 			continue;
 
-		std::string typeName;
-		if(field.Type)
-			typeName = field.Type->GetName();
-
 		serializer.BeginMapping()
-			.WriteKey("Field")
-			.BeginMapping()
-				.WriteKey("Name").Write(field.Name)
-				.WriteKey("Type").Write(typeName == "" ? "int" : typeName)
-				.WriteKey("Value");
+			.WriteKey("Field").BeginMapping()
+				.WriteKey("Name").Write(field.Name);
 
-		if(field.TypeID == asTYPEID_BOOL)
-			serializer.Write(*field.As<bool>());
-		else if(field.TypeID == asTYPEID_INT8)
-			serializer.Write((i32)*field.As<i8>());
-		else if(field.TypeID == asTYPEID_INT16)
-			serializer.Write((i32)*field.As<i16>());
-		else if(field.TypeID == asTYPEID_INT32)
-			serializer.Write(*field.As<i32>());
-		else if(field.TypeID == asTYPEID_INT64)
-			serializer.Write(*field.As<i64>());
-		else if(field.TypeID == asTYPEID_UINT8)
-			serializer.Write((u32)*field.As<u8>());
-		else if(field.TypeID == asTYPEID_UINT16)
-			serializer.Write((u32)*field.As<u16>());
-		else if(field.TypeID == asTYPEID_UINT32)
-			serializer.Write(*field.As<u32>());
-		else if(field.TypeID == asTYPEID_UINT64)
-			serializer.Write(*field.As<u64>());
-		else if(field.TypeID == asTYPEID_FLOAT)
-			serializer.Write(*field.As<f32>());
-		else if(field.TypeID == asTYPEID_DOUBLE)
-			serializer.Write((f32)*field.As<f64>());
-		else if(typeName == "string")
-			serializer.Write(*field.As<std::string>());
-		else if(typeName == "array") {
+		if(field.TypeID == asTYPEID_BOOL) {
+			serializer
+				.WriteKey("Type").Write(std::string("bool"))
+				.WriteKey("Value").Write(*field.As<bool>());
+		}
+		else if(field.TypeID == asTYPEID_INT8) {
+			serializer
+				.WriteKey("Type").Write(std::string("int8"))
+				.WriteKey("Value").Write((i32)*field.As<i8>());
+		}
+		else if(field.TypeID == asTYPEID_INT16) {
+			serializer
+				.WriteKey("Type").Write(std::string("int16"))
+				.WriteKey("Value").Write((i32)*field.As<i16>());
+		}
+		else if(field.TypeID == asTYPEID_INT32) {
+			serializer
+				.WriteKey("Type").Write(std::string("int32"))
+				.WriteKey("Value").Write(*field.As<i32>());
+		}
+		else if(field.TypeID == asTYPEID_INT64) {
+			serializer
+				.WriteKey("Type").Write(std::string("int64"))
+				.WriteKey("Value").Write(*field.As<i64>());
+		}
+		else if(field.TypeID == asTYPEID_UINT8) {
+			serializer
+				.WriteKey("Type").Write(std::string("uint8"))
+				.WriteKey("Value").Write((u32)*field.As<u8>());
+		}
+		else if(field.TypeID == asTYPEID_UINT16) {
+			serializer
+				.WriteKey("Type").Write(std::string("uint16"))
+				.WriteKey("Value").Write((u32)*field.As<u16>());
+		}
+		else if(field.TypeID == asTYPEID_UINT32) {
+			serializer
+				.WriteKey("Type").Write(std::string("uint32"))
+				.WriteKey("Value").Write(*field.As<u32>());
+		}
+		else if(field.TypeID == asTYPEID_UINT64) {
+			serializer
+				.WriteKey("Type").Write(std::string("uint64"))
+				.WriteKey("Value").Write(*field.As<u64>());
+		}
+		else if(field.TypeID == asTYPEID_FLOAT) {
+			serializer
+				.WriteKey("Type").Write(std::string("float"))
+				.WriteKey("Value").Write(*field.As<f32>());
+		}
+		else if(field.TypeID == asTYPEID_DOUBLE) {
+			serializer
+				.WriteKey("Type").Write(std::string("double"))
+				.WriteKey("Value").Write((f32)*field.As<f64>());
+		}
+		else if(field.Type && std::string(field.Type->GetName()) == "string") {
+			serializer
+				.WriteKey("Type").Write(std::string("string"))
+				.WriteKey("Value").Write(*field.As<std::string>());
+		}
+		else if(field.Type && std::string(field.Type->GetName()) == "array") {
 			auto* array = field.As<CScriptArray>();
-			// Works for primitive types
+			serializer
+				.WriteKey("Type").Write(std::string("array"))
+				.WriteKey("Value");
+			serializer.SetOptions(Serializer::Options::ArrayOneLine);
 			serializer.BeginSequence();
-			for(u32 i = 0; i < array->GetSize(); i++)
-				serializer.Write(*(u32*)array->At(i));
+			for(u32 j = 0; j < array->GetSize(); j++)
+				serializer.Write(*(u32*)array->At(j));
 			serializer.EndSequence();
 		}
-		else if(typeName == "Asset") {
-			auto asset = *field.As<Asset>();
-			serializer.BeginMapping()
-				.WriteKey("ID").Write((u64)asset.ID)
-				.WriteKey("Type").Write(AssetTypeToString(asset.Type))
-			.EndMapping();
+		else if(field.Type && std::string(field.Type->GetName()) == "Asset") {
+			serializer
+				.WriteKey("Type").Write(std::string("Asset"))
+				.WriteKey("Value").Write(*field.As<Asset>());
 		}
-		else if(typeName == "Vec3")
-			serializer.Write(*field.As<Vec3>());
-		else if(typeName == "GridSet") {
+		else if(field.Type && std::string(field.Type->GetName()) == "Vec3") {
+			serializer
+				.WriteKey("Type").Write(std::string("Vec3"))
+				.WriteKey("Value").Write(*field.As<Vec3>());
+		}
+		else if(field.Type && std::string(field.Type->GetName()) == "GridSet") {
 			auto* grid = field.As<GridSet>();
-			serializer.BeginMapping()
-				.WriteKey("Width").Write(grid->GetWidth())
-				.WriteKey("Height").Write(grid->GetHeight())
-				.WriteKey("Data").BeginSequence();
+			serializer
+				.WriteKey("Type").Write(std::string("GridSet"))
+				.WriteKey("Value").BeginMapping()
+					.WriteKey("Width").Write(grid->GetWidth())
+					.WriteKey("Height").Write(grid->GetHeight())
+					.WriteKey("Data").BeginSequence();
 			for(u32 y = 0; y < grid->GetHeight(); y++) {
+				serializer.SetOptions(Serializer::Options::ArrayOneLine);
 				serializer.BeginSequence();
 				for(u32 x = 0; x < grid->GetWidth(); x++)
 					serializer.Write((u32)*grid->At(x, y));
@@ -230,9 +266,10 @@ void SaveScript(YAMLSerializer& serializer, Ref<ScriptObject> obj) {
 }
 
 void SerializeEntity(YAMLSerializer& serializer, const Entity& entity) {
-	serializer.BeginMapping();
-	serializer.WriteKey("Entity").Write((u64)entity.GetHandle());
+	serializer.WriteKey("Entity").BeginMapping(); // Entity
+
 	serializer.WriteKey("Name").Write(entity.GetName());
+	serializer.WriteKey("ID").Write((u64)entity.GetHandle());
 
 	serializer.WriteKey("Components").BeginMapping();
 
@@ -432,6 +469,7 @@ void SerializeEntity(YAMLSerializer& serializer, const Entity& entity) {
 Ref<ScriptObject> LoadScript(Entity entity, Asset asset,
 	YAML::Node& scriptComponentNode)
 {
+	AssetManager::Get()->Load(asset);
 	auto mod = AssetManager::Get()->Get<ScriptModule>(asset);
 	if(!mod) {
 		Log::Info(
@@ -453,6 +491,9 @@ Ref<ScriptObject> LoadScript(Entity entity, Asset asset,
 	}
 
 	auto instance = _class->Construct();
+	if(!scriptComponentNode["Fields"])
+		return instance;
+
 	for(auto fieldNode : scriptComponentNode["Fields"]) {
 		auto node = fieldNode["Field"];
 		YAML::Node value = node["Value"];

@@ -1,6 +1,9 @@
 #include "DefaultRenderPipeline.h"
 #include "ScriptPipelineContext.h"
 
+#include <chrono>
+#include <fstream>
+
 #include <Engine/Graphics/Renderer.h>
 #include <Engine/Graphics/Renderer3D.h>
 #include <Engine/Graphics/Renderer2D.h>
@@ -299,7 +302,7 @@ void DefaultRenderPipeline::TickParticles(Scene* scene, TimeStep ts,
 				.Set("u_ParticleLifetime", spec.ParticleLifetime)
 				.Set("u_Offset", spec.Offset)
 				.Set(StorageSlot{ gpu.ParticleBuffer, "", 0 })
-				.Set(StorageSlot{ gpu.FreeListBuffer,  "", 1 });
+				.Set(StorageSlot{ gpu.FreeListBuffer, "", 1 });
 			});
 	}
 	Renderer::EndPass();
@@ -324,7 +327,7 @@ void DefaultRenderPipeline::TickParticles(Scene* scene, TimeStep ts,
 				cmd->Uniforms
 				.Set("u_TimeStep", (f32)ts)
 				.Set(StorageSlot{ gpu.ParticleBuffer, "", 0 })
-				.Set(StorageSlot{ gpu.FreeListBuffer,  "", 1 });
+				.Set(StorageSlot{ gpu.FreeListBuffer, "", 1 });
 			});
 	}
 	Renderer::EndPass();
@@ -416,6 +419,8 @@ void DefaultRenderPipeline::OnRender(Scene* scene, TimeStep ts) {
 		return;
 	}
 
+	mainCamera->Resize(m_RenderWidth, m_RenderHeight);
+
 	// ── Shadow pass ───────────────────────────────────────────────────────────
 
 	ExecuteHooks(PipelineStage::PreShadows, ctx);
@@ -437,7 +442,6 @@ void DefaultRenderPipeline::OnRender(Scene* scene, TimeStep ts) {
 		auto* cmd = Renderer::GetCommand();
 		cmd->Uniforms.Set("u_LightSpaceMatrix", lightSpaceMatrix);
 
-		Renderer3D::Begin(mainCamera);
 		scene->World3D.ForEach<MeshComponent, TransformComponent>(
 			[&](ECS::Entity& entity) {
 				auto& mesh = entity.Get<MeshComponent>();
@@ -469,10 +473,11 @@ void DefaultRenderPipeline::OnRender(Scene* scene, TimeStep ts) {
 		auto* cmd = Renderer::GetCommand();
 		cmd->Uniforms.Set("u_ViewProj", mainCamera->GetViewProjection());
 
+		u32 meshDrawCount = 0;
 		scene->World3D.ForEach<MeshComponent, TransformComponent>(
 			[&](ECS::Entity& entity) {
 				auto& mesh = entity.Get<MeshComponent>();
-				auto& tr   = entity.Get<TransformComponent>();
+				auto& tr = entity.Get<TransformComponent>();
 
 				auto geo = AssetManager::Get()->Get<Geometry>(mesh.GeometryAsset);
 				if(!geo) return;
@@ -484,7 +489,28 @@ void DefaultRenderPipeline::OnRender(Scene* scene, TimeStep ts) {
 					MaterialBinder::Bind(cmd, *mat);
 
 				Renderer3D::DrawGeometry(geo, Transform(tr).GetTransform(), cmd);
+				meshDrawCount++;
 			});
+
+		// #region agent log
+		{
+			const auto& vp = mainCamera->GetViewProjection();
+			auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(
+				std::chrono::system_clock::now().time_since_epoch()).count();
+			std::ofstream log(
+				"/home/jernesstar/Code/Work/.cursor/.cursor/debug-29aebe.log",
+				std::ios::app);
+			log << "{\"sessionId\":\"29aebe\",\"runId\":\"post-fix\","
+				<< "\"hypothesisId\":\"A\",\"location\":\"DefaultRenderPipeline.cpp:GBuffer\","
+				<< "\"message\":\"ViewProj before GBuffer draw\","
+				<< "\"data\":{\"vp00\":" << vp[0][0] << ",\"vp33\":" << vp[3][3]
+				<< ",\"vpW\":" << vp[0][3] << ",\"vpH\":" << vp[1][3]
+				<< ",\"meshDraws\":" << meshDrawCount
+				<< ",\"camW\":" << mainCamera->GetViewportWidth()
+				<< ",\"camH\":" << mainCamera->GetViewportHeight()
+				<< "},\"timestamp\":" << ts << "}\n";
+		}
+		// #endregion
 	}
 	Renderer::EndPass();
 

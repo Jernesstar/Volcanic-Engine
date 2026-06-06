@@ -83,19 +83,15 @@ private:
 		glTextureParameteri(m_RendererID, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
 		u32 type;
-		if(spec.Target == Graphics::AttachmentTarget::Color) {
-			if(index > 0)
-				return;
-
-			type = GL_COLOR_ATTACHMENT0;
-		}
+		if(spec.Target == Graphics::AttachmentTarget::Color)
+			type = GL_COLOR_ATTACHMENT0 + index;
 		else if(spec.Target == Graphics::AttachmentTarget::Depth)
 			type = GL_DEPTH_ATTACHMENT;
 		else if(spec.Target == Graphics::AttachmentTarget::Stencil)
 			type = GL_STENCIL_ATTACHMENT;
 
-		glFramebufferTexture2D(GL_FRAMEBUFFER, type + index,
-								GL_TEXTURE_2D, m_RendererID, 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, type,
+							   GL_TEXTURE_2D, m_RendererID, 0);
 	}
 };
 
