@@ -376,6 +376,10 @@ void EditorAssetManager::Build(Asset asset) {
 	}
 	else if(asset.Type == AssetType::Script) {
 		auto* mod = ScriptManager::LoadScript(path, false);
+		if(!mod) {
+			Log::Error("Failed to compile script '{}'", path);
+			return;
+		}
 		Str name = mod->GetName();
 
 		BytesWriter wr(name.size() + std::numeric_limits<u16>::max());
@@ -506,6 +510,19 @@ void EditorAssetManager::LoadRegistry(const std::string& projectRoot) {
 		Asset asset = Add(type, id, true, path);
 		if(node["Name"])
 			m_AssetRegistry->NameAsset(asset, node["Name"].as<Str>());
+
+		// Script bytecode is tied to the exact registered AngelScript interface;
+		// any engine binding change invalidates cached bytecode (LoadByteCode
+		// then fails). Recompile scripts from source at load so they always
+		// match the current interface.
+		if(type == AssetType::Script && path != "")
+			Build(asset);
+		// For every other asset the .bin blob is a persistent cache: rebuild it
+		// from source when it is missing, so a stale/corrupt blob can be fixed
+		// by deleting the file. (Models also regenerate their child geometry/
+		// material/texture blobs here.)
+		else if(path != "" && !fs::exists(m_AssetRegistry->GetBinPath(id)))
+			Build(asset);
 	}
 
 	Log::Info("Loaded registered assets");

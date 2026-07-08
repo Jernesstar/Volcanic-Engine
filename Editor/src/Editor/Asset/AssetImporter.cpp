@@ -48,8 +48,12 @@ ImageData AssetImporter::GetImageData(const std::string& path, bool flip) {
 
 	image.Width = (u32)width;
 	image.Height = (u32)height;
-	image.BPP = (u32)bpp;
-	image.Data = Buffer(pixels, image.Width * image.Height * bpp);
+	// stbi was asked for 4 channels, so the returned data is ALWAYS RGBA — the
+	// bpp out-param only reports the file's native channel count. Sizing the
+	// buffer with the native bpp truncates the data and corrupts every texture
+	// that isn't natively RGBA (e.g. RGB PNGs upload as rainbow noise).
+	image.BPP = 4;
+	image.Data = Buffer(pixels, image.Width * image.Height * 4);
 	return image;
 }
 

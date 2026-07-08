@@ -16,6 +16,10 @@ struct AttachmentSpec {
 	AttachmentTarget Target;
 	u32 Width = 0, Height = 0;
 	TextureSampling Filter = TextureSampling::Linear;
+	// Color attachments default to 8-bit. Use Float (rgba16f) for buffers that
+	// must hold values outside [0,1] — G-Buffer world position/normal and the HDR
+	// buffer — otherwise they clamp and corrupt lighting/shadows/bloom.
+	TextureFormat Format = TextureFormat::Normal;
 };
 
 class Attachment : public Derivable<Attachment> {

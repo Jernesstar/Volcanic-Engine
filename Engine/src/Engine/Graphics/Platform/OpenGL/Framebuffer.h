@@ -65,7 +65,9 @@ private:
 		u32 filter = spec.Filter == Graphics::TextureSampling::Nearest
 			? GL_NEAREST : GL_LINEAR;
 		if(spec.Target == Graphics::AttachmentTarget::Color) {
-			internalFormat = GL_RGBA8;
+			internalFormat =
+				spec.Format == Graphics::TextureFormat::Float
+					? GL_RGBA16F : GL_RGBA8;
 		}
 		else if(spec.Target == Graphics::AttachmentTarget::Depth) {
 			internalFormat = GL_DEPTH_COMPONENT32F;

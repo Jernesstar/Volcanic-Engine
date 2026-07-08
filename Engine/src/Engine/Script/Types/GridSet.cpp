@@ -11,8 +11,10 @@ namespace VolcanicEngine {
 GridSet::GridSet(uint32_t width, uint32_t height)
 	: m_Width(width), m_Height(height)
 {
-	if(width && height)
+	if(width && height) {
 		m_Data = new uint8_t[GetCount()];
+		memset(m_Data, 0, GetCount()); // cells default to 0, like Reallocate/Clear
+	}
 }
 
 GridSet::~GridSet() {
@@ -134,6 +136,14 @@ void GridSet::RegisterInterface() {
 		asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("GridSet", asBEHAVE_DESTRUCT,
 		"void f()", asFUNCTION(GridSetDestruct), asCALL_CDECL_OBJLAST);
+
+	// Deep-copy assignment. Required for `grid = GridSet(w, h)` and
+	// `GridSet copy = other;` (which default-construct then opAssign) — without
+	// it AngelScript would bitwise-copy the heap pointer and double-free.
+	engine->RegisterObjectMethod("GridSet",
+		"GridSet& opAssign(const GridSet &in)",
+		asMETHODPR(GridSet, operator=, (const GridSet&), GridSet&),
+		asCALL_THISCALL);
 
 	engine->RegisterObjectMethod("GridSet", "uint32 get_Count() const property",
 		asMETHOD(GridSet, GetCount), asCALL_THISCALL);

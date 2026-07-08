@@ -82,11 +82,18 @@ struct ScriptFunc {
 			}, std::forward<Args>(args)...);
 
 		int result = Context->Execute();
-		if(result != asEXECUTION_FINISHED) {
+		if(result == asEXECUTION_EXCEPTION) {
 			const char* exception = Context->GetExceptionString();
-			VolcaniCore::Log::Error("Script exception in '{}': {}",
-				Func->GetDeclaration(),
-				exception ? exception : "unknown");
+			int line = Context->GetExceptionLineNumber();
+			auto* fn = Context->GetExceptionFunction();
+			VolcaniCore::Log::Error(
+				"Script exception in '{}' (line {}): {}",
+				fn ? fn->GetDeclaration() : Func->GetDeclaration(),
+				line, exception ? exception : "unknown");
+		}
+		else if(result != asEXECUTION_FINISHED) {
+			VolcaniCore::Log::Error("Script did not finish in '{}'",
+				Func->GetDeclaration());
 		}
 	}
 

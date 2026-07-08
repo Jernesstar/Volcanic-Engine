@@ -16,7 +16,11 @@ using namespace VolcaniCore;
 
 namespace VolcanicEngine::Graphics {
 
-using MatPropValue = std::variant<i32, f32, Vec2, Vec3, Vec4, Mat4, Ref<Texture>>;
+// Note: `Asset` holds an unresolved texture reference (id + type). Material
+// deserialization stores texture props as Asset; the binder resolves them to a
+// Ref<Texture> at bind time via the AssetManager.
+using MatPropValue =
+	std::variant<i32, f32, Vec2, Vec3, Vec4, Mat4, Ref<Texture>, Asset>;
 
 struct MatProp {
 	ShaderPropType Type;
@@ -74,6 +78,12 @@ public:
 				using T = std::decay_t<decltype(v)>;
 				if constexpr(std::is_same_v<T, Ref<Texture>>)
 					cmd->Uniforms.Set(name, TextureSlot{ v, texSlot++ });
+				else if constexpr(std::is_same_v<T, Asset>)
+					// Unresolved texture reference. The default deferred G-Buffer
+					// path resolves these explicitly (see DefaultRenderPipeline);
+					// the generic binder cannot reach the AssetManager without a
+					// circular include, so it is skipped here.
+					(void)v;
 				else
 					cmd->Uniforms.Set(name, v);
 			}, resolve(name));

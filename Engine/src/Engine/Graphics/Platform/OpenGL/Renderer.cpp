@@ -155,8 +155,11 @@ void Renderer::Init() {
 	glEnable(GL_FRAMEBUFFER_SRGB);	// Gamma correction
 
 	s_EmptyVAO = CreateRef<VertexArray>();
-	s_Passes.Allocate(40);
-	s_Commands.Allocate(40);
+	// Pre-allocate generously: NewCommand() hands out pointers INTO s_Commands,
+	// so any reallocation mid-frame would dangle them. A scene with many meshes
+	// can produce hundreds of commands per frame.
+	s_Passes.Allocate(1024);
+	s_Commands.Allocate(8192);
 }
 
 void Renderer::Close() {

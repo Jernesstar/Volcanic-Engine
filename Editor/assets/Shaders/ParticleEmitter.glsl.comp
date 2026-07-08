@@ -15,15 +15,14 @@ layout(std430, binding = 1) coherent restrict buffer SSBO_1 {
     int Indices[];
 } FreeList;
 
-struct EmitterSettings {
-    vec3 Position;
-    float ParticleLifetime;
-    float Offset;
-};
-
+// Flat uniforms, set by name from the CPU (DefaultRenderPipeline::TickParticles).
+// A struct uniform was previously used but the CPU sets flat names, so the
+// members never received data and every particle spawned with Life = 0.
 layout(location = 0) uniform float u_TimeStep;
-layout(location = 1) uniform int u_ParticlesToSpawn;
-layout(location = 2) uniform EmitterSettings u_Emitter;
+layout(location = 1) uniform int   u_ParticlesToSpawn;
+layout(location = 2) uniform vec3  u_EmitterPosition;
+layout(location = 3) uniform float u_ParticleLifetime;
+layout(location = 4) uniform float u_Offset;
 
 float umap(float val, float rs, float re) // [0, 1] -> [rs, re]
 {
@@ -58,11 +57,17 @@ vec3 rng(vec3 low, vec3 high)
 }
 
 void MakeParticle(out Particle particle) {
-    particle.Life = u_Emitter.ParticleLifetime;
-    particle.Velocity = vec3(0.0f, 0.0001, 0.0);
+    particle.Life = u_ParticleLifetime;
+    // Gentle upward drift with a little horizontal jitter — embers rising from
+    // a torch/lava. Integrated as Position += Velocity * dt, dt in seconds, so
+    // velocity is in world units per second.
+    particle.Velocity = vec3(
+        rng(-0.25, 0.25, 11.0),
+        rng( 0.60, 1.60, 37.0),
+        rng(-0.25, 0.25, 59.0));
     particle.Position =
-        u_Emitter.Position
-            + rng(vec3(-u_Emitter.Offset), vec3(u_Emitter.Offset));
+        u_EmitterPosition
+            + rng(vec3(-u_Offset), vec3(u_Offset));
 }
 
 layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;

@@ -72,6 +72,7 @@ static AssetEditorPanel     s_AssetEditor;
 static ConsolePanel         s_Console;
 
 static bool s_DockspaceBuilt = false;
+static bool s_AutoPlay = false; // --play: enter Play mode automatically on first frame
 
 static TimeStep s_TimeStep;
 struct {
@@ -241,6 +242,8 @@ void Editor::Init(const CommandLineArgs& args) {
 		Str name = args["--open_scene"];
 		Editor::OpenScene(name);
 	}
+
+	s_AutoPlay = args.Has("--play");
 }
 
 void Editor::Close() {
@@ -265,6 +268,11 @@ void Editor::Update(TimeStep ts) {
 	UIRenderer::BeginFrame();
 	Renderer::BeginFrame();
 	// ImGuizmo::BeginFrame();
+
+	if(s_AutoPlay && s_EditorMode == EditorMode::Edit && s_CurrentScene) {
+		s_AutoPlay = false;
+		OnPlay();
+	}
 
 	if(s_EditorMode == EditorMode::Play) {
 		if(s_Debugging) {

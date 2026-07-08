@@ -1,6 +1,6 @@
 #version 460 core
 
-// Material uniforms (bound by MaterialBinder)
+// Material uniforms (set by name from the geometry pass).
 layout(location = 4) uniform sampler2D u_Albedo;
 layout(location = 5) uniform vec4      u_AlbedoColor;
 layout(location = 6) uniform int       u_HasAlbedoTexture;
@@ -27,5 +27,4 @@ void main()
 		albedo = u_AlbedoColor.rgb;
 
 	g_Albedo = vec4(albedo, u_Emissive);
-	g_Albedo = vec4(0.7, 0.7, 0.0, 1.2);
 }

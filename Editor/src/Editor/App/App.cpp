@@ -9,6 +9,8 @@
 #include <rapidjson/writer.h>
 #include <rapidjson/stringbuffer.h>
 
+#include <Engine/Audio/AudioEngine.h>
+
 #include "Editor.h"
 #include "../Asset/AssetManager.h"
 
@@ -20,11 +22,13 @@ EditorApp::EditorApp(const CommandLineArgs& args)
 		{ .Title = "Editor" }
 	)
 {
+	VolcanicEngine::Audio::AudioEngine::Init();
 	Editor::Init(args);
 }
 
 EditorApp::~EditorApp() {
 	Editor::Close();
+	VolcanicEngine::Audio::AudioEngine::Shutdown();
 }
 
 void EditorApp::OnUpdate(TimeStep ts) {

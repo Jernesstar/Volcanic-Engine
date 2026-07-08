@@ -187,19 +187,26 @@ static void DrawSubGeometry(Ref<Geometry> root, SubGeometry& sub,
 	command->DepthTesting = DepthTestingMode::On;
 	command->Blending = BlendingMode::Greatest;
 	command->Culling = CullingMode::Back;
-	// command->IndicesIndex = buffer->GetIndexCount();
-	// command->VerticesIndex = buffer->GetVertexCount();
+
+	// Absolute offsets into the shared mesh buffer, captured BEFORE appending
+	// this surface's data. Without these each draw call would read from buffer
+	// position 0 / instance 0, collapsing every mesh onto the first one — so
+	// distinct tiles/transforms only render correctly with these set.
+	u32 vertexBase   = buffer->GetVertexCount();
+	u32 indexBase    = buffer->GetIndexCount();
+	u32 instanceBase = buffer->GetInstanceCount();
+
 	buffer->Add(DrawBufferIndex::E_Index, sub.Indices.Get(), sub.Indices.GetCount());
 	buffer->Add(DrawBufferIndex::E_Vertex, sub.Vertices.Get(), sub.Vertices.GetCount());
 
 	auto* call = command->NewCall();
 	call->Partition = DrawPartition::Instanced;
 	call->Primitive = DrawPrimitive::Triangle;
-	call->VertexOffset = 0;
+	call->VertexOffset = vertexBase;
 	call->VertexCount = sub.Vertices.GetCount();
-	call->IndexOffset = 0;
+	call->IndexOffset = indexBase;
 	call->IndexCount = sub.Indices.GetCount();
-	call->InstanceOffset = 0;
+	call->InstanceOffset = instanceBase;
 	call->InstanceCount = 1;
 	buffer->Add(DrawBufferIndex::E_Instance, glm::value_ptr(tr), 1);
 }

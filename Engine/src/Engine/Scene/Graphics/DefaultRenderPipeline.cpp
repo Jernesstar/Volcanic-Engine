@@ -1,8 +1,7 @@
 #include "DefaultRenderPipeline.h"
 #include "ScriptPipelineContext.h"
 
-#include <chrono>
-#include <fstream>
+#include <unordered_map>
 
 #include <Engine/Graphics/Renderer.h>
 #include <Engine/Graphics/Renderer3D.h>
@@ -27,27 +26,95 @@ struct ParticleData {
 static constexpr i32 k_EmitWorkGroup = 64;
 static constexpr i32 k_UpdateWorkGroup = 128;
 
+// Bind a material's properties to the deferred G-Buffer shader generically. A
+// material's prop names ARE the shader uniform names (u_Albedo, u_AlbedoColor,
+// u_HasAlbedoTexture, u_Emissive, ...), so every prop is written straight to the
+// draw command. Texture props stored as an unresolved Asset are loaded through
+// the AssetManager here (the generic MaterialBinder cannot reach the AssetManager
+// without a circular include). No knowledge of any specific material lives here.
+static void BindMaterialToGBuffer(DrawCommand* cmd, const Ref<Material>& mat) {
+	// Map material props to the G-Buffer shader BY TYPE (not by name), so both the
+	// maze materials (u_Albedo/u_AlbedoColor/u_Emissive) and model-imported
+	// materials (DiffuseMap/DiffuseColor) resolve correctly: any texture prop
+	// becomes the albedo texture, any Vec3/Vec4 the albedo colour, any float named
+	// "emissive" the emissive strength. Unresolved Asset textures are loaded here.
+	Vec4 albedoColor{ 1.0f, 1.0f, 1.0f, 1.0f };
+	f32 emissive = 0.0f;
+	Ref<Texture> albedoTex;
+
+	if(mat)
+		for(auto& [name, prop] : mat->Props) {
+			std::visit([&](auto&& v) {
+				using T = std::decay_t<decltype(v)>;
+				if constexpr(std::is_same_v<T, Ref<Texture>>) {
+					if(v) albedoTex = v;
+				}
+				else if constexpr(std::is_same_v<T, Asset>) {
+					if(v && v.Type == AssetType::Texture)
+						albedoTex = AssetManager::Get()->Get<Texture>(v);
+				}
+				else if constexpr(std::is_same_v<T, Vec4>) {
+					albedoColor = v;
+				}
+				else if constexpr(std::is_same_v<T, Vec3>) {
+					albedoColor = Vec4(v, 1.0f);
+				}
+				else if constexpr(std::is_same_v<T, f32>) {
+					if(name.find("Emissive") != Str::npos
+					|| name.find("emissive") != Str::npos)
+						emissive = v;
+				}
+			}, prop.Value);
+		}
+
+	cmd->Uniforms
+	.Set("u_HasAlbedoTexture", (i32)(albedoTex ? 1 : 0))
+	.Set("u_AlbedoColor", albedoColor)
+	.Set("u_Emissive", emissive);
+	if(albedoTex)
+		cmd->Uniforms.Set("u_Albedo", TextureSlot{ albedoTex, 0 });
+}
+
 DefaultRenderPipeline::DefaultRenderPipeline(
 	u32 renderW, u32 renderH, u32 outputW, u32 outputH)
 	: m_RenderWidth(renderW), m_RenderHeight(renderH),
 		m_OutputWidth(outputW), m_OutputHeight(outputH) { }
 
+// Compose an entity's world transform by walking up the flecs parent chain, so
+// spawned model hierarchies (a root entity with child mesh nodes) render at the
+// root's placement rather than each node's local origin.
+static Mat4 WorldTransform(ECS::Entity entity) {
+	Mat4 m = Transform(entity.Get<TransformComponent>()).GetTransform();
+	auto handle = entity.GetHandle().parent();
+	while(handle.is_valid()) {
+		ECS::Entity parent(handle);
+		if(!parent.Has<TransformComponent>())
+			break;
+		m = Transform(parent.Get<TransformComponent>()).GetTransform() * m;
+		handle = handle.parent();
+	}
+	return m;
+}
+
 void DefaultRenderPipeline::OnInit() {
 	u32 w = m_RenderWidth, h = m_RenderHeight;
 
 	const auto nearest = TextureSampling::Nearest;
+	const auto flt = TextureFormat::Float;
 	m_GBuffer = RendererAPI::CreateFramebuffer({
 		{
-			{ AttachmentTarget::Color, w, h, nearest }, // Position  (location 0)
-			{ AttachmentTarget::Color, w, h, nearest }, // Normal    (location 1)
-			{ AttachmentTarget::Color, w, h, nearest }, // Albedo    (location 2)
+			// Position + Normal must be float: world coords and signed normals
+			// exceed [0,1] and would clamp in rgba8, corrupting lighting/shadows.
+			{ AttachmentTarget::Color, w, h, nearest, flt }, // Position (loc 0)
+			{ AttachmentTarget::Color, w, h, nearest, flt }, // Normal   (loc 1)
+			{ AttachmentTarget::Color, w, h, nearest },      // Albedo   (loc 2)
 			{ AttachmentTarget::Depth, w, h },
 		}
 	});
 
 	m_HDRBuffer = RendererAPI::CreateFramebuffer({
 		{
-			{ AttachmentTarget::Color, w, h, nearest },
+			{ AttachmentTarget::Color, w, h, nearest, flt }, // HDR (emissive > 1)
 			{ AttachmentTarget::Depth, w, h },
 		}
 	});
@@ -338,12 +405,8 @@ void DefaultRenderPipeline::TickParticles(Scene* scene, TimeStep ts,
 	// blit from m_GBuffer during the lighting pass setup.
 	Renderer::StartPass(m_ParticleDrawPass);
 	{
-		auto* sharedCmd = Renderer::GetCommand();
-		sharedCmd->Uniforms
-		.Set("u_View", cam->GetView())
-		.Set("u_ViewProj", cam->GetViewProjection())
-		.Set("u_BillboardWidth", 0.1f)
-		.Set("u_BillboardHeight", 0.1f);
+		Mat4 view = cam->GetView();
+		Mat4 viewProj = cam->GetViewProjection();
 
 		scene->World3D.ForEach<ParticleEmitterComponent>(
 			[&](Entity& entity) {
@@ -354,15 +417,46 @@ void DefaultRenderPipeline::TickParticles(Scene* scene, TimeStep ts,
 				auto& spec = entity.Get<ParticleEmitterComponent>();
 				auto& gpu  = m_ParticleState[id];
 
-				// Resolve the material texture if one is set
+				// Resolve the material texture if one is set. The emitter's
+				// MaterialAsset may reference either a Texture directly or a
+				// Material whose first texture prop we use.
 				Ref<Texture> tex;
-				if(spec.MaterialAsset)
-					tex = AssetManager::Get()->Get<Texture>(spec.MaterialAsset);
+				if(spec.MaterialAsset) {
+					if(spec.MaterialAsset.Type == AssetType::Texture)
+						tex = AssetManager::Get()->Get<Texture>(spec.MaterialAsset);
+					else if(spec.MaterialAsset.Type == AssetType::Material) {
+						auto mat = AssetManager::Get()
+							->Get<Material>(spec.MaterialAsset);
+						if(mat)
+							for(auto& [name, prop] : mat->Props)
+								std::visit([&](auto&& v) {
+									using T = std::decay_t<decltype(v)>;
+									if constexpr(std::is_same_v<T, Ref<Texture>>) {
+										if(v) tex = v;
+									}
+									else if constexpr(std::is_same_v<T, Asset>) {
+										if(v && v.Type == AssetType::Texture)
+											tex = AssetManager::Get()
+												->Get<Texture>(v);
+									}
+								}, prop.Value);
+					}
+				}
+
+				f32 half = spec.Size;
 
 				auto* cmd = Renderer::NewCommand();
 				cmd->DepthTesting = DepthTestingMode::On;
 				cmd->Blending = BlendingMode::Additive;
 				cmd->Culling = CullingMode::Off;
+
+				cmd->Uniforms
+				.Set("u_View", view)
+				.Set("u_ViewProj", viewProj)
+				.Set("u_BillboardWidth", half)
+				.Set("u_BillboardHeight", half)
+				.Set("u_Color", spec.Color)
+				.Set("u_HasTexture", (i32)(tex ? 1 : 0));
 
 				if(tex)
 					cmd->Uniforms.Set("u_Texture", TextureSlot{ tex, 0 });
@@ -407,6 +501,30 @@ void DefaultRenderPipeline::OnRender(Scene* scene, TimeStep ts) {
 			pointLights.Add(entity.Get<PointLightComponent>());
 		});
 
+	// Particle emitters that emit light contribute a co-located point light into
+	// the deferred lighting pass (Unity-style approximation): the whole emitter
+	// lights nearby geometry rather than each particle individually. (Sprint 64)
+	scene->World3D.ForEach<ParticleEmitterComponent>(
+		[&](ECS::Entity& entity) {
+			auto& spec = entity.Get<ParticleEmitterComponent>();
+			if(!spec.EmitsLight)
+				return;
+
+			f32 r = glm::max(spec.LightRadius, 0.5f);
+			Vec3 color = Vec3(spec.Color) * spec.Color.w;
+
+			PointLightComponent light;
+			light.Position  = spec.Position;
+			light.Ambient   = color * 0.05f;
+			light.Diffuse   = color;
+			light.Specular  = color * 0.5f;
+			light.Constant  = 1.0f;
+			light.Linear    = 2.0f / r;
+			light.Quadratic = 1.0f / (r * r);
+			light.Bloom     = true;
+			pointLights.Add(light);
+		});
+
 	scene->World3D.ForEach<SkyboxComponent>(
 		[&](ECS::Entity& entity) {
 			auto asset = entity.Get<SkyboxComponent>().CubemapAsset;
@@ -448,7 +566,7 @@ void DefaultRenderPipeline::OnRender(Scene* scene, TimeStep ts) {
 				auto& tr = entity.Get<TransformComponent>();
 				auto geo = AssetManager::Get()->Get<Geometry>(mesh.GeometryAsset);
 				if(geo)
-					Renderer3D::DrawGeometry(geo, Transform(tr).GetTransform(), cmd);
+					Renderer3D::DrawGeometry(geo, WorldTransform(entity), cmd);
 			});
 		Renderer3D::End();
 	}
@@ -470,10 +588,14 @@ void DefaultRenderPipeline::OnRender(Scene* scene, TimeStep ts) {
 	{
 		Renderer::Clear();
 
-		auto* cmd = Renderer::GetCommand();
-		cmd->Uniforms.Set("u_ViewProj", mainCamera->GetViewProjection());
+		Mat4 viewProj = mainCamera->GetViewProjection();
 
-		u32 meshDrawCount = 0;
+		// Batch meshes by material: material uniforms live on the command, so we
+		// use one command per distinct material and append every mesh of that
+		// material as its own instanced draw call. This keeps the command count
+		// (and GL state changes) small even for scenes with hundreds of meshes.
+		// Safe because s_Commands is pre-allocated and does not reallocate.
+		std::unordered_map<u64, DrawCommand*> matCommands;
 		scene->World3D.ForEach<MeshComponent, TransformComponent>(
 			[&](ECS::Entity& entity) {
 				auto& mesh = entity.Get<MeshComponent>();
@@ -482,35 +604,28 @@ void DefaultRenderPipeline::OnRender(Scene* scene, TimeStep ts) {
 				auto geo = AssetManager::Get()->Get<Geometry>(mesh.GeometryAsset);
 				if(!geo) return;
 
-				// Bind material for this draw command
-				auto matAsset = mesh.MaterialAsset;
-				auto mat = AssetManager::Get()->Get<Material>(matAsset);
-				if(mat)
-					MaterialBinder::Bind(cmd, *mat);
+				u64 matKey = (u64)mesh.MaterialAsset.ID;
+				DrawCommand* cmd;
+				auto it = matCommands.find(matKey);
+				if(it != matCommands.end())
+					cmd = it->second;
+				else {
+					cmd = Renderer::NewCommand();
+					cmd->Uniforms.Set("u_ViewProj", viewProj);
+					auto mat = AssetManager::Get()->Get<Material>(mesh.MaterialAsset);
+					BindMaterialToGBuffer(cmd, mat);
+					matCommands[matKey] = cmd;
+				}
 
-				Renderer3D::DrawGeometry(geo, Transform(tr).GetTransform(), cmd);
-				meshDrawCount++;
+				Renderer3D::DrawGeometry(geo, WorldTransform(entity), cmd);
 			});
 
-		// #region agent log
-		{
-			const auto& vp = mainCamera->GetViewProjection();
-			auto ts = std::chrono::duration_cast<std::chrono::milliseconds>(
-				std::chrono::system_clock::now().time_since_epoch()).count();
-			std::ofstream log(
-				"/home/jernesstar/Code/Work/.cursor/.cursor/debug-29aebe.log",
-				std::ios::app);
-			log << "{\"sessionId\":\"29aebe\",\"runId\":\"post-fix\","
-				<< "\"hypothesisId\":\"A\",\"location\":\"DefaultRenderPipeline.cpp:GBuffer\","
-				<< "\"message\":\"ViewProj before GBuffer draw\","
-				<< "\"data\":{\"vp00\":" << vp[0][0] << ",\"vp33\":" << vp[3][3]
-				<< ",\"vpW\":" << vp[0][3] << ",\"vpH\":" << vp[1][3]
-				<< ",\"meshDraws\":" << meshDrawCount
-				<< ",\"camW\":" << mainCamera->GetViewportWidth()
-				<< ",\"camH\":" << mainCamera->GetViewportHeight()
-				<< "},\"timestamp\":" << ts << "}\n";
-		}
-		// #endregion
+		// DrawGeometry sets alpha blending (Greatest) on the command, which is
+		// wrong for the G-Buffer: g_Albedo.a carries emissive strength (0 for
+		// most surfaces), so SRC_ALPHA blending would discard the albedo writes
+		// entirely. G-Buffer attachments hold data, not colors — never blend.
+		for(auto& [key, mcmd] : matCommands)
+			mcmd->Blending = BlendingMode::Off;
 	}
 	Renderer::EndPass();
 
@@ -570,7 +685,8 @@ void DefaultRenderPipeline::OnRender(Scene* scene, TimeStep ts) {
 			.Set(s + ".Diffuse",   dl.Diffuse)
 			.Set(s + ".Specular",  dl.Specular);
 		}
-		cmd->Uniforms.Set("u_DirLightCount", (i32)dirLights.Count());
+		cmd->Uniforms.Set("u_DirLightCount",
+			(i32)(dirLights.Count() < 4 ? dirLights.Count() : 4));
 
 		// Point lights (up to 16)
 		for(u32 i = 0; i < pointLights.Count() && i < 16; i++) {
@@ -585,7 +701,8 @@ void DefaultRenderPipeline::OnRender(Scene* scene, TimeStep ts) {
 			.Set(s + ".Linear",    pl.Linear)
 			.Set(s + ".Quadratic", pl.Quadratic);
 		}
-		cmd->Uniforms.Set("u_PointLightCount", (i32)pointLights.Count());
+		cmd->Uniforms.Set("u_PointLightCount",
+			(i32)(pointLights.Count() < 16 ? pointLights.Count() : 16));
 
 		auto* call = cmd->NewCall();
 		call->VertexCount = 6;

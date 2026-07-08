@@ -250,6 +250,29 @@ void App::LoadScene(Scene* scene) {
 	s_Scene = CreateRef<Scene>(scene->Name);
 	s_Scene->RegisterSystems();
 	SceneLoad(*s_Scene);
+
+	// Instantiate each script controller bound to its entity and call OnStart.
+	// This happens OUTSIDE any flecs system iteration, so entity spawning and
+	// component adds performed in OnStart are applied immediately (not deferred).
+	List<Entity> list;
+	s_Scene->World3D.ForEach<ScriptComponent>(
+		[&](Entity entity) {
+			auto& sc = entity.Set<ScriptComponent>();
+			if(sc.Instance)
+				list.Add(entity);
+		});
+
+	list.ForEach(
+		[](Entity& entity) {
+			auto& sc = entity.Set<ScriptComponent>();
+			auto old = sc.Instance;
+			if(!old->IsInitialized()) {
+				sc.Instance = old->GetClass()->Instantiate(entity);
+				ScriptGlue::Copy(old, sc.Instance);
+			}
+			sc.Instance->Call("OnStart");
+		});
+
 	Log::Info("Scene '{}' loaded", scene->Name);
 }
 

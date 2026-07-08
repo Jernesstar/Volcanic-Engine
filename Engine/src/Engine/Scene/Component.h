@@ -97,12 +97,18 @@ struct ScriptComponent : public Component {
 	ScriptComponent(ScriptComponent&& other) = default;
 };
 
+// Lightweight static collider used by the raycast + trigger queries in
+// PhysicsSystem. Not a rigid-body dynamics body — Sprint 60 is scoped to
+// raycasts and trigger volumes only. The collider is an axis-aligned box
+// centred on the entity's TransformComponent, with half-extents multiplied by
+// the transform scale.
 struct RigidBodyComponent : public Component {
-	// Ref<RigidBody> Body;
+	Vec3 HalfExtents = { 0.5f, 0.5f, 0.5f };
+	bool IsTrigger = false; // Triggers are reported by overlap queries only.
 
 	RigidBodyComponent() = default;
-	// RigidBodyComponent(Ref<RigidBody> body)
-	// 	: Body(body) { }
+	RigidBodyComponent(const Vec3& halfExtents, bool isTrigger = false)
+		: HalfExtents(halfExtents), IsTrigger(isTrigger) { }
 	RigidBodyComponent(const RigidBodyComponent& other) = default;
 };
 
@@ -163,6 +169,15 @@ struct ParticleEmitterComponent : public Component {
 	f32 SpawnInterval; // In milliseconds
 	f32 Offset;
 	Asset MaterialAsset;
+
+	// Additive tint written into the HDR buffer; values > 1 push past the bloom
+	// threshold so emissive particles glow. (Sprint 64)
+	Vec4 Color = { 2.0f, 1.1f, 0.35f, 1.0f };
+	f32 Size = 0.1f; // Billboard half-size in world units
+	// When true, the emitter contributes a co-located point light into the
+	// deferred lighting pass so particles light nearby scene geometry.
+	bool EmitsLight = false;
+	f32 LightRadius = 6.0f; // Attenuation reach of the emitter light
 
 	ParticleEmitterComponent() = default;
 	ParticleEmitterComponent(const Vec3& pos, u64 max, f32 lifetime,

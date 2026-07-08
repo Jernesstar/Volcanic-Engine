@@ -210,6 +210,10 @@ inline Ref<Material> LoadFromBytes<Material>(Bytes&& bytes) {
 	BytesReader reader(std::move(bytes));
 	auto mat = CreateRef<Material>();
 
+	// NOTE: AssetRegistry::GetData already strips the u64 length prefix that
+	// SetData's Buffer serialization adds — the bytes here start directly at
+	// the material body. Do NOT skip a prefix (doing so eats the shader ID and
+	// misaligns every following read, so propCount comes back 0).
 	u64 shaderId; u8 shaderType;
 	reader.Read(shaderId);
 	reader.Read(shaderType);
@@ -232,6 +236,9 @@ template<>
 inline Ref<Model> LoadFromBytes<Model>(Bytes&& bytes) {
 	BytesReader reader(std::move(bytes));
 	auto model = CreateRef<Model>();
+
+	// As with materials, GetData already strips the length prefix — read the
+	// node hierarchy directly.
 	ReadModelNode(reader, model->Root);
 	return model;
 }

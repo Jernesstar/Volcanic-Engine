@@ -79,8 +79,11 @@ public:
 	void For(const Func<void, Asset>& cb);
 	void Clear();
 
-private:
+	// Path of an asset's cached binary blob (Asset/.bin/<id>.asset). Public so
+	// managers can check for a missing/deleted cache and rebuild from source.
 	std::string GetBinPath(UUID id) const;
+
+private:
 
 	std::string m_ProjectRoot;
 	// Registry* m_Registry;

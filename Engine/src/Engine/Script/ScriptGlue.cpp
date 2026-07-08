@@ -37,6 +37,8 @@
 #include "Scene/ScriptSystem.h"
 #include "Scene/PhysicsSystem.h"
 
+#include "Graphics/ModelSpawner.h"
+
 #include "Scene/Graphics/RenderPipeline.h"
 #include "Scene/Graphics/DefaultRenderPipeline.h"
 #include "Scene/Graphics/SceneRenderer.h"
@@ -597,6 +599,11 @@ static void AssetDestructor(Asset* ptr) {
 	ptr->~Asset();
 }
 
+static Asset& AssetAssign(const Asset& other, Asset* self) {
+	*self = other;
+	return *self;
+}
+
 static u64 GetAssetID(Asset* asset) {
 	return (u64)asset->ID;
 }
@@ -652,6 +659,8 @@ void RegisterAssetManager() {
 		asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectBehaviour("Asset", asBEHAVE_DESTRUCT,
 		"void f()", asFUNCTION(AssetDestructor), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("Asset", "Asset& opAssign(const Asset &in)",
+		asFUNCTION(AssetAssign), asCALL_CDECL_OBJLAST);
 
 	engine->RegisterObjectProperty("Asset", "const AssetType Type",
 		asOFFSET(Asset, Type));
@@ -914,6 +923,12 @@ void RegisterECS() {
 		asMETHOD(Entity, Kill), asCALL_THISCALL);
 }
 
+// Spawn a model's entity hierarchy into the scene's World3D. The SceneClass
+// object is the Scene, passed as the trailing object (asCALL_CDECL_OBJLAST).
+static Entity ScriptSpawnModel(const std::string& name, Scene* scene) {
+	return SpawnModel(scene->World3D, name);
+}
+
 void RegisterScene() {
 	auto* engine = ScriptEngine::Get();
 
@@ -977,6 +992,10 @@ void RegisterScene() {
 		asFUNCTION(GetScriptInstance), asCALL_CDECL_OBJLAST);
 
 	engine->RegisterObjectType("RigidBodyComponent", 0, asOBJ_REF | asOBJ_NOCOUNT);
+	engine->RegisterObjectProperty("RigidBodyComponent", "Vec3 HalfExtents",
+		asOFFSET(RigidBodyComponent, HalfExtents));
+	engine->RegisterObjectProperty("RigidBodyComponent", "bool IsTrigger",
+		asOFFSET(RigidBodyComponent, IsTrigger));
 
 	engine->RegisterObjectType("RigidBody", 0, asOBJ_REF | asOBJ_NOCOUNT);
 
@@ -1014,6 +1033,23 @@ void RegisterScene() {
 
 	engine->RegisterObjectType("PointLightComponent", 0,
 		asOBJ_REF | asOBJ_NOCOUNT);
+	engine->RegisterObjectProperty("PointLightComponent", "Vec3 Ambient",
+		asOFFSET(PointLightComponent, Ambient));
+	engine->RegisterObjectProperty("PointLightComponent", "Vec3 Diffuse",
+		asOFFSET(PointLightComponent, Diffuse));
+	engine->RegisterObjectProperty("PointLightComponent", "Vec3 Specular",
+		asOFFSET(PointLightComponent, Specular));
+	engine->RegisterObjectProperty("PointLightComponent", "Vec3 Position",
+		asOFFSET(PointLightComponent, Position));
+	engine->RegisterObjectProperty("PointLightComponent", "float Constant",
+		asOFFSET(PointLightComponent, Constant));
+	engine->RegisterObjectProperty("PointLightComponent", "float Linear",
+		asOFFSET(PointLightComponent, Linear));
+	engine->RegisterObjectProperty("PointLightComponent", "float Quadratic",
+		asOFFSET(PointLightComponent, Quadratic));
+	engine->RegisterObjectProperty("PointLightComponent", "bool Bloom",
+		asOFFSET(PointLightComponent, Bloom));
+
 	engine->RegisterObjectType("SpotlightComponent", 0,
 		asOBJ_REF | asOBJ_NOCOUNT);
 	engine->RegisterObjectType("ParticleEmitterComponent", 0,
@@ -1026,6 +1062,24 @@ void RegisterScene() {
 		asFUNCTION(SetParticleEmitterMaxParticles), asCALL_CDECL_OBJLAST);
 	engine->RegisterObjectProperty("ParticleEmitterComponent", "Vec3 Position",
 		asOFFSET(ParticleEmitterComponent, Position));
+	engine->RegisterObjectProperty("ParticleEmitterComponent", "float Lifetime",
+		asOFFSET(ParticleEmitterComponent, ParticleLifetime));
+	engine->RegisterObjectProperty("ParticleEmitterComponent",
+		"float SpawnInterval",
+		asOFFSET(ParticleEmitterComponent, SpawnInterval));
+	engine->RegisterObjectProperty("ParticleEmitterComponent", "float Offset",
+		asOFFSET(ParticleEmitterComponent, Offset));
+	engine->RegisterObjectProperty("ParticleEmitterComponent", "Vec4 Color",
+		asOFFSET(ParticleEmitterComponent, Color));
+	engine->RegisterObjectProperty("ParticleEmitterComponent", "float Size",
+		asOFFSET(ParticleEmitterComponent, Size));
+	engine->RegisterObjectProperty("ParticleEmitterComponent", "bool EmitsLight",
+		asOFFSET(ParticleEmitterComponent, EmitsLight));
+	engine->RegisterObjectProperty("ParticleEmitterComponent", "float LightRadius",
+		asOFFSET(ParticleEmitterComponent, LightRadius));
+	engine->RegisterObjectProperty("ParticleEmitterComponent",
+		"Asset MaterialAsset",
+		asOFFSET(ParticleEmitterComponent, MaterialAsset));
 
 	engine->RegisterObjectMethod("Entity", "bool HasCameraComponent() const",
 		asMETHODPR(Entity, Has<CameraComponent>, () const, bool),
@@ -1175,17 +1229,24 @@ void RegisterScene() {
 		"ParticleEmitterComponent@ SetParticleEmitterComponent()",
 		asFUNCTION(SetParticleEmitterComponent), asCALL_CDECL_OBJLAST);
 
-	// engine->RegisterObjectType("HitInfo", sizeof(Physics::HitInfo),
-	// 	asOBJ_VALUE | asGetTypeTraits<Physics::HitInfo>());
-	// engine->RegisterObjectProperty("HitInfo", "const bool HasHit",
-	// 	asOFFSET(Physics::HitInfo, HasHit));
-	// engine->RegisterObjectProperty("HitInfo", "RigidBody@ Actor",
-	// 	asOFFSET(Physics::HitInfo, Actor));
+	engine->RegisterObjectType("HitInfo", sizeof(HitInfo),
+		asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<HitInfo>());
+	engine->RegisterObjectProperty("HitInfo", "bool HasHit",
+		asOFFSET(HitInfo, HasHit));
+	engine->RegisterObjectProperty("HitInfo", "Entity HitEntity",
+		asOFFSET(HitInfo, HitEntity));
+	engine->RegisterObjectProperty("HitInfo", "Vec3 Point",
+		asOFFSET(HitInfo, Point));
+	engine->RegisterObjectProperty("HitInfo", "float Distance",
+		asOFFSET(HitInfo, Distance));
 
 	engine->RegisterObjectType("PhysicsSystem", 0, asOBJ_REF | asOBJ_NOCOUNT);
-	// engine->RegisterObjectMethod("PhysicsSystem",
-	// 	"HitInfo Raycast(const Vec3 &in, const Vec3 &in)",
-	// 	asFUNCTION(PhysicsRaycast), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("PhysicsSystem",
+		"HitInfo Raycast(const Vec3 &in, const Vec3 &in, float maxDist = 1000)",
+		asMETHOD(PhysicsSystem, Raycast), asCALL_THISCALL);
+	engine->RegisterObjectMethod("PhysicsSystem",
+		"Entity OverlapPoint(const Vec3 &in)",
+		asMETHOD(PhysicsSystem, OverlapPoint), asCALL_THISCALL);
 
 	engine->RegisterObjectType("ScriptSystem", 0, asOBJ_REF | asOBJ_NOCOUNT);
 	engine->RegisterObjectMethod("ScriptSystem",
@@ -1208,6 +1269,9 @@ void RegisterScene() {
 	engine->RegisterObjectMethod("SceneClass", "Entity GetEntity(uint64)",
 		asMETHODPR(ECS::World, GetEntity, (u64), Entity), asCALL_THISCALL, 0,
 		asOFFSET(Scene, World3D));
+	engine->RegisterObjectMethod("SceneClass",
+		"Entity SpawnModel(const string &in)",
+		asFUNCTION(ScriptSpawnModel), asCALL_CDECL_OBJLAST);
 
 	engine->RegisterObjectMethod("SceneClass", "PhysicsSystem@ GetPhysicsSystem()",
 		asMETHODPR(ECS::World, Get<PhysicsSystem>, (), PhysicsSystem*),
