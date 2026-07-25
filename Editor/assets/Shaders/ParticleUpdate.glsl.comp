@@ -16,10 +16,28 @@ layout(std430, binding = 1) restrict buffer SSBO_1 {
 } FreeList;
 
 layout(location = 0) uniform float u_TimeStep;
+layout(location = 1) uniform float u_ElapsedTime; // monotonic per-emitter clock
+
+// Buoyancy makes the plume stretch as particles rise instead of travelling at a
+// constant spawn speed; sway adds turbulence. (Sprint 64, task 2.2)
+const float k_Buoyancy = 1.8;   // world units / s^2
+const float k_SwayAmp  = 0.35;  // u/s
+const float k_SwayFreq = 3.1;   // rad/s
 
 void UpdateParticle(inout Particle particle, int index) {
     if(particle.Life > 0) {
-        // particle.Velocity += particle.Acceleration * u_TimeStep;
+        // Buoyancy (upward acceleration) before integrating position.
+        particle.Velocity.y += k_Buoyancy * u_TimeStep;
+
+        // Sinusoidal sway — NOT curl noise (indistinguishable at 320x180 and far
+        // cheaper). Golden-angle per-particle phase decorrelates neighbours; X
+        // and Z sway at different frequencies for a wobbling Lissajous, not a
+        // clean circle.
+        float phase = float(index) * 2.399963;
+        float t = u_ElapsedTime + phase;
+        particle.Position.x += sin(t * k_SwayFreq)       * k_SwayAmp * u_TimeStep;
+        particle.Position.z += cos(t * k_SwayFreq * 0.7) * k_SwayAmp * u_TimeStep;
+
         particle.Position += particle.Velocity * u_TimeStep;
         particle.Life -= u_TimeStep;
 

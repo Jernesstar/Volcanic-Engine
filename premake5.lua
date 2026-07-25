@@ -31,11 +31,6 @@ workspace "VolcanicEngine"
     filter "action:vs*"
         startproject "Editor"
 
-include "VolcaniCore"
-include "Engine"
-include "Editor"
-include "Runtime"
-
 RootPath = _MAIN_SCRIPT_DIR;
 VolcaniCoreVendorDir = "%{RootPath}/VolcaniCore/.vendor"
 EngineVendorDir = "%{RootPath}/Engine/.vendor"
@@ -43,6 +38,33 @@ EditorVendorDir = "%{RootPath}/Editor/.vendor"
 
 VendorPaths = {}
 Includes = {}
+
+-- Jolt physics config. This exact set of defines MUST be applied identically
+-- to the Jolt static lib (Engine/.deps/Jolt.lua) AND every module that
+-- includes Jolt headers (Engine, Editor). SIMD/config define mismatches
+-- corrupt Jolt struct layout across the boundary. Keep in sync with the
+-- -msse4.1/-msse4.2 build options in Jolt.lua.
+JoltDefines = {
+    "JPH_USE_SSE4_1",
+    "JPH_USE_SSE4_2",
+    -- Use plain aligned new/delete instead of Jolt's overridable allocator
+    -- function-pointer hooks. This avoids a whole class of "allocator hook is
+    -- null across the lib/consumer boundary" crashes and needs no runtime
+    -- RegisterDefaultAllocator() to be reachable from consumer code.
+    "JPH_DISABLE_CUSTOM_ALLOCATOR",
+    -- CRITICAL: NDEBUG must be defined identically for the Jolt lib AND every
+    -- consumer. Jolt derives JPH_DEBUG from !NDEBUG, and JPH_DEBUG changes its
+    -- internal struct layout + enables asserts. A mismatch (lib built with
+    -- JPH_DEBUG, Engine without) silently corrupts Jolt structs across the
+    -- boundary and traps on the first allocation. The Engine/Editor projects
+    -- already define NDEBUG; forcing it here keeps the lib in lockstep.
+    "NDEBUG",
+}
+
+include "VolcaniCore"
+include "Engine"
+include "Editor"
+include "Runtime"
 
 -- VolcaniCore libraries
 VendorPaths["glm"]                = "%{VolcaniCoreVendorDir}/glm"
@@ -57,6 +79,7 @@ VendorPaths["lmdb"]               = "%{EngineVendorDir}/lmdb"
 VendorPaths["libuv"]              = "%{EngineVendorDir}/libuv"
 VendorPaths["uSockets"]           = "%{EngineVendorDir}/uSockets"
 VendorPaths["uWebSockets"]        = "%{EngineVendorDir}/uWebSockets"
+VendorPaths["Jolt"]               = "%{EngineVendorDir}/JoltPhysics"
 -- Editor libraries
 VendorPaths["imgui"]              = "%{EditorVendorDir}/imgui"
 VendorPaths["ImGuizmo"]           = "%{EditorVendorDir}/ImGuizmo"
@@ -81,6 +104,7 @@ Includes["flecs"]                 = "%{VendorPaths.flecs}/include"
 Includes["lmdb"]                  = "%{VendorPaths.lmdb}/libraries/liblmdb"
 Includes["uSockets"]              = "%{VendorPaths.uSockets}/src"
 Includes["uWebSockets"]           = "%{EngineVendorDir}"
+Includes["Jolt"]                  = "%{VendorPaths.Jolt}"
 -- Editor libraries
 Includes["imgui"]                 = "%{EditorVendorDir}"
 Includes["ImGuizmo"]              = "%{EditorVendorDir}"

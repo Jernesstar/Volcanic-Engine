@@ -1,183 +1,106 @@
-// #include "Shape.h"
+#include "Shape.h"
 
-// #include <VolcaniCore/Core/Log.h>
-// #include <VolcaniCore/Core/Buffer.h>
+#include <Jolt/Physics/Collision/Shape/BoxShape.h>
+#include <Jolt/Physics/Collision/Shape/SphereShape.h>
+#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+#include <Jolt/Physics/Collision/Shape/MeshShape.h>
 
-// #include <Physics/Physics.h>
+#include <VolcaniCore/Core/Log.h>
 
-// namespace VolcanicEngine::Physics {
+using namespace VolcaniCore;
 
-// #ifdef MAGMA_PHYSICS
-// static PxShape* CookMesh(Ref<Graphics::Mesh> mesh);
-// #endif
+namespace VolcanicEngine::Physics {
 
-// Ref<Shape> Shape::Create(Shape::Type type) {
-// 	Ref<Shape> shape;
-// 	switch(type) {
-// 		case Shape::Type::Box:
-// 			shape = CreateBox(0.5f);
-// 			break;
-// 		case Shape::Type::Sphere:
-// 			shape = CreateSphere(0.5f);
-// 			break;
-// 		case Shape::Type::Plane:
-// 			shape = CreatePlane(Transform{ });
-// 			break;
-// 		case Shape::Type::Capsule:
-// 			shape = CreateCapsule(0.5f, 0.5f);
-// 			break;
-// 		case Shape::Type::Mesh:
-// 			break;
-// 	}
+Ref<Shape> Shape::CreateBox(const Vec3& halfExtents) {
+	// Jolt requires every half-extent to be >= the box convex radius. Clamp the
+	// extents to a small floor and shrink the convex radius to fit thin boxes
+	// (e.g. floor tiles) so we don't trip "Invalid convex radius".
+	JPH::Vec3 he(
+		std::max(halfExtents.x, 0.01f),
+		std::max(halfExtents.y, 0.01f),
+		std::max(halfExtents.z, 0.01f));
 
-// #ifdef MAGMA_PHYSICS
-// 	shape->m_Shape->setFlag(PxShapeFlag::eVISUALIZATION, true);
-// #endif
+	float minExtent = std::min({ he.GetX(), he.GetY(), he.GetZ() });
+	float convexRadius = std::min(0.05f, minExtent * 0.5f);
 
-// 	return shape;
-// }
+	JPH::BoxShapeSettings settings(he, convexRadius);
+	settings.SetEmbedded();
+	auto result = settings.Create();
+	if(result.HasError()) {
+		Log::Error("Jolt box shape: {}", result.GetError().c_str());
+		return nullptr;
+	}
 
-// Ref<Shape> Shape::Create(Ref<Graphics::Mesh> mesh) {
-// 	Ref<Shape> shape = CreateRef<Shape>(Shape::Type::Mesh);
-// #ifdef MAGMA_PHYSICS
-// 	auto* mat = GetPhysicsLib()->createMaterial(0.5f, 0.5f, 0.6f);
-// 	shape->m_Shape = CookMesh(mesh);
-// #endif
+	return CreateRef<Shape>(Type::Box, result.Get());
+}
 
-// 	return shape;
-// }
+Ref<Shape> Shape::CreateSphere(float radius) {
+	JPH::SphereShapeSettings settings(std::max(radius, 0.001f));
+	settings.SetEmbedded();
+	auto result = settings.Create();
+	if(result.HasError()) {
+		Log::Error("Jolt sphere shape: {}", result.GetError().c_str());
+		return nullptr;
+	}
 
-// Ref<Shape> Shape::CreateBox(float radius) {
-// 	Ref<Shape> shape = CreateRef<Shape>(Shape::Type::Box);
-// #ifdef MAGMA_PHYSICS
-// 	auto* mat = GetPhysicsLib()->createMaterial(0.5f, 0.5f, 0.6f);
-// 	shape->m_Shape =
-// 		GetPhysicsLib()->createShape(
-// 			PxBoxGeometry(radius, radius, radius), *mat);
-// 	mat->release();
-// #endif
+	return CreateRef<Shape>(Type::Sphere, result.Get());
+}
 
-// 	return shape;
-// }
+Ref<Shape> Shape::CreateCapsule(float halfHeight, float radius) {
+	JPH::CapsuleShapeSettings settings(
+		std::max(halfHeight, 0.001f), std::max(radius, 0.001f));
+	settings.SetEmbedded();
+	auto result = settings.Create();
+	if(result.HasError()) {
+		Log::Error("Jolt capsule shape: {}", result.GetError().c_str());
+		return nullptr;
+	}
 
-// Ref<Shape> Shape::CreateSphere(float radius) {
-// 	Ref<Shape> shape = CreateRef<Shape>(Shape::Type::Box);
-// #ifdef MAGMA_PHYSICS
-// 	auto* mat = GetPhysicsLib()->createMaterial(0.5f, 0.5f, 0.6f);
-// 	shape->m_Shape = GetPhysicsLib()->createShape(PxSphereGeometry(0.5f), *mat);
-// 	mat->release();
-// #endif
+	return CreateRef<Shape>(Type::Capsule, result.Get());
+}
 
-// 	return shape;
-// }
+Ref<Shape> Shape::CreateMesh(const Ref<Graphics::Geometry>& geometry) {
+	if(!geometry)
+		return nullptr;
 
-// Ref<Shape> Shape::CreatePlane(const Transform& tr) {
-// 	Ref<Shape> shape = CreateRef<Shape>(Shape::Type::Plane);
-// #ifdef MAGMA_PHYSICS
-// 	auto* mat = GetPhysicsLib()->createMaterial(0.5f, 0.5f, 0.6f);
-// 	shape->m_Shape = GetPhysicsLib()->createShape(PxPlaneGeometry(), *mat);
-// 	mat->release();
-// #endif
-// 	return shape;
-// }
+	JPH::VertexList vertices;
+	JPH::IndexedTriangleList triangles;
 
-// Ref<Shape> Shape::CreateCapsule(float radius, float halfRadius) {
-// 	Ref<Shape> shape = CreateRef<Shape>(Shape::Type::Capsule);
-// #ifdef MAGMA_PHYSICS
-// 	auto* mat = GetPhysicsLib()->createMaterial(0.5f, 0.5f, 0.6f);
-// 	shape->m_Shape =
-// 		GetPhysicsLib()->createShape(
-// 			PxCapsuleGeometry(radius, halfRadius), *mat);
-// 	mat->release();
-// #endif
+	uint32_t vertexBase = 0;
+	for(const auto& surface : geometry->Surfaces) {
+		const auto& verts = surface.Vertices;
+		const auto& indices = surface.Indices;
 
-// 	return shape;
-// }
+		for(u64 i = 0; i < verts.GetCount(); i++) {
+			const auto& p = verts.Get()[i].Position;
+			vertices.push_back(JPH::Float3(p.x, p.y, p.z));
+		}
 
-// Shape::Shape(Shape::Type type)
-// 	: m_Type(type) { }
+		for(u64 i = 0; i + 2 < indices.GetCount(); i += 3) {
+			triangles.push_back(
+				JPH::IndexedTriangle(
+					vertexBase + indices.Get()[i + 0],
+					vertexBase + indices.Get()[i + 1],
+					vertexBase + indices.Get()[i + 2]));
+		}
 
-// Shape::Shape(const Shape& other)
-// 	: m_Type(other.m_Type)
-// {
-// #ifdef MAGMA_PHYSICS
-// 	m_Shape = other.m_Shape;
-// 	m_Shape->acquireReference();
-// #endif
-// }
+		vertexBase += (uint32_t)verts.GetCount();
+	}
 
-// Shape& Shape::operator =(const Shape& other) {
-// 	m_Type = other.m_Type;
+	if(vertices.empty() || triangles.empty()) {
+		Log::Error("Jolt mesh shape: empty geometry");
+		return nullptr;
+	}
 
-// #ifdef MAGMA_PHYSICS
-// 	m_Shape = other.m_Shape;
-// 	m_Shape->acquireReference();
-// #endif
-// 	return *this;
-// }
+	JPH::MeshShapeSettings settings(std::move(vertices), std::move(triangles));
+	settings.SetEmbedded();
+	auto result = settings.Create();
+	if(result.HasError()) {
+		Log::Error("Jolt mesh shape: {}", result.GetError().c_str());
+		return nullptr;
+	}
 
-// Shape::~Shape() {
-// #ifdef MAGMA_PHYSICS
-// 	m_Shape->release();
-// #endif
-// }
+	return CreateRef<Shape>(Type::Mesh, result.Get());
+}
 
-// #ifdef MAGMA_PHYSICS
-
-// PxShape* CookConvex(Buffer<Graphics::Vertex> data) {
-// 	PxConvexMeshDesc desc;
-// 	desc.points.count  = 5;
-// 	desc.points.stride = sizeof(Graphics::Vertex);
-// 	desc.points.data   = data.Get();
-// 	desc.flags		   = PxConvexFlag::eCOMPUTE_CONVEX;
-
-// 	PxTolerancesScale scale;
-// 	PxCookingParams params(scale);
-// 	PxDefaultMemoryOutputStream buf;
-// 	PxConvexMeshCookingResult::Enum result;
-
-// 	bool success = PxCookConvexMesh(params, desc, buf, &result);
-// 	if(!success)
-// 		VOLCANICORE_LOG_ERROR("Failed to create convex mesh");
-
-// 	PxDefaultMemoryInputData input(buf.getData(), buf.getSize());
-// 	PxConvexMesh* mesh = GetPhysicsLib()->createConvexMesh(input);
-
-// 	auto* mat = GetPhysicsLib()->createMaterial(0.5f, 0.5f, 0.6f);
-// 	auto res = GetPhysicsLib()->createShape(PxConvexMeshGeometry(mesh), *mat);
-// 	mat->release();
-// 	return res;
-// }
-
-// PxShape* CookMesh(Ref<Graphics::Mesh> mesh) {
-// 	PxTriangleMeshDesc desc;
-// 	desc.points.count  = mesh->SubMeshes[-1].Vertices.GetCount();
-// 	desc.points.stride = sizeof(Graphics::Vertex);
-// 	desc.points.data   = mesh->SubMeshes[-1].Vertices.Get();
-
-// 	desc.triangles.count  = mesh->SubMeshes[-1].Indices.GetCount() / 3;
-// 	desc.triangles.stride = 3 * sizeof(uint32_t);
-// 	desc.triangles.data   = mesh->SubMeshes[-1].Indices.Get();
-
-// 	PxTolerancesScale scale;
-// 	PxCookingParams params(scale);
-// 	PxDefaultMemoryOutputStream buf;
-// 	PxTriangleMeshCookingResult::Enum result;
-
-// 	bool success = PxCookTriangleMesh(params, desc, buf, &result);
-// 	if(!success) {
-// 		VOLCANICORE_LOG_ERROR("Failed to create triangle mesh");
-// 		return nullptr;
-// 	}
-
-// 	PxDefaultMemoryInputData input(buf.getData(), buf.getSize());
-// 	PxTriangleMesh* m = GetPhysicsLib()->createTriangleMesh(input);
-
-// 	auto* mat = GetPhysicsLib()->createMaterial(0.5f, 0.5f, 0.6f);
-// 	auto res = GetPhysicsLib()->createShape(PxTriangleMeshGeometry(m), *mat);
-// 	mat->release();
-// 	return res;
-// }
-
-// #endif
-// }
+}

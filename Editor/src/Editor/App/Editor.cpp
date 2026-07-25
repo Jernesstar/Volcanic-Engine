@@ -396,6 +396,10 @@ void Editor::OnPlay(bool debug) {
 	s_EditorMode = EditorMode::Play;
 	SaveScene();
 
+	// Reset the frame timer so the first play frame's ts starts from now,
+	// not from however long the editor has been idle.
+	Application::ResetFrameTimer();
+
 	s_Debugging = debug;
 	if(!s_Debugging) {
 		App::Get()->Running = true;

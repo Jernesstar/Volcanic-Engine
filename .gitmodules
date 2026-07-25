@@ -67,3 +67,6 @@
 [submodule "Editor/.vendor/json"]
 	path = Editor/.vendor/json
 	url = https://github.com/nlohmann/json.git
+[submodule "Engine/.vendor/JoltPhysics"]
+	path = Engine/.vendor/JoltPhysics
+	url = https://github.com/jrouwe/JoltPhysics.git

@@ -185,6 +185,44 @@ static void WriteModelNode(BytesWriter& wr,
 		WriteModelNode(wr, child, geoAssets, matAssets);
 }
 
+// Shared MatProp encoder — the single writer counterpart to ReadMatPropValue in
+// AssetManager.h. Format: [name] [type: u8] [value]. Texture value is written as
+// an unresolved [asset id: u64] [asset type: u8], matching the reader. Used by
+// both the model-material writer and the MaterialInstance writer so the on-disk
+// prop encoding lives in exactly one place.
+static void WriteMatProp(BytesWriter& wr, const Str& name, const MatProp& prop) {
+	wr.Write(name);
+	wr.Write((u8)prop.Type);
+	std::visit([&](auto&& v) {
+		using T = std::decay_t<decltype(v)>;
+		if constexpr(std::is_same_v<T, i32>)  wr.Write(v);
+		else if constexpr(std::is_same_v<T, f32>)  wr.Write(v);
+		else if constexpr(std::is_same_v<T, Vec2>) wr.WriteData(&v.x, sizeof(Vec2));
+		else if constexpr(std::is_same_v<T, Vec3>) wr.WriteData(&v.x, sizeof(Vec3));
+		else if constexpr(std::is_same_v<T, Vec4>) wr.WriteData(&v.x, sizeof(Vec4));
+		else if constexpr(std::is_same_v<T, Mat4>)
+			wr.WriteData(glm::value_ptr(v), sizeof(Mat4));
+		else if constexpr(std::is_same_v<T, Asset>) {
+			wr.Write((u64)v.ID); wr.Write((u8)v.Type);
+		}
+		else if constexpr(std::is_same_v<T, Ref<Texture>>) {
+			// A live texture has no asset id to persist; overrides authored for
+			// serialization always reference assets. Write a null texture ref.
+			wr.Write((u64)0); wr.Write((u8)AssetType::Texture);
+		}
+	}, prop.Value);
+}
+
+// MaterialInstance writer — counterpart to LoadFromBytes<MaterialInstance>.
+// [parent id: u64] [parent type: u8] [override count: u32] (MatProp)*
+static void WriteMaterialInstance(BytesWriter& wr, const MaterialInstance& inst) {
+	wr.Write((u64)inst.ParentAsset.ID);
+	wr.Write((u8)inst.ParentAsset.Type);
+	wr.Write((u32)inst.Overrides.size());
+	for(auto& [name, prop] : inst.Overrides)
+		WriteMatProp(wr, name, prop);
+}
+
 EditorAssetManager::EditorAssetManager()
 	: AssetManager()
 {
@@ -203,7 +241,9 @@ void EditorAssetManager::Build(Asset asset) {
 		return;
 
 	std::string path = GetPath(asset.ID);
-	if(asset.ID > 100) // Not a native asset
+	// Not a native asset, and has a source path. Shader-group primaries are
+	// path-less (they build from their stage-file refs), so guard the empty case.
+	if(asset.ID > 100 && path != "")
 		path = fs::canonical(path).string();
 
 	if(asset.Type == AssetType::Geometry) {
@@ -266,8 +306,10 @@ void EditorAssetManager::Build(Asset asset) {
 		}
 
 		// ── Material child assets ────────────────────────────────────────────
-		// All model-derived materials reference the native GBuffer shader (ID 100).
-		Asset gbufShader{ 100, AssetType::Shader };
+		// All model-derived materials reference the native GBuffer shader. This is
+		// the same sentinel a null-shader Material resolves to at bind time — see
+		// Graphics::k_DefaultGBufferShaderID and the MaterialBinder contract.
+		Asset gbufShader{ Graphics::k_DefaultGBufferShaderID, AssetType::Shader };
 
 		List<Asset> matAssets;
 		matAssets.Allocate(mats.Count());
@@ -297,18 +339,16 @@ void EditorAssetManager::Build(Asset asset) {
 			matWr.Write((u8)gbufShader.Type);
 			matWr.Write(propCount);
 
-			// DiffuseColor — always present
-			matWr.Write(Str("DiffuseColor"));
-			matWr.Write((u8)ShaderPropType::Vec4);
-			matWr.WriteData(&mp.DiffuseColor.x, sizeof(Vec4));
+			// DiffuseColor — always present. Shares the prop encoder with the
+			// MaterialInstance writer so material and override props round-trip
+			// identically.
+			WriteMatProp(matWr, "DiffuseColor",
+				{ ShaderPropType::Vec4, mp.DiffuseColor });
 
 			// DiffuseMap — only when a texture was found
-			if(diffTex) {
-				matWr.Write(Str("DiffuseMap"));
-				matWr.Write((u8)ShaderPropType::Texture);
-				matWr.Write((u64)diffTex.ID);
-				matWr.Write((u8)diffTex.Type);
-			}
+			if(diffTex)
+				WriteMatProp(matWr, "DiffuseMap",
+					{ ShaderPropType::Texture, diffTex });
 
 			m_AssetRegistry->SetData(matAsset, std::move(matWr.Bytes));
 			matAssets.Add(matAsset);
@@ -340,37 +380,68 @@ void EditorAssetManager::Build(Asset asset) {
 
 		auto refs = m_AssetRegistry->GetRefs(asset);
 
-		List<ShaderFile> files;
-		ShaderLayout layout;
-		u64 size = sizeof(u64);
-		for(auto& ref : refs) {
-			auto shaderPath = GetPath(ref.ID);
-			Log::Info("Shader path {} for {}", shaderPath, (u64)ref.ID);
-			ShaderFile file = AssetImporter::GetShaderFileData(shaderPath);
-			size += sizeof(u32) + file.Data.GetSize();
-			Buffer<u32> data((u32*)file.Data.Get(), file.Data.GetSize(), 0, false);
+		// A game-supplied shader that fails to compile must not take down the
+		// Editor: glslang/SPIRV-Cross paths can assert or throw on bad source.
+		// Log and leave the asset unbuilt so the rest of the project still loads.
+		try {
+			List<ShaderFile> files;
+			ShaderLayout layout;
+			u64 size = sizeof(u64);
+			for(auto& ref : refs) {
+				auto shaderPath = GetPath(ref.ID);
+				Log::Info("Shader path {} for {}", shaderPath, (u64)ref.ID);
+				ShaderFile file = AssetImporter::GetShaderFileData(shaderPath);
+				size += sizeof(u32) + file.Data.GetSize();
 
-			Log::Info("Reflecting shader");
-			AssetImporter::ReflectShader(data, layout);
+				// A failed glslang compile returns an empty SPIR-V buffer (the
+				// failure is already logged by GetShaderData). Reflecting an empty
+				// buffer throws "0 words" — surface a clear error instead.
+				if(!file.Data.GetCount()) {
+					Log::Error("Shader stage '{}' produced no SPIR-V; skipping "
+						"shader group {}.", shaderPath, (u64)asset.ID);
+					return;
+				}
 
-			files.AddMove(std::move(file));
+				// Buffer view over the SPIR-V words: second arg is the word COUNT.
+				Buffer<u32> data((u32*)file.Data.Get(), file.Data.GetCount(),
+								 0, false);
+
+				Log::Info("Reflecting shader");
+				AssetImporter::ReflectShader(data, layout);
+
+				files.AddMove(std::move(file));
+			}
+
+			BytesWriter wr(size + 1024); // Extra space for layout
+			wr.Write((u64)files.Count());
+
+			for(auto& file : files) {
+				wr.Write((u32)file.FileType);
+				wr.Write(file.Data);
+			}
+
+			wr.Write(layout);
+
+			m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
 		}
-
-		BytesWriter wr(size + 1024); // Extra space for layout
-		wr.Write((u64)files.Count());
-
-		for(auto& file : files) {
-			wr.Write((u32)file.FileType);
-			wr.Write(file.Data);
+		catch(const std::exception& e) {
+			Log::Error("Failed to build shader {}: {}", (u64)asset.ID, e.what());
 		}
-
-		wr.Write(layout);
-
-		m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
+		catch(...) {
+			Log::Error("Failed to build shader {}: unknown error", (u64)asset.ID);
+		}
 	}
 	else if(asset.Type == AssetType::Audio) {
-		Buffer<f32> soundData = AssetImporter::GetAudioData(path);
-		BytesWriter wr(soundData.GetSize());
+		// Header [sampleRate f32][channels u32] precedes the planar sample data
+		// so playback uses the source's true rate/channel count (the previous
+		// hardcoded 44.1kHz-mono replay distorted speed and dropped channels).
+		f32 sampleRate;
+		u32 channels;
+		Buffer<f32> soundData =
+			AssetImporter::GetAudioData(path, sampleRate, channels);
+		BytesWriter wr(sizeof(f32) + sizeof(u32) + soundData.GetSize());
+		wr.Write(sampleRate);
+		wr.Write(channels);
 		wr.Write(soundData);
 		m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
 	}
@@ -391,7 +462,125 @@ void EditorAssetManager::Build(Asset asset) {
 		m_AssetRegistry->SetData(asset, std::move(wr.Bytes));
 	}
 	else if(asset.Type == AssetType::Material) {
-		
+		// Standalone .mat builder. Parses a YAML material into the same binary
+		// Material blob format the model-import path writes (and LoadFromBytes<
+		// Material> reads): [shader id:u64] [shader type:u8] [prop count:u32]
+		// then (name, type, value)* via the shared WriteMatProp encoder.
+		//
+		// .mat schema (all blocks optional):
+		//   Shader: <asset name>            resolved by name; unknown → GBuffer
+		//   TextureUniforms: [{ Uniform: { Name, Ref: <texture asset name> } }]
+		//   Props:           [{ Prop: { Name, Type: Float|Vec3|Vec4|Int, Data } }]
+		//   Vec4Uniforms/Vec3Uniforms/FloatUniforms/IntUniforms (legacy typed
+		//     blocks with { Uniform: { Name, Data } }) are also accepted so older
+		//     materials round-trip.
+		YAML::Node file;
+		try {
+			file = YAML::LoadFile(path);
+		}
+		catch(const std::exception& e) {
+			Log::Error("Failed to parse material '{}': {}", path, e.what());
+			return;
+		}
+
+		YAML::Node matNode = file["Material"];
+		if(!matNode) {
+			Log::Error("Material '{}' has no 'Material' node", path);
+			return;
+		}
+
+		// ── Shader: resolve by name (guarded), else the default G-Buffer shader ──
+		Asset shaderAsset{ Graphics::k_DefaultGBufferShaderID, AssetType::Shader };
+		if(auto shaderName = matNode["Shader"]) {
+			Str name = shaderName.as<Str>();
+			Asset found = FindAssetByName(name);
+			if(found && found.Type == AssetType::Shader)
+				shaderAsset = found;
+			else
+				Log::Warning("Material '{}' references unknown shader '{}'; "
+					"falling back to the default G-Buffer shader.", path, name);
+		}
+
+		// Collect props first so we can write an accurate count.
+		List<Pair<Str, MatProp>> props;
+
+		// ── TextureUniforms: { Name, Ref: <texture asset name> } ────────────────
+		if(auto texNode = matNode["TextureUniforms"]) {
+			for(auto item : texNode) {
+				auto u = item["Uniform"];
+				if(!u || !u["Name"] || !u["Ref"])
+					continue;
+				Str name = u["Name"].as<Str>();
+				Str ref = u["Ref"].as<Str>();
+				Asset tex = FindAssetByName(ref);
+				if(!tex) {
+					Log::Warning("Material '{}' texture uniform '{}' references "
+						"unknown asset '{}'; skipping.", path, name, ref);
+					continue;
+				}
+				props.Emplace(name, MatProp{ ShaderPropType::Texture, tex });
+			}
+		}
+
+		// ── Generic Props block: { Name, Type: Float|Vec3|Vec4|Int, Data } ──────
+		if(auto propsNode = matNode["Props"]) {
+			for(auto item : propsNode) {
+				auto p = item["Prop"];
+				if(!p || !p["Name"] || !p["Type"] || !p["Data"])
+					continue;
+				Str name = p["Name"].as<Str>();
+				Str type = p["Type"].as<Str>();
+				if(type == "Float")
+					props.Emplace(name,
+						MatProp{ ShaderPropType::Float, p["Data"].as<f32>() });
+				else if(type == "Int")
+					props.Emplace(name,
+						MatProp{ ShaderPropType::Int, p["Data"].as<i32>() });
+				else if(type == "Vec3")
+					props.Emplace(name,
+						MatProp{ ShaderPropType::Vec3, p["Data"].as<Vec3>() });
+				else if(type == "Vec4")
+					props.Emplace(name,
+						MatProp{ ShaderPropType::Vec4, p["Data"].as<Vec4>() });
+				else
+					Log::Warning("Material '{}' prop '{}' has unsupported type "
+						"'{}'; skipping.", path, name, type);
+			}
+		}
+
+		// ── Legacy typed uniform blocks: { Name, Data } ─────────────────────────
+		auto readTyped = [&](const char* block, ShaderPropType type) {
+			auto node = matNode[block];
+			if(!node) return;
+			for(auto item : node) {
+				auto u = item["Uniform"];
+				if(!u || !u["Name"] || !u["Data"])
+					continue;
+				Str name = u["Name"].as<Str>();
+				MatProp prop; prop.Type = type;
+				switch(type) {
+					case ShaderPropType::Float: prop.Value = u["Data"].as<f32>(); break;
+					case ShaderPropType::Int:   prop.Value = u["Data"].as<i32>(); break;
+					case ShaderPropType::Vec3:  prop.Value = u["Data"].as<Vec3>(); break;
+					case ShaderPropType::Vec4:  prop.Value = u["Data"].as<Vec4>(); break;
+					default: continue;
+				}
+				props.Emplace(name, prop);
+			}
+		};
+		readTyped("FloatUniforms", ShaderPropType::Float);
+		readTyped("IntUniforms",   ShaderPropType::Int);
+		readTyped("Vec3Uniforms",  ShaderPropType::Vec3);
+		readTyped("Vec4Uniforms",  ShaderPropType::Vec4);
+
+		BytesWriter matWr(256);
+		matWr.Write((u64)shaderAsset.ID);
+		matWr.Write((u8)shaderAsset.Type);
+		matWr.Write((u32)props.Count());
+		for(auto& [name, prop] : props)
+			WriteMatProp(matWr, name, prop);
+
+		m_AssetRegistry->SetData(asset, std::move(matWr.Bytes));
 	}
 }
 
@@ -444,6 +633,61 @@ void EditorAssetManager::Clear() {
 	s_WatcherIDs.Clear();
 }
 
+Asset EditorAssetManager::FindAssetByName(const std::string& name) const {
+	// AssetRegistry::FindAsset uses map::at and throws on unknown names; guard it.
+	auto reg = m_AssetRegistry;
+	Asset found;
+	reg->For([&](Asset asset) {
+		if(found) return;
+		if(reg->GetAssetName(asset) == name)
+			found = asset;
+	});
+	return found;
+}
+
+void EditorAssetManager::RegisterShaderGroups(const fs::path& shaderFolder) {
+	if(!fs::exists(shaderFolder))
+		return;
+
+	// Group stage files by double-stem: Foo.glsl.vert / Foo.glsl.frag → "Foo".
+	Map<Str, List<Str>> groups;
+	for(auto& path : FileUtils::GetFiles(shaderFolder.string(),
+			{ ".vert", ".frag", ".geom", ".comp" }))
+	{
+		Str group = fs::path(path).stem().stem().string();
+		groups[group].Add(path);
+	}
+
+	for(auto& [group, stageFiles] : groups) {
+		// Deterministic, path-independent UUID from the group name so the primary
+		// keeps a stable ID across restarts. High bit set keeps it clear of the
+		// native asset range (<= 200) and the hashed-child ID space is disjoint.
+		UUID primaryID(
+			(std::hash<Str>{}(group) | 0x4000000000000000ULL));
+		Asset primary{ primaryID, AssetType::Shader, true };
+
+		// A re-derived group may already be registered from a previous scan in the
+		// same session (e.g. after a folder-watch reload) — rebuild it in place.
+		m_AssetRegistry->Add(primary);
+		m_AssetRegistry->NameAsset(primary, group);
+
+		// Stage files as non-primary refs; Build's Shader branch reads their SPIR-V.
+		u32 i = 0;
+		for(auto& stagePath : stageFiles) {
+			UUID stageID(
+				((u64)primaryID * 6364136223846793005ULL) ^ (u64)(++i));
+			Asset stage{ stageID, AssetType::Shader, false };
+			m_Paths[stageID] = stagePath;
+			m_AssetRegistry->Add(stage);
+			m_AssetRegistry->AddRef(primary, stage);
+		}
+
+		Log::Info("Registering shader group '{}' ({} stage file(s))",
+			group, stageFiles.Count());
+		Build(primary);
+	}
+}
+
 void EditorAssetManager::LoadRegistry(const std::string& projectRoot) {
 	m_AssetRegistry = CreateRef<AssetRegistry>(projectRoot);
 
@@ -491,6 +735,12 @@ void EditorAssetManager::LoadRegistry(const std::string& projectRoot) {
 	if(!assetPackNode)
 		return;
 
+	// A Material Build resolves its `Shader: <name>` reference against the
+	// registry, so every shader group must be registered first. Shader primaries
+	// are re-derived from the Shader folder each startup (below), which runs after
+	// this registry pass — so defer material builds until then.
+	List<Asset> deferredMaterialBuilds;
+
 	for(auto assetNode : assetPackNode["Assets"]) {
 		auto node = assetNode["Asset"];
 		AssetType type = AssetTypeFromString(node["Type"].as<Str>());
@@ -505,6 +755,13 @@ void EditorAssetManager::LoadRegistry(const std::string& projectRoot) {
 				continue;
 			}
 		}
+
+		// Shader primaries are path-less group descriptors re-derived from the
+		// Shader folder on every startup — never persisted meaningfully. Skip any
+		// that leaked into the assetpk so the folder-group pass owns them.
+		if(type == AssetType::Shader && path == "")
+			continue;
+
 		Log::Info("Adding asset {} {} {}", node["Type"].as<Str>(), (u64)id, path);
 
 		Asset asset = Add(type, id, true, path);
@@ -517,6 +774,10 @@ void EditorAssetManager::LoadRegistry(const std::string& projectRoot) {
 		// match the current interface.
 		if(type == AssetType::Script && path != "")
 			Build(asset);
+		// Materials resolve a shader by name; defer until shader groups exist.
+		else if(type == AssetType::Material && path != ""
+				&& !fs::exists(m_AssetRegistry->GetBinPath(id)))
+			deferredMaterialBuilds.Add(asset);
 		// For every other asset the .bin blob is a persistent cache: rebuild it
 		// from source when it is missing, so a stale/corrupt blob can be fixed
 		// by deleting the file. (Models also regenerate their child geometry/
@@ -528,6 +789,14 @@ void EditorAssetManager::LoadRegistry(const std::string& projectRoot) {
 	Log::Info("Loaded registered assets");
 
 	for(auto& folder : folders) {
+		// Shader folders are grouped by double-stem (e.g. Foo.glsl.vert +
+		// Foo.glsl.frag → one "Foo" shader), so each stage file cannot be a
+		// standalone primary. RegisterShaderGroups owns the whole folder.
+		if(folder.Type == AssetType::Shader) {
+			RegisterShaderGroups(folder.Path);
+			continue;
+		}
+
 		for(auto& path : FileUtils::GetFiles(folder.Path.string())) {
 			if(folder.Type == AssetType::Model)
 				path = FileUtils::GetFiles(path, { ".obj" })[0];
@@ -537,6 +806,11 @@ void EditorAssetManager::LoadRegistry(const std::string& projectRoot) {
 			}
 		}
 	}
+
+	// Shader groups now exist — build the deferred materials so their
+	// `Shader: <name>` references resolve.
+	for(auto& mat : deferredMaterialBuilds)
+		Build(mat);
 
 	Log::Info("New assets");
 

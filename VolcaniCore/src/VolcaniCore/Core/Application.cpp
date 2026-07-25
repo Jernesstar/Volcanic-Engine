@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <chrono>
 #include <thread>
+#include <algorithm>
 
 #ifdef VOLCANIC_LINUX
 	#include <stdlib.h>
@@ -47,19 +48,25 @@ Application::Application(const AppSpecification& spec,
 void Application::Run() {
 	while(s_Window->IsOpen()) {
 		TimePoint time = Time::GetTime();
-		TimeStep ts = time - m_LastFrame;
+		TimeStep ts = time - m_LastFrame; // SECONDS
 		m_LastFrame = time;
 
+		// Clamp the ts handed to OnUpdate so a huge hitch (window drag, asset
+		// load, editor idle) can't blow up per-frame catch-up loops. Keep the
+		// raw ts for the sleep math below.
+		f32 rawTs = (f32)ts;
+		TimeStep updateTs = std::min(rawTs, 0.1f);
+
 		Events::PollEvents();
-		s_Instance->OnUpdate(ts);
+		s_Instance->OnUpdate(updateTs);
 		s_Window->Update();
 
 		if(!s_Spec.TickRate)
 			continue;
 
-		f32 targetDelta = (1.0f / f32(s_Spec.TickRate)) * 1000.0f;
-		if(ts < targetDelta) {
-			f32 sleep = targetDelta - ts;
+		f32 targetDelta = 1.0f / f32(s_Spec.TickRate); // SECONDS
+		if(rawTs < targetDelta) {
+			f32 sleep = (targetDelta - rawTs) * 1000.0f; // → milliseconds
 			auto timeMS = std::chrono::milliseconds(static_cast<u32>(sleep));
 			std::this_thread::sleep_for(timeMS);
 		}

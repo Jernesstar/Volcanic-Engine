@@ -52,8 +52,15 @@ public:
 	void SetBloomThreshold(f32 t) { m_Pipeline->m_BloomThreshold = t; }
 	void SetFilterRadius(f32 r) { m_Pipeline->m_FilterRadius = r; }
 	void SetBloomRadius(f32 r) { m_Pipeline->m_FilterRadius = r; }
+	// Whole-scene balance controls (Sprint 63, task 4.1): tonemap exposure and
+	// the additive bloom strength, so a render hook can balance emissive
+	// highlights against overall exposure without blowing out the 320x180 image.
+	void SetExposure(f32 e) { m_Pipeline->m_Exposure = e; }
+	void SetBloomStrength(f32 s) { m_Pipeline->m_BloomStrength = s; }
 	f32 GetBloomThreshold() const { return m_Pipeline->m_BloomThreshold; }
 	f32 GetFilterRadius() const { return m_Pipeline->m_FilterRadius; }
+	f32 GetExposure() const { return m_Pipeline->m_Exposure; }
+	f32 GetBloomStrength() const { return m_Pipeline->m_BloomStrength; }
 
 	void SetSubPixelOffset(Vec2 offset) {
 		m_SubPixelOffset = offset;

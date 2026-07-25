@@ -66,6 +66,61 @@ Serializer& Serializer::Write(const Asset& value) {
 	return *this;
 }
 
+// Serialize a MeshComponent's per-slot material overrides as a compact sequence.
+// Empty overrides emit an empty sequence. Mirrors the binary MaterialInstance
+// block (Sprint 65).
+static void WriteMaterialOverrides(YAMLSerializer& out,
+	const MaterialInstance& inst)
+{
+	out.WriteKey("Overrides").BeginSequence();
+	for(auto& [name, prop] : inst.Overrides) {
+		out.BeginMapping()
+			.WriteKey("Name").Write(name)
+			.WriteKey("Type").Write((u32)prop.Type);
+		std::visit([&](auto&& v) {
+			using T = std::decay_t<decltype(v)>;
+			if constexpr(std::is_same_v<T, i32>)  out.WriteKey("Value").Write((i32)v);
+			else if constexpr(std::is_same_v<T, f32>)  out.WriteKey("Value").Write((f32)v);
+			else if constexpr(std::is_same_v<T, Vec2>) out.WriteKey("Value").Write(v);
+			else if constexpr(std::is_same_v<T, Vec3>) out.WriteKey("Value").Write(v);
+			else if constexpr(std::is_same_v<T, Vec4>) out.WriteKey("Value").Write(v);
+			else if constexpr(std::is_same_v<T, Asset>)
+				out.WriteKey("TextureID").Write((u64)v.ID)
+					.WriteKey("TextureType").Write((u32)v.Type);
+			else if constexpr(std::is_same_v<T, Ref<Texture>>)
+				out.WriteKey("TextureID").Write((u64)0)
+					.WriteKey("TextureType").Write((u32)AssetType::Texture);
+			// Mat4 overrides are not authorable in the editor; skipped in YAML.
+		}, prop.Value);
+		out.EndMapping();
+	}
+	out.EndSequence();
+}
+
+static void ReadMaterialOverrides(const YAML::Node& node, MaterialInstance& inst) {
+	auto overrides = node["Overrides"];
+	if(!overrides)
+		return;
+	for(auto item : overrides) {
+		Str name = item["Name"].as<std::string>();
+		auto type = (ShaderPropType)item["Type"].as<u32>();
+		MatProp prop; prop.Type = type;
+		switch(type) {
+		case ShaderPropType::Int:   prop.Value = item["Value"].as<i32>(); break;
+		case ShaderPropType::Float: prop.Value = item["Value"].as<f32>(); break;
+		case ShaderPropType::Vec2:  prop.Value = item["Value"].as<Vec2>(); break;
+		case ShaderPropType::Vec3:  prop.Value = item["Value"].as<Vec3>(); break;
+		case ShaderPropType::Vec4:  prop.Value = item["Value"].as<Vec4>(); break;
+		case ShaderPropType::Texture:
+			prop.Value = Asset{ item["TextureID"].as<u64>(),
+				(AssetType)item["TextureType"].as<u32>() };
+			break;
+		default: break;
+		}
+		inst.Overrides[name] = prop;
+	}
+}
+
 void DeserializeEntity(YAML::Node entityNode, World& scene);
 void SerializeEntity(YAMLSerializer& out, const Entity& entity);
 
@@ -335,6 +390,7 @@ void SerializeEntity(YAMLSerializer& serializer, const Entity& entity) {
 		.BeginMapping()
 			.WriteKey("GeometryID").Write((u64)mc.GeometryAsset.ID)
 			.WriteKey("MaterialID").Write((u64)mc.MaterialAsset.ID);
+		WriteMaterialOverrides(serializer, mc.Instance);
 		serializer.EndMapping().EndMapping();
 	}
 	if(entity.Has<SkyboxComponent>()) {
@@ -358,44 +414,26 @@ void SerializeEntity(YAMLSerializer& serializer, const Entity& entity) {
 		serializer.EndMapping();
 	}
 	if(entity.Has<RigidBodyComponent>()) {
-		// auto body = entity.Get<RigidBodyComponent>().Body;
-		// serializer.WriteKey("RigidBodyComponent")
-		// .BeginMapping();
+		const auto& rb = entity.Get<RigidBodyComponent>();
 
-		// if(body) {
-		// 	auto type = body->GetType();
-		// 	auto t = type == RigidBody::Type::Static ? "Static" : "Dynamic";
+		std::string shape;
+		switch(rb.Shape) {
+			case RigidBodyComponent::ShapeType::Sphere:  shape = "Sphere";  break;
+			case RigidBodyComponent::ShapeType::Capsule: shape = "Capsule"; break;
+			case RigidBodyComponent::ShapeType::Mesh:	 shape = "Mesh";	break;
+			default:									     shape = "Box";	 break;
+		}
 
-		// 	serializer.WriteKey("Body")
-		// 		.BeginMapping()
-		// 			.WriteKey("Type").Write(t);
-
-		// 	if(body->HasShape()) {
-		// 		std::string shapeType;
-		// 		switch(body->GetShape()->GetType()) {
-		// 			case Shape::Type::Box:
-		// 				shapeType = "Box";
-		// 				break;
-		// 			case Shape::Type::Sphere:
-		// 				shapeType = "Sphere";
-		// 				break;
-		// 			case Shape::Type::Plane:
-		// 				shapeType = "Plane";
-		// 				break;
-		// 			case Shape::Type::Capsule:
-		// 				shapeType = "Capsule";
-		// 				break;
-		// 			case Shape::Type::Mesh:
-		// 				shapeType = "Mesh";
-		// 				break;
-		// 		}
-
-		// 		serializer.WriteKey("ShapeType").Write(shapeType);
-		// 	}
-
-		// 	serializer.EndMapping(); // Body
-		// }
-		// serializer.EndMapping(); // RigidBodyComponent
+		serializer.WriteKey("RigidBodyComponent")
+		.BeginMapping()
+			.WriteKey("Body")
+			.BeginMapping()
+				.WriteKey("Type").Write(std::string("Static"))
+				.WriteKey("ShapeType").Write(shape)
+				.WriteKey("HalfExtents").Write(rb.HalfExtents)
+				.WriteKey("IsTrigger").Write(rb.IsTrigger)
+			.EndMapping() // Body
+		.EndMapping(); // RigidBodyComponent
 	}
 	if(entity.Has<DirectionalLightComponent>()) {
 		const auto& light = entity.Get<DirectionalLightComponent>();
@@ -452,11 +490,22 @@ void SerializeEntity(YAMLSerializer& serializer, const Entity& entity) {
 
 		serializer.WriteKey("ParticleEmitterComponent")
 		.BeginMapping()
-			.WriteKey("Position").Write(system.Position)
+			.WriteKey("LocalOffset").Write(system.LocalOffset)
+			.WriteKey("LightOffset").Write(system.LightOffset)
+			.WriteKey("SpawnExtents").Write(system.SpawnExtents)
 			.WriteKey("MaxParticleCount").Write(system.MaxParticleCount)
 			.WriteKey("ParticleLifetime").Write(system.ParticleLifetime)
 			.WriteKey("SpawnInterval").Write(system.SpawnInterval)
-			.WriteKey("Offset").Write(system.Offset)
+			.WriteKey("Color").Write(system.Color)
+			.WriteKey("Size").Write(system.Size)
+			.WriteKey("EmitsLight").Write(system.EmitsLight)
+			.WriteKey("LightRadius").Write(system.LightRadius)
+			.WriteKey("SpawnJitter").Write(system.SpawnJitter)
+			.WriteKey("LightFlicker").Write(system.LightFlicker)
+			.WriteKey("LightFlickerSpeed").Write(system.LightFlickerSpeed)
+			.WriteKey("ColorStart").Write(system.ColorStart)
+			.WriteKey("ColorMid").Write(system.ColorMid)
+			.WriteKey("ColorEnd").Write(system.ColorEnd)
 			.WriteKey("MaterialID").Write((u64)system.MaterialAsset.ID)
 		.EndMapping(); // ParticleEmitterComponent
 	}
@@ -635,6 +684,8 @@ void DeserializeEntity(YAML::Node entityNode, World& world) {
 		auto materialID = meshComponentNode["MaterialID"].as<u64>();
 		mc.GeometryAsset = Asset{ geometryID, AssetType::Geometry };
 		mc.MaterialAsset = Asset{ materialID, AssetType::Material };
+		mc.Instance.ParentAsset = mc.MaterialAsset;
+		ReadMaterialOverrides(meshComponentNode, mc.Instance);
 	}
 
 	auto skyboxComponentNode = components["SkyboxComponent"];
@@ -658,34 +709,30 @@ void DeserializeEntity(YAML::Node entityNode, World& world) {
 
 	auto rigidBodyComponentNode = components["RigidBodyComponent"];
 	if(rigidBodyComponentNode) {
+		RigidBodyComponent rb;
+
 		auto rigidBodyNode = rigidBodyComponentNode["Body"];
 		if(rigidBodyNode) {
-			auto typeStr	   = rigidBodyNode["Type"].as<std::string>();
-			auto shapeTypeStr  = rigidBodyNode["ShapeType"].as<std::string>();
+			if(auto n = rigidBodyNode["HalfExtents"])
+				rb.HalfExtents = n.as<Vec3>();
+			if(auto n = rigidBodyNode["IsTrigger"])
+				rb.IsTrigger = n.as<bool>();
 
-			// RigidBody::Type type =
-			// 	(typeStr == "Static") ? RigidBody::Type::Static
-			// 						  : RigidBody::Type::Dynamic;
-			// Shape::Type shapeType;
-			// if(shapeTypeStr == "Box")	  shapeType = Shape::Type::Box;
-			// if(shapeTypeStr == "Sphere")  shapeType = Shape::Type::Sphere;
-			// if(shapeTypeStr == "Plane")	  shapeType = Shape::Type::Plane;
-			// if(shapeTypeStr == "Capsule") shapeType = Shape::Type::Capsule;
-			// if(shapeTypeStr == "Mesh")	  shapeType = Shape::Type::Mesh;
-	
-			// Ref<RigidBody> body;
-			// if(shapeType == Shape::Type::Mesh)
-			// 	body = RigidBody::Create(type);
-			// else {
-			// 	Ref<Shape> shape = Shape::Create(shapeType);
-			// 	body = RigidBody::Create(type, shape);
-			// }
+			std::string shapeTypeStr;
+			if(auto n = rigidBodyNode["ShapeType"])
+				shapeTypeStr = n.as<std::string>();
 
-			// entity.Add<RigidBodyComponent>(body);
+			if(shapeTypeStr == "Sphere")
+				rb.Shape = RigidBodyComponent::ShapeType::Sphere;
+			else if(shapeTypeStr == "Capsule")
+				rb.Shape = RigidBodyComponent::ShapeType::Capsule;
+			else if(shapeTypeStr == "Mesh")
+				rb.Shape = RigidBodyComponent::ShapeType::Mesh;
+			else
+				rb.Shape = RigidBodyComponent::ShapeType::Box;
 		}
-		else {
-			// entity.Add<RigidBodyComponent>();
-		}
+
+		entity.Add<RigidBodyComponent>(rb);
 	}
 
 	auto directionalLightComponentNode = components["DirectionalLightComponent"];
@@ -726,22 +773,28 @@ void DeserializeEntity(YAML::Node entityNode, World& world) {
 			lightNode["OuterCutoffAngle"].as<f32>());
 	}
 
-	auto particleEmitterComponentNode = components["ParticleEmitterComponent"];
-	if(particleEmitterComponentNode) {
-		Asset asset
-		{
-			particleEmitterComponentNode["MaterialID"].as<u64>(),
-			AssetType::Material
-		};
-		entity.Add<ParticleEmitterComponent>(
-			particleEmitterComponentNode["Position"].as<Vec3>(),
-			particleEmitterComponentNode["MaxParticleCount"].as<u64>(),
-			particleEmitterComponentNode["ParticleLifetime"].as<f32>(),
-			particleEmitterComponentNode["SpawnInterval"].as<f32>(),
-			particleEmitterComponentNode["Offset"].as<f32>(),
-			asset);
-
-		// entity.GetHandle().modified<ParticleEmitterComponent>();
+	auto n = components["ParticleEmitterComponent"];
+	if(n) {
+		auto& pe = entity.Set<ParticleEmitterComponent>();
+		// Transform-relative offsets + spawn shape (Sprint 64). Guarded so scenes
+		// authored with a partial field set still load.
+		if(n["LocalOffset"])  pe.LocalOffset  = n["LocalOffset"].as<Vec3>();
+		if(n["LightOffset"])  pe.LightOffset  = n["LightOffset"].as<Vec3>();
+		if(n["SpawnExtents"]) pe.SpawnExtents = n["SpawnExtents"].as<Vec3>();
+		pe.MaxParticleCount = n["MaxParticleCount"].as<u64>();
+		pe.ParticleLifetime = n["ParticleLifetime"].as<f32>();
+		pe.SpawnInterval    = n["SpawnInterval"].as<f32>();
+		if(n["Color"])       pe.Color       = n["Color"].as<Vec4>();
+		if(n["Size"])        pe.Size        = n["Size"].as<f32>();
+		if(n["EmitsLight"])  pe.EmitsLight  = n["EmitsLight"].as<bool>();
+		if(n["LightRadius"]) pe.LightRadius = n["LightRadius"].as<f32>();
+		if(n["SpawnJitter"])       pe.SpawnJitter       = n["SpawnJitter"].as<f32>();
+		if(n["LightFlicker"])      pe.LightFlicker      = n["LightFlicker"].as<f32>();
+		if(n["LightFlickerSpeed"]) pe.LightFlickerSpeed = n["LightFlickerSpeed"].as<f32>();
+		if(n["ColorStart"])  pe.ColorStart  = n["ColorStart"].as<Vec3>();
+		if(n["ColorMid"])    pe.ColorMid    = n["ColorMid"].as<Vec3>();
+		if(n["ColorEnd"])    pe.ColorEnd    = n["ColorEnd"].as<Vec3>();
+		pe.MaterialAsset = Asset{ n["MaterialID"].as<u64>(), AssetType::Material };
 	}
 }
 
@@ -800,10 +853,42 @@ BinaryWriter& BinaryWriter::WriteObject(const AudioComponent& comp) {
 	return *this;
 }
 
+// MaterialInstance block — must stay byte-identical to
+// LoadFromBytes<MaterialInstance> (AssetManager.h) and the Runtime reader.
+// [parent id: u64] [parent type: u8] [override count: u32] ([name][type: u8][value])*
+template<>
+BinaryWriter& BinaryWriter::WriteObject(const MaterialInstance& inst) {
+	Write((u64)inst.ParentAsset.ID);
+	Write((u8)inst.ParentAsset.Type);
+	Write((u32)inst.Overrides.size());
+	for(auto& [name, prop] : inst.Overrides) {
+		Write(name);
+		Write((u8)prop.Type);
+		std::visit([&](auto&& v) {
+			using T = std::decay_t<decltype(v)>;
+			if constexpr(std::is_same_v<T, i32>)  Write(v);
+			else if constexpr(std::is_same_v<T, f32>)  Write(v);
+			else if constexpr(std::is_same_v<T, Vec2>) WriteData(&v.x, sizeof(Vec2));
+			else if constexpr(std::is_same_v<T, Vec3>) WriteData(&v.x, sizeof(Vec3));
+			else if constexpr(std::is_same_v<T, Vec4>) WriteData(&v.x, sizeof(Vec4));
+			else if constexpr(std::is_same_v<T, Mat4>)
+				WriteData(&v[0][0], sizeof(Mat4));
+			else if constexpr(std::is_same_v<T, Asset>) {
+				Write((u64)v.ID); Write((u8)v.Type);
+			}
+			else if constexpr(std::is_same_v<T, Ref<Texture>>) {
+				Write((u64)0); Write((u8)AssetType::Texture);
+			}
+		}, prop.Value);
+	}
+	return *this;
+}
+
 template<>
 BinaryWriter& BinaryWriter::WriteObject(const MeshComponent& comp) {
 	Write((u64)comp.GeometryAsset.ID);
 	Write((u64)comp.MaterialAsset.ID);
+	Write(comp.Instance); // per-slot material overrides (Sprint 65)
 	return *this;
 }
 
@@ -896,10 +981,10 @@ BinaryWriter& BinaryWriter::WriteObject(const ScriptComponent& comp) {
 
 template<>
 BinaryWriter& BinaryWriter::WriteObject(const RigidBodyComponent& comp) {
-	// auto body = comp.Body;
-
-	// Write((u8)body->GetType());
-	// Write((u8)body->GetShape()->GetType());
+	Write((u8)comp.Type);
+	Write((u8)comp.Shape);
+	Write(comp.HalfExtents);
+	Write(comp.IsTrigger);
 
 	return *this;
 }
@@ -942,13 +1027,28 @@ BinaryWriter& BinaryWriter::WriteObject(const SpotlightComponent& comp) {
 	return *this;
 }
 
+// Versioned (Sprint 64, task 1.2). The Runtime reader checks the version word
+// and bails loudly on mismatch rather than reading misaligned data. Keep the
+// field order in exact sync with the Runtime reader.
 template<>
 BinaryWriter& BinaryWriter::WriteObject(const ParticleEmitterComponent& comp) {
-	Write(comp.Position);
+	Write(k_EmitterFormatVersion);
+	Write(comp.LocalOffset);
+	Write(comp.LightOffset);
+	Write(comp.SpawnExtents);
 	Write(comp.MaxParticleCount);
 	Write(comp.ParticleLifetime);
 	Write(comp.SpawnInterval);
-	Write(comp.Offset);
+	Write(comp.Color);
+	Write(comp.Size);
+	Write(comp.EmitsLight);
+	Write(comp.LightRadius);
+	Write(comp.SpawnJitter);
+	Write(comp.LightFlicker);
+	Write(comp.LightFlickerSpeed);
+	Write(comp.ColorStart);
+	Write(comp.ColorMid);
+	Write(comp.ColorEnd);
 	Write((u64)comp.MaterialAsset.ID);
 
 	return *this;

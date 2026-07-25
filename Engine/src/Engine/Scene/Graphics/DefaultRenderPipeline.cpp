@@ -2,6 +2,7 @@
 #include "ScriptPipelineContext.h"
 
 #include <unordered_map>
+#include <algorithm>
 
 #include <Engine/Graphics/Renderer.h>
 #include <Engine/Graphics/Renderer3D.h>
@@ -26,6 +27,11 @@ struct ParticleData {
 static constexpr i32 k_EmitWorkGroup = 64;
 static constexpr i32 k_UpdateWorkGroup = 128;
 
+// Deferred lighting shader caps point lights at this many (u_PointLights[16] in
+// DeferredLighting.glsl.frag). Kept in sync with the shader; when the scene
+// exceeds it we keep the nearest lights and log once. (Sprint 64, task 3.2)
+static constexpr u32 k_MaxPointLights = 16;
+
 // Bind a material's properties to the deferred G-Buffer shader generically. A
 // material's prop names ARE the shader uniform names (u_Albedo, u_AlbedoColor,
 // u_HasAlbedoTexture, u_Emissive, ...), so every prop is written straight to the
@@ -34,7 +40,7 @@ static constexpr i32 k_UpdateWorkGroup = 128;
 // without a circular include). No knowledge of any specific material lives here.
 static void BindMaterialToGBuffer(DrawCommand* cmd, const Ref<Material>& mat) {
 	// Map material props to the G-Buffer shader BY TYPE (not by name), so both the
-	// maze materials (u_Albedo/u_AlbedoColor/u_Emissive) and model-imported
+	// authored materials (u_Albedo/u_AlbedoColor/u_Emissive) and model-imported
 	// materials (DiffuseMap/DiffuseColor) resolve correctly: any texture prop
 	// becomes the albedo texture, any Vec3/Vec4 the albedo colour, any float named
 	// "emissive" the emissive strength. Unresolved Asset textures are loaded here.
@@ -166,6 +172,7 @@ void DefaultRenderPipeline::OnInit() {
 	m_ParticleEmitPass   = RenderPass::Create("ParticleEmit",   m_ParticleEmitShader);
 	m_ParticleUpdatePass = RenderPass::Create("ParticleUpdate", m_ParticleUpdateShader);
 	m_ParticleDrawPass   = RenderPass::Create("ParticleDraw",   m_ParticleDrawShader,  m_HDRBuffer);
+	// Surface passes are built lazily per game-supplied shader in RenderSurfaces.
 
 	m_GeometryPass->SetData(Renderer3D::GetMeshBuffer());
 	m_ShadowPass->SetData(Renderer3D::GetMeshBuffer());
@@ -208,6 +215,7 @@ void DefaultRenderPipeline::OnClose() {
 	m_ParticleEmitPass.reset();
 	m_ParticleUpdatePass.reset();
 	m_ParticleDrawPass.reset();
+	m_SurfacePasses.clear();
 
 	m_GBuffer.reset();
 	m_HDRBuffer.reset();
@@ -215,6 +223,7 @@ void DefaultRenderPipeline::OnClose() {
 	m_BloomMips.reset();
 	m_OutputBuffer.reset();
 	m_ParticleState.clear();
+	m_SurfaceState.clear();
 	Log::Info("DefaultRenderPipeline closed");
 }
 
@@ -304,6 +313,193 @@ void DefaultRenderPipeline::ExecuteHooks(PipelineStage stage, ScriptPipelineCont
 		m_SubPixelOffset = ctx->GetSubPixelOffset();
 }
 
+// ── Grid surfaces ─────────────────────────────────────────────────────────────
+// One quad per SurfaceGridComponent, drawn into HDR. The grid is uploaded to a
+// double-buffered R-in-RGBA8 texture pair; on each new tick (Version bump) we swap
+// handles (no blit) and upload the fresh field into curr. The surface's material
+// names the shader; the fragment shader lerps prev/curr by TickAlpha and produces
+// the look. Each distinct shader gets its own lazily-built RenderPass, cached by
+// shader id. The pipeline holds no knowledge of any specific surface shader: it
+// sets only engine-standard uniforms (placement, time, tick, grid textures) and
+// binds every remaining material prop generically through the reflected layout.
+void DefaultRenderPipeline::RenderSurfaces(Scene* scene, Ref<Camera> cam) {
+	auto* am = AssetManager::Get();
+	Mat4 viewProj = cam->GetViewProjection();
+
+	scene->World3D.ForEach<SurfaceGridComponent>(
+		[&](Entity& entity) {
+			auto& surface = entity.Get<SurfaceGridComponent>();
+			if(surface.GridWidth == 0 || surface.GridHeight == 0)
+				return;
+
+			// Resolve the material and its shader. Skip (warn once) if either is
+			// missing — a surface with no shader cannot be drawn generically.
+			if(!surface.MaterialAsset
+			|| surface.MaterialAsset.Type != AssetType::Material) {
+				static bool s_WarnedNoMat = false;
+				if(!s_WarnedNoMat) {
+					Log::Warning("SurfaceGridComponent has no material asset; "
+						"skipping surface render.");
+					s_WarnedNoMat = true;
+				}
+				return;
+			}
+			auto mat = am->Get<Material>(surface.MaterialAsset);
+			if(!mat) return;
+
+			Asset shaderAsset = mat->ShaderAsset;
+			if(!shaderAsset || shaderAsset.Type != AssetType::Shader) {
+				static bool s_WarnedNoShader = false;
+				if(!s_WarnedNoShader) {
+					Log::Warning("Surface material (id {}) resolves to no shader; "
+						"skipping surface render.",
+						(u64)surface.MaterialAsset.ID);
+					s_WarnedNoShader = true;
+				}
+				return;
+			}
+			auto shader = am->Get<Shader>(shaderAsset);
+			if(!shader) return;
+
+			// Lazily build one pass per distinct shader id (cleared on OnClose).
+			auto passIt = m_SurfacePasses.find((u64)shaderAsset.ID);
+			if(passIt == m_SurfacePasses.end()) {
+				auto pass = RenderPass::Create(
+					"Surface", shader, m_HDRBuffer);
+				passIt = m_SurfacePasses.emplace(
+					(u64)shaderAsset.ID, pass).first;
+			}
+
+			u64 id = entity.GetHandle().id();
+			auto& gpu = m_SurfaceState[id];
+
+			// (Re)allocate the texture pair on first sighting or grid resize.
+			if(!gpu.Initialized
+			|| gpu.GridWidth != surface.GridWidth
+			|| gpu.GridHeight != surface.GridHeight) {
+				TextureSpec spec;
+				spec.Width  = surface.GridWidth;
+				spec.Height = surface.GridHeight;
+				spec.Type = TextureType::RGBA;
+				spec.Format = TextureFormat::Normal; // rgba8
+				spec.Sampling = TextureSampling::Linear; // bilinear
+				gpu.HeightPrev = RendererAPI::CreateTexture(spec);
+				gpu.HeightCurr = RendererAPI::CreateTexture(spec);
+				gpu.GridWidth  = surface.GridWidth;
+				gpu.GridHeight = surface.GridHeight;
+				gpu.LastVersion = surface.Version - 1; // force an upload below
+				gpu.Initialized = true;
+			}
+
+			// Pack the grid into RGBA8 (value in R). Uploaded on every observed
+			// Version increment; swapping curr->prev per step leaves prev as the
+			// second-to-last state even if several ticks elapsed in one frame.
+			auto upload = [&](const Ref<Texture>& tex) {
+				Buffer<u8> px((u64)surface.GridWidth * surface.GridHeight * 4);
+				for(u32 i = 0; i < surface.GridWidth * surface.GridHeight; i++) {
+					u8 h = surface.Heights[i];
+					u8 rgba[4] = { h, h, h, 255 };
+					px.Add(rgba, 4);
+				}
+				tex->SetData(px);
+			};
+
+			if(gpu.LastVersion != surface.Version) {
+				u32 diff = surface.Version - gpu.LastVersion; // wraps fine (u32)
+				if(diff >= 2) {
+					// Multiple ticks this frame: the last upload IS the second
+					// -to-last, so make it prev, then upload latest as curr.
+					std::swap(gpu.HeightPrev, gpu.HeightCurr);
+					upload(gpu.HeightPrev);
+					upload(gpu.HeightCurr);
+				}
+				else {
+					// One tick: previous curr becomes prev, new field is curr.
+					std::swap(gpu.HeightPrev, gpu.HeightCurr);
+					upload(gpu.HeightCurr);
+				}
+				gpu.LastVersion = surface.Version;
+			}
+
+			// Quad world bounds. Origin is cell (0,0) centre; extend by half a
+			// cell on each side so cell centres land on texel centres.
+			f32 half = surface.CellSize * 0.5f;
+			Vec2 minXZ = {
+				surface.Origin.x - half,
+				surface.Origin.z - half
+			};
+			Vec2 maxXZ = {
+				surface.Origin.x + (surface.GridWidth  - 0.5f) * surface.CellSize,
+				surface.Origin.z + (surface.GridHeight - 0.5f) * surface.CellSize
+			};
+
+			// Pre-resolve Asset-valued texture props to Ref<Texture> before the
+			// generic bind (the MaterialBinder cannot reach the AssetManager). We
+			// build a temporary resolved copy so the binder sees concrete textures
+			// and assigns their sampler slots from the reflected layout. Slots 0/1
+			// are reserved for the engine-standard grid textures below.
+			Material resolved;
+			resolved.ShaderAsset = mat->ShaderAsset;
+			for(auto& [name, prop] : mat->Props) {
+				if(std::holds_alternative<Asset>(prop.Value)) {
+					Asset a = std::get<Asset>(prop.Value);
+					if(a && a.Type == AssetType::Texture) {
+						auto rtex = am->Get<Texture>(a);
+						if(rtex)
+							resolved.Props[name] =
+								{ ShaderPropType::Texture, rtex };
+					}
+					// else: unresolved non-texture asset — drop it.
+				}
+				else
+					resolved.Props[name] = prop;
+			}
+
+			Renderer::StartPass(passIt->second);
+			{
+				auto* cmd = Renderer::NewCommand();
+				// Surfaces write depth and occlude correctly within HDR: the
+				// shader discards uncovered texels and outputs alpha 1. Opaque
+				// (Blending Off) avoids the GL_ONE,GL_ONE additive washout.
+				cmd->DepthTesting = DepthTestingMode::On;
+				cmd->DepthWrite = true;
+				cmd->Blending = BlendingMode::Off;
+				cmd->Culling = CullingMode::Off;
+
+				// First forward command this frame: pull opaque scene depth from
+				// the G-Buffer into the HDR depth buffer so the surface depth-tests
+				// against walls/floor.
+				if(!m_HDRDepthSynced) {
+					cmd->DepthCopySrc = m_GBuffer.get();
+					m_HDRDepthSynced = true;
+				}
+
+				// Engine-standard uniforms: placement, tick blend, time, and the
+				// double-buffered grid textures on reserved slots 0/1.
+				cmd->Uniforms
+				.Set("u_ViewProj", viewProj)
+				.Set("u_MinXZ", minXZ)
+				.Set("u_MaxXZ", maxXZ)
+				.Set("u_PlaneY", surface.PlaneY)
+				.Set("u_TickAlpha", glm::clamp(surface.TickAlpha, 0.0f, 1.0f))
+				.Set("u_Time", m_ElapsedTime)
+				.Set("u_HeightPrev", TextureSlot{ gpu.HeightPrev, 0 })
+				.Set("u_HeightCurr", TextureSlot{ gpu.HeightCurr, 1 });
+
+				// Everything else (shading params + textures) via the generic
+				// MaterialBinder against the shader's reflected layout — first real
+				// caller of the reflected-layout path (Sprint 65).
+				MaterialBinder::Bind(cmd, resolved, nullptr, &shader->GetLayout());
+
+				auto* call = cmd->NewCall();
+				call->VertexCount = 6;
+				call->Primitive = DrawPrimitive::Triangle;
+				call->Partition = DrawPartition::Single;
+			}
+			Renderer::EndPass();
+		});
+}
+
 void DefaultRenderPipeline::TickParticles(Scene* scene, TimeStep ts,
 	Ref<Camera> cam)
 {
@@ -350,14 +546,34 @@ void DefaultRenderPipeline::TickParticles(Scene* scene, TimeStep ts,
 				}
 
 				auto& gpu = m_ParticleState[id];
-				gpu.Timer += (f32)ts;
-				u32 toSpawn = (u32)(gpu.Timer / spec.SpawnInterval);
-				gpu.Timer = glm::mod(gpu.Timer, spec.SpawnInterval);
+				gpu.Timer   += (f32)ts;
+				gpu.Elapsed += (f32)ts; // monotonic, drives sway + spawn jitter
+
+				// Spawn-rate jitter (authored amplitude): the emitter body
+				// swells/thins on a slow cycle, on a different, slower frequency
+				// than the light intensity flicker. Seeded per entity so a cluster
+				// of emitters doesn't breathe in unison. SpawnJitter is the
+				// amplitude (0 = steady). The SAME jittered interval must divide
+				// and wrap the timer, or the accumulator drifts. (Sprint 64, task 3.1)
+				f32 seed = (f32)(id % 997) * 0.618f;
+				f32 jitter =
+					1.0f + spec.SpawnJitter * sin(gpu.Elapsed * 7.3f + seed * 1.7f);
+				f32 interval = glm::max(spec.SpawnInterval * jitter, 0.0001f);
+
+				u32 toSpawn = (u32)(gpu.Timer / interval);
+				gpu.Timer = glm::mod(gpu.Timer, interval);
 				if(toSpawn == 0)
 					return;
 
 				u32 workGroups =
 					(toSpawn + k_EmitWorkGroup - 1) / k_EmitWorkGroup;
+
+				// Transform-relative spawn origin: emitter tracks its entity's
+				// world transform (Sprint 64, task 1.1). Guard emitters that have
+				// no TransformComponent (spawn at world origin + offset).
+				Vec3 base = entity.Has<TransformComponent>()
+					? Vec3(WorldTransform(entity)[3]) : Vec3(0.0f);
+				Vec3 origin = base + spec.LocalOffset;
 
 				auto* cmd = Renderer::NewCommand();
 				cmd->Compute  = true;
@@ -365,9 +581,9 @@ void DefaultRenderPipeline::TickParticles(Scene* scene, TimeStep ts,
 				cmd->Uniforms
 				.Set("u_TimeStep", (f32)ts)
 				.Set("u_ParticlesToSpawn", (i32)toSpawn)
-				.Set("u_EmitterPosition", spec.Position)
+				.Set("u_EmitterPosition", origin)
 				.Set("u_ParticleLifetime", spec.ParticleLifetime)
-				.Set("u_Offset", spec.Offset)
+				.Set("u_SpawnExtents", spec.SpawnExtents)
 				.Set(StorageSlot{ gpu.ParticleBuffer, "", 0 })
 				.Set(StorageSlot{ gpu.FreeListBuffer, "", 1 });
 			});
@@ -393,6 +609,7 @@ void DefaultRenderPipeline::TickParticles(Scene* scene, TimeStep ts,
 				cmd->ComputeX = workGroups;
 				cmd->Uniforms
 				.Set("u_TimeStep", (f32)ts)
+				.Set("u_ElapsedTime", gpu.Elapsed) // sway phase (Sprint 64, task 2.2)
 				.Set(StorageSlot{ gpu.ParticleBuffer, "", 0 })
 				.Set(StorageSlot{ gpu.FreeListBuffer, "", 1 });
 			});
@@ -401,8 +618,9 @@ void DefaultRenderPipeline::TickParticles(Scene* scene, TimeStep ts,
 
 	// ── Draw pass ─────────────────────────────────────────────────────────────
 	// Billboarded quads rendered into the HDR buffer so emissive particles
-	// feed into the bloom pass. Depth-tests against the scene depth that was
-	// blit from m_GBuffer during the lighting pass setup.
+	// feed into the bloom pass. Depth-tests against scene depth: the G-Buffer
+	// depth is blit into the HDR depth by the first forward transparency
+	// command (surfaces, or the first particle command below as a fallback).
 	Renderer::StartPass(m_ParticleDrawPass);
 	{
 		Mat4 view = cam->GetView();
@@ -446,16 +664,37 @@ void DefaultRenderPipeline::TickParticles(Scene* scene, TimeStep ts,
 				f32 half = spec.Size;
 
 				auto* cmd = Renderer::NewCommand();
+				// Particles test against scene depth (occluded by walls) but do
+				// NOT write depth — additive sprites must not occlude each other
+				// or the geometry behind them (task 2.4).
 				cmd->DepthTesting = DepthTestingMode::On;
+				cmd->DepthWrite = false;
 				cmd->Blending = BlendingMode::Additive;
 				cmd->Culling = CullingMode::Off;
+
+				// Fallback: if no surface ran this frame, the HDR depth still holds
+				// stale/cleared values, so the first particle command pulls the
+				// G-Buffer depth in itself.
+				if(!m_HDRDepthSynced) {
+					cmd->DepthCopySrc = m_GBuffer.get();
+					m_HDRDepthSynced = true;
+				}
 
 				cmd->Uniforms
 				.Set("u_View", view)
 				.Set("u_ViewProj", viewProj)
 				.Set("u_BillboardWidth", half)
 				.Set("u_BillboardHeight", half)
+				// Lifetime feeds the vertex-stage age ramp (Sprint 64, task 2.3).
+				// Same seconds unit as the particle's Life so t = 1 - Life/lifetime
+				// is correct.
+				.Set("u_ParticleLifetime", spec.ParticleLifetime)
 				.Set("u_Color", spec.Color)
+				// Three-stop age colour ramp (young -> mid -> old), multiplied
+				// into the particle shading. Neutral white leaves Color unchanged.
+				.Set("u_ColorStart", spec.ColorStart)
+				.Set("u_ColorMid", spec.ColorMid)
+				.Set("u_ColorEnd", spec.ColorEnd)
 				.Set("u_HasTexture", (i32)(tex ? 1 : 0));
 
 				if(tex)
@@ -475,6 +714,12 @@ void DefaultRenderPipeline::TickParticles(Scene* scene, TimeStep ts,
 }
 
 void DefaultRenderPipeline::OnRender(Scene* scene, TimeStep ts) {
+	m_ElapsedTime += (f32)ts; // monotonic clock for hardcoded flicker (Sprint 64)
+
+	// Re-arm the once-per-frame G-Buffer→HDR depth blit (task 2.4). The first
+	// forward transparency command that runs this frame does the copy.
+	m_HDRDepthSynced = false;
+
 	ScriptPipelineContext* ctx =
 		ScriptPipelineContext::Factory(this, scene);
 
@@ -510,18 +755,48 @@ void DefaultRenderPipeline::OnRender(Scene* scene, TimeStep ts) {
 			if(!spec.EmitsLight)
 				return;
 
+			// Emitter-light flicker (light intensity): three mutually NON-harmonic
+			// sines (11.3/19.7/31.1 base rates) so there's no periodic beat, seeded
+			// per entity id so neighbouring emitters flicker independently. Applied
+			// uniformly to Ambient/Diffuse/Specular. LightFlicker is the amplitude
+			// (0 = steady) and LightFlickerSpeed scales the rates. (Sprint 64, task 3.1)
+			f32 t = m_ElapsedTime * spec.LightFlickerSpeed;
+			u64 id = entity.GetHandle().id();
+			f32 seed = (f32)(id % 997) * 0.618f;
+			f32 flicker = 1.0f + spec.LightFlicker * (
+				  0.55f * sin(t * 11.3f + seed)
+				+ 0.30f * sin(t * 19.7f + seed * 2.1f)
+				+ 0.15f * sin(t * 31.1f + seed * 3.7f));
+
 			f32 r = glm::max(spec.LightRadius, 0.5f);
-			Vec3 color = Vec3(spec.Color) * spec.Color.w;
+			// Light colour follows the emitter tint (the pooled light reads as the
+			// emitter's overall colour), but particle tints are authored in HDR
+			// (e.g. 3.2 for bloom-bright sparks) — used raw as light intensity they
+			// overexpose the whole level. Normalize to unit peak so the tint sets
+			// the hue and LightRadius/flicker set the energy. (task 3.3)
+			Vec3 tint = Vec3(spec.Color) * spec.Color.w;
+			f32 peak = glm::max(tint.x, glm::max(tint.y, tint.z));
+			if(peak > 1.0f)
+				tint /= peak;
+			Vec3 color = tint * 0.9f * flicker;
+
+			// Light origin = world transform + LightOffset, slightly above the
+			// spawn base so the emitter isn't lit from below. (task 1.1 / 3.3)
+			Vec3 base = entity.Has<TransformComponent>()
+				? Vec3(WorldTransform(entity)[3]) : Vec3(0.0f);
 
 			PointLightComponent light;
-			light.Position  = spec.Position;
+			light.Position  = base + spec.LightOffset;
 			light.Ambient   = color * 0.05f;
 			light.Diffuse   = color;
 			light.Specular  = color * 0.5f;
 			light.Constant  = 1.0f;
-			light.Linear    = 2.0f / r;
+			light.Linear    = 2.0f / r;   // ~near-zero attenuation around radius r
 			light.Quadratic = 1.0f / (r * r);
-			light.Bloom     = true;
+			// Particles already write emissive HDR that blooms directly; this
+			// light only contributes scene lighting. Keep it out of the bloom
+			// bright-pass so the emitter glow isn't double-counted. (task 3.3)
+			light.Bloom     = false;
 			pointLights.Add(light);
 		});
 
@@ -664,6 +939,11 @@ void DefaultRenderPipeline::OnRender(Scene* scene, TimeStep ts) {
 		Renderer::Clear();
 		auto* cmd = Renderer::GetCommand();
 		cmd->DepthTesting = DepthTestingMode::Off;
+		// Fullscreen lighting pass must not clobber the HDR depth buffer that
+		// the forward surface/particle passes depth-test against (task 2.4). Its
+		// Renderer::Clear() above is queued as a separate command and stays
+		// ordered before the transparency passes' depth blit.
+		cmd->DepthWrite = false;
 		cmd->Blending = BlendingMode::Off;
 
 		// G-Buffer inputs
@@ -688,8 +968,33 @@ void DefaultRenderPipeline::OnRender(Scene* scene, TimeStep ts) {
 		cmd->Uniforms.Set("u_DirLightCount",
 			(i32)(dirLights.Count() < 4 ? dirLights.Count() : 4));
 
-		// Point lights (up to 16)
-		for(u32 i = 0; i < pointLights.Count() && i < 16; i++) {
+		// Point light budget (Sprint 64, task 3.2): the deferred lighting shader
+		// only has k_MaxPointLights slots. When the scene has more (many emitter
+		// lights + authored lights), keep the ones NEAREST the camera and
+		// log once — lights past the cap were previously dropped silently.
+		bool over = pointLights.Count() > k_MaxPointLights;
+		if(over) {
+			Vec3 camPos = mainCamera->GetPosition();
+			std::sort(pointLights.begin(), pointLights.end(),
+				[&](const PointLightComponent& a, const PointLightComponent& b) {
+					Vec3 da = a.Position - camPos, db = b.Position - camPos;
+					return glm::dot(da, da) < glm::dot(db, db); // squared distance
+				});
+		}
+		// Latched: warn once when we go over, re-arm when back under so a recurring
+		// problem is reported again but the log isn't spammed every frame.
+		static bool s_CapWarned = false;
+		if(over && !s_CapWarned) {
+			Log::Warning("Point light count {} exceeds cap {}; dropping {} "
+				"farthest lights.", pointLights.Count(), k_MaxPointLights,
+				pointLights.Count() - k_MaxPointLights);
+			s_CapWarned = true;
+		}
+		else if(!over)
+			s_CapWarned = false;
+
+		u32 pointCount = (u32)glm::min<u64>(pointLights.Count(), k_MaxPointLights);
+		for(u32 i = 0; i < pointCount; i++) {
 			auto& pl = pointLights[i];
 			std::string s = "u_PointLights[" + std::to_string(i) + "]";
 			cmd->Uniforms
@@ -701,8 +1006,7 @@ void DefaultRenderPipeline::OnRender(Scene* scene, TimeStep ts) {
 			.Set(s + ".Linear",    pl.Linear)
 			.Set(s + ".Quadratic", pl.Quadratic);
 		}
-		cmd->Uniforms.Set("u_PointLightCount",
-			(i32)(pointLights.Count() < 16 ? pointLights.Count() : 16));
+		cmd->Uniforms.Set("u_PointLightCount", (i32)pointCount);
 
 		auto* call = cmd->NewCall();
 		call->VertexCount = 6;
@@ -714,6 +1018,9 @@ void DefaultRenderPipeline::OnRender(Scene* scene, TimeStep ts) {
 	// ── Transparency pass (forward, additive over HDR) ────────────────────────
 
 	ExecuteHooks(PipelineStage::PreTransparency, ctx);
+	// Surfaces first: they write depth and emissive body into HDR; particles then
+	// draw over them (lifted above the plane so they don't z-fight).
+	RenderSurfaces(scene, mainCamera);
 	TickParticles(scene, ts, mainCamera);
 	ExecuteHooks(PipelineStage::PostTransparency, ctx);
 

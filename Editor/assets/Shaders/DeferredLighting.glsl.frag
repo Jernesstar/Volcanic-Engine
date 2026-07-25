@@ -116,9 +116,9 @@ void main()
 	// Emissive contribution (feeds bloom extraction in the blur pass)
 	result += albedo * emissive * 2.0;
 
-	// Small ambient floor so shadowed surfaces stay just legible without washing
-	// out the shadows (the float G-Buffer now makes real directional lighting work).
-	result += albedo * 0.06;
+	// Small ambient floor so unlit surfaces stay just legible. Kept very low so
+	// scenes lit primarily by local point lights (not sun) stay dark.
+	result += albedo * 0.025;
 
 	FragColor = vec4(result, 1.0);
 }

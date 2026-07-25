@@ -139,6 +139,10 @@ public:
 };
 
 void Clear() {
+	// glClear on the depth buffer is gated by the depth-write mask, which
+	// persists across frames/commands. A prior command may have left it FALSE,
+	// so force it TRUE before clearing or the depth buffer keeps stale values.
+	glDepthMask(GL_TRUE);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
@@ -168,6 +172,8 @@ void Renderer::Close() {
 
 void Renderer::BeginFrame() {
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	// Depth mask persists across frames; force it on so the clear takes effect.
+	glDepthMask(GL_TRUE);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
@@ -234,6 +240,11 @@ static void SetOptions(DrawCommand& cmd) {
 		glEnable(GL_DEPTH_TEST);
 	else
 		glDisable(GL_DEPTH_TEST);
+
+	// Depth-write mask is independent of the depth test: a command may test
+	// against existing depth (occlusion) while not writing its own (e.g.
+	// additive particles). This state persists, so it is set every command.
+	glDepthMask(cmd.DepthWrite ? GL_TRUE : GL_FALSE);
 
 	if(cmd.Blending == BlendingMode::Off)
 		glDisable(GL_BLEND);
@@ -348,7 +359,33 @@ void Renderer::EndFrame() {
 
 		if(cmd.Clear) {
 			glClearColor(cmd.ClearColor.r, cmd.ClearColor.g, cmd.ClearColor.b, cmd.ClearColor.a);
+			// glClear on depth is gated by the depth-write mask (persistent
+			// state). Force it on for the clear, then restore this command's
+			// intended mask so the following draws honour cmd.DepthWrite.
+			glDepthMask(GL_TRUE);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glDepthMask(cmd.DepthWrite ? GL_TRUE : GL_FALSE);
+		}
+
+		// Bring another framebuffer's depth into this pass's output before
+		// drawing. The forward HDR passes (surfaces, particles) share size with the
+		// deferred G-Buffer; blitting G-Buffer depth here lets them depth-test
+		// against opaque scene geometry. Done after the clear (which would wipe
+		// it) and before the draw calls.
+		if(cmd.DepthCopySrc && cmd.Pass && cmd.Pass->Output) {
+			auto* src = cmd.DepthCopySrc->As<OpenGL::Framebuffer>();
+			auto* dst = cmd.Pass->Output->As<OpenGL::Framebuffer>();
+			auto srcAtt = src->Get(AttachmentTarget::Depth);
+			auto dstAtt = dst->Get(AttachmentTarget::Depth);
+			if(srcAtt && dstAtt) {
+				u32 w = srcAtt->Spec.Width, h = srcAtt->Spec.Height;
+				glBindFramebuffer(GL_READ_FRAMEBUFFER, src->GetID());
+				glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dst->GetID());
+				glBlitFramebuffer(0, 0, w, h, 0, 0, w, h,
+					GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+				// Rebind the pass output for the subsequent draws.
+				dst->Bind();
+			}
 		}
 
 		if(cmd.Pass && cmd.ComputeX && cmd.ComputeY && cmd.ComputeZ)

@@ -126,6 +126,9 @@ static void SetData(uint32_t x, uint32_t y, uint8_t data, GridSet* ptr) {
 void GridSet::RegisterInterface() {
 	auto* engine = ScriptEngine::Get();
 
+	// GridSet stores a raw uint8 per cell; the meaning of those codes is entirely
+	// game-defined. The raw grid is what SceneLoader (de)serializes; scripts assign
+	// their own semantics (e.g. a game-side enum) to the numeric cell values.
 	engine->RegisterObjectType("GridSet", sizeof(GridSet),
 		asOBJ_VALUE | asOBJ_APP_CLASS_ALLINTS
 		| asOBJ_APP_CLASS_MORE_CONSTRUCTORS | asGetTypeTraits<GridSet>());

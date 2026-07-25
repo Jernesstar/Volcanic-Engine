@@ -55,7 +55,7 @@ void CameraController::OnUpdate(TimeStep ts) {
 		moveDir += (float)inputDir.x * right;
 		moveDir += (float)inputDir.y * up;
 		moveDir += (float)inputDir.z * forward;
-		float moveSpeed = TranslationSpeed * 0.001f;
+		float moveSpeed = TranslationSpeed;
 		finalPos += glm::normalize(moveDir) * moveSpeed * (float)ts;
 	}
 

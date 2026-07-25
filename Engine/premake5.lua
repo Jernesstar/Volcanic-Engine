@@ -33,6 +33,7 @@ project "Engine"
         "%{Includes.glad}",
         "%{Includes.lmdb}",
         "%{Includes.soloud}",
+        "%{Includes.Jolt}",
         "%{VendorPaths.angelscript}",
     }
 
@@ -46,6 +47,7 @@ project "Engine"
         "glad",
         "lmdb",
         "soloud",
+        "Jolt",
         "uSockets",
 
         "z",
@@ -59,7 +61,15 @@ project "Engine"
         "NDEBUG",
         "WIN32_LEAN_AND_MEAN",
         "YAML_CPP_STATIC_DEFINE",
+        JoltDefines,
     }
+
+    filter "toolset:gcc or toolset:clang"
+        buildoptions {
+            "-msse4.1",
+            "-msse4.2",
+            "-mpopcnt",
+        }
 
     filter "system:linux"
         links {
@@ -96,4 +106,4 @@ include "Engine/.deps/soloud"
 include "Engine/.deps/lmdb"
 include "Engine/.deps/flecs"
 include "Engine/.deps/uWebSockets"
--- include "Engine/.deps/Jolt"
+include "Engine/.deps/Jolt"

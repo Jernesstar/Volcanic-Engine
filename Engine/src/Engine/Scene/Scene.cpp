@@ -11,7 +11,16 @@ namespace VolcanicEngine {
 Scene::Scene(const std::string& name)
 	: Name(name) { }
 
+Scene::~Scene() {
+	// Release any script gameplay-system references before the scene is torn down.
+	GameSystems.Clear();
+}
+
 void Scene::OnUpdate(TimeStep ts) {
+	// Fixed-tick gameplay systems run before entity systems so their tick ops
+	// (spawns, component writes) apply outside flecs iteration.
+	GameSystems.Update(ts);
+
 	World3D.OnUpdate(ts);
 	World2D.OnUpdate(ts);
 	Canvas.OnUpdate(ts);
@@ -143,6 +152,8 @@ void Scene::RegisterSystems() {
 }
 
 void Scene::UnregisterSystems() {
+	GameSystems.Clear();
+
 	World3D.Remove<ScriptSystem>();
 	World3D.Remove<PhysicsSystem>();
 }

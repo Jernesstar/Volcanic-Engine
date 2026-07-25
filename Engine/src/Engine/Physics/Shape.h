@@ -1,60 +1,52 @@
-// #pragma once
+#pragma once
 
-// #include <VolcaniCore/Core/Defines.h>
-// #include <VolcaniCore/Core/Math.h>
+#include <cstdint>
 
-// #ifdef MAGMA_PHYSICS
+#include <Jolt/Jolt.h>
+#include <Jolt/Physics/Collision/Shape/Shape.h>
 
-// #define PX_PHYSX_STATIC_LIB
-// #include <PxPhysics.h>
-// #include <PxPhysicsAPI.h>
-// using namespace physx;
+#include <VolcaniCore/Core/Defines.h>
+#include <VolcaniCore/Core/Math.h>
 
-// #endif
+#include <Engine/Graphics/Geometry.h>
 
-// #include <Engine/Graphics/Mesh.h>
+using namespace VolcaniCore;
 
-// using namespace VolcaniCore;
-// using namespace VolcanicEngine;
+namespace VolcanicEngine::Physics {
 
-// namespace VolcanicEngine::Physics {
+// Thin wrapper around a Jolt collision shape. Static-body colliders are built
+// from these: axis-aligned boxes for blocky geometry, cooked meshes for
+// arbitrary geometry, plus cheap sphere/capsule primitives.
+class Shape {
+public:
+	enum class Type : uint8_t {
+		Box = 0,
+		Sphere = 1,
+		Capsule = 2,
+		Mesh = 3,
+	};
 
-// class Shape {
-// public:
-// 	enum class Type {
-// 		Box,
-// 		Sphere,
-// 		Plane,
-// 		Capsule,
-// 		Mesh
-// 	};
+public:
+	static Ref<Shape> CreateBox(const Vec3& halfExtents);
+	static Ref<Shape> CreateSphere(float radius);
+	static Ref<Shape> CreateCapsule(float halfHeight, float radius);
 
-// public:
-// 	static Ref<Shape> Create(Shape::Type type);
-// 	static Ref<Shape> Create(Ref<Graphics::Mesh> mesh);
-// 	static Ref<Shape> CreateBox(float radius);
-// 	static Ref<Shape> CreateSphere(float radius);
-// 	static Ref<Shape> CreatePlane(const Transform& tr);
-// 	static Ref<Shape> CreateCapsule(float radius, float halfRadius);
+	// Cook a static triangle-mesh shape from a graphics Geometry's surfaces.
+	static Ref<Shape> CreateMesh(const Ref<Graphics::Geometry>& geometry);
 
-// public:
-// 	Shape(Shape::Type type);
-// 	Shape(const Shape& other);
-// 	Shape& operator =(const Shape& other);
-// 	~Shape();
+public:
+	Shape(Type type, JPH::RefConst<JPH::Shape> shape)
+		: m_Type(type), m_Shape(std::move(shape)) { }
+	~Shape() = default;
 
-// 	Shape::Type GetType() const { return m_Type; }
+	Type GetType() const { return m_Type; }
+	bool IsValid() const { return m_Shape != nullptr; }
 
-// protected:
-// 	Type m_Type;
+	const JPH::RefConst<JPH::Shape>& Get() const { return m_Shape; }
 
-// #ifdef MAGMA_PHYSICS
-// 	PxShape* m_Shape;
+private:
+	Type m_Type;
+	JPH::RefConst<JPH::Shape> m_Shape;
+};
 
-// 	friend class RigidBody;
-// 	friend class StaticBody;
-// 	friend class DynamicBody;
-// #endif
-// };
-
-// }
+}

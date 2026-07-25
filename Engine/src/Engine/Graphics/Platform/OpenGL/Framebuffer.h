@@ -153,6 +153,8 @@ public:
 	void Bind() const { glBindFramebuffer(GL_FRAMEBUFFER, m_BufferID); }
 	void Unbind() const { glBindFramebuffer(GL_FRAMEBUFFER, 0); }
 
+	u32 GetID() const { return m_BufferID; }
+
 	bool Has(Graphics::AttachmentTarget t) const override {
 		for(auto& att : m_Attachments) {
 			if(att->Spec.Target == t)

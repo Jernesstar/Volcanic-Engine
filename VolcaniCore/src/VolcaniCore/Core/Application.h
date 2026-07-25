@@ -24,7 +24,14 @@ public:
 
 protected:
 	virtual void Run();
-	TimePoint m_LastFrame{ Time::GetTime() };
+	inline static TimePoint m_LastFrame{ Time::GetTime() };
+
+public:
+	// Reset the frame timer so the next frame's ts starts from now. Call when
+	// entering play mode to avoid handing the entire editor-idle duration to
+	// the first play frame.
+	static void ResetFrameTimer() { m_LastFrame = Time::GetTime(); }
+protected:
 
 	inline static Application* s_Instance;
 	inline static AppSpecification s_Spec;

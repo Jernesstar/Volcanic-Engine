@@ -4,7 +4,7 @@
 layout(location = 4) uniform sampler2D u_Albedo;
 layout(location = 5) uniform vec4      u_AlbedoColor;
 layout(location = 6) uniform int       u_HasAlbedoTexture;
-layout(location = 7) uniform float     u_Emissive; // 0..1, torches > 0
+layout(location = 7) uniform float     u_Emissive; // 0..1, emissive surfaces > 0
 
 layout(location = 0) in vec3 v_FragPos;
 layout(location = 1) in vec3 v_Normal;

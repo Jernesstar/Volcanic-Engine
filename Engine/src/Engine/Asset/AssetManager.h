@@ -182,11 +182,19 @@ inline Ref<Shader> LoadFromBytes<Shader>(Bytes&& bytes) {
 template<>
 inline Ref<Sound> LoadFromBytes<Sound>(Bytes&& bytes) {
 	BytesReader reader(std::move(bytes));
+	// Header written by the Editor's audio Build: true source rate/channels,
+	// then planar (channel-major) float samples — the layout SoLoud stores and
+	// loadRawWave expects.
+	f32 sampleRate;
+	u32 channels;
+	reader.Read(sampleRate);
+	reader.Read(channels);
 	Buffer<f32> data;
 	reader.Read(data);
 
 	auto sound = CreateRef<Sound>();
-	sound->GetInternal().loadRawWave(data.Get(), data.GetCount(), 44100.0f, 1, true, false);
+	sound->GetInternal().loadRawWave(data.Get(), data.GetCount(),
+		sampleRate, channels, true, false);
 	return sound;
 }
 
@@ -230,6 +238,36 @@ inline Ref<Material> LoadFromBytes<Material>(Bytes&& bytes) {
 		mat->Props[name] = { propType, ReadMatPropValue(reader, propType) };
 	}
 	return mat;
+}
+
+// MaterialInstance format (mirrors the Material format):
+//   [parent id: u64] [parent type: u8]
+//   [override count: u32] ([name] [type: u8] [value])*
+// Texture override value: [asset id: u64] [asset type: u8]
+// Overrides are normally serialized inline with their owning MeshComponent (see
+// SceneLoader); this standalone decoder documents the canonical format and is the
+// single source of truth for how an override block is read.
+template<>
+inline Ref<MaterialInstance> LoadFromBytes<MaterialInstance>(Bytes&& bytes) {
+	BytesReader reader(std::move(bytes));
+	auto inst = CreateRef<MaterialInstance>();
+
+	u64 parentId; u8 parentType;
+	reader.Read(parentId);
+	reader.Read(parentType);
+	inst->ParentAsset = { parentId, (AssetType)parentType };
+
+	u32 overrideCount;
+	reader.Read(overrideCount);
+	for(u32 i = 0; i < overrideCount; i++) {
+		Str name;
+		u8 type;
+		reader.Read(name);
+		reader.Read(type);
+		auto propType = (ShaderPropType)type;
+		inst->Overrides[name] = { propType, ReadMatPropValue(reader, propType) };
+	}
+	return inst;
 }
 
 template<>

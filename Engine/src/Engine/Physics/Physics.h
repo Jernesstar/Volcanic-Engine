@@ -1,24 +1,11 @@
-// #pragma once
+#pragma once
 
-// #include <VolcaniCore/Core/Defines.h>
+namespace VolcanicEngine::Physics {
 
-// #ifdef MAGMA_PHYSICS
-// #define PX_PHYSX_STATIC_LIB
+// Global Jolt process-wide lifetime: registers the default allocator, creates
+// the type Factory, and registers Jolt's shape/collision types. Must be called
+// once before any PhysicsWorld is created and torn down once at shutdown.
+void Init();
+void Close();
 
-// #include <PxPhysics.h>
-// #include <PxPhysicsAPI.h>
-// using namespace physx;
-
-// #endif
-
-// namespace VolcanicEngine::Physics {
-
-// extern void Init();
-// extern void Close();
-
-// #ifdef MAGMA_PHYSICS
-// extern PxPhysics* GetPhysicsLib();
-// extern PxDefaultCpuDispatcher* GetDispatcher();
-// #endif
-
-// }
+}

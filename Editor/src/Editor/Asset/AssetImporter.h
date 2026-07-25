@@ -56,7 +56,8 @@ public:
 	static Graphics::ShaderFile GetShaderFileData(const std::string& path);
 	static Ref<Graphics::Shader> GetShader(const List<std::string>& path);
 
-	static VolcaniCore::Buffer<f32> GetAudioData(const std::string& path);
+	static VolcaniCore::Buffer<f32> GetAudioData(const std::string& path,
+												 f32& sampleRate, u32& channels);
 	static Ref<Audio::Sound> GetAudio(const std::string& path);
 
 	static asIScriptModule* GetScriptData(const std::string& path,

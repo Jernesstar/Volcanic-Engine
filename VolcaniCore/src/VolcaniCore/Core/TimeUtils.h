@@ -6,7 +6,8 @@ namespace VolcaniCore {
 
 using Clock		 = std::chrono::high_resolution_clock;
 using Time_Point = std::chrono::time_point<Clock>;
-using Duration	 = std::chrono::duration<float, std::milli>;
+// TimeStep is SECONDS everywhere. Duration measures elapsed time in seconds.
+using Duration	 = std::chrono::duration<float>;
 
 class TimePoint {
 public:

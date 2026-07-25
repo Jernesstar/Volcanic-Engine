@@ -84,6 +84,17 @@ void ScriptGlue::RegisterInterface() {
 		.AddMethod("void OnMouseUp()")
 		.AddMethod("void OnMouseDown()");
 
+	// Fixed-tick gameplay system. Registered on the Scene via Scene.AddSystem.
+	// OnAttach runs once at registration; OnTick(dt) runs at the fixed interval
+	// (up to a small catch-up budget); OnUpdate(ts, tickAlpha) runs every frame
+	// with the interpolation fraction for smooth rendering between ticks.
+	// Declared before RegisterScene() so the Scene.AddSystem/RemoveSystem bindings
+	// can reference the IGameSystem@ parameter type.
+	ScriptEngine::RegisterInterface("IGameSystem")
+		.AddMethod("void OnAttach()")
+		.AddMethod("void OnUpdate(float ts, float tickAlpha)")
+		.AddMethod("void OnTick(float dt)");
+
 	RegisterGlobalFunctions();
 	RegisterTypes();
 	RegisterAssetManager();
@@ -731,6 +742,38 @@ static asIScriptObject* GetScriptInstance(ScriptComponent* sc) {
 	return sc->Instance->GetHandle();
 }
 
+// Bridge a script `TriggerCallback@` funcdef into the C++ trigger listener.
+// The script function handle is kept alive for the subscription's lifetime and
+// invoked (with a TriggerInfo value arg) whenever a sensor overlap changes.
+static uint32_t PhysicsSubscribeTrigger(asIScriptFunction* callback,
+	PhysicsSystem* system)
+{
+	if(!callback || !system)
+		return 0;
+
+	// Own a reference so the delegate isn't collected while subscribed.
+	callback->AddRef();
+
+	uint32_t token = system->SubscribeTrigger(
+		[callback](const TriggerInfo& info) {
+			auto* ctx = ScriptEngine::Get()->RequestContext();
+			if(!ctx)
+				return;
+
+			ctx->Prepare(callback);
+			if(callback->GetFuncType() == asFUNC_DELEGATE) {
+				if(auto* obj = callback->GetDelegateObject())
+					ctx->SetObject(obj);
+			}
+			TriggerInfo copy = info;
+			ctx->SetArgObject(0, &copy);
+			ctx->Execute();
+			ScriptEngine::Get()->ReturnContext(ctx);
+		});
+
+	return token;
+}
+
 // static Physics::RigidBody* GetRigidBody(RigidBodyComponent* rc) {
 // 	return rc->Body.get();
 // }
@@ -779,7 +822,12 @@ static ScriptComponent* AddScriptComponent(Entity* entity) {
 
 static RigidBodyComponent* AddRigidBodyComponent(Entity* entity) {
 	entity->Add<RigidBodyComponent>();
-	return &entity->Set<RigidBodyComponent>();
+	RigidBodyComponent* rb = &entity->Set<RigidBodyComponent>();
+	// flecs emplace<T>() with no args does not run our default member
+	// initializers, leaving the collider fields as garbage. Assign a
+	// default-constructed component so HalfExtents/IsTrigger/Shape are valid.
+	*rb = RigidBodyComponent{};
+	return rb;
 }
 
 static DirectionalLightComponent* AddDirectionalLightComponent(Entity* entity) {
@@ -800,6 +848,16 @@ static SpotlightComponent* AddSpotlightComponent(Entity* entity) {
 static ParticleEmitterComponent* AddParticleEmitterComponent(Entity* entity) {
 	entity->Add<ParticleEmitterComponent>();
 	return &entity->Set<ParticleEmitterComponent>();
+}
+
+static SurfaceGridComponent* AddSurfaceGridComponent(Entity* entity) {
+	entity->Add<SurfaceGridComponent>();
+	SurfaceGridComponent* surface = &entity->Set<SurfaceGridComponent>();
+	// flecs emplace<T>() with no args skips default member initializers, leaving
+	// the fields garbage; assign a default-constructed component so the defaults
+	// and (empty) grid vector are valid.
+	*surface = SurfaceGridComponent{};
+	return surface;
 }
 
 static const CameraComponent* GetCameraComponent(const Entity* entity) {
@@ -850,6 +908,10 @@ static const ParticleEmitterComponent* GetParticleEmitterComponent(const Entity*
 	return &entity->Get<ParticleEmitterComponent>();
 }
 
+static const SurfaceGridComponent* GetSurfaceGridComponent(const Entity* entity) {
+	return &entity->Get<SurfaceGridComponent>();
+}
+
 static CameraComponent* SetCameraComponent(Entity* entity) {
 	return &entity->Set<CameraComponent>();
 }
@@ -898,6 +960,32 @@ static ParticleEmitterComponent* SetParticleEmitterComponent(Entity* entity) {
 	return &entity->Set<ParticleEmitterComponent>();
 }
 
+static SurfaceGridComponent* SetSurfaceGridComponent(Entity* entity) {
+	return &entity->Set<SurfaceGridComponent>();
+}
+
+// ── SurfaceGridComponent script accessors ────────────────────────────────────
+// The grid buffer is not asOFFSET-mirrorable (it's a std::vector), so scripts
+// drive it through these method wrappers on the live component pointer returned
+// by Get/SetSurfaceGridComponent.
+static void SurfaceGridAllocate(u32 w, u32 h, SurfaceGridComponent* surface) {
+	surface->Allocate(w, h);
+}
+static u32 SurfaceGridGetWidth(SurfaceGridComponent* surface)  { return surface->GridWidth; }
+static u32 SurfaceGridGetHeight(SurfaceGridComponent* surface) { return surface->GridHeight; }
+static u32 SurfaceGridGetAt(u32 x, u32 y, SurfaceGridComponent* surface) {
+	return (u32)surface->At(x, y);
+}
+static void SurfaceGridSetAt(u32 x, u32 y, u32 v, SurfaceGridComponent* surface) {
+	surface->Set(x, y, (u8)glm::clamp<u32>(v, 0, 255));
+}
+// Signals the pipeline that a new tick's field is ready to be swapped in +
+// uploaded. Call exactly once per fixed tick, inside the catch-up loop, so
+// multi-tick frames leave prev as the second-to-last state.
+static void SurfaceGridCommitTick(SurfaceGridComponent* surface) {
+	surface->Version++;
+}
+
 static void SetParticleEmitterMaxParticles(uint32_t maxCount,
 	ParticleEmitterComponent* comp)
 {
@@ -927,6 +1015,19 @@ void RegisterECS() {
 // object is the Scene, passed as the trailing object (asCALL_CDECL_OBJLAST).
 static Entity ScriptSpawnModel(const std::string& name, Scene* scene) {
 	return SpawnModel(scene->World3D, name);
+}
+
+// Fixed-tick gameplay-system registration. The registry AddRefs the object and
+// holds that reference until Remove/Clear. Mirrors the IRenderHook binding
+// (App::AddRenderHook): the incoming handle ref is not released here.
+static void ScriptAddSystem(asIScriptObject* obj, float tickInterval,
+							Scene* scene)
+{
+	scene->GameSystems.Add(obj, tickInterval);
+}
+
+static void ScriptRemoveSystem(asIScriptObject* obj, Scene* scene) {
+	scene->GameSystems.Remove(obj);
 }
 
 void RegisterScene() {
@@ -991,11 +1092,23 @@ void RegisterScene() {
 		"IEntityController@ get_Instance() property",
 		asFUNCTION(GetScriptInstance), asCALL_CDECL_OBJLAST);
 
+	engine->RegisterEnum("RigidBodyShape");
+	engine->RegisterEnumValue("RigidBodyShape", "Box",
+		(int)RigidBodyComponent::ShapeType::Box);
+	engine->RegisterEnumValue("RigidBodyShape", "Sphere",
+		(int)RigidBodyComponent::ShapeType::Sphere);
+	engine->RegisterEnumValue("RigidBodyShape", "Capsule",
+		(int)RigidBodyComponent::ShapeType::Capsule);
+	engine->RegisterEnumValue("RigidBodyShape", "Mesh",
+		(int)RigidBodyComponent::ShapeType::Mesh);
+
 	engine->RegisterObjectType("RigidBodyComponent", 0, asOBJ_REF | asOBJ_NOCOUNT);
 	engine->RegisterObjectProperty("RigidBodyComponent", "Vec3 HalfExtents",
 		asOFFSET(RigidBodyComponent, HalfExtents));
 	engine->RegisterObjectProperty("RigidBodyComponent", "bool IsTrigger",
 		asOFFSET(RigidBodyComponent, IsTrigger));
+	engine->RegisterObjectProperty("RigidBodyComponent", "RigidBodyShape Shape",
+		asOFFSET(RigidBodyComponent, Shape));
 
 	engine->RegisterObjectType("RigidBody", 0, asOBJ_REF | asOBJ_NOCOUNT);
 
@@ -1060,15 +1173,17 @@ void RegisterScene() {
 	engine->RegisterObjectMethod("ParticleEmitterComponent",
 		"void set_MaxParticles(uint32) property",
 		asFUNCTION(SetParticleEmitterMaxParticles), asCALL_CDECL_OBJLAST);
-	engine->RegisterObjectProperty("ParticleEmitterComponent", "Vec3 Position",
-		asOFFSET(ParticleEmitterComponent, Position));
+	engine->RegisterObjectProperty("ParticleEmitterComponent", "Vec3 LocalOffset",
+		asOFFSET(ParticleEmitterComponent, LocalOffset));
+	engine->RegisterObjectProperty("ParticleEmitterComponent", "Vec3 LightOffset",
+		asOFFSET(ParticleEmitterComponent, LightOffset));
 	engine->RegisterObjectProperty("ParticleEmitterComponent", "float Lifetime",
 		asOFFSET(ParticleEmitterComponent, ParticleLifetime));
 	engine->RegisterObjectProperty("ParticleEmitterComponent",
 		"float SpawnInterval",
 		asOFFSET(ParticleEmitterComponent, SpawnInterval));
-	engine->RegisterObjectProperty("ParticleEmitterComponent", "float Offset",
-		asOFFSET(ParticleEmitterComponent, Offset));
+	engine->RegisterObjectProperty("ParticleEmitterComponent", "Vec3 SpawnExtents",
+		asOFFSET(ParticleEmitterComponent, SpawnExtents));
 	engine->RegisterObjectProperty("ParticleEmitterComponent", "Vec4 Color",
 		asOFFSET(ParticleEmitterComponent, Color));
 	engine->RegisterObjectProperty("ParticleEmitterComponent", "float Size",
@@ -1077,9 +1192,55 @@ void RegisterScene() {
 		asOFFSET(ParticleEmitterComponent, EmitsLight));
 	engine->RegisterObjectProperty("ParticleEmitterComponent", "float LightRadius",
 		asOFFSET(ParticleEmitterComponent, LightRadius));
+	engine->RegisterObjectProperty("ParticleEmitterComponent", "float SpawnJitter",
+		asOFFSET(ParticleEmitterComponent, SpawnJitter));
+	engine->RegisterObjectProperty("ParticleEmitterComponent", "float LightFlicker",
+		asOFFSET(ParticleEmitterComponent, LightFlicker));
+	engine->RegisterObjectProperty("ParticleEmitterComponent",
+		"float LightFlickerSpeed",
+		asOFFSET(ParticleEmitterComponent, LightFlickerSpeed));
+	engine->RegisterObjectProperty("ParticleEmitterComponent", "Vec3 ColorStart",
+		asOFFSET(ParticleEmitterComponent, ColorStart));
+	engine->RegisterObjectProperty("ParticleEmitterComponent", "Vec3 ColorMid",
+		asOFFSET(ParticleEmitterComponent, ColorMid));
+	engine->RegisterObjectProperty("ParticleEmitterComponent", "Vec3 ColorEnd",
+		asOFFSET(ParticleEmitterComponent, ColorEnd));
 	engine->RegisterObjectProperty("ParticleEmitterComponent",
 		"Asset MaterialAsset",
 		asOFFSET(ParticleEmitterComponent, MaterialAsset));
+
+	// ── SurfaceGridComponent ────────────────────────────────────────────────────
+	engine->RegisterObjectType("SurfaceGridComponent", 0, asOBJ_REF | asOBJ_NOCOUNT);
+	// POD-mirrored placement + tick fields. All shading lives in the material.
+	engine->RegisterObjectProperty("SurfaceGridComponent", "Vec3 Origin",
+		asOFFSET(SurfaceGridComponent, Origin));
+	engine->RegisterObjectProperty("SurfaceGridComponent", "float CellSize",
+		asOFFSET(SurfaceGridComponent, CellSize));
+	engine->RegisterObjectProperty("SurfaceGridComponent", "float PlaneY",
+		asOFFSET(SurfaceGridComponent, PlaneY));
+	engine->RegisterObjectProperty("SurfaceGridComponent", "float TickAlpha",
+		asOFFSET(SurfaceGridComponent, TickAlpha));
+	engine->RegisterObjectProperty("SurfaceGridComponent", "Asset MaterialAsset",
+		asOFFSET(SurfaceGridComponent, MaterialAsset));
+	// Grid accessors (the buffer is a std::vector, not asOFFSET-mirrored).
+	engine->RegisterObjectMethod("SurfaceGridComponent",
+		"void Allocate(uint w, uint h)",
+		asFUNCTION(SurfaceGridAllocate), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("SurfaceGridComponent",
+		"uint get_Width() const property",
+		asFUNCTION(SurfaceGridGetWidth), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("SurfaceGridComponent",
+		"uint get_Height() const property",
+		asFUNCTION(SurfaceGridGetHeight), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("SurfaceGridComponent",
+		"uint At(uint x, uint y) const",
+		asFUNCTION(SurfaceGridGetAt), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("SurfaceGridComponent",
+		"void Set(uint x, uint y, uint v)",
+		asFUNCTION(SurfaceGridSetAt), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("SurfaceGridComponent",
+		"void CommitTick()",
+		asFUNCTION(SurfaceGridCommitTick), asCALL_CDECL_OBJLAST);
 
 	engine->RegisterObjectMethod("Entity", "bool HasCameraComponent() const",
 		asMETHODPR(Entity, Has<CameraComponent>, () const, bool),
@@ -1116,6 +1277,9 @@ void RegisterScene() {
 		asCALL_THISCALL);
 	engine->RegisterObjectMethod("Entity", "bool HasParticleEmitterComponent() const",
 		asMETHODPR(Entity, Has<ParticleEmitterComponent>, () const, bool),
+		asCALL_THISCALL);
+	engine->RegisterObjectMethod("Entity", "bool HasSurfaceGridComponent() const",
+		asMETHODPR(Entity, Has<SurfaceGridComponent>, () const, bool),
 		asCALL_THISCALL);
 
 	engine->RegisterObjectMethod("Entity",
@@ -1154,6 +1318,9 @@ void RegisterScene() {
 	engine->RegisterObjectMethod("Entity",
 		"ParticleEmitterComponent@ AddParticleEmitterComponent()",
 		asFUNCTION(AddParticleEmitterComponent), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("Entity",
+		"SurfaceGridComponent@ AddSurfaceGridComponent()",
+		asFUNCTION(AddSurfaceGridComponent), asCALL_CDECL_OBJLAST);
 
 	engine->RegisterObjectMethod("Entity",
 		"const CameraComponent@ GetCameraComponent() const",
@@ -1191,6 +1358,9 @@ void RegisterScene() {
 	engine->RegisterObjectMethod("Entity",
 		"const ParticleEmitterComponent@ GetParticleEmitterComponent() const",
 		asFUNCTION(GetParticleEmitterComponent), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("Entity",
+		"const SurfaceGridComponent@ GetSurfaceGridComponent() const",
+		asFUNCTION(GetSurfaceGridComponent), asCALL_CDECL_OBJLAST);
 
 	engine->RegisterObjectMethod("Entity",
 		"CameraComponent@ SetCameraComponent()",
@@ -1228,6 +1398,9 @@ void RegisterScene() {
 	engine->RegisterObjectMethod("Entity",
 		"ParticleEmitterComponent@ SetParticleEmitterComponent()",
 		asFUNCTION(SetParticleEmitterComponent), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("Entity",
+		"SurfaceGridComponent@ SetSurfaceGridComponent()",
+		asFUNCTION(SetSurfaceGridComponent), asCALL_CDECL_OBJLAST);
 
 	engine->RegisterObjectType("HitInfo", sizeof(HitInfo),
 		asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<HitInfo>());
@@ -1237,8 +1410,23 @@ void RegisterScene() {
 		asOFFSET(HitInfo, HitEntity));
 	engine->RegisterObjectProperty("HitInfo", "Vec3 Point",
 		asOFFSET(HitInfo, Point));
+	engine->RegisterObjectProperty("HitInfo", "Vec3 Normal",
+		asOFFSET(HitInfo, Normal));
 	engine->RegisterObjectProperty("HitInfo", "float Distance",
 		asOFFSET(HitInfo, Distance));
+
+	// Trigger enter/exit event, resolved into scene entities.
+	engine->RegisterObjectType("TriggerInfo", sizeof(TriggerInfo),
+		asOBJ_VALUE | asOBJ_POD | asGetTypeTraits<TriggerInfo>());
+	engine->RegisterObjectProperty("TriggerInfo", "Entity Trigger",
+		asOFFSET(TriggerInfo, Trigger));
+	engine->RegisterObjectProperty("TriggerInfo", "Entity Other",
+		asOFFSET(TriggerInfo, Other));
+	engine->RegisterObjectProperty("TriggerInfo", "bool Enter",
+		asOFFSET(TriggerInfo, Enter));
+
+	// Funcdef used by scripts to receive trigger events.
+	engine->RegisterFuncdef("void TriggerCallback(TriggerInfo)");
 
 	engine->RegisterObjectType("PhysicsSystem", 0, asOBJ_REF | asOBJ_NOCOUNT);
 	engine->RegisterObjectMethod("PhysicsSystem",
@@ -1247,6 +1435,12 @@ void RegisterScene() {
 	engine->RegisterObjectMethod("PhysicsSystem",
 		"Entity OverlapPoint(const Vec3 &in)",
 		asMETHOD(PhysicsSystem, OverlapPoint), asCALL_THISCALL);
+	engine->RegisterObjectMethod("PhysicsSystem",
+		"uint SubscribeTrigger(TriggerCallback@)",
+		asFUNCTION(PhysicsSubscribeTrigger), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("PhysicsSystem",
+		"void UnsubscribeTrigger(uint)",
+		asMETHOD(PhysicsSystem, UnsubscribeTrigger), asCALL_THISCALL);
 
 	engine->RegisterObjectType("ScriptSystem", 0, asOBJ_REF | asOBJ_NOCOUNT);
 	engine->RegisterObjectMethod("ScriptSystem",
@@ -1272,6 +1466,13 @@ void RegisterScene() {
 	engine->RegisterObjectMethod("SceneClass",
 		"Entity SpawnModel(const string &in)",
 		asFUNCTION(ScriptSpawnModel), asCALL_CDECL_OBJLAST);
+
+	engine->RegisterObjectMethod("SceneClass",
+		"void AddSystem(IGameSystem@, float tickInterval)",
+		asFUNCTION(ScriptAddSystem), asCALL_CDECL_OBJLAST);
+	engine->RegisterObjectMethod("SceneClass",
+		"void RemoveSystem(IGameSystem@)",
+		asFUNCTION(ScriptRemoveSystem), asCALL_CDECL_OBJLAST);
 
 	engine->RegisterObjectMethod("SceneClass", "PhysicsSystem@ GetPhysicsSystem()",
 		asMETHODPR(ECS::World, Get<PhysicsSystem>, (), PhysicsSystem*),
@@ -1378,6 +1579,14 @@ static void ContextSetBloomThreshold(ScriptPipelineContext* ctx, float t) {
 
 static void ContextSetBloomRadius(ScriptPipelineContext* ctx, float r) {
 	ctx->SetBloomRadius(r);
+}
+
+static void ContextSetExposure(ScriptPipelineContext* ctx, float e) {
+	ctx->SetExposure(e);
+}
+
+static void ContextSetBloomStrength(ScriptPipelineContext* ctx, float s) {
+	ctx->SetBloomStrength(s);
 }
 
 static void ContextRestoreOutput(ScriptPipelineContext* ctx) {
@@ -1515,6 +1724,12 @@ void RegisterRenderPipeline() {
 	engine->RegisterObjectMethod("PipelineContext",
 		"void SetBloomRadius(float)",
 		asFUNCTION(ContextSetBloomRadius), asCALL_CDECL_OBJFIRST);
+	engine->RegisterObjectMethod("PipelineContext",
+		"void SetExposure(float)",
+		asFUNCTION(ContextSetExposure), asCALL_CDECL_OBJFIRST);
+	engine->RegisterObjectMethod("PipelineContext",
+		"void SetBloomStrength(float)",
+		asFUNCTION(ContextSetBloomStrength), asCALL_CDECL_OBJFIRST);
 
 	engine->RegisterObjectMethod("PipelineContext",
 		"void SetSubPixelOffset(const Vec2 &in)",

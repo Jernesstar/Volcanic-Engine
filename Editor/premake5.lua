@@ -38,6 +38,7 @@ project "Editor"
         "%{Includes.glad}",
         "%{Includes.lmdb}",
         "%{Includes.soloud}",
+        "%{Includes.Jolt}",
         "%{VendorPaths.uWebSockets}",
         "%{Includes.uSockets}",
         "%{VendorPaths.angelscript}",
@@ -67,6 +68,7 @@ project "Editor"
         "glad",
         "lmdb",
         "soloud",
+        "Jolt",
         "uSockets",
 
         "imgui",
@@ -91,7 +93,15 @@ project "Editor"
         "NDEBUG",
         "WIN32_LEAN_AND_MEAN",
         "YAML_CPP_STATIC_DEFINE",
+        JoltDefines,
     }
+
+    filter "toolset:gcc or toolset:clang"
+        buildoptions {
+            "-msse4.1",
+            "-msse4.2",
+            "-mpopcnt",
+        }
 
     filter "system:linux"
         links {

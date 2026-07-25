@@ -300,7 +300,11 @@ void EditorRenderPipeline::SubmitLight3D(const Entity& entity) {
 }
 
 void EditorRenderPipeline::SubmitParticles(const Entity& entity) {
-	Vec3 position = entity.Get<ParticleEmitterComponent>().Position;
+	// Emitters are transform-relative now (Sprint 64): the viewport gizmo sits at
+	// the entity transform plus the emitter's LocalOffset.
+	Vec3 base = entity.Has<TransformComponent>()
+		? entity.Get<TransformComponent>().Translation : Vec3(0.0f);
+	Vec3 position = base + entity.Get<ParticleEmitterComponent>().LocalOffset;
 	AddBillboard(position, 5);
 }
 

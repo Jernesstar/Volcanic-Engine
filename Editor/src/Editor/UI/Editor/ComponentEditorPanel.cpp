@@ -488,8 +488,14 @@ static void DrawParticleEmitterComponent(ECS::Entity& entity) {
 	ComponentSection<ParticleEmitterComponent>("Particle Emitter", entity, [&] {
 		auto& c = entity.Set<ParticleEmitterComponent>();
 
+		// Transform-relative offsets (Sprint 64). Spawn origin and light origin
+		// are the entity's world position plus these.
 		ImGui::SetNextItemWidth(180.0f);
-		ImGui::DragFloat3("Position", &c.Position.x, 0.1f);
+		ImGui::DragFloat3("Local Offset", &c.LocalOffset.x, 0.01f);
+		ImGui::SetNextItemWidth(180.0f);
+		ImGui::DragFloat3("Light Offset", &c.LightOffset.x, 0.01f);
+		ImGui::SetNextItemWidth(180.0f);
+		ImGui::DragFloat3("Spawn Extents", &c.SpawnExtents.x, 0.005f, 0.0f, 1000.0f);
 
 		uint64_t pMin = 1, pMax = 100000;
 		ImGui::SetNextItemWidth(80.0f);
@@ -497,13 +503,34 @@ static void DrawParticleEmitterComponent(ECS::Entity& entity) {
 			&c.MaxParticleCount, 1.0f, &pMin, &pMax);
 
 		ImGui::SetNextItemWidth(80.0f);
-		ImGui::DragFloat("Lifetime (ms)",
-			&c.ParticleLifetime, 1.0f, 1.0f, 99000.0f, "%.0f");
+		ImGui::DragFloat("Lifetime (s)",
+			&c.ParticleLifetime, 0.01f, 0.01f, 99.0f, "%.2f");
 		ImGui::SetNextItemWidth(80.0f);
-		ImGui::DragFloat("Spawn Interval (ms)",
-			&c.SpawnInterval, 1.0f, 1.0f, 99000.0f, "%.0f");
+		ImGui::DragFloat("Spawn Interval (s)",
+			&c.SpawnInterval, 0.001f, 0.001f, 99.0f, "%.3f");
+
+		ImGui::ColorEdit4("Color", &c.Color.x,
+			ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_Float);
 		ImGui::SetNextItemWidth(80.0f);
-		ImGui::DragFloat("Offset", &c.Offset, 0.01f, 0.0f, 1000.0f, "%.3f");
+		ImGui::DragFloat("Peak Size", &c.Size, 0.01f, 0.0f, 100.0f, "%.3f");
+		ImGui::Checkbox("Emits Light", &c.EmitsLight);
+		ImGui::SetNextItemWidth(80.0f);
+		ImGui::DragFloat("Light Radius", &c.LightRadius, 0.1f, 0.0f, 1000.0f);
+
+		ImGui::SetNextItemWidth(80.0f);
+		ImGui::DragFloat("Spawn Jitter", &c.SpawnJitter, 0.005f, 0.0f, 1.0f, "%.3f");
+		ImGui::SetNextItemWidth(80.0f);
+		ImGui::DragFloat("Light Flicker", &c.LightFlicker, 0.005f, 0.0f, 2.0f, "%.3f");
+		ImGui::SetNextItemWidth(80.0f);
+		ImGui::DragFloat("Flicker Speed", &c.LightFlickerSpeed, 0.01f, 0.0f, 20.0f, "%.3f");
+
+		// Three-stop age colour ramp (young -> mid -> old), HDR-valued.
+		ImGui::ColorEdit3("Color Start", &c.ColorStart.x,
+			ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_Float);
+		ImGui::ColorEdit3("Color Mid", &c.ColorMid.x,
+			ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_Float);
+		ImGui::ColorEdit3("Color End", &c.ColorEnd.x,
+			ImGuiColorEditFlags_HDR | ImGuiColorEditFlags_Float);
 
 		ImGui::Text("Material: %llu", (uint64_t)c.MaterialAsset.ID);
 		// TODO: hook up ContentBrowserPanel asset picker

@@ -22,7 +22,9 @@ layout(location = 0) uniform float u_TimeStep;
 layout(location = 1) uniform int   u_ParticlesToSpawn;
 layout(location = 2) uniform vec3  u_EmitterPosition;
 layout(location = 3) uniform float u_ParticleLifetime;
-layout(location = 4) uniform float u_Offset;
+// Per-axis spawn half-extents (e.g. wide X/Z with near-zero Y for a flat disc).
+// Replaces the old scalar cube offset. (Sprint 64, task 2.1)
+layout(location = 4) uniform vec3  u_SpawnExtents;
 
 float umap(float val, float rs, float re) // [0, 1] -> [rs, re]
 {
@@ -58,16 +60,18 @@ vec3 rng(vec3 low, vec3 high)
 
 void MakeParticle(out Particle particle) {
     particle.Life = u_ParticleLifetime;
-    // Gentle upward drift with a little horizontal jitter — embers rising from
-    // a torch/lava. Integrated as Position += Velocity * dt, dt in seconds, so
+    // Gentle upward drift with a little horizontal jitter — particles rising from
+    // the emitter. Integrated as Position += Velocity * dt, dt in seconds, so
     // velocity is in world units per second.
     particle.Velocity = vec3(
         rng(-0.25, 0.25, 11.0),
         rng( 0.60, 1.60, 37.0),
         rng(-0.25, 0.25, 59.0));
+    // Square footprint (not a rejection-sampled circle — indistinguishable at
+    // 320x180 with few-pixel billboards, and cheaper in a compute shader).
     particle.Position =
         u_EmitterPosition
-            + rng(vec3(-u_Offset), vec3(u_Offset));
+            + rng(-u_SpawnExtents, u_SpawnExtents);
 }
 
 layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;

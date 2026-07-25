@@ -1,98 +1,108 @@
-// #pragma once
+#pragma once
 
-// #ifdef MAGMA_PHYSICS
-// #include <PxPhysics.h>
-// #include <PxPhysicsAPI.h>
+#include <cstdint>
+#include <memory>
 
-// using namespace physx;
-// #endif
+#include <VolcaniCore/Core/Math.h>
+#include <VolcaniCore/Core/List.h>
 
-// #include <VolcaniCore/Core/List.h>
-// #include <VolcaniCore/Core/TimeUtils.h>
+#include "Shape.h"
 
-// using namespace VolcaniCore;
+using namespace VolcaniCore;
 
-// #include "RigidBody.h"
+namespace VolcanicEngine::Physics {
 
-// namespace VolcanicEngine::Physics {
+// Object layers: statics never collide with statics; sensors overlap everything
+// but never solve contacts (static geometry + sensors only).
+namespace Layers {
+	static constexpr uint16_t NON_MOVING = 0;
+	static constexpr uint16_t MOVING	 = 1;
+	static constexpr uint16_t SENSOR	 = 2;
+	static constexpr uint16_t NUM_LAYERS = 3;
+}
 
-// #ifdef MAGMA_PHYSICS
-// class ContactCallback : public PxSimulationEventCallback {
-// public:
-// 	void AddCallback(
-// 		const Func<void, RigidBody*, RigidBody*>& callback)
-// 	{
-// 		m_Callbacks.Add(callback);
-// 	}
+// A single raycast hit against a body in the world. Entity is the raw ECS id
+// stored as body user data; a value of 0 with HasHit=false means no hit.
+struct RayHit {
+	bool HasHit = false;
+	uint64_t Entity = 0;
+	float Distance = 0.0f;
+	Vec3 Point = { 0.0f, 0.0f, 0.0f };
+	Vec3 Normal = { 0.0f, 0.0f, 0.0f };
+};
 
-// private:
-// 	void onConstraintBreak(PxConstraintInfo* constraints, PxU32 count) { }
-// 	void onWake(PxActor** actors, PxU32 count) { }
-// 	void onSleep(PxActor** actors, PxU32 count) { }
-// 	void onAdvance(const PxRigidBody*const*, const PxTransform*, const PxU32) {}
-// 	void onTrigger(PxTriggerPair* pairs, PxU32 count);
-// 	void onContact(const PxContactPairHeader& pairHeader,
-// 				   const PxContactPair* pairs, PxU32 nbPairs);
+// Emitted by the contact listener when a sensor body's overlap set changes.
+struct TriggerEvent {
+	uint64_t Trigger = 0; // The sensor body's entity.
+	uint64_t Other = 0;   // The entity that entered/exited.
+	bool Enter = false;   // true = enter, false = exit.
+};
 
-// private:
-// 	List<Func<void, RigidBody*, RigidBody*>> m_Callbacks;
-// };
+using TriggerCallback = std::function<void(const TriggerEvent&)>;
 
-// #endif
+// Opaque handle wrapping a JPH::BodyID (see World.cpp). We hide the Jolt type
+// here so downstream translation units that only need to reference bodies do
+// not have to include Jolt headers.
+struct BodyHandle {
+	uint32_t ID = 0xFFFFFFFF; // JPH::BodyID::cInvalidBodyID
+	bool IsValid() const { return ID != 0xFFFFFFFF; }
+};
 
-// struct HitInfo {
-// 	const bool HasHit;
-// 	RigidBody* Actor;
-// 	const float Distance;
+// Real Jolt-backed physics world. Owns the JPH::PhysicsSystem, layer
+// interfaces, temp allocator, job system and contact listener. Scoped to
+// query-only usage (static colliders + sensors); no rigid-body dynamics.
+class PhysicsWorld {
+public:
+	static const float StepSize; // Fixed physics timestep (1/60 s).
 
-// 	HitInfo()
-// 		: HasHit(false), Actor(nullptr), Distance(0.0f) { }
-// 	HitInfo(RigidBody* actor, float distance)
-// 		: HasHit(true), Actor(actor), Distance(distance) { }
-	
-// 	operator bool() const { return HasHit; }
-// };
+public:
+	PhysicsWorld();
+	~PhysicsWorld();
 
-// class World {
-// public:
-// 	static const float StepSize;
+	PhysicsWorld(const PhysicsWorld&) = delete;
+	PhysicsWorld& operator =(const PhysicsWorld&) = delete;
 
-// public:
-// 	World();
-// 	~World();
+	// Advance the simulation with a fixed-timestep accumulator. Multiple
+	// sub-steps run if dt exceeds StepSize.
+	void Step(float dt);
 
-// 	void OnUpdate(TimeStep ts);
+	void SetGravity(const Vec3& gravity);
+	Vec3 GetGravity() const;
 
-// 	void AddActor(Ref<RigidBody> body);
-// 	// RigidBody CreateActor();
-// 	// RigidBody CreatePlane();
+	// Add a static (non-moving) collider. `entity` is the raw ECS id stored as
+	// body user data so queries and trigger events can resolve back to it.
+	BodyHandle AddStaticBody(const Ref<Shape>& shape, const Transform& transform,
+		uint64_t entity);
 
-// 	HitInfo Raycast(const glm::vec3& start,
-// 					const glm::vec3& direction, float maxDist = 10000.0f);
+	// Add a sensor (trigger) collider. Sensors report enter/exit overlaps via
+	// the contact listener but never solve contacts.
+	BodyHandle AddSensorBody(const Ref<Shape>& shape, const Transform& transform,
+		uint64_t entity);
 
-// 	void AddContactCallback(
-// 		const Func<void, RigidBody*, RigidBody*>& callback);
+	void RemoveBody(BodyHandle handle);
+	void SetBodyTransform(BodyHandle handle, const Transform& transform);
+	Transform GetBodyTransform(BodyHandle handle) const;
 
-// 	const List<Ref<RigidBody>>& GetActors() const { return m_Actors; }
+	// Rebuild the broadphase acceleration structure. Newly added bodies are not
+	// visible to raycast/overlap queries until the broadphase is optimized (or
+	// the world is stepped), so call this after a batch of AddStaticBody /
+	// AddSensorBody calls if you need to query before the next Step.
+	void OptimizeBroadPhase();
 
-// 	List<Ref<RigidBody>>::const_iterator begin() { return m_Actors.begin(); }
-// 	List<Ref<RigidBody>>::const_iterator end() { return m_Actors.end(); }
+	// Nearest hit along the ray within maxDist. `layerMask` is a bitmask over
+	// Layers::* (bit N = layer N); default hits everything. Sensors are only
+	// hit if their layer bit is set (they are excluded by default).
+	RayHit Raycast(const Vec3& origin, const Vec3& direction,
+		float maxDist = 1000.0f, uint32_t layerMask = 0xFFFFFFFF) const;
 
-// #ifdef MAGMA_PHYSICS
-// 	PxScene* Get() { return m_Scene; }
-// #endif
+	// Register a callback invoked for every trigger enter/exit event. Returns a
+	// token usable to unsubscribe.
+	uint32_t AddTriggerCallback(const TriggerCallback& callback);
+	void RemoveTriggerCallback(uint32_t token);
 
-// private:
+private:
+	struct Impl;
+	std::unique_ptr<Impl> m_Impl;
+};
 
-// #ifdef MAGMA_PHYSICS
-// 	PxScene* m_Scene = nullptr;
-// 	ContactCallback m_ContactCallback;
-// #endif
-
-// 	uint64_t m_MaxActorCount = 0;
-// 	List<Ref<RigidBody>> m_Actors;
-
-// 	float m_Accumulator = 0.0f;
-// };
-
-// }
+}

@@ -193,6 +193,16 @@ struct DrawCommand {
 	BlendingMode Blending = BlendingMode::Off;
 	CullingMode Culling = CullingMode::Off;
 
+	// Whether this command writes to the depth buffer (glDepthMask). Depth-
+	// testing may still read depth while this is false (e.g. additive particles
+	// that test against scene depth but must not occlude each other).
+	bool DepthWrite = true;
+
+	// If set, blit this framebuffer's depth buffer into the pass output's depth
+	// buffer before drawing. Used to bring deferred G-Buffer depth into the
+	// forward HDR pass so surfaces/particles depth-test against opaque geometry.
+	Graphics::Framebuffer* DepthCopySrc = nullptr;
+
 	DrawCall* NewCall() {
 		return &DrawCalls.Emplace();
 	}

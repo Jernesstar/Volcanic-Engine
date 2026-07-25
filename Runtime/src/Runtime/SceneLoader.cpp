@@ -95,14 +95,39 @@ BinaryReader& BinaryReader::ReadObject(MeshComponent& comp) {
 	Read(geometryID);
 	comp.GeometryAsset = { geometryID, AssetType::Geometry };
 
+	uint64_t materialID;
+	Read(materialID);
+	comp.MaterialAsset = { materialID, AssetType::Material };
+
+	// MaterialInstance override block (Sprint 65) — byte-identical to the Editor
+	// writer (SceneLoader.cpp) and LoadFromBytes<MaterialInstance>.
+	uint64_t parentId; uint8_t parentType;
+	Read(parentId); Read(parentType);
+	comp.Instance.ParentAsset = { parentId, (AssetType)parentType };
+
 	uint32_t overrideCount;
 	Read(overrideCount);
 	for(uint32_t i = 0; i < overrideCount; i++) {
-		uint32_t slot;
-		Read(slot);
-		uint64_t materialID;
-		Read(materialID);
-		comp.MaterialOverrides[slot] = { materialID, AssetType::Material };
+		std::string name; uint8_t type;
+		Read(name); Read(type);
+		auto propType = (Graphics::ShaderPropType)type;
+		Graphics::MatProp prop; prop.Type = propType;
+		switch(propType) {
+		case Graphics::ShaderPropType::Int:   { int32_t v; Read(v); prop.Value = v; break; }
+		case Graphics::ShaderPropType::Float: { float v;   Read(v); prop.Value = v; break; }
+		case Graphics::ShaderPropType::Vec2:  { glm::vec2 v; Read(v); prop.Value = v; break; }
+		case Graphics::ShaderPropType::Vec3:  { glm::vec3 v; Read(v); prop.Value = v; break; }
+		case Graphics::ShaderPropType::Vec4:  { glm::vec4 v; Read(v); prop.Value = v; break; }
+		case Graphics::ShaderPropType::Mat4:  { glm::mat4 v; Read(v); prop.Value = v; break; }
+		case Graphics::ShaderPropType::Texture: {
+			uint64_t tid; uint8_t tt;
+			Read(tid); Read(tt);
+			prop.Value = Asset{ tid, (AssetType)tt };
+			break;
+		}
+		default: break;
+		}
+		comp.Instance.Overrides[name] = prop;
 	}
 
 	return *this;
@@ -221,13 +246,14 @@ template<>
 BinaryReader& BinaryReader::ReadObject(RigidBodyComponent& comp) {
 	uint8_t typeInt;
 	Read(typeInt);
-	RigidBody::Type type = (RigidBody::Type)typeInt;
+	comp.Type = (RigidBodyComponent::BodyType)typeInt;
+
 	uint8_t shapeTypeInt;
 	Read(shapeTypeInt);
-	Shape::Type shapeType = (Shape::Type)shapeTypeInt;
+	comp.Shape = (RigidBodyComponent::ShapeType)shapeTypeInt;
 
-	Ref<Shape> shape = Shape::Create(shapeType);
-	comp.Body = RigidBody::Create(type, shape);
+	Read(comp.HalfExtents);
+	Read(comp.IsTrigger);
 
 	return *this;
 }
@@ -272,11 +298,34 @@ BinaryReader& BinaryReader::ReadObject(SpotlightComponent& comp) {
 
 template<>
 BinaryReader& BinaryReader::ReadObject(ParticleEmitterComponent& comp) {
-	Read(comp.Position);
+	// Versioned format (Sprint 64, task 1.2): bail loudly on a stale binary rather
+	// than reading misaligned garbage. Keep in sync with the Editor writer.
+	uint32_t version;
+	Read(version);
+	if(version != k_EmitterFormatVersion) {
+		VolcaniCore::Log::Error(
+			"ParticleEmitterComponent format version {}, expected {}. "
+			"Scene binary is stale — re-export from the Editor.",
+			version, k_EmitterFormatVersion);
+		return *this;
+	}
+
+	Read(comp.LocalOffset);
+	Read(comp.LightOffset);
+	Read(comp.SpawnExtents);
 	Read(comp.MaxParticleCount);
 	Read(comp.ParticleLifetime);
 	Read(comp.SpawnInterval);
-	Read(comp.Offset);
+	Read(comp.Color);
+	Read(comp.Size);
+	Read(comp.EmitsLight);
+	Read(comp.LightRadius);
+	Read(comp.SpawnJitter);
+	Read(comp.LightFlicker);
+	Read(comp.LightFlickerSpeed);
+	Read(comp.ColorStart);
+	Read(comp.ColorMid);
+	Read(comp.ColorEnd);
 
 	uint64_t id;
 	Read(id);

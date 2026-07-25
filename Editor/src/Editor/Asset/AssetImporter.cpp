@@ -430,13 +430,33 @@ void AssetImporter::ReflectShader(const VolcaniCore::Buffer<u32>& spirv,
 				compiler.get_decoration(resource.id, spv::DecorationDescriptorSet));
 		}
 	}
+
+	// Loose (non-block) uniforms declared with layout(location=N) — the SPIR-V GL
+	// backend used for game-supplied surface shaders emits these as individual
+	// uniforms rather than a uniform block. Reflect them so MaterialBinder can
+	// validate and bind material props by name. Their "binding" carries the GL
+	// location so it is meaningful for callers that need it.
+	for(auto& resource : resources.gl_plain_uniforms) {
+		const auto& type = compiler.get_type(resource.type_id);
+		layout.Uniforms.Emplace(resource.name, getPropType(type),
+			compiler.get_decoration(resource.id, spv::DecorationLocation),
+			compiler.get_decoration(resource.id, spv::DecorationDescriptorSet));
+	}
 }
 
-Buffer<f32> AssetImporter::GetAudioData(const std::string& path) {
+Buffer<f32> AssetImporter::GetAudioData(const std::string& path,
+	f32& sampleRate, u32& channels)
+{
 	SoLoud::Wav sound;
 	VOLCANICORE_ASSERT(sound.load(path.c_str()) == 0);
-	Buffer<f32> data(sound.mSampleCount);
-	data.Set(sound.mData, sound.mSampleCount);
+	sampleRate = sound.mBaseSamplerate;
+	channels = sound.mChannels;
+	// SoLoud stores samples PLANAR (channel-major): mSampleCount frames per
+	// channel, mChannels planes. Keep all planes — loadRawWave expects the
+	// same planar layout on playback.
+	u64 total = (u64)sound.mSampleCount * sound.mChannels;
+	Buffer<f32> data(total);
+	data.Set(sound.mData, total);
 	return data;
 }
 

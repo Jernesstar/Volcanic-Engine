@@ -1,36 +1,55 @@
-// #include "Physics.h"
+#include "Physics.h"
 
-// #ifdef MAGMA_PHYSICS
-// static PxDefaultAllocator	   s_Allocator;
-// static PxDefaultErrorCallback  s_ErrorCallback;
-// static PxFoundation*		   s_Foundation = nullptr;
-// static PxPhysics*			   s_Physics	= nullptr;
-// static PxDefaultCpuDispatcher* s_Dispatcher = nullptr;
-// #endif
+#include <cstdarg>
+#include <cstdio>
 
-// namespace VolcanicEngine::Physics {
+#include <Jolt/Jolt.h>
+#include <Jolt/RegisterTypes.h>
+#include <Jolt/Core/Factory.h>
 
-// void Init() {
-// #ifdef MAGMA_PHYSICS
-// 	s_Foundation =
-// 		PxCreateFoundation(PX_PHYSICS_VERSION, s_Allocator, s_ErrorCallback);
-// 	s_Physics =
-// 		PxCreatePhysics(PX_PHYSICS_VERSION, *s_Foundation, PxTolerancesScale());
-// 	s_Dispatcher = PxDefaultCpuDispatcherCreate(2);
-// #endif
-// }
+#include <VolcaniCore/Core/Log.h>
 
-// void Close() {
-// #ifdef MAGMA_PHYSICS
-// 	PX_RELEASE(s_Dispatcher);
-// 	// PX_RELEASE(s_Physics);
-// 	// PX_RELEASE(s_Foundation);
-// #endif
-// }
+using namespace VolcaniCore;
 
-// #ifdef MAGMA_PHYSICS
-// PxPhysics* GetPhysicsLib() { return s_Physics; }
-// PxDefaultCpuDispatcher* GetDispatcher() { return s_Dispatcher; }
-// #endif
+namespace VolcanicEngine::Physics {
 
-// }
+static bool s_Initialized = false;
+static int s_RefCount = 0;
+
+static void TraceImpl(const char* fmt, ...) {
+	char buffer[1024];
+	va_list list;
+	va_start(list, fmt);
+	std::vsnprintf(buffer, sizeof(buffer), fmt, list);
+	va_end(list);
+	Log::Info("[Jolt] {}", buffer);
+}
+
+void Init() {
+	s_RefCount++;
+	if(s_Initialized)
+		return;
+
+	JPH::RegisterDefaultAllocator();
+	JPH::Trace = TraceImpl;
+
+	JPH::Factory::sInstance = new JPH::Factory();
+	JPH::RegisterTypes();
+
+	s_Initialized = true;
+}
+
+void Close() {
+	if(!s_Initialized)
+		return;
+	if(--s_RefCount > 0)
+		return;
+
+	JPH::UnregisterTypes();
+	delete JPH::Factory::sInstance;
+	JPH::Factory::sInstance = nullptr;
+
+	s_Initialized = false;
+}
+
+}

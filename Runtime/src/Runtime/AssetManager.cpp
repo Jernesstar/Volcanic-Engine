@@ -100,7 +100,7 @@ void RuntimeAssetManager::Load(Asset asset) {
 
 		for(auto& materialRef : GetRefs(asset)) {
 			Load(materialRef);
-			auto material = Get<Lava::Material>(materialRef);
+			auto material = Get<VolcanicEngine::Material>(materialRef);
 			VolcaniCore::Material& mat = mesh->Materials.Emplace();
 
 			if(material->TextureUniforms.count("u_Diffuse")) {
@@ -152,10 +152,52 @@ void RuntimeAssetManager::Load(Asset asset) {
 
 	}
 	else if(asset.Type == AssetType::Shader) {
-		Buffer<uint32_t> bytecode;
-		pack.Read(bytecode);
+		// Mirrors the Editor Shader Build output and LoadFromBytes<Shader>:
+		// [file count:u64] [(file type:u32, data:Buffer<u32>)*] [ShaderLayout].
+		// (Runtime module is stale/best-effort; kept symmetric with the engine.)
+		u64 fileCount;
+		pack.Read(fileCount);
 
-		// m_ShaderAssets[asset.ID] = ShaderPipeline::Create(bytecode);
+		List<Graphics::ShaderFile> files;
+		files.Allocate(fileCount);
+		for(u64 i = 0; i < fileCount; i++) {
+			u32 fileType;
+			pack.Read(fileType);
+			Buffer<u32> data;
+			pack.Read(data);
+			files.AddMove(
+				{ (Graphics::ShaderFileType)fileType, std::move(data) });
+		}
+
+		Graphics::ShaderLayout layout;
+		u32 uniformCount;
+		pack.Read(uniformCount);
+		layout.Uniforms.Allocate(uniformCount);
+		for(u32 i = 0; i < uniformCount; i++) {
+			Graphics::ShaderPropDeclaration decl;
+			u8 type;
+			pack.Read(decl.Name);
+			pack.Read(type); decl.Type = (Graphics::ShaderPropType)type;
+			pack.Read(decl.Binding);
+			pack.Read(decl.Set);
+			layout.Uniforms.Add(decl);
+		}
+		u32 samplerCount;
+		pack.Read(samplerCount);
+		layout.Samplers.Allocate(samplerCount);
+		for(u32 i = 0; i < samplerCount; i++) {
+			Graphics::ShaderPropDeclaration decl;
+			u8 type;
+			pack.Read(decl.Name);
+			pack.Read(type); decl.Type = (Graphics::ShaderPropType)type;
+			pack.Read(decl.Binding);
+			pack.Read(decl.Set);
+			layout.Samplers.Add(decl);
+		}
+
+		auto shader = RendererAPI::Get()->CreateShader({});
+		shader->SetShaderData(std::move(files), layout);
+		m_ShaderAssets[asset.ID] = shader;
 	}
 	else if(asset.Type == AssetType::Audio) {
 		Buffer<float> data;
@@ -180,7 +222,7 @@ void RuntimeAssetManager::Load(Asset asset) {
 		m_ScriptAssets[asset.ID] = CreateRef<ScriptModule>(handle);
 	}
 	else if(asset.Type == AssetType::Material) {
-		auto mat = CreateRef<Lava::Material>();
+		auto mat = CreateRef<VolcanicEngine::Material>();
 		pack.Read(mat->IntUniforms);
 		pack.Read(mat->FloatUniforms);
 		pack.Read(mat->Vec2Uniforms);
